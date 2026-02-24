@@ -176,10 +176,7 @@ public class Manager {
     public boolean isSamePlayer(EntityPlayer p) {
         return p.getUniqueID()
             .equals(playerUUID) && p instanceof EntityPlayerMP
-            && Thread.currentThread()
-                .getName()
-                .toLowerCase()
-                .contains("server")
+            && !p.worldObj.isRemote
             && !(p instanceof FakePlayer);
     }
 }

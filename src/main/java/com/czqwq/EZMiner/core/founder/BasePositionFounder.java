@@ -96,6 +96,7 @@ public class BasePositionFounder extends Pauseable {
         } catch (InterruptedException e) {
             Thread.currentThread()
                 .interrupt();
+            return; // respect interrupt
         }
     }
 

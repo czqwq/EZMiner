@@ -161,6 +161,7 @@ public class DeterminingIdentical {
 
     /** Returns true if two ItemStacks are identical (type, damage, NBT). */
     public static boolean isSame(ItemStack a, ItemStack b) {
+        if (a == null || b == null) return a == b;
         if (!Objects.equals(a.getItem(), b.getItem())) return false;
         if (a.getItemDamage() != b.getItemDamage()) return false;
         NBTTagCompound tagA = a.getTagCompound();

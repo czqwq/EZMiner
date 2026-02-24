@@ -59,6 +59,7 @@ public class MinerRenderer {
             stopViewer();
             return;
         }
+        if (event.target == null) return;
 
         // Capture GL matrices here while we are in a render context
         MatrixUtils.captureMatrices();
