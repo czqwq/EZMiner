@@ -9,6 +9,7 @@ elytraModpackVersion {
 }
 
 dependencies {
+    implementation('org.joml:joml:1.10.8')
     implementation(gtnhDev("GT5-Unofficial"))
     implementation(gtnhDev("NewHorizonsCoreMod"))
     implementation(gtnhDev("Mobs-Info"))
