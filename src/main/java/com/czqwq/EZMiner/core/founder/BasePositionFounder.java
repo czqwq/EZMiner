@@ -77,6 +77,7 @@ public class BasePositionFounder extends Pauseable {
 
     public boolean checkCanAdd(Vector3i pos) {
         if (foundedPositions.contains(pos)) return false;
+        if (player.worldObj == null) return false; // player logged out
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
         if (block.equals(Blocks.air) || block.getMaterial()
             .isLiquid() || block.equals(Blocks.bedrock)) return false;

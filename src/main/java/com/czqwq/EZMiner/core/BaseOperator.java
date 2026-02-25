@@ -42,7 +42,8 @@ public class BaseOperator {
     @SubscribeEvent
     public void operatorTask(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
-        if (!manager.inPressChainKey) {
+        // Guard: stop if chain key released OR player is no longer online/alive
+        if (!manager.inPressChainKey || !isPlayerOnline()) {
             unRegistry();
             return;
         }
@@ -54,7 +55,7 @@ public class BaseOperator {
         int countThisTick = 0;
         Vector3i pos;
         while ((pos = canBreakPositions.poll()) != null) {
-            if (!canOperate()) {
+            if (!canOperate() || !isPlayerOnline()) {
                 unRegistry();
                 return;
             }
@@ -80,6 +81,10 @@ public class BaseOperator {
         EZMiner.network.network.sendTo(new PacketChainCount(operatorCount), playerMP);
 
         if (positionFounder.stopped.get()) unRegistry();
+    }
+
+    private boolean isPlayerOnline() {
+        return playerMP != null && !playerMP.isDead && playerMP.worldObj != null;
     }
 
     private boolean canOperate() {
@@ -109,6 +114,23 @@ public class BaseOperator {
             .bus()
             .unregister(this);
         positionFounder.interrupt();
+        manager.inOperate = false;
+    }
+
+    /**
+     * Emergency stop called when the player logs out mid-operation.
+     * Does not attempt to send chat messages or deliver drops.
+     */
+    public void stopImmediately() {
+        positionFounder.interrupt();
+        canBreakPositions.clear();
+        try {
+            FMLCommonHandler.instance()
+                .bus()
+                .unregister(this);
+        } catch (Exception ignored) {
+            // already unregistered – safe to ignore
+        }
         manager.inOperate = false;
     }
 }

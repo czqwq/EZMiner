@@ -1,6 +1,7 @@
 package com.czqwq.EZMiner.core.founder;
 
-import java.util.ArrayDeque;
+import java.util.Comparator;
+import java.util.PriorityQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import net.minecraft.block.Block;
@@ -12,17 +13,18 @@ import org.joml.Vector3i;
 import com.czqwq.EZMiner.core.MinerConfig;
 
 /**
- * Chain mode: BFS flood-fill from the targeted block.
+ * Chain mode: priority-queue BFS flood-fill from the targeted block.
  *
  * <p>
- * For each discovered block we expand outward by up to {@code smallRadius} in each axis,
- * constrained to a cube of {@code bigRadius} from the origin. Only blocks of the same type
- * as the targeted block are included.
+ * Blocks are expanded in non-decreasing Euclidean-distance order from the
+ * origin (same strategy as Bandit-Legacy's {@code ManhattanExecutorGenerator}).
+ * This produces "ring-layer" outward scanning: all same-type blocks at distance 1
+ * are found before those at distance 2, etc., so the player sees a smooth sphere
+ * of outlines expanding from the targeted block.
  *
  * <p>
- * BFS ordering guarantees that nearby blocks are always discovered before distant ones,
- * fixing the issue where expanding-shell iteration could miss adjacent blocks while
- * finding distant ones (because shell order is not adjacency order).
+ * Each found block expands its {@code smallRadius}-neighbourhood; only blocks
+ * of the same type within {@code bigRadius} of the origin are included.
  */
 public class ChainPositionFounder extends BasePositionFounder {
 
@@ -34,8 +36,9 @@ public class ChainPositionFounder extends BasePositionFounder {
 
     @Override
     public void run1() {
-        // BFS frontier – centre is already in foundedPositions (added by super constructor)
-        ArrayDeque<Vector3i> frontier = new ArrayDeque<>();
+        // Priority-queue ordered by distance² from center – smallest distance first.
+        PriorityQueue<Vector3i> frontier = new PriorityQueue<>(Comparator.comparingDouble(v -> distSq(v, center)));
+        // Center is already in foundedPositions (added by BasePositionFounder constructor).
         frontier.add(center);
 
         while (!frontier.isEmpty() && curCount < minerConfig.blockLimit) {
@@ -66,13 +69,19 @@ public class ChainPositionFounder extends BasePositionFounder {
             && Math.abs(pos.z - center.z) <= minerConfig.bigRadius;
     }
 
+    private static double distSq(Vector3i a, Vector3i b) {
+        double dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
+        return dx * dx + dy * dy + dz * dz;
+    }
+
     /**
-     * No explicit adjacency check needed – BFS guarantees we only visit positions reachable
-     * from an already-found block within {@code smallRadius}.
+     * No explicit adjacency check needed – PQ-BFS guarantees we only visit positions
+     * reachable from an already-found block within {@code smallRadius}.
      */
     @Override
     public boolean checkCanAdd(Vector3i pos) {
         if (foundedPositions.contains(pos)) return false;
+        if (player.worldObj == null) return false; // player logged out
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
         if (block.equals(Blocks.air) || block.getMaterial()
             .isLiquid() || block.equals(Blocks.bedrock)) return false;

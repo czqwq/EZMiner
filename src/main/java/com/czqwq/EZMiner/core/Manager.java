@@ -158,7 +158,19 @@ public class Manager {
 
     @SubscribeEvent
     public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        cleanupState();
+        // Each Manager is bound to a specific player – ignore events for other players.
+        if (!event.player.getUniqueID()
+            .equals(playerUUID)) return;
+        // Stop the operator immediately so no further server-tick callbacks fire
+        // against the now-invalid player entity.
+        if (operator != null) {
+            operator.stopImmediately();
+            operator = null;
+        }
+        // Discard pending drops – the player is gone and items cannot be delivered.
+        drops.clear();
+        inPressChainKey = false;
+        inOperate = false;
     }
 
     // ===== Config sync =====
