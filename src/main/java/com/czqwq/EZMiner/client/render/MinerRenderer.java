@@ -36,6 +36,7 @@ public class MinerRenderer {
 
     private final ShaderManager shader = new ShaderManager();
     private static boolean shaderLoaded = false;
+    private static boolean shaderLoadFailed = false;
 
     public static final RenderCache renderCache = new RenderCache();
     private final SpaceCalculator spaceCalc = new SpaceCalculator();
@@ -97,8 +98,8 @@ public class MinerRenderer {
         spaceCalc.positions.clear();
         spaceCalc.hasChange = false;
         lastIndexCount = 0;
-        // Clear render cache
-        renderCache.updateData(new float[0], new int[0]);
+        // Reset the RenderCache data on the next render call; don't touch GL here
+        // because stopViewer() may be called from a non-render context.
     }
 
     private static final long MAX_DRAIN_MS = 5;
@@ -124,7 +125,7 @@ public class MinerRenderer {
     private void doRender(float partialTicks) {
         if (lastIndexCount <= 0) return;
         ensureShader();
-        if (!shaderLoaded) return;
+        if (!shaderLoaded) return; // shader not ready or failed to load
 
         try {
             shader.bind();
@@ -143,7 +144,7 @@ public class MinerRenderer {
     }
 
     private void ensureShader() {
-        if (shaderLoaded) return;
+        if (shaderLoaded || shaderLoadFailed) return;
         try {
             String vert = FileReadUtils.readText("assets/EZMiner/shader/MinerPreviewVertex.glsl");
             String frag = FileReadUtils.readText("assets/EZMiner/shader/MinerPreviewFragment.glsl");
@@ -151,7 +152,8 @@ public class MinerRenderer {
             shader.loadShader(vert, frag, geom.isEmpty() ? null : geom);
             shaderLoaded = true;
         } catch (Exception e) {
-            EZMiner.LOG.error("Failed to load preview shaders", e);
+            shaderLoadFailed = true;
+            EZMiner.LOG.error("Failed to load preview shaders (preview disabled)", e);
         }
     }
 

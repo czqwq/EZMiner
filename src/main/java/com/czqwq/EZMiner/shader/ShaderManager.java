@@ -23,11 +23,17 @@ public class ShaderManager {
     private static int currentProgram = 0;
 
     public ShaderManager() {
-        programId = GL20.glCreateProgram();
+        // Intentionally empty – GL program is created lazily inside loadShader() so that
+        // this constructor is safe to call before an OpenGL context exists.
     }
 
     public void loadShader(String vert, String frag, @Nullable String geom) {
         uniforms.clear();
+        // Create (or recreate) the GL program object now that we know a context is active.
+        if (programId != 0) {
+            GL20.glDeleteProgram(programId);
+        }
+        programId = GL20.glCreateProgram();
         int vs = compile(vert, GL20.GL_VERTEX_SHADER);
         int fs = compile(frag, GL20.GL_FRAGMENT_SHADER);
         int gs = -1;
