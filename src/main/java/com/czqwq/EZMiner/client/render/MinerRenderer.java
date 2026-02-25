@@ -98,8 +98,9 @@ public class MinerRenderer {
         spaceCalc.positions.clear();
         spaceCalc.hasChange = false;
         lastIndexCount = 0;
-        // Reset the RenderCache data on the next render call; don't touch GL here
-        // because stopViewer() may be called from a non-render context.
+        // Reset so that pressing the key again while looking at the same block
+        // correctly triggers restartViewer (lastTarget != any real block).
+        lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
     }
 
     private static final long MAX_DRAIN_MS = 5;
@@ -137,6 +138,14 @@ public class MinerRenderer {
             shader.setUniformM4f("view", view);
             shader.setUniformM4f("projection", proj);
             shader.setUniform3F("cameraPos", cam);
+            // Fragment shader defaults (uniform initializers are not valid GLSL 330)
+            shader.setUniform3F("fogColor", 0.2f, 0.2f, 0.2f);
+            shader.setUniform1F("fogNear", 0f);
+            shader.setUniform1F("fogFar", 32f);
+            shader.setUniform4F("lineColor", 0.2f, 0.8f, 1.0f, 1.0f);
+            // Geometry shader defaults
+            shader.setUniform1F("minWidth", 0.01f);
+            shader.setUniform1F("maxWidth", 5.0f);
             renderCache.render(lastIndexCount);
         } finally {
             shader.unbind();

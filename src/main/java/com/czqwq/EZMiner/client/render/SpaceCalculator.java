@@ -110,8 +110,9 @@ public class SpaceCalculator {
                     }
                 }
             }
+            // Skip fully-enclosed blocks – but do NOT increment base here;
+            // base must only advance when vertices are actually appended.
             if (edges.isEmpty()) {
-                base += 8;
                 continue;
             }
 
@@ -130,7 +131,7 @@ public class SpaceCalculator {
                 idx[c++] = edge.y + base;
             }
             inds.add(idx);
-            base += 8;
+            base += 8; // advance only after vertices are appended
         }
         hasChange = false;
         return new VertexAndIndex(ArrayConverter.convertF(verts), ArrayConverter.convertI(inds));

@@ -87,6 +87,21 @@ public class ShaderManager {
         if (loc >= 0) GL20.glUniform3f(loc, v.x, v.y, v.z);
     }
 
+    public void setUniform3F(String name, float x, float y, float z) {
+        int loc = uniform(name);
+        if (loc >= 0) GL20.glUniform3f(loc, x, y, z);
+    }
+
+    public void setUniform4F(String name, float x, float y, float z, float w) {
+        int loc = uniform(name);
+        if (loc >= 0) GL20.glUniform4f(loc, x, y, z, w);
+    }
+
+    public void setUniform1F(String name, float v) {
+        int loc = uniform(name);
+        if (loc >= 0) GL20.glUniform1f(loc, v);
+    }
+
     public void bind() {
         if (programId != currentProgram) {
             GL20.glUseProgram(programId);

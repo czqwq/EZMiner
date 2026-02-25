@@ -63,6 +63,7 @@ public class KeyListener {
                 // Rising edge: start chain
                 EZMiner.network.network.sendToServer(new PacketChainSwitcher(true));
                 ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = true;
+                ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = true;
                 // Sync config to server
                 EZMiner.network.network.sendToServer(new PacketMinerConfig(new MinerConfig()));
             }
@@ -83,6 +84,7 @@ public class KeyListener {
         if (!holding && wasHoldingChain) {
             EZMiner.network.network.sendToServer(new PacketChainSwitcher(false));
             ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = false;
+            ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = false;
             wasHoldingChain = false;
         }
     }

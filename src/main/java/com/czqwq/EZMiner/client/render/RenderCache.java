@@ -14,7 +14,8 @@ import com.czqwq.EZMiner.EZMiner;
 /**
  * Manages OpenGL VAO/VBO/EBO for the chain preview wireframe.
  *
- * <p>GL objects are created lazily on the first {@link #updateData} or {@link #render} call so
+ * <p>
+ * GL objects are created lazily on the first {@link #updateData} or {@link #render} call so
  * that the constructor is safe to call before an OpenGL context exists (e.g. during FML proxy
  * setup).
  */
