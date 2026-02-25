@@ -13,17 +13,29 @@ import com.czqwq.EZMiner.EZMiner;
 
 /**
  * Manages OpenGL VAO/VBO/EBO for the chain preview wireframe.
+ *
+ * <p>GL objects are created lazily on the first {@link #updateData} or {@link #render} call so
+ * that the constructor is safe to call before an OpenGL context exists (e.g. during FML proxy
+ * setup).
  */
 public class RenderCache {
 
     public int vao, vbo, ebo;
     private int vboCap = 0, eboCap = 0;
+    private boolean glInitialized = false;
 
     public RenderCache() {
-        init();
+        // Intentionally empty – GL objects are created lazily in ensureGLInit().
     }
 
-    private void init() {
+    /**
+     * Initialise GL objects. Must only be called from the render thread when a GL context is
+     * active.
+     */
+    private void ensureGLInit() {
+        if (glInitialized) return;
+        glInitialized = true;
+
         vao = GL30.glGenVertexArrays();
         vbo = GL15.glGenBuffers();
         ebo = GL15.glGenBuffers();
@@ -47,6 +59,7 @@ public class RenderCache {
     }
 
     public void updateData(float[] vertices, int[] indices) {
+        ensureGLInit();
         GL30.glBindVertexArray(vao);
 
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
@@ -76,6 +89,8 @@ public class RenderCache {
 
     public void render(int indexCount) {
         if (indexCount <= 0) return;
+        ensureGLInit();
+        if (vao == 0) return; // GL init failed – do nothing rather than crash
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glDisable(GL11.GL_CULL_FACE);
