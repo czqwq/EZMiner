@@ -3,6 +3,9 @@ package com.czqwq.EZMiner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.czqwq.EZMiner.network.NetworkMain;
+import com.czqwq.EZMiner.thread.ParallelTick;
+
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -19,27 +22,25 @@ public class EZMiner {
     @SidedProxy(clientSide = "com.czqwq.EZMiner.ClientProxy", serverSide = "com.czqwq.EZMiner.CommonProxy")
     public static CommonProxy proxy;
 
+    public static final NetworkMain network = new NetworkMain();
+    public static final ParallelTick parallelTick = new ParallelTick();
+
     @Mod.EventHandler
-    // preInit "Run before anything else. Read your config, create blocks, items, etc, and register them with the
-    // GameRegistry." (Remove if not needed)
     public void preInit(FMLPreInitializationEvent event) {
         proxy.preInit(event);
     }
 
     @Mod.EventHandler
-    // load "Do your mod setup. Build whatever data structures you care about. Register recipes." (Remove if not needed)
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
     }
 
     @Mod.EventHandler
-    // postInit "Handle interaction with other mods, complete your setup based on this." (Remove if not needed)
     public void postInit(FMLPostInitializationEvent event) {
         proxy.postInit(event);
     }
 
     @Mod.EventHandler
-    // register server commands in this event handler (Remove if not needed)
     public void serverStarting(FMLServerStartingEvent event) {
         proxy.serverStarting(event);
     }

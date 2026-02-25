@@ -1,0 +1,29 @@
+ezminer.hud.active=连锁已启用
+ezminer.hud.chainCount=已连锁方块
+
+key.ezminer.chainKey=连锁键
+key.ezminer.modeSwitch=模式切换
+key.categories.ezminer=EZMiner连锁模组
+
+ezminer.mode.blast=爆破模式
+ezminer.mode.chain=连锁模式
+
+ezminer.mode.blast.allBlocks=爆破: 无差别爆破
+ezminer.mode.blast.sameType=爆破: 同类筛选
+ezminer.mode.blast.tunnel=爆破: 隧道爆破
+ezminer.mode.blast.oreOnly=爆破: 矿石爆破
+ezminer.mode.blast.logging=爆破: 爆破伐木
+
+ezminer.mode.chain.basic=连锁: 基础连锁
+
+ezminer.message.mainMode=当前主模式
+ezminer.message.subMode=当前子模式
+
+ezminer.config.bigRadius=最大连锁/爆破半径
+ezminer.config.blockLimit=每次连锁最大方块数
+ezminer.config.smallRadius=连锁模式邻接检测半径
+ezminer.config.tunnelWidth=隧道半宽度
+ezminer.config.addExhaustion=每次挖掘消耗的饥饿值（负值恢复饥饿）
+ezminer.config.dropToInventory=将掉落物直接放入背包（超出则掉落到脚下）
+ezminer.config.usePreview=按住连锁键时显示方块轮廓预览
+ezminer.config.useChainDoneMessage=连锁结束后显示提示消息

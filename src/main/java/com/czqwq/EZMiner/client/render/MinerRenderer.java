@@ -1,0 +1,201 @@
+package com.czqwq.EZMiner.client.render;
+
+import java.util.concurrent.LinkedBlockingQueue;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraftforge.client.event.DrawBlockHighlightEvent;
+import net.minecraftforge.common.MinecraftForge;
+
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector3i;
+
+import com.czqwq.EZMiner.Config;
+import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.client.ClientStateContainer;
+import com.czqwq.EZMiner.core.MinerConfig;
+import com.czqwq.EZMiner.core.founder.BasePositionFounder;
+import com.czqwq.EZMiner.shader.ShaderManager;
+import com.czqwq.EZMiner.utils.FileReadUtils;
+import com.czqwq.EZMiner.utils.MatrixUtils;
+
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+
+/**
+ * Client-side renderer that draws block outlines for the current chain preview.
+ * Rendering penetrates blocks (depth test disabled) to match QzMiner behaviour.
+ */
+@SideOnly(Side.CLIENT)
+public class MinerRenderer {
+
+    public boolean inPressChainKey = false;
+
+    private final ShaderManager shader = new ShaderManager();
+    private static boolean shaderLoaded = false;
+    private static boolean shaderLoadFailed = false;
+
+    public static final RenderCache renderCache = new RenderCache();
+    private final SpaceCalculator spaceCalc = new SpaceCalculator();
+
+    private Vector3i lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+    private BasePositionFounder founder = null;
+    private final LinkedBlockingQueue<Vector3i> foundQueue = new LinkedBlockingQueue<>();
+    private boolean searchComplete = false;
+    private int lastIndexCount = 0;
+
+    private ClientStateContainer clientState;
+
+    public MinerRenderer(ClientStateContainer state) {
+        this.clientState = state;
+    }
+
+    @SubscribeEvent
+    public void onBlockHighlight(DrawBlockHighlightEvent event) {
+        if (!Config.usePreview) return;
+        if (!inPressChainKey) {
+            stopViewer();
+            return;
+        }
+        if (event.target == null) return;
+        // Only render when actually looking at a block (not air/entity/miss).
+        if (event.target.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
+            stopViewer();
+            return;
+        }
+
+        // Capture GL matrices here while we are in a render context
+        MatrixUtils.captureMatrices();
+
+        Vector3i target = new Vector3i(event.target.blockX, event.target.blockY, event.target.blockZ);
+        if (!lastTarget.equals(target)) {
+            lastTarget = new Vector3i(target);
+            restartViewer(target);
+        }
+
+        drainQueue();
+        doRender(event.partialTicks);
+    }
+
+    private void restartViewer(Vector3i target) {
+        stopViewer();
+        searchComplete = false;
+        spaceCalc.hasChange = false;
+        // reset space calculator
+        spaceCalc.posSet.clear();
+        spaceCalc.positions.clear();
+
+        EntityPlayer player = Minecraft.getMinecraft().thePlayer;
+        founder = clientState.minerModeState.createPositionFounder(target, foundQueue, player, new MinerConfig());
+        EZMiner.parallelTick.addNormalTask(founder);
+    }
+
+    private void stopViewer() {
+        if (founder != null) {
+            founder.interrupt();
+            founder = null;
+        }
+        foundQueue.clear();
+        spaceCalc.posSet.clear();
+        spaceCalc.positions.clear();
+        spaceCalc.hasChange = false;
+        lastIndexCount = 0;
+        // Reset so that pressing the key again while looking at the same block
+        // correctly triggers restartViewer (lastTarget != any real block).
+        lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+    }
+
+    private void drainQueue() {
+        if (searchComplete) return;
+        int n = 0;
+        Vector3i p;
+        Minecraft mc = Minecraft.getMinecraft();
+        EntityPlayer player = mc.thePlayer;
+        // Render distance in blocks (chunks × 16). Blocks beyond this have no loaded chunk
+        // data on the client and would produce null-pointer crashes in the GL pipeline.
+        int renderDistBlocks = mc.gameSettings.renderDistanceChunks * 16;
+        // Drain everything available this frame – the block limit caps the queue size so
+        // this is always O(blockLimit) and won't stall the render thread.
+        while ((p = foundQueue.poll()) != null) {
+            if (player != null && withinRenderDist(p, player, renderDistBlocks)) {
+                spaceCalc.add(p);
+            }
+            n++;
+        }
+        // Only mark complete once the founder has stopped AND the queue is fully drained.
+        if (founder != null && founder.stopped.get() && foundQueue.isEmpty()) {
+            searchComplete = true;
+        }
+        if (n > 0) {
+            SpaceCalculator.VertexAndIndex vi = spaceCalc.getVertexAndIndex();
+            lastIndexCount = vi.indices.length;
+            renderCache.updateData(vi.vertices, vi.indices);
+        }
+    }
+
+    /** Returns true if {@code pos} is within {@code dist} blocks of the player on X and Z. */
+    private static boolean withinRenderDist(Vector3i pos, EntityPlayer player, int dist) {
+        return Math.abs(pos.x - (int) player.posX) <= dist && Math.abs(pos.z - (int) player.posZ) <= dist;
+    }
+
+    private void doRender(float partialTicks) {
+        if (lastIndexCount <= 0) return;
+        ensureShader();
+        if (!shaderLoaded) return; // shader not ready or failed to load
+
+        try {
+            shader.bind();
+            Vector3f cam = MatrixUtils.getCameraPos(partialTicks);
+            Matrix4f model = MatrixUtils.getModelMatrix(-cam.x, -cam.y, -cam.z);
+            Matrix4f view = MatrixUtils.getModelViewByOriginal();
+            Matrix4f proj = MatrixUtils.getProjectionByOriginal();
+            shader.setUniformM4f("model", model);
+            shader.setUniformM4f("view", view);
+            shader.setUniformM4f("projection", proj);
+            shader.setUniform3F("cameraPos", cam);
+            // Fragment shader defaults (uniform initializers are not valid GLSL 330)
+            shader.setUniform3F("fogColor", 0.2f, 0.2f, 0.2f);
+            shader.setUniform1F("fogNear", 0f);
+            shader.setUniform1F("fogFar", 32f);
+            shader.setUniform4F("lineColor", 0.2f, 0.8f, 1.0f, 1.0f);
+            // Geometry shader defaults
+            shader.setUniform1F("minWidth", 0.01f);
+            shader.setUniform1F("maxWidth", 5.0f);
+            renderCache.render(lastIndexCount);
+        } finally {
+            shader.unbind();
+        }
+    }
+
+    private void ensureShader() {
+        if (shaderLoaded || shaderLoadFailed) return;
+        try {
+            String vert = FileReadUtils.readText("assets/EZMiner/shader/MinerPreviewVertex.glsl");
+            String frag = FileReadUtils.readText("assets/EZMiner/shader/MinerPreviewFragment.glsl");
+            String geom = FileReadUtils.readText("assets/EZMiner/shader/MinerPreviewGeometry.glsl");
+            shader.loadShader(vert, frag, geom.isEmpty() ? null : geom);
+            shaderLoaded = true;
+        } catch (Exception e) {
+            shaderLoadFailed = true;
+            EZMiner.LOG.error("Failed to load preview shaders (preview disabled)", e);
+        }
+    }
+
+    public void registry() {
+        MinecraftForge.EVENT_BUS.register(this);
+        FMLCommonHandler.instance()
+            .bus()
+            .register(this);
+    }
+
+    public void unRegistry() {
+        MinecraftForge.EVENT_BUS.unregister(this);
+        FMLCommonHandler.instance()
+            .bus()
+            .unregister(this);
+    }
+}

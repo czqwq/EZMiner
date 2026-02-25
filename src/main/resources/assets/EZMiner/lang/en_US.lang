@@ -1,0 +1,29 @@
+ezminer.hud.active=Chain Active
+ezminer.hud.chainCount=Chained Blocks
+
+key.ezminer.chainKey=Chain Key
+key.ezminer.modeSwitch=Mode Switch
+key.categories.ezminer=EZMiner
+
+ezminer.mode.blast=Blast Mode
+ezminer.mode.chain=Chain Mode
+
+ezminer.mode.blast.allBlocks=Blast: All Blocks
+ezminer.mode.blast.sameType=Blast: Same Type
+ezminer.mode.blast.tunnel=Blast: Tunnel
+ezminer.mode.blast.oreOnly=Blast: Ore Only
+ezminer.mode.blast.logging=Blast: Logging
+
+ezminer.mode.chain.basic=Chain: Basic
+
+ezminer.message.mainMode=Main Mode
+ezminer.message.subMode=Sub Mode
+
+ezminer.config.bigRadius=Maximum chain/blast radius
+ezminer.config.blockLimit=Maximum blocks per chain
+ezminer.config.smallRadius=Adjacency radius for chain mode
+ezminer.config.tunnelWidth=Tunnel half-width
+ezminer.config.addExhaustion=Exhaustion added per block mined (negative restores food)
+ezminer.config.dropToInventory=Place drops directly into player inventory (overflow falls at feet)
+ezminer.config.usePreview=Show block outline preview while chain key is held
+ezminer.config.useChainDoneMessage=Show completion message after each chain operation
