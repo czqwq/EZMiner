@@ -1,0 +1,122 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "org.joml",
+    "module": "joml",
+    "version": "1.10.8",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.9"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-jdk8",
+          "version": {
+            "requires": "1.8.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "joml-1.10.8.jar",
+          "url": "joml-1.10.8.jar",
+          "size": 778846,
+          "sha512": "3aea55bd4587a9ba7f594815e42d41d81cd6e2dcdaec5afddea2bad56959e479d506766bd7d253a57183376ecaf65cf08dbb1c9fa02c5301897bcb2518da8e14",
+          "sha256": "bf19510145178df82cd3bd37edd514c13f411531ec5545299fd3abcbc98fe7c2",
+          "sha1": "fc0a71dad90a2cf41d82a76156a0e700af8e4f8d",
+          "md5": "58a4c6e7475f1121bfd390a819e62c98"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-jdk8",
+          "version": {
+            "requires": "1.8.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "joml-1.10.8.jar",
+          "url": "joml-1.10.8.jar",
+          "size": 778846,
+          "sha512": "3aea55bd4587a9ba7f594815e42d41d81cd6e2dcdaec5afddea2bad56959e479d506766bd7d253a57183376ecaf65cf08dbb1c9fa02c5301897bcb2518da8e14",
+          "sha256": "bf19510145178df82cd3bd37edd514c13f411531ec5545299fd3abcbc98fe7c2",
+          "sha1": "fc0a71dad90a2cf41d82a76156a0e700af8e4f8d",
+          "md5": "58a4c6e7475f1121bfd390a819e62c98"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "joml-1.10.8-sources.jar",
+          "url": "joml-1.10.8-sources.jar",
+          "size": 736157,
+          "sha512": "534a5806b5310e2f1c650e28355373f102fccc2c34efb92aa6e15cc34d0c4795a0b421f4b6a3bd441b3a9182f515cc87df3ebd3924aa497c4f8a378146504975",
+          "sha256": "bd34bd5ea2b9b59a14b24cb46ca6037b9d150b8ff2ba1d5ca49fe42afff575cf",
+          "sha1": "3fa7a5a8a5119d23dbe3402f6ffa3df1b3d9598e",
+          "md5": "62c55312df3dfea794e7c04c655a3fd5"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "joml-1.10.8-javadoc.jar",
+          "url": "joml-1.10.8-javadoc.jar",
+          "size": 1730230,
+          "sha512": "78d4306560eb865d2d4ca43b69f909553e718be3212d8f8727528e83652aa128ac1590c337c094bd87fbb346ceb28657361de03f024ccf2c557190607e6e8af0",
+          "sha256": "dc9d79854ab4ae3372a140475b765e1b99579b8db7d6696bd08dc86ea435ccfc",
+          "sha1": "c9dc479043b1cc27737307e9b8526a0de5a2cd0d",
+          "md5": "ef944277251d39fb243ef4c7bcca7806"
+        }
+      ]
+    }
+  ]
+}

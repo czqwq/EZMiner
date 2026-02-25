@@ -1,0 +1,193 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "Avaritiaddons",
+    "version": "1.9.1-GTNH",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Avaritia",
+          "version": {
+            "requires": "1.70"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Avaritia",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "WanionLib",
+          "version": {
+            "requires": "1.10.0"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "WanionLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "Avaritiaddons-1.9.1-GTNH-dev.jar",
+          "url": "Avaritiaddons-1.9.1-GTNH-dev.jar",
+          "size": 208631,
+          "sha512": "440dccd70c57cd2abde5f8d10e4e3e0f8b95006f83de29be499048460dd0f593b921dd32291504a96b138b79cb3daa7463d2025860e390029caadfb210dbd377",
+          "sha256": "c981a9ed0d829ba974ca0c3154c3bef3f3a9aff9b2238fd8ea1856176e185e01",
+          "sha1": "29b82bc59598a258f10f6b2b9b55ad206166bde4",
+          "md5": "1ecd89c5ec58b876ff7ff3002a84c377"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.69-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Avaritia",
+          "version": {
+            "requires": "1.70"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Avaritia",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "WanionLib",
+          "version": {
+            "requires": "1.10.0"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "WanionLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "Avaritiaddons-1.9.1-GTNH-dev.jar",
+          "url": "Avaritiaddons-1.9.1-GTNH-dev.jar",
+          "size": 208631,
+          "sha512": "440dccd70c57cd2abde5f8d10e4e3e0f8b95006f83de29be499048460dd0f593b921dd32291504a96b138b79cb3daa7463d2025860e390029caadfb210dbd377",
+          "sha256": "c981a9ed0d829ba974ca0c3154c3bef3f3a9aff9b2238fd8ea1856176e185e01",
+          "sha1": "29b82bc59598a258f10f6b2b9b55ad206166bde4",
+          "md5": "1ecd89c5ec58b876ff7ff3002a84c377"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Avaritiaddons-1.9.1-GTNH.jar",
+          "url": "Avaritiaddons-1.9.1-GTNH.jar",
+          "size": 209927,
+          "sha512": "457507ba1001d6213528f5e12c1bb82715934370042554090bedf746d4c78d2a73e4cdb3815587b584a1188abf49316fde8708194881db6e823b2a4bf2173b32",
+          "sha256": "c9b2c5c38cb79fa799a4379b3c2a7f75d2164e8acd18611f4af8c4c511a28ce5",
+          "sha1": "1ee6b3ba392631ff14aebcc464069a4036305c37",
+          "md5": "6ba13384a2162136c80d38dd700ad6b5"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Avaritiaddons-1.9.1-GTNH-sources.jar",
+          "url": "Avaritiaddons-1.9.1-GTNH-sources.jar",
+          "size": 179315,
+          "sha512": "802ee3bea7050175a03e90d5d730ad968ef7abd20f2dec1398cc35b0a555c6bb2fab50701a79f2af37c08ec43113040002c7051c7efcec409765ba7b3a703b8c",
+          "sha256": "a93ba48ecf4b433f3e12e212a1b4894d18d59193caf55ed3142fe016648a0ed7",
+          "sha1": "0c113843cbd41ba30db960fc1f935fd8e2965a79",
+          "md5": "9329599bf0948d5924b0140d2b4ce2cf"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "org.apache.logging.log4j",
+    "module": "log4j-api",
+    "version": "2.25.2",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "maven": {
+      "version": "3.9.8"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.jspecify",
+          "module": "jspecify",
+          "version": {
+            "requires": "1.0.0"
+          }
+        },
+        {
+          "group": "biz.aQute.bnd",
+          "module": "biz.aQute.bnd.annotation",
+          "version": {
+            "requires": "7.1.0"
+          }
+        },
+        {
+          "group": "com.google.errorprone",
+          "module": "error_prone_annotations",
+          "version": {
+            "requires": "2.38.0"
+          }
+        },
+        {
+          "group": "org.osgi",
+          "module": "org.osgi.annotation.bundle",
+          "version": {
+            "requires": "2.0.0"
+          }
+        },
+        {
+          "group": "org.osgi",
+          "module": "org.osgi.annotation.versioning",
+          "version": {
+            "requires": "1.1.2"
+          }
+        },
+        {
+          "group": "com.github.spotbugs",
+          "module": "spotbugs-annotations",
+          "version": {
+            "requires": "4.8.6"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "log4j-api-2.25.2.jar",
+          "url": "log4j-api-2.25.2.jar",
+          "size": 349595,
+          "sha512": "df1142813e3f64768695e5891a0eff499692cb8b3213f1d87ce9c14f06343252733ad14ff193a0934997f65f0ba1d8b58cbdaab13349c305781f58a937683afb",
+          "sha256": "9fd66c9fe0bea06fa9666c147989a46cafaa92b4a88753697d3945cc43338cbb",
+          "sha1": "292c1a2b1702f1e1e3adb13e1c57e5bff60335ff",
+          "md5": "4ad7b5c23d86eab187e599a826fa9254"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [],
+      "files": [
+        {
+          "name": "log4j-api-2.25.2.jar",
+          "url": "log4j-api-2.25.2.jar",
+          "size": 349595,
+          "sha512": "df1142813e3f64768695e5891a0eff499692cb8b3213f1d87ce9c14f06343252733ad14ff193a0934997f65f0ba1d8b58cbdaab13349c305781f58a937683afb",
+          "sha256": "9fd66c9fe0bea06fa9666c147989a46cafaa92b4a88753697d3945cc43338cbb",
+          "sha1": "292c1a2b1702f1e1e3adb13e1c57e5bff60335ff",
+          "md5": "4ad7b5c23d86eab187e599a826fa9254"
+        }
+      ]
+    }
+  ]
+}

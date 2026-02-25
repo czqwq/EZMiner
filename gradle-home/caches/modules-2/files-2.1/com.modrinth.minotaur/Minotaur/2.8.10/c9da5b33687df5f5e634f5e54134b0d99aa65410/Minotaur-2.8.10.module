@@ -1,0 +1,146 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.modrinth.minotaur",
+    "module": "Minotaur",
+    "version": "2.8.10",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "dev.masecla",
+          "module": "Modrinth4J",
+          "version": {
+            "requires": "2.2.0"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm",
+          "version": {
+            "requires": "9.5"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm-tree",
+          "version": {
+            "requires": "9.5"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "Minotaur-2.8.10.jar",
+          "url": "Minotaur-2.8.10.jar",
+          "size": 39406,
+          "sha512": "695a8c33735265fb0f8ad9c8460bba9d8ebf61b797a2c39554529b64b6f36f2d05c273908ff81c3da2ed4c780b79ef8a1856fc54234d70f7aec4ece5f4929cb1",
+          "sha256": "64f273635da54855502596c094e4dadcfa9b081ca3495cc050cb7c7ada872b2a",
+          "sha1": "1f829c303707b3aa6dfe9345436c6516443ceb90",
+          "md5": "99cdc7e3af313d6f9ac62854e72ffa09"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "dev.masecla",
+          "module": "Modrinth4J",
+          "version": {
+            "requires": "2.2.0"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm",
+          "version": {
+            "requires": "9.5"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm-tree",
+          "version": {
+            "requires": "9.5"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "Minotaur-2.8.10.jar",
+          "url": "Minotaur-2.8.10.jar",
+          "size": 39406,
+          "sha512": "695a8c33735265fb0f8ad9c8460bba9d8ebf61b797a2c39554529b64b6f36f2d05c273908ff81c3da2ed4c780b79ef8a1856fc54234d70f7aec4ece5f4929cb1",
+          "sha256": "64f273635da54855502596c094e4dadcfa9b081ca3495cc050cb7c7ada872b2a",
+          "sha1": "1f829c303707b3aa6dfe9345436c6516443ceb90",
+          "md5": "99cdc7e3af313d6f9ac62854e72ffa09"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Minotaur-2.8.10-sources.jar",
+          "url": "Minotaur-2.8.10-sources.jar",
+          "size": 21464,
+          "sha512": "f52d5d83b54e303833222b95562095b2b03c86fe51e062deaebff7138a03e03e3378b7b855a8eb7856529f7ad8da1712cca7f810152afd3e1aa4f4df0ee0fe9c",
+          "sha256": "298b96d1eac12aa924888e53a9217bc7d6e5657d7420baad0bec1c2edf5eba8e",
+          "sha1": "dd0e53356cd45b0d35b842fa4639188742b1ac98",
+          "md5": "026db6d2c7f06f10a2f399b619dc17e5"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Minotaur-2.8.10-javadoc.jar",
+          "url": "Minotaur-2.8.10-javadoc.jar",
+          "size": 164268,
+          "sha512": "5c851eb112504f07b5c7a6b17ecc978e01d996186b530c8f5ec5c7468654f6c060fa57827fd15ea9e6b0acce4ec2c299b6131a069599939877180826029b22f1",
+          "sha256": "ed5d1b7e0fac071246eb192e670bc6b3941f667536350591a0dcb0765eaf98ad",
+          "sha1": "ad1c77fb0249c5cf48e83fd2861c945318e9db34",
+          "md5": "27855a88f68197a7cbecd9a9366a63a9"
+        }
+      ]
+    }
+  ]
+}

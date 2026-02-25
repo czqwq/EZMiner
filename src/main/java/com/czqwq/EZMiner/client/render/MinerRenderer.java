@@ -103,24 +103,37 @@ public class MinerRenderer {
         lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
     }
 
-    private static final long MAX_DRAIN_MS = 5;
-    private static final int MAX_DRAIN = 128;
-
     private void drainQueue() {
         if (searchComplete) return;
-        if (founder != null && founder.stopped.get()) searchComplete = true;
-        long t0 = System.currentTimeMillis();
         int n = 0;
         Vector3i p;
-        while ((p = foundQueue.poll()) != null && n < MAX_DRAIN && System.currentTimeMillis() - t0 < MAX_DRAIN_MS) {
-            spaceCalc.add(p);
+        Minecraft mc = Minecraft.getMinecraft();
+        EntityPlayer player = mc.thePlayer;
+        // Render distance in blocks (chunks × 16). Blocks beyond this have no loaded chunk
+        // data on the client and would produce null-pointer crashes in the GL pipeline.
+        int renderDistBlocks = mc.gameSettings.renderDistanceChunks * 16;
+        // Drain everything available this frame – the block limit caps the queue size so
+        // this is always O(blockLimit) and won't stall the render thread.
+        while ((p = foundQueue.poll()) != null) {
+            if (player != null && withinRenderDist(p, player, renderDistBlocks)) {
+                spaceCalc.add(p);
+            }
             n++;
         }
-        if (spaceCalc.hasChange || n > 0) {
+        // Only mark complete once the founder has stopped AND the queue is fully drained.
+        if (founder != null && founder.stopped.get() && foundQueue.isEmpty()) {
+            searchComplete = true;
+        }
+        if (n > 0) {
             SpaceCalculator.VertexAndIndex vi = spaceCalc.getVertexAndIndex();
             lastIndexCount = vi.indices.length;
             renderCache.updateData(vi.vertices, vi.indices);
         }
+    }
+
+    /** Returns true if {@code pos} is within {@code dist} blocks of the player on X and Z. */
+    private static boolean withinRenderDist(Vector3i pos, EntityPlayer player, int dist) {
+        return Math.abs(pos.x - (int) player.posX) <= dist && Math.abs(pos.z - (int) player.posZ) <= dist;
     }
 
     private void doRender(float partialTicks) {

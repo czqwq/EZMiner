@@ -1,0 +1,178 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "StructureLib",
+    "version": "1.4.23",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.39"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "StructureLib-1.4.23-dev.jar",
+          "url": "StructureLib-1.4.23-dev.jar",
+          "size": 342302,
+          "sha512": "7f06e3a9cea4de7aea3a964f8685daabe018ecd93cc7e0c2d650ab37e32d86e503b668485bd54a902470c920e245e623833b976ad28f5690eec9e345314a97c8",
+          "sha256": "3184cc1f94644e9409f8835a8e42e997bfc625e6449aa2fae76604642d0a963b",
+          "sha1": "f30356fd311915f0f43f668e8b795a735f4236e8",
+          "md5": "bd9708436bfbf9c0cde1221c031b53fc"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.legacymoddingmc",
+          "module": "unimixins",
+          "version": {
+            "requires": "0.1.23"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "unimixins",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.86-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.39"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "StructureLib-1.4.23-dev.jar",
+          "url": "StructureLib-1.4.23-dev.jar",
+          "size": 342302,
+          "sha512": "7f06e3a9cea4de7aea3a964f8685daabe018ecd93cc7e0c2d650ab37e32d86e503b668485bd54a902470c920e245e623833b976ad28f5690eec9e345314a97c8",
+          "sha256": "3184cc1f94644e9409f8835a8e42e997bfc625e6449aa2fae76604642d0a963b",
+          "sha1": "f30356fd311915f0f43f668e8b795a735f4236e8",
+          "md5": "bd9708436bfbf9c0cde1221c031b53fc"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "StructureLib-1.4.23.jar",
+          "url": "StructureLib-1.4.23.jar",
+          "size": 345377,
+          "sha512": "b41daf33759091a36b07dd31b4dfff761ef18f1d8a88466ae554861616a52505b122407a30b2591d425bbf5046da954a66af2671e688397dbc8dab40eb5b160b",
+          "sha256": "56917dcfd48608d2baec7a11ad35cb7c8d0442e0dae66c7290d6ccb981d461db",
+          "sha1": "0e832b914657889fca67d6d7e67154afd9586d0c",
+          "md5": "a0d2544a95a1d67a715d3637057f1390"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "StructureLib-1.4.23-sources.jar",
+          "url": "StructureLib-1.4.23-sources.jar",
+          "size": 157137,
+          "sha512": "9608f5ff52562a4cf4ed1a16a7a1e7927264e017d976f7bc16b1228aec4201b57b6da0a91087d2d042ca1ba357064812c90880dfd356953f3cf53277d4ca7b6c",
+          "sha256": "352216962b5e2d2dd19de68094b572489bfa216a6a4d57ba27869708715a0a5f",
+          "sha1": "0a8a1d2db5eafca36536d27888ea606b1894941f",
+          "md5": "98c0e18804e858a99a22a92588bb68a4"
+        }
+      ]
+    }
+  ]
+}

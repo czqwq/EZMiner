@@ -1,0 +1,114 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "Infernal-Mobs",
+    "version": "1.10.3-GTNH",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "Infernal-Mobs-1.10.3-GTNH-dev.jar",
+          "url": "Infernal-Mobs-1.10.3-GTNH-dev.jar",
+          "size": 144125,
+          "sha512": "15ad21d180029c4a6cd6725cab6cbb65569c6b6fd46348089e9d002e0a78b728846ffd032c7c295fbe77a43daadca110cdb6cc582075fe589e2cb3ac4624ca6c",
+          "sha256": "ebda2b438729088475a1342b95013d04edd92d5b62c4db69416fce4c325c3d39",
+          "sha1": "f0075db0f5fbb7b6d2d015faea76f63bc7b4f3b1",
+          "md5": "2d77e47dc32fa556d6553cca6c5e18a0"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "Infernal-Mobs-1.10.3-GTNH-dev.jar",
+          "url": "Infernal-Mobs-1.10.3-GTNH-dev.jar",
+          "size": 144125,
+          "sha512": "15ad21d180029c4a6cd6725cab6cbb65569c6b6fd46348089e9d002e0a78b728846ffd032c7c295fbe77a43daadca110cdb6cc582075fe589e2cb3ac4624ca6c",
+          "sha256": "ebda2b438729088475a1342b95013d04edd92d5b62c4db69416fce4c325c3d39",
+          "sha1": "f0075db0f5fbb7b6d2d015faea76f63bc7b4f3b1",
+          "md5": "2d77e47dc32fa556d6553cca6c5e18a0"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Infernal-Mobs-1.10.3-GTNH.jar",
+          "url": "Infernal-Mobs-1.10.3-GTNH.jar",
+          "size": 145457,
+          "sha512": "65812dec419f6636f8ce66f1316e82dc7aae05c98c5670e149372f1d52f4659ec429bc55a97dcc6a340015810e5f06033399b67409d75143961c968d3227a08d",
+          "sha256": "fca5cf76f64862cb1b74650fc937b2c03ac57f8150b80cb7f75f4be6533f146f",
+          "sha1": "d9785d6df2f008c1345751de7cdbfb161e871d63",
+          "md5": "a5e8bf152de3692a76399c9e4b3d1bfa"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Infernal-Mobs-1.10.3-GTNH-sources.jar",
+          "url": "Infernal-Mobs-1.10.3-GTNH-sources.jar",
+          "size": 77567,
+          "sha512": "62e714e01c21c7f1483f690d82e59b574fb8a2452aca726af07d5ba7a50620200ba615b14b1d5c7496e68d96ba8ba52df2574b30f72cc44a1af86b4e4fe5d6bf",
+          "sha256": "a25c59d3eedba46c3f4f363d0af2574dc59dafaadcba710cfdad5ba44513cd67",
+          "sha1": "b8df483655536ac42a8ce44e34877117f3a11b8d",
+          "md5": "bedb398835d970f95cc257fbb44ca127"
+        }
+      ]
+    }
+  ]
+}

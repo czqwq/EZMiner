@@ -1,0 +1,132 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "BuildCraft",
+    "version": "7.1.44",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "curse.maven",
+          "module": "cofh-lib-220333",
+          "version": {
+            "requires": "2388748"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "BuildCraft-7.1.44-dev.jar",
+          "url": "BuildCraft-7.1.44-dev.jar",
+          "size": 2630682,
+          "sha512": "1171fa2ba959db35022c1011342261bbc444480f49a8cba0bfa63ab81bf90fd9b8e5299732e3c000a6cf66fbe67d07bfa75c67ad0e5009d4574f36e11f435ae1",
+          "sha256": "b80a95be3543efe79bf3bf34fd800ad1205eac8b8196b945141fb1a6a546c88e",
+          "sha1": "c9ee90582f17f8c3c91e8ca337fb9e606db774f3",
+          "md5": "b692660eb8e1ee2e645eed1f5b693a6d"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "curse.maven",
+          "module": "cofh-lib-220333",
+          "version": {
+            "requires": "2388748"
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.13"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "BuildCraft-7.1.44-dev.jar",
+          "url": "BuildCraft-7.1.44-dev.jar",
+          "size": 2630682,
+          "sha512": "1171fa2ba959db35022c1011342261bbc444480f49a8cba0bfa63ab81bf90fd9b8e5299732e3c000a6cf66fbe67d07bfa75c67ad0e5009d4574f36e11f435ae1",
+          "sha256": "b80a95be3543efe79bf3bf34fd800ad1205eac8b8196b945141fb1a6a546c88e",
+          "sha1": "c9ee90582f17f8c3c91e8ca337fb9e606db774f3",
+          "md5": "b692660eb8e1ee2e645eed1f5b693a6d"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "BuildCraft-7.1.44.jar",
+          "url": "BuildCraft-7.1.44.jar",
+          "size": 2675715,
+          "sha512": "90783dcc41c06c09cafb55c1b4709a01cc4375f098d560a5a2d6d8e011c05ec2c3430c8d07500489c2bcebfb27e812c35de6bafd1753a69f27850b853338021e",
+          "sha256": "42d3e70f9435f0c0bdca304d57a680aa6ec9e6f8536620778452e3213e126d80",
+          "sha1": "1a4e8faffecfdf572d285f4fe7ff0a9aca5cefd5",
+          "md5": "aeab2df4e0a25abddaeb5cae99201141"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "BuildCraft-7.1.44-sources.jar",
+          "url": "BuildCraft-7.1.44-sources.jar",
+          "size": 1774875,
+          "sha512": "8c5c777ad1555dbe2fcb7eaec220abbc2529c11ac7bb8cf0937fe3b1f41a301fd8174ed2a89d473300da71a9f746a6cf8412e532d44cb0e5b67045086f6f3b60",
+          "sha256": "aeeff0f998e8667c19fd81e410818eee099b1d991c0dab922784bb1e0f3e7e47",
+          "sha1": "76dd92244dcc557c933c8be6e3bd15ea39c556c9",
+          "md5": "ce7e338a31794ed0af44a3085804156c"
+        }
+      ]
+    }
+  ]
+}

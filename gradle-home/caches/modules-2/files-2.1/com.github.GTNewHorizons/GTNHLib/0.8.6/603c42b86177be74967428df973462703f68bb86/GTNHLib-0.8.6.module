@@ -1,0 +1,131 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "GTNHLib",
+    "version": "0.8.6",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "GTNHLib-0.8.6-dev.jar",
+          "url": "GTNHLib-0.8.6-dev.jar",
+          "size": 25324206,
+          "sha512": "a46b6c9fd7597582f1534b445b7ce00f2ee848c018af989afbccfd962d07ba84132da19d2dff80eea12df1ea0594c041e9d43152d931a6a53f2004449a9ac0b3",
+          "sha256": "7e213bda104b96dc330206a16e9f721c9077e4bbafdf92b8600c40b9e1e67fa3",
+          "sha1": "63172489d18ab4c824446c2c2f193e06eebdefe1",
+          "md5": "aebda14a3ec93c8276090ec310e7c6d4"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.legacymoddingmc",
+          "module": "unimixins",
+          "version": {
+            "requires": "0.1.23"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "unimixins",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.7.3"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "GTNHLib-0.8.6-dev.jar",
+          "url": "GTNHLib-0.8.6-dev.jar",
+          "size": 25324206,
+          "sha512": "a46b6c9fd7597582f1534b445b7ce00f2ee848c018af989afbccfd962d07ba84132da19d2dff80eea12df1ea0594c041e9d43152d931a6a53f2004449a9ac0b3",
+          "sha256": "7e213bda104b96dc330206a16e9f721c9077e4bbafdf92b8600c40b9e1e67fa3",
+          "sha1": "63172489d18ab4c824446c2c2f193e06eebdefe1",
+          "md5": "aebda14a3ec93c8276090ec310e7c6d4"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "GTNHLib-0.8.6.jar",
+          "url": "GTNHLib-0.8.6.jar",
+          "size": 25168915,
+          "sha512": "406dc22b3752e214190f07a92b55906489b16a618aa835a7f3dc7780eaca2fce509e8a941ebba7bc308de93116f43c7596b065986c7595f4f8e96e603c8fbfee",
+          "sha256": "6ad07dbb45cabaa1da148fe7f575ea66aed88a22a95e2aea3c597cc410e01f90",
+          "sha1": "b9979b3ae074e1926fd827ebbc0ce220e8c4b840",
+          "md5": "8539e8b15df6de14114d10fa4b4c315f"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "GTNHLib-0.8.6-sources.jar",
+          "url": "GTNHLib-0.8.6-sources.jar",
+          "size": 23091013,
+          "sha512": "5fed53a67b1f4cda6c15f1be77ceb6e0d01d737f50b04bf578db0a8460c1087f1fa84fc7ebad7d10acf31c15bd8ce095c6b3dfc249944eac1e30025a66f64544",
+          "sha256": "77074f8f927e6fa7c2e7e6688570cd47648ad7a2eaf553344965a788c105c654",
+          "sha1": "61d17020bbb28d420b4ec937cffd83f79fc31a33",
+          "md5": "a217956599d89da3d34ad612c66aa3a1"
+        }
+      ]
+    }
+  ]
+}

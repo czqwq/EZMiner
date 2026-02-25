@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>tv.twitch</groupId>
+	<artifactId>twitch</artifactId>
+	<version>5.16</version>
+	<description>Twitch - Java</description>
+	<url>http://dev.twitch.tv/</url>
+
+	<properties>
+		<external.version>4.5</external.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>twitch-platform</artifactId>
+			<version>${project.version}</version>
+			<classifier>natives-windows-32</classifier>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>twitch-platform</artifactId>
+			<version>${project.version}</version>
+			<classifier>natives-windows-64</classifier>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>twitch-platform</artifactId>
+			<version>${project.version}</version>
+			<classifier>natives-osx</classifier>
+		</dependency>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>twitch-external-platform</artifactId>
+			<version>${external.version}</version>
+			<classifier>natives-windows-32</classifier>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>twitch-external-platform</artifactId>
+			<version>${external.version}</version>
+			<classifier>natives-windows-64</classifier>
+		</dependency>
+	</dependencies>
+</project>

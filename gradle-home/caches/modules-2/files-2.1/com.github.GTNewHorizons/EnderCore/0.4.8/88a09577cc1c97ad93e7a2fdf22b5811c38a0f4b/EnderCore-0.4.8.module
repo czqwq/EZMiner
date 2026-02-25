@@ -1,0 +1,146 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "EnderCore",
+    "version": "0.4.8",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "EnderCore-0.4.8-dev.jar",
+          "url": "EnderCore-0.4.8-dev.jar",
+          "size": 447212,
+          "sha512": "9cf199392191100497c414e1bf55e86141917f8fbdb34280c67f06c82b34abcf9161b301a57ae5d6d5033b486fb680553497efe4ab67a7fdcff0d14241aa3702",
+          "sha256": "358abaf5127034ac7e7819e43a73bcfc5db32c05b1b3cf6046df7084e4f7e5aa",
+          "sha1": "9a10d1599b02029adb0ca43e41e6310a5cae1cc4",
+          "md5": "1222deabd1a2b87f4fd791b68a0a1546"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.21"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.40-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.13"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "EnderCore-0.4.8-dev.jar",
+          "url": "EnderCore-0.4.8-dev.jar",
+          "size": 447212,
+          "sha512": "9cf199392191100497c414e1bf55e86141917f8fbdb34280c67f06c82b34abcf9161b301a57ae5d6d5033b486fb680553497efe4ab67a7fdcff0d14241aa3702",
+          "sha256": "358abaf5127034ac7e7819e43a73bcfc5db32c05b1b3cf6046df7084e4f7e5aa",
+          "sha1": "9a10d1599b02029adb0ca43e41e6310a5cae1cc4",
+          "md5": "1222deabd1a2b87f4fd791b68a0a1546"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "EnderCore-0.4.8.jar",
+          "url": "EnderCore-0.4.8.jar",
+          "size": 453616,
+          "sha512": "1cd596a415b7bf204d1446fd3b4f2b3c73ca574151e67dfbfb7f1513483f96ce05562e9123e5d52dfbac61ffe3e43a278eaa293993ece9e8c54c766de04739ea",
+          "sha256": "033e83eb4fea36edb5aacdfca6936552fc1bbb0161b4cfdab341f5a86bdb0f14",
+          "sha1": "a1950834090f71131b65deef2c71c61ca11fe18f",
+          "md5": "c3940998b024065ff0e18419da412047"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "EnderCore-0.4.8-sources.jar",
+          "url": "EnderCore-0.4.8-sources.jar",
+          "size": 249799,
+          "sha512": "3b8a5cdbbd615b68e857f830445ffde1f93d702a8ee3ed641f321870a5deaa9f6cec755c37e845426eb0600e7f1046f19269aac24ea10197c1921cc324689831",
+          "sha256": "e774c6af479ad40ad88283dc0a93060200bbffee94eaec176b34782addd40568",
+          "sha1": "be4d16aefae012352e8cc8a155c1e924a613fbad",
+          "md5": "111d7a540d5cdcfadf6b001700f5c9bb"
+        }
+      ]
+    }
+  ]
+}

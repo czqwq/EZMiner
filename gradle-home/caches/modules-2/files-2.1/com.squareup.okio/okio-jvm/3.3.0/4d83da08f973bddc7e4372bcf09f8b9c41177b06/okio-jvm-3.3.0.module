@@ -1,0 +1,91 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../okio/3.3.0/okio-3.3.0.module",
+    "group": "com.squareup.okio",
+    "module": "okio",
+    "version": "3.3.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.6"
+    }
+  },
+  "variants": [
+    {
+      "name": "jvmApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-jdk8",
+          "version": {
+            "requires": "1.8.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-common",
+          "version": {
+            "requires": "1.8.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okio-jvm-3.3.0.jar",
+          "url": "okio-jvm-3.3.0.jar",
+          "size": 352021,
+          "sha512": "de2568d8b8ee7ad21aebf823d16234435a6622dcc3123ad68260bb244888520e5fc2f3fe1b9ff4eb4ae4b2de78410cf25145e5254e80db72bc3c15ecd305fbfb",
+          "sha256": "dffa8417ec20d7d46bc74c6ad7a4226b38da2588a9754f6298624f04df237222",
+          "sha1": "2d175add2d06a67bda111ae5455e49b42d0bb287",
+          "md5": "5d7bed1baeff77c3a9189f639defe9a6"
+        }
+      ]
+    },
+    {
+      "name": "jvmRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-jdk8",
+          "version": {
+            "requires": "1.8.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-common",
+          "version": {
+            "requires": "1.8.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okio-jvm-3.3.0.jar",
+          "url": "okio-jvm-3.3.0.jar",
+          "size": 352021,
+          "sha512": "de2568d8b8ee7ad21aebf823d16234435a6622dcc3123ad68260bb244888520e5fc2f3fe1b9ff4eb4ae4b2de78410cf25145e5254e80db72bc3c15ecd305fbfb",
+          "sha256": "dffa8417ec20d7d46bc74c6ad7a4226b38da2588a9754f6298624f04df237222",
+          "sha1": "2d175add2d06a67bda111ae5455e49b42d0bb287",
+          "md5": "5d7bed1baeff77c3a9189f639defe9a6"
+        }
+      ]
+    }
+  ]
+}

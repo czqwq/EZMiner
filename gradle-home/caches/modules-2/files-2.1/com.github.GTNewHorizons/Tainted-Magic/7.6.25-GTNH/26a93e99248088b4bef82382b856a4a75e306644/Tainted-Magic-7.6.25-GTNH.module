@@ -1,0 +1,228 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "Tainted-Magic",
+    "version": "7.6.25-GTNH",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Baubles-Expanded",
+          "version": {
+            "requires": "2.1.9-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Baubles-Expanded",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "thaumcraft",
+          "module": "Thaumcraft",
+          "version": {
+            "requires": "1.7.10-4.2.3.5"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Thaumcraft",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ThaumicBoots",
+          "version": {
+            "requires": "1.4.13"
+          },
+          "excludes": [
+            {
+              "group": "com.github.GTNewHorizons",
+              "module": "Tainted-Magic"
+            },
+            {
+              "group": "*",
+              "module": "Baubles"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ThaumicBoots",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "Tainted-Magic-7.6.25-GTNH-dev.jar",
+          "url": "Tainted-Magic-7.6.25-GTNH-dev.jar",
+          "size": 3301959,
+          "sha512": "80c17f7a3f5f6b49bd0246e409081e95745f0d84823930cbe6a1544580d9157f6c34dd398ed7164364af06e0d1c559e2d03fdded3a56932c5f15463bf3a37b9c",
+          "sha256": "4eb9168c5fa080fc32a96b93b32290263214b32e2ad00689312ae0dc61ef184a",
+          "sha1": "a1771cd4855e3d959d18e4c2e0dd82ce3f7f333a",
+          "md5": "bbd124918e15c586311b55ccfd20b881"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Baubles-Expanded",
+          "version": {
+            "requires": "2.1.9-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Baubles-Expanded",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "thaumcraft",
+          "module": "Thaumcraft",
+          "version": {
+            "requires": "1.7.10-4.2.3.5"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Thaumcraft",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ThaumicBoots",
+          "version": {
+            "requires": "1.4.13"
+          },
+          "excludes": [
+            {
+              "group": "com.github.GTNewHorizons",
+              "module": "Tainted-Magic"
+            },
+            {
+              "group": "*",
+              "module": "Baubles"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ThaumicBoots",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "Tainted-Magic-7.6.25-GTNH-dev.jar",
+          "url": "Tainted-Magic-7.6.25-GTNH-dev.jar",
+          "size": 3301959,
+          "sha512": "80c17f7a3f5f6b49bd0246e409081e95745f0d84823930cbe6a1544580d9157f6c34dd398ed7164364af06e0d1c559e2d03fdded3a56932c5f15463bf3a37b9c",
+          "sha256": "4eb9168c5fa080fc32a96b93b32290263214b32e2ad00689312ae0dc61ef184a",
+          "sha1": "a1771cd4855e3d959d18e4c2e0dd82ce3f7f333a",
+          "md5": "bbd124918e15c586311b55ccfd20b881"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Tainted-Magic-7.6.25-GTNH.jar",
+          "url": "Tainted-Magic-7.6.25-GTNH.jar",
+          "size": 3305545,
+          "sha512": "5e38c5bf42972ea9514c25be026b8baddb43a7e35feb74b3b54a3384a9181a3b51d9b997b53893e1a7f1264143689144fd8f49af836760adbfc3411d66aa4cb0",
+          "sha256": "c2d75be4cd2ec5329df0044744e66a9f81ec005692c1956718e00fdea80c8e8c",
+          "sha1": "425a0823d8fe053e7552bf24b8147b67f7d7e62e",
+          "md5": "ac342787f92bc568968f5379ccf98327"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Tainted-Magic-7.6.25-GTNH-sources.jar",
+          "url": "Tainted-Magic-7.6.25-GTNH-sources.jar",
+          "size": 3230937,
+          "sha512": "03ab2a2fcf40d1aa47c8f651cad79ad3ec5107a38cac6ca6c7d55d7761f3e1254c3d548c2ae61d6a40e0db4130c2acf3680616c950fcaabcfaa9c36d8c38b3e9",
+          "sha256": "285c8178de3d1dfb092072f66583be5041e46e99bdff64c453f9f08b787ac6d7",
+          "sha1": "4e9e1a56e0e0d0f3467d3e8dc5d595034448efd3",
+          "md5": "5348e2bca9dc513c39bf94f2fded1f4a"
+        }
+      ]
+    }
+  ]
+}

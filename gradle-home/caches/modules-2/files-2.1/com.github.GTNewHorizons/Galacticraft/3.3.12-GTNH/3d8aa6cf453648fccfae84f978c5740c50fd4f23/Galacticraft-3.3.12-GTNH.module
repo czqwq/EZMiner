@@ -1,0 +1,244 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "Galacticraft",
+    "version": "3.3.12-GTNH",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "net.industrial-craft",
+          "module": "industrialcraft-2",
+          "version": {
+            "requires": "2.2.828-experimental"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "industrialcraft-2",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "Galacticraft-3.3.12-GTNH-dev.jar",
+          "url": "Galacticraft-3.3.12-GTNH-dev.jar",
+          "size": 12741794,
+          "sha512": "7cf2fa7dda470c161a9b4d0eb061e632e7ad61c4b78ee45f397dd558ad47344815be8e9b990173bd5223d211f7f303d96bac376c6634fdad6208bb945a30d2c6",
+          "sha256": "69074bf6ee1f2c6c066cb673e5b09184e389f9e73754425c72a48e686c839f20",
+          "sha1": "086eda0469b30c0c1611ba15f278f905685dbab0",
+          "md5": "4549483405b6b4e504fe4e69f5b5a97a"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.legacymoddingmc",
+          "module": "unimixins",
+          "version": {
+            "requires": "0.1.22"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "unimixins",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GT5-Unofficial",
+          "version": {
+            "requires": "5.09.51.434"
+          },
+          "excludes": [
+            {
+              "group": "com.github.GTNewHorizons",
+              "module": "Galacticraft"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GT5-Unofficial",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "TinkersConstruct",
+          "version": {
+            "requires": "1.13.51-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "TinkersConstruct",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.77-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.39"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "net.industrial-craft",
+          "module": "industrialcraft-2",
+          "version": {
+            "requires": "2.2.828-experimental"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "industrialcraft-2",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ironchest",
+          "version": {
+            "requires": "6.1.6"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ironchest",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "Galacticraft-3.3.12-GTNH-dev.jar",
+          "url": "Galacticraft-3.3.12-GTNH-dev.jar",
+          "size": 12741794,
+          "sha512": "7cf2fa7dda470c161a9b4d0eb061e632e7ad61c4b78ee45f397dd558ad47344815be8e9b990173bd5223d211f7f303d96bac376c6634fdad6208bb945a30d2c6",
+          "sha256": "69074bf6ee1f2c6c066cb673e5b09184e389f9e73754425c72a48e686c839f20",
+          "sha1": "086eda0469b30c0c1611ba15f278f905685dbab0",
+          "md5": "4549483405b6b4e504fe4e69f5b5a97a"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Galacticraft-3.3.12-GTNH.jar",
+          "url": "Galacticraft-3.3.12-GTNH.jar",
+          "size": 12753620,
+          "sha512": "0481cec3f7721c7d76287472e3a5c9d0364732b7eb063f59a633d336fdfd1d12b52f7654879c06cc1ae683e8c795e53268adb0eded0a5109f8b2eb9158141bd5",
+          "sha256": "eb0d15bb28826e05dbed68be1cd4ec5ceb09b2bf367b773adddb85391b4f56e8",
+          "sha1": "baf6db67b632971213a7026c82e1e1ebd2c4759e",
+          "md5": "0a5bc44bee52a64ea817213ee806e29d"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Galacticraft-3.3.12-GTNH-sources.jar",
+          "url": "Galacticraft-3.3.12-GTNH-sources.jar",
+          "size": 11678734,
+          "sha512": "37aede359d6dce6d1ee880c5e46f9ac935114677c5d2487a2f641ebb3e8ac5ab8f177df974955321680f97fecae7b835e78e4d670b6658987f1a28b0a305600c",
+          "sha256": "33d63c11d57fcdde6f07a88ad50cf36ea79e2146982bd5ca9eb705b635facf46",
+          "sha1": "6e5aa223a0328c6796fc9d6262d215011e77ebae",
+          "md5": "4f678755f6cfb9458aef430781c3e884"
+        }
+      ]
+    }
+  ]
+}

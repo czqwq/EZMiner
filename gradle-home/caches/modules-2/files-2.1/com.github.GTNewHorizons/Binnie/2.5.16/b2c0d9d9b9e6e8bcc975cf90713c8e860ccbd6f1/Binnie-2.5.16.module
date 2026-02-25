@@ -1,0 +1,163 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "Binnie",
+    "version": "2.5.16",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ForestryMC",
+          "version": {
+            "requires": "4.10.13"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ForestryMC",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "Binnie-2.5.16-dev.jar",
+          "url": "Binnie-2.5.16-dev.jar",
+          "size": 4563750,
+          "sha512": "6e0a10e4ac7eeb7f9d860226bd6f7a746cde0c1a2b3868dd31758f7cc09c28b9a116e2c1fa60967f234367a4bfd2e9d1b407fcaf754e68adfad25cd3e112794d",
+          "sha256": "546f3c667fa2b127f9cf856573251e1f1c308854dd6ddde0723f43a0929c1ee5",
+          "sha1": "24979f0ebb045b1e4cdbff264fb9f7b231372383",
+          "md5": "e26c2c4c74f794bf2a7862656e66809a"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.36"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ForestryMC",
+          "version": {
+            "requires": "4.10.13"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ForestryMC",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.13"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "Binnie-2.5.16-dev.jar",
+          "url": "Binnie-2.5.16-dev.jar",
+          "size": 4563750,
+          "sha512": "6e0a10e4ac7eeb7f9d860226bd6f7a746cde0c1a2b3868dd31758f7cc09c28b9a116e2c1fa60967f234367a4bfd2e9d1b407fcaf754e68adfad25cd3e112794d",
+          "sha256": "546f3c667fa2b127f9cf856573251e1f1c308854dd6ddde0723f43a0929c1ee5",
+          "sha1": "24979f0ebb045b1e4cdbff264fb9f7b231372383",
+          "md5": "e26c2c4c74f794bf2a7862656e66809a"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Binnie-2.5.16.jar",
+          "url": "Binnie-2.5.16.jar",
+          "size": 4623456,
+          "sha512": "88f8a57f172c40203241363858c647107f87186c01068a1c5b0f41e511ded1af910e3c43e82c75e8886fdfb7f22141a74b593a5d2ce99548df560c21fd3b3520",
+          "sha256": "8171a038f8527e7fc2fc2e0f5235761c236a2d8580891d1c059430b098a8c341",
+          "sha1": "8108ee86e4931f407d1b4ed151bfe165ae2e676d",
+          "md5": "4a2fee7bd0b8a1bc58632af8d12af2e0"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Binnie-2.5.16-sources.jar",
+          "url": "Binnie-2.5.16-sources.jar",
+          "size": 3433112,
+          "sha512": "9bbfa3597b76c82e67b6f2a209d1cd177c5b2c787e83f15ecb110ec309fa24c7522698d5777c8ad2ae6d993916c29c7fcf3023bd14c7021203235afe0a6285d0",
+          "sha256": "c378e5aff400a7d57620d1767ff69fc7edf9ed1fdc8cab017f265cd15abac0db",
+          "sha1": "bfafc39ab5bf580d7840330b28dbd1d2caa99b42",
+          "md5": "b221567336af4883f09632a9e456ecc1"
+        }
+      ]
+    }
+  ]
+}

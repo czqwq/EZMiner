@@ -1,0 +1,78 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "de.undercouch",
+    "module": "gradle-download-task",
+    "version": "5.6.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.6"
+    }
+  },
+  "variants": [
+    {
+      "name": "shadowRuntimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "shadowed",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "gradle-download-task-5.6.0.jar",
+          "url": "gradle-download-task-5.6.0.jar",
+          "size": 2174707,
+          "sha512": "9b03baf8f196893fab3db75849c4be60e947bc2caaac75f3ec738d23fe5378f411825d214287f7f19b6d75508663e82aaab324dc5ed1830e31f8b59f4fb210ec",
+          "sha256": "ce437a6ab9ca719cc856b55ba7492e42c4ce0ee982e6d22fb432cd55887681be",
+          "sha1": "28d1bd7f90c4223629d27064476d5b105f8664f8",
+          "md5": "23d2feb37b0835fe3ec7a7af1d9f74c1"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "gradle-download-task-5.6.0-javadoc.jar",
+          "url": "gradle-download-task-5.6.0-javadoc.jar",
+          "size": 132064,
+          "sha512": "26aa674b378a958c57f15780e452251f522c332021508dcb748a46dfb89d6b98a304c54493425ed85533bd40554879e95bbd4c7d49228e28c7502039adf50b95",
+          "sha256": "feb1fb2cfdc13af70580b3b9d97d90adaf3304ffe2c73480cef04ea36b2f2f8c",
+          "sha1": "20a6dac27b2c06496ce8019730b7db0128e1f79e",
+          "md5": "3373ed7ca3d8bc737fb6dd44250c21d1"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "gradle-download-task-5.6.0-sources.jar",
+          "url": "gradle-download-task-5.6.0-sources.jar",
+          "size": 42779,
+          "sha512": "60d16cf2b0e7f1669a97d7522da24a49e6ce31259fc66b29a30a18144dbb5f2dbe23e2c7abb0334058755f8bab821c8c7a4dad87eb7458e33c7f79d909b82833",
+          "sha256": "11a5bf1977304ccfd224db76c2c0db0452fe68bf5bfba3fd1b5624ded9801688",
+          "sha1": "e88bc2610f125f56eb8ed200621866bdfa94633d",
+          "md5": "f815279572e146a56ea8a54de5ec4400"
+        }
+      ]
+    }
+  ]
+}

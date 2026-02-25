@@ -1,0 +1,88 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "jabel-javac-plugin",
+    "version": "1.0.2-GTNH",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "jabel-javac-plugin-1.0.2-GTNH.jar",
+          "url": "jabel-javac-plugin-1.0.2-GTNH.jar",
+          "size": 27019,
+          "sha512": "afadd4138f0e73728dbd79701e18d04b9367564801861421ca0eaacb1b231e1a4cd97544ded836e199f9ab5c74157eb36ba2702731b837886ca0f629cbaa19ed",
+          "sha256": "2abe4c01ee9cfb0e4f7a1d20a65131abeabd8c6d002b4c5bcb2d88bd0923aa39",
+          "sha1": "7d3b0e7b577d483997b909ed0af109e511ef6ff2",
+          "md5": "afc9b3ccfd68bb2b2e919f987c4b47a8"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.bytebuddy",
+          "module": "byte-buddy-parent",
+          "version": {
+            "requires": "1.14.9"
+          },
+          "attributes": {
+            "org.gradle.category": "platform"
+          },
+          "endorseStrictVersions": true
+        },
+        {
+          "group": "net.bytebuddy",
+          "module": "byte-buddy"
+        },
+        {
+          "group": "net.bytebuddy",
+          "module": "byte-buddy-agent"
+        },
+        {
+          "group": "net.java.dev.jna",
+          "module": "jna",
+          "version": {
+            "requires": "5.13.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "jabel-javac-plugin-1.0.2-GTNH.jar",
+          "url": "jabel-javac-plugin-1.0.2-GTNH.jar",
+          "size": 27019,
+          "sha512": "afadd4138f0e73728dbd79701e18d04b9367564801861421ca0eaacb1b231e1a4cd97544ded836e199f9ab5c74157eb36ba2702731b837886ca0f629cbaa19ed",
+          "sha256": "2abe4c01ee9cfb0e4f7a1d20a65131abeabd8c6d002b4c5bcb2d88bd0923aa39",
+          "sha1": "7d3b0e7b577d483997b909ed0af109e511ef6ff2",
+          "md5": "afc9b3ccfd68bb2b2e919f987c4b47a8"
+        }
+      ]
+    }
+  ]
+}

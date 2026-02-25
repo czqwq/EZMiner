@@ -1,0 +1,162 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "Draconic-Evolution",
+    "version": "1.4.27-GTNH",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "BrandonsCore",
+          "version": {
+            "requires": "1.2.0-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "BrandonsCore",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "curse.maven",
+          "module": "cofh-lib-220333",
+          "version": {
+            "requires": "2388748"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "Draconic-Evolution-1.4.27-GTNH-dev.jar",
+          "url": "Draconic-Evolution-1.4.27-GTNH-dev.jar",
+          "size": 6831135,
+          "sha512": "d85ffb2fba562a302f5bf9070dbfaa7ce615cfdfd88f9d337fb58b044c8b962ebf824b82950bd69c3f824030d4091aabb3997e3010dd447348b5519e65904b10",
+          "sha256": "3472e9c7cea8fd806b65416f8d6dae93938443037100c4a29b52c6461343a754",
+          "sha1": "cc2af6b265edeacb48fd0576895672b495d30faf",
+          "md5": "e6fa12c42f2d7e7d8a43f9dd27092588"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "BrandonsCore",
+          "version": {
+            "requires": "1.2.0-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "BrandonsCore",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "curse.maven",
+          "module": "cofh-lib-220333",
+          "version": {
+            "requires": "2388748"
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "Draconic-Evolution-1.4.27-GTNH-dev.jar",
+          "url": "Draconic-Evolution-1.4.27-GTNH-dev.jar",
+          "size": 6831135,
+          "sha512": "d85ffb2fba562a302f5bf9070dbfaa7ce615cfdfd88f9d337fb58b044c8b962ebf824b82950bd69c3f824030d4091aabb3997e3010dd447348b5519e65904b10",
+          "sha256": "3472e9c7cea8fd806b65416f8d6dae93938443037100c4a29b52c6461343a754",
+          "sha1": "cc2af6b265edeacb48fd0576895672b495d30faf",
+          "md5": "e6fa12c42f2d7e7d8a43f9dd27092588"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Draconic-Evolution-1.4.27-GTNH.jar",
+          "url": "Draconic-Evolution-1.4.27-GTNH.jar",
+          "size": 6833849,
+          "sha512": "c972ad45688415e46740de38077983e63ab8304f6b6c8e9d54ebced3df35eb4661415ea2a46268ad789e1f17e4451c29041acd180a409ce323e69d3d8955133d",
+          "sha256": "34a470894a4461353caeb57e7e02c803740d1dfbe9c2816da9d2a0ea4e3dcbcf",
+          "sha1": "04ec420a383f590133a9da40cea288d01a5f2cfe",
+          "md5": "42e30c3aed3651c74162b6c969ae6233"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Draconic-Evolution-1.4.27-GTNH-sources.jar",
+          "url": "Draconic-Evolution-1.4.27-GTNH-sources.jar",
+          "size": 6280852,
+          "sha512": "c8611bebc01260b169cb16a652a6ba92dc39359539ea4df3364813f3bbe47c409989348167d650d4c9585b5de98f713cf6ec9693c1f2a4a3294c6d72ef469bd8",
+          "sha256": "a67e61d581fa00c7f1c2e635112a6ddd75e17aee090a3f6ae273595a48417e2f",
+          "sha1": "71c1fc84e6c0fba4eb772ba4b7a5fdaf6c57580b",
+          "md5": "dcf6702c3c2304f26fce4ce3c53c0782"
+        }
+      ]
+    }
+  ]
+}

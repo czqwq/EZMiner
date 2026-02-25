@@ -1,0 +1,130 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.darkhax.curseforgegradle",
+    "module": "CurseForgeGradle",
+    "version": "1.1.28",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "CurseForgeGradle-1.1.28.jar",
+          "url": "CurseForgeGradle-1.1.28.jar",
+          "size": 27260,
+          "sha512": "899226aed78b21006b1a965e189edeb90d611f08ddee0486dcffc6283d807a16b47da54ab844a5358b5561bc95c7461a48cc41595b868106e9d4491d2bd90199",
+          "sha256": "844961a8c90647d07834e987f2d57d427a89be191d358b9142020648b6e672a3",
+          "sha1": "1c5f7716923467266da832023b8702015b458453",
+          "md5": "e31317e5a678305861b83ff3c505a904"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.google.code.gson",
+          "module": "gson",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.apache.httpcomponents",
+          "module": "httpmime",
+          "version": {
+            "requires": "4.5.14"
+          }
+        },
+        {
+          "group": "org.apache.httpcomponents",
+          "module": "httpclient",
+          "version": {
+            "requires": "4.5.14"
+          }
+        },
+        {
+          "group": "com.google.guava",
+          "module": "guava",
+          "version": {
+            "requires": "33.5.0-jre"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "CurseForgeGradle-1.1.28.jar",
+          "url": "CurseForgeGradle-1.1.28.jar",
+          "size": 27260,
+          "sha512": "899226aed78b21006b1a965e189edeb90d611f08ddee0486dcffc6283d807a16b47da54ab844a5358b5561bc95c7461a48cc41595b868106e9d4491d2bd90199",
+          "sha256": "844961a8c90647d07834e987f2d57d427a89be191d358b9142020648b6e672a3",
+          "sha1": "1c5f7716923467266da832023b8702015b458453",
+          "md5": "e31317e5a678305861b83ff3c505a904"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "CurseForgeGradle-1.1.28-javadoc.jar",
+          "url": "CurseForgeGradle-1.1.28-javadoc.jar",
+          "size": 76063,
+          "sha512": "97141f373e01baf9c0b6af5bdfbdb040a57e9e16e3263c21c2f5ad0811210a480f7cbdcfd4ecdef375a4ba403ea8e6aa084edb48c3067c8852299720c70aa764",
+          "sha256": "91aea9adfcbd8ca08fcd13f5b7f5690127b0d4b0758b1452b6118bcff0202614",
+          "sha1": "4d472f3bcc1480bed30c611cb1c9bbcbf22d465a",
+          "md5": "6a9dca50fc08c2eada4c2980526fc781"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "CurseForgeGradle-1.1.28-sources.jar",
+          "url": "CurseForgeGradle-1.1.28-sources.jar",
+          "size": 22967,
+          "sha512": "8a46440613a401f0ca5b2cf1a4d3aa2e23ce02974df843f8ed780dee9353183dfa2549574d6cc84644b10cecd8b1ad431f02d9165125203c23dae0468257b7b4",
+          "sha256": "c1df44f209980421549aa29a2930e1edcaebbb85c882fc12a7a53cacdc1e9e19",
+          "sha1": "c4bdf4841922756c1ac5579dc5403516e092fd6c",
+          "md5": "31ad671a73cc6885db891a848b5b589b"
+        }
+      ]
+    }
+  ]
+}

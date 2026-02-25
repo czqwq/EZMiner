@@ -1,0 +1,185 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "Railcraft",
+    "version": "9.16.33",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Angelica",
+          "version": {
+            "requires": "1.0.0-beta51"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Angelica",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "api"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "Railcraft-9.16.33-dev.jar",
+          "url": "Railcraft-9.16.33-dev.jar",
+          "size": 3415411,
+          "sha512": "2a79b32c3766e80a6ef904cc6bb33bc9bb519ace5f9114d85eaf90fd8065a7e957ab5c63aab1a4810b6c3bd024b1ead2ab22ec0b17b7847450bb94f9987815be",
+          "sha256": "eeafce405b7a1966f42b75fd5458e81879fb2a750e208efd117313f3a1d9bce3",
+          "sha1": "6fcd9b2e35b81519dbecfadf6a5fd8e7f0b682e8",
+          "md5": "4b3b43f9aba17111e1a6bfa0837e33af"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.industrial-craft",
+          "module": "industrialcraft-2",
+          "version": {
+            "requires": "2.2.828-experimental"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "industrialcraft-2",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "thaumcraft",
+          "module": "Thaumcraft",
+          "version": {
+            "requires": "1.7.10-4.2.3.5"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Thaumcraft",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "curse.maven",
+          "module": "cofh-lib-220333",
+          "version": {
+            "requires": "2388748"
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Baubles-Expanded",
+          "version": {
+            "requires": "2.1.9-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Baubles-Expanded",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "Railcraft-9.16.33-dev.jar",
+          "url": "Railcraft-9.16.33-dev.jar",
+          "size": 3415411,
+          "sha512": "2a79b32c3766e80a6ef904cc6bb33bc9bb519ace5f9114d85eaf90fd8065a7e957ab5c63aab1a4810b6c3bd024b1ead2ab22ec0b17b7847450bb94f9987815be",
+          "sha256": "eeafce405b7a1966f42b75fd5458e81879fb2a750e208efd117313f3a1d9bce3",
+          "sha1": "6fcd9b2e35b81519dbecfadf6a5fd8e7f0b682e8",
+          "md5": "4b3b43f9aba17111e1a6bfa0837e33af"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Railcraft-9.16.33.jar",
+          "url": "Railcraft-9.16.33.jar",
+          "size": 3435323,
+          "sha512": "0a4cb7ca9124936d3ff6d5d21c723f1d475474b2e8a3269b4fe628ad0a7059a71cfdac499356c009f0df9573cd0567f982b0c9c178e61b0349144f4f5d37d8b6",
+          "sha256": "6bd57ff9f788310971ee0acb08128004494bffd292563514a3b1244d18141306",
+          "sha1": "21a1d9e61fab5723c1b6eff60f968807a3c603db",
+          "md5": "b1514628d7d2f7d24ec3ca28d5b7fb5e"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Railcraft-9.16.33-sources.jar",
+          "url": "Railcraft-9.16.33-sources.jar",
+          "size": 2446633,
+          "sha512": "0144701656dbe9d186f5147013e6803c8f95e64f7cb36aea28e13f853947c52891bf928e4c0d75ebe797a199d4abd0d916b7c593842b185417fdc51499f48903",
+          "sha256": "111464c3bf02f29c726fdbe8915632943ab68918294d0b6812171861c94d98e6",
+          "sha1": "6d84ab32cf7fa2eeb30d31b2b937a65fd074640b",
+          "md5": "6cef855c5d963314d701b8120c228023"
+        }
+      ]
+    }
+  ]
+}

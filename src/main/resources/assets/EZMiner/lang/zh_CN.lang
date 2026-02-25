@@ -1,4 +1,5 @@
 ezminer.hud.active=连锁已启用
+ezminer.hud.chainCount=已连锁方块
 
 key.ezminer.chainKey=连锁键
 key.ezminer.modeSwitch=模式切换

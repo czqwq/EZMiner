@@ -1,0 +1,146 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "Avaritia",
+    "version": "1.75",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "Avaritia-1.75-dev.jar",
+          "url": "Avaritia-1.75-dev.jar",
+          "size": 919493,
+          "sha512": "6d6141fd81d14666a1b7494942e8b1ebfa55c674adfe277659a170dd6e9fac21b9257ce6e76b215660b981e7a2d9a2418d58c1bb6008a709310492680fb72d5a",
+          "sha256": "68cd1097f5ce85a58c2b8e9e8f3863e0fb6229a1cf7685d6dda3704506edc002",
+          "sha1": "310d3b9e49ceca9d0a0677a754a96fe3bd04fcda",
+          "md5": "b4a4a92b787e7cc7bb8fae0c1f335a14"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.legacymoddingmc",
+          "module": "unimixins",
+          "version": {
+            "requires": "0.1.23"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "unimixins",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.39"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "Avaritia-1.75-dev.jar",
+          "url": "Avaritia-1.75-dev.jar",
+          "size": 919493,
+          "sha512": "6d6141fd81d14666a1b7494942e8b1ebfa55c674adfe277659a170dd6e9fac21b9257ce6e76b215660b981e7a2d9a2418d58c1bb6008a709310492680fb72d5a",
+          "sha256": "68cd1097f5ce85a58c2b8e9e8f3863e0fb6229a1cf7685d6dda3704506edc002",
+          "sha1": "310d3b9e49ceca9d0a0677a754a96fe3bd04fcda",
+          "md5": "b4a4a92b787e7cc7bb8fae0c1f335a14"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Avaritia-1.75.jar",
+          "url": "Avaritia-1.75.jar",
+          "size": 923337,
+          "sha512": "77d53a184dad7c8a3844782e77dc3d6e8be4b00d4d4dfc130f0c514f8218a8871fd7341eaa5eb5c44213a213290114ab119afbec6c3e4aa4f56d62b46a8c231c",
+          "sha256": "e9bfd21a78b7374fb01fab8f19779424c322bfe9bb06b5dbd9acd3ef83d0c8ea",
+          "sha1": "dac6995876e61afe00b4a058e452535b2312f172",
+          "md5": "00ae7358a34012d4d69b57a248e7e9b2"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Avaritia-1.75-sources.jar",
+          "url": "Avaritia-1.75-sources.jar",
+          "size": 764835,
+          "sha512": "6f6543c2f7ac4b68eeffd8c5f71cbdf1ec0899d3ca93ffe6cd9fa3f0d9a75b7d35764103471a67c4e215b0a3a2975665df02c8851a16084730c6da86ff0f70af",
+          "sha256": "683177c66e07caf5f6b75993940ccb36acca2d68e4e1c20c883fde2ee67a57f0",
+          "sha1": "a0a16e60c86cebf6e0bc5c9e92e2b5c58bf7dae1",
+          "md5": "58850ed4932e2540d6f9efead7e7832b"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "CodeChickenCore",
+    "version": "1.4.7",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "CodeChickenCore-1.4.7-dev.jar",
+          "url": "CodeChickenCore-1.4.7-dev.jar",
+          "size": 443271,
+          "sha512": "cf3addb8ba1561748f9b13a1506ffc217eccabf420d69be1f757552569bb59143241456b9fb7f3a1f7c9f76619aaaac88bfd40c47464cbeb20ef3897e03fd405",
+          "sha256": "0c1b9065b5bf0835119a6834608d981a1bea4ba4abae3a68f35ca19ebca8f869",
+          "sha1": "80d2a585aba75733e6301c9c945882d89424f16f",
+          "md5": "deadb12ccb942fa2cedf2cffd258bf8d"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "CodeChickenCore-1.4.7-dev.jar",
+          "url": "CodeChickenCore-1.4.7-dev.jar",
+          "size": 443271,
+          "sha512": "cf3addb8ba1561748f9b13a1506ffc217eccabf420d69be1f757552569bb59143241456b9fb7f3a1f7c9f76619aaaac88bfd40c47464cbeb20ef3897e03fd405",
+          "sha256": "0c1b9065b5bf0835119a6834608d981a1bea4ba4abae3a68f35ca19ebca8f869",
+          "sha1": "80d2a585aba75733e6301c9c945882d89424f16f",
+          "md5": "deadb12ccb942fa2cedf2cffd258bf8d"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "CodeChickenCore-1.4.7.jar",
+          "url": "CodeChickenCore-1.4.7.jar",
+          "size": 445977,
+          "sha512": "453929b9cc2f78b76760edb0cf49444f25bc20f9473462080484304af413caecf845a69884c73a63a799c95d4899d3e33d2e06e48ccb16d54862338716635e99",
+          "sha256": "3e5200db5c81df3cca7a15ee0729136654d791e8e598cd977a8b53dd59212b11",
+          "sha1": "7d741bd0248acecfb634b6e3d587aadaa8ba6a7f",
+          "md5": "7b3ad499fdcbccafe894f370737440eb"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "CodeChickenCore-1.4.7-sources.jar",
+          "url": "CodeChickenCore-1.4.7-sources.jar",
+          "size": 200494,
+          "sha512": "fc4f977f28f4d169db353c979513b4564442e44beaef816bd1009d207a23ab989e3319788bad94a90aff441eb562d5d92509aa84f1f46ea0ad072e163c130fe9",
+          "sha256": "9c92cfe942fd4e1625617b2a730246e62fe9b7fd92fcd49ed9a1731c415403c4",
+          "sha1": "730a4f0d47b707a5de17ef284f830a5747945df2",
+          "md5": "d7cd8ee4ccdca21329b2297a901df0cc"
+        }
+      ]
+    }
+  ]
+}

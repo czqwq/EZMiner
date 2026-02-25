@@ -1,0 +1,14 @@
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0">
+      <modelVersion>4.0.0</modelVersion>
+      <groupId>com.palantir.git-version</groupId>
+      <artifactId>com.palantir.git-version.gradle.plugin</artifactId>
+      <version>4.2.0</version>
+      <packaging>pom</packaging>
+      <dependencies>
+        <dependency>
+          <groupId>com.palantir.gradle.gitversion</groupId>
+          <artifactId>gradle-git-version</artifactId>
+          <version>4.2.0</version>
+        </dependency>
+      </dependencies>
+    </project>

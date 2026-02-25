@@ -1,0 +1,208 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "SGCraft",
+    "version": "1.4.5-GTNH",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "net.industrial-craft",
+          "module": "industrialcraft-2",
+          "version": {
+            "requires": "2.2.828-experimental"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "industrialcraft-2",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "OpenComputers",
+          "version": {
+            "requires": "1.10.11-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "OpenComputers",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.2.11"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "SGCraft-1.4.5-GTNH-dev.jar",
+          "url": "SGCraft-1.4.5-GTNH-dev.jar",
+          "size": 1045088,
+          "sha512": "af46c5628467ee0fe53b0b0333f3955813d7e8e5209a50e26ad4179977054a1d26816807b312a7cb9c1cfc6ae0446b9cbf290038b69074b1d725accef1245365",
+          "sha256": "773924bae2c18eb6542f7d5539d43f960d3d0634c7d437edea7f0ba6df04c26f",
+          "sha1": "ae1b1103312ce7d195e7d55624e954516c10cde6",
+          "md5": "5f22caeaa369231f5a6c50739628902c"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.industrial-craft",
+          "module": "industrialcraft-2",
+          "version": {
+            "requires": "2.2.828-experimental"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "industrialcraft-2",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "OpenComputers",
+          "version": {
+            "requires": "1.10.11-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "OpenComputers",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.2.11"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.2.11"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "SGCraft-1.4.5-GTNH-dev.jar",
+          "url": "SGCraft-1.4.5-GTNH-dev.jar",
+          "size": 1045088,
+          "sha512": "af46c5628467ee0fe53b0b0333f3955813d7e8e5209a50e26ad4179977054a1d26816807b312a7cb9c1cfc6ae0446b9cbf290038b69074b1d725accef1245365",
+          "sha256": "773924bae2c18eb6542f7d5539d43f960d3d0634c7d437edea7f0ba6df04c26f",
+          "sha1": "ae1b1103312ce7d195e7d55624e954516c10cde6",
+          "md5": "5f22caeaa369231f5a6c50739628902c"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "SGCraft-1.4.5-GTNH.jar",
+          "url": "SGCraft-1.4.5-GTNH.jar",
+          "size": 1052168,
+          "sha512": "2e851249785ca88db301c3cc067442a9983f604d1039313543dd45f70fd67b5ccc874b11c2c1dee18524d105d6fe989108cdfa3f1e32ce44175d8b65c114b219",
+          "sha256": "70b77d48c95eb1859f5af321b28d822437c80b5ce4d8c7848303fb1f8d62e4f6",
+          "sha1": "e404352b4cca06271db036cfd343aab5c1bf78a0",
+          "md5": "66279e8ed79fa0b8016773c2c2383d87"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "SGCraft-1.4.5-GTNH-sources.jar",
+          "url": "SGCraft-1.4.5-GTNH-sources.jar",
+          "size": 890789,
+          "sha512": "c77d2b3bfb90b5dbeffa4a50aa06c44b2407665b1d1c7c7132a00ce745b477ae66105682015417f955c272cd3189e88c897d22ac1f14aee549e197c6c179a46c",
+          "sha256": "b8a5b0fe1839d09c811e716117bcbed6600105908241fa2eda470b9cccbe5760",
+          "sha1": "864a12c8dd2ddeb6d63dd7e99541b04fd16a3a59",
+          "md5": "784093ee93fc341d03fdc5f18f3cf584"
+        }
+      ]
+    }
+  ]
+}

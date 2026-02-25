@@ -1,0 +1,114 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "Mantle",
+    "version": "0.5.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "Mantle-0.5.1-dev.jar",
+          "url": "Mantle-0.5.1-dev.jar",
+          "size": 197821,
+          "sha512": "1bd5e743d234960ad2e146b6c6a96c19621786d75e380600f14614cfe9e0b629d1ebbbc19e41683af17b93da9dede9cbe5fbb1461545ebbbf66922884c5624a7",
+          "sha256": "050f7b36401f57eeff94b430e1e15783ce4b75834c1dd712968fc7d786dda602",
+          "sha1": "d493ebfc9299ef101f9491239e679bf562cb220b",
+          "md5": "c7b5a29a1c09878dad19da1be69a880b"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.13"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "Mantle-0.5.1-dev.jar",
+          "url": "Mantle-0.5.1-dev.jar",
+          "size": 197821,
+          "sha512": "1bd5e743d234960ad2e146b6c6a96c19621786d75e380600f14614cfe9e0b629d1ebbbc19e41683af17b93da9dede9cbe5fbb1461545ebbbf66922884c5624a7",
+          "sha256": "050f7b36401f57eeff94b430e1e15783ce4b75834c1dd712968fc7d786dda602",
+          "sha1": "d493ebfc9299ef101f9491239e679bf562cb220b",
+          "md5": "c7b5a29a1c09878dad19da1be69a880b"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Mantle-0.5.1.jar",
+          "url": "Mantle-0.5.1.jar",
+          "size": 200783,
+          "sha512": "d1319ca60b2c921cf771f4cfd2b9f8c41e0050d9c5565db71cdda98a351762a52f3c1df828405238b8e5b0f9eff0f8864380052f77eda33eb73433715c19fde1",
+          "sha256": "6a48d327d3442235a697b1cb57447e50e136374706c7a650262a533f16edd360",
+          "sha1": "2934f3acf59fcd660f68eed1ec675ff06111cc4b",
+          "md5": "c88e5aead588dfb0c538e6fcb3288dd9"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Mantle-0.5.1-sources.jar",
+          "url": "Mantle-0.5.1-sources.jar",
+          "size": 144972,
+          "sha512": "5a99c8b361b090229d9b1f8a6c8370ffcce900e85b8f54a5910c04ebfca003bbfbf32804eace3bea2db6938dadccb6191415613d3f53563398d323b4544475f4",
+          "sha256": "870f4e7490a6f79e3867188d7fc4a5d87f02bcc74ab65cbbe308b1045d173e6f",
+          "sha1": "d19c25132ef9a1ac56e52809a3c1858ac53b2214",
+          "md5": "5c839c068a46f06decd6f75b63a25123"
+        }
+      ]
+    }
+  ]
+}

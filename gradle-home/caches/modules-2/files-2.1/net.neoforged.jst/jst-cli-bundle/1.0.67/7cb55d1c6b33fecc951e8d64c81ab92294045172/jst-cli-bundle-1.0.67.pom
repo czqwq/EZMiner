@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <!-- This module was also published with a richer model, Gradle metadata,  -->
+  <!-- which should be used instead. Do not delete the following line which  -->
+  <!-- is to indicate to Gradle or any Gradle module metadata file consumer  -->
+  <!-- that they should prefer consuming it instead. -->
+  <!-- do_not_remove: published-with-gradle-metadata -->
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>net.neoforged.jst</groupId>
+  <artifactId>jst-cli-bundle</artifactId>
+  <version>1.0.67</version>
+  <name>JST CLI bundle</name>
+  <description>The JavaSourceTransformer CLI bundle, containing all builtin plugins shadowed</description>
+  <url>https://github.com/NeoForged/JavaSourceTransformer</url>
+  <licenses>
+    <license>
+      <name>LGPL-2.1-only</name>
+      <url>https://spdx.org/licenses/LGPL-2.1-only</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>neoforged</id>
+      <name>NeoForged</name>
+      <email>contact@neoforged.net</email>
+      <url>https://github.com/neoforged</url>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:git://github.com/NeoForged/JavaSourceTransformer.git</connection>
+    <developerConnection>scm:git:git@github.com:NeoForged/JavaSourceTransformer.git</developerConnection>
+    <url>https://github.com/NeoForged/JavaSourceTransformer</url>
+  </scm>
+  <issueManagement>
+    <system>github</system>
+    <url>https://github.com/NeoForged/JavaSourceTransformer/issues</url>
+  </issueManagement>
+</project>

@@ -1,0 +1,348 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "Thaumic_Exploration",
+    "version": "1.4.2-GTNH",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ThaumicBoots",
+          "version": {
+            "requires": "1.4.7"
+          },
+          "excludes": [
+            {
+              "group": "com.github.GTNewHorizons",
+              "module": "Thaumic_Exploration"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ThaumicBoots",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "AppleCore",
+          "version": {
+            "requires": "3.3.4"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "AppleCore",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "thaumcraft",
+          "module": "Thaumcraft",
+          "version": {
+            "requires": "1.7.10-4.2.3.5"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Thaumcraft",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "curse.maven",
+          "module": "witchery-69673",
+          "version": {
+            "requires": "2234410"
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Baubles",
+          "version": {
+            "requires": "1.0.4"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Baubles",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "CodeChickenLib",
+          "version": {
+            "requires": "1.3.0"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "CodeChickenLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "Thaumic_Exploration-1.4.2-GTNH-dev.jar",
+          "url": "Thaumic_Exploration-1.4.2-GTNH-dev.jar",
+          "size": 2005431,
+          "sha512": "5d40d35688996e327b636501db7c1f5b3e3c6dd00083f390d7f3296e2c48872c2ede842d0b67deedd834cf75dade9e42f4fc0bef0f63141047dd5bd248b3d887",
+          "sha256": "8a5ddc08adbc89ae9667cde3b7f3942858ef68bb870824d612830ae719ed0695",
+          "sha1": "f16e1c59e858b6754a1ff4deca6893dade362fcf",
+          "md5": "0b5f28dc4768d8b54973a84a79ac4ed3"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ThaumicBoots",
+          "version": {
+            "requires": "1.4.7"
+          },
+          "excludes": [
+            {
+              "group": "com.github.GTNewHorizons",
+              "module": "Thaumic_Exploration"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ThaumicBoots",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "AppleCore",
+          "version": {
+            "requires": "3.3.4"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "AppleCore",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "thaumcraft",
+          "module": "Thaumcraft",
+          "version": {
+            "requires": "1.7.10-4.2.3.5"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Thaumcraft",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "curse.maven",
+          "module": "witchery-69673",
+          "version": {
+            "requires": "2234410"
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Baubles",
+          "version": {
+            "requires": "1.0.4"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Baubles",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "CodeChickenLib",
+          "version": {
+            "requires": "1.3.0"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "CodeChickenLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "CodeChickenCore",
+          "version": {
+            "requires": "1.4.3"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "CodeChickenCore",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.62-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.13"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "Thaumic_Exploration-1.4.2-GTNH-dev.jar",
+          "url": "Thaumic_Exploration-1.4.2-GTNH-dev.jar",
+          "size": 2005431,
+          "sha512": "5d40d35688996e327b636501db7c1f5b3e3c6dd00083f390d7f3296e2c48872c2ede842d0b67deedd834cf75dade9e42f4fc0bef0f63141047dd5bd248b3d887",
+          "sha256": "8a5ddc08adbc89ae9667cde3b7f3942858ef68bb870824d612830ae719ed0695",
+          "sha1": "f16e1c59e858b6754a1ff4deca6893dade362fcf",
+          "md5": "0b5f28dc4768d8b54973a84a79ac4ed3"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Thaumic_Exploration-1.4.2-GTNH.jar",
+          "url": "Thaumic_Exploration-1.4.2-GTNH.jar",
+          "size": 2012465,
+          "sha512": "e05d3e7b4ebefd265bdcdb6a35ef0646b29bde4e511be798738a70abde5cac4846fa649848326f3fc5dfd2371ab0a02ebddd52e8870424a94d006c0ed7d3b581",
+          "sha256": "61eafc85c21f9eb039e1ac9703d687b05c0658da45ebc9fb99659348127f3d0b",
+          "sha1": "287d34e900e03313fa15c5a0faeb2eba7590f31a",
+          "md5": "30b6d884288f6ef35513ab234bf6a6e0"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Thaumic_Exploration-1.4.2-GTNH-sources.jar",
+          "url": "Thaumic_Exploration-1.4.2-GTNH-sources.jar",
+          "size": 1926493,
+          "sha512": "790670aad083144ef71cbcb9b893ef4189763eb1a0ead34b344a73f47a02b033b73bae2f67e6ef9537401d7d80ccaee0d13b6ce58033a13cd171c50312fdfec4",
+          "sha256": "360b02c83643d09b0e8798b4b503bac45f577807f656cb00ebf3777986a0d9fd",
+          "sha1": "a9023bd31cd46f80d935dd2e6184cdf8c6ba9e5e",
+          "md5": "a30eb6fcd811bdc589bf7571dce1b9e7"
+        }
+      ]
+    }
+  ]
+}

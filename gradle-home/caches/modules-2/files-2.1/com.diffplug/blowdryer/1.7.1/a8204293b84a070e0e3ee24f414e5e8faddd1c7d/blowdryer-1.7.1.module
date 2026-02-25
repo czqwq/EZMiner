@@ -1,0 +1,155 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.diffplug",
+    "module": "blowdryer",
+    "version": "1.7.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.6"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "blowdryer-1.7.1.jar",
+          "url": "blowdryer-1.7.1.jar",
+          "size": 39319,
+          "sha512": "8ab8cbdaf717ee0571f5cc2fc48b2bce92aae9f13bdded0eec51c5a3c3b4b2e202977b10b15f2235f88081bd6b2e9e3bd452329b4df59324e6c0c69e774ca760",
+          "sha256": "57f2f2b2bbfc77ad9c3b639076b04e1021755499ef75fd473e2de1558c742906",
+          "sha1": "92d161073179f2e3efdbeb9c7ec217593f99f6ac",
+          "md5": "732cca3640d9d61c2abd9c7f153ffd3a"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.squareup.okhttp3",
+          "module": "okhttp",
+          "version": {
+            "requires": "4.10.0"
+          }
+        },
+        {
+          "group": "com.squareup.okio",
+          "module": "okio",
+          "version": {
+            "requires": "3.3.0"
+          }
+        },
+        {
+          "group": "com.google.code.gson",
+          "module": "gson",
+          "version": {
+            "requires": "2.10.1"
+          }
+        },
+        {
+          "group": "com.diffplug.durian",
+          "module": "durian-core",
+          "version": {
+            "requires": "1.2.0"
+          }
+        },
+        {
+          "group": "com.diffplug.durian",
+          "module": "durian-io",
+          "version": {
+            "requires": "1.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "blowdryer-1.7.1.jar",
+          "url": "blowdryer-1.7.1.jar",
+          "size": 39319,
+          "sha512": "8ab8cbdaf717ee0571f5cc2fc48b2bce92aae9f13bdded0eec51c5a3c3b4b2e202977b10b15f2235f88081bd6b2e9e3bd452329b4df59324e6c0c69e774ca760",
+          "sha256": "57f2f2b2bbfc77ad9c3b639076b04e1021755499ef75fd473e2de1558c742906",
+          "sha1": "92d161073179f2e3efdbeb9c7ec217593f99f6ac",
+          "md5": "732cca3640d9d61c2abd9c7f153ffd3a"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "blowdryer-1.7.1-javadoc.jar",
+          "url": "blowdryer-1.7.1-javadoc.jar",
+          "size": 348603,
+          "sha512": "8be22cea11f6c88f493a14890c8dd0cd2dd6c0508665b2804138e0048c6474ab11df66ed34d347207961c87a8c96eb4b2dbf4474bd71a8427dce0fdac564b4b6",
+          "sha256": "6391101a18d5ce341d097bb127e7b425e080987a81e04c2bc78a75f33b014b35",
+          "sha1": "6de4c36f77d0c48337fc6a07943ae009f5c91213",
+          "md5": "0b288565469ab8fc56026a491910d1c4"
+        },
+        {
+          "name": "blowdryer-1.7.1-javadoc.jar",
+          "url": "blowdryer-1.7.1-javadoc.jar",
+          "size": 348603,
+          "sha512": "8be22cea11f6c88f493a14890c8dd0cd2dd6c0508665b2804138e0048c6474ab11df66ed34d347207961c87a8c96eb4b2dbf4474bd71a8427dce0fdac564b4b6",
+          "sha256": "6391101a18d5ce341d097bb127e7b425e080987a81e04c2bc78a75f33b014b35",
+          "sha1": "6de4c36f77d0c48337fc6a07943ae009f5c91213",
+          "md5": "0b288565469ab8fc56026a491910d1c4"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "blowdryer-1.7.1-sources.jar",
+          "url": "blowdryer-1.7.1-sources.jar",
+          "size": 17401,
+          "sha512": "9da68f4a68ba0faa2496c7fa85d6c0bec1f92452db8627126f353e34de91d8ee699353eafa8bafcfc43da7c4e261f6c41ef1745c3bf537f6c0ccecbba47a9f1e",
+          "sha256": "382ec1f50a97a2067a9a2028454346f6503401a1fa6cbd95a5984f469e2580bb",
+          "sha1": "e36bfe9e004f725c3912c916a27baa8eeebad4e9",
+          "md5": "0ed1397b28e709b2152c89e97cefc0e1"
+        },
+        {
+          "name": "blowdryer-1.7.1-sources.jar",
+          "url": "blowdryer-1.7.1-sources.jar",
+          "size": 17401,
+          "sha512": "9da68f4a68ba0faa2496c7fa85d6c0bec1f92452db8627126f353e34de91d8ee699353eafa8bafcfc43da7c4e261f6c41ef1745c3bf537f6c0ccecbba47a9f1e",
+          "sha256": "382ec1f50a97a2067a9a2028454346f6503401a1fa6cbd95a5984f469e2580bb",
+          "sha1": "e36bfe9e004f725c3912c916a27baa8eeebad4e9",
+          "md5": "0ed1397b28e709b2152c89e97cefc0e1"
+        }
+      ]
+    }
+  ]
+}

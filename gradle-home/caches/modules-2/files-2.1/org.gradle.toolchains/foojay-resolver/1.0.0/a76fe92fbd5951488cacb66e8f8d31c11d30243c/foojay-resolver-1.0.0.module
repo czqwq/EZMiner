@@ -1,0 +1,81 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "org.gradle.toolchains",
+    "module": "foojay-resolver",
+    "version": "1.0.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14"
+    }
+  },
+  "variants": [
+    {
+      "name": "shadowRuntimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "shadowed",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.plugin.api-version": "7.6",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "foojay-resolver-1.0.0.jar",
+          "url": "foojay-resolver-1.0.0.jar",
+          "size": 327154,
+          "sha512": "b88512eaf3aeda8862ba52b7b1a7cc5d3b232eb09f02bb288521910f018c8ede7acfe56fbceb167ad01a3a4f0092c07f675b5ae7d7906284e04f14414fb643f9",
+          "sha256": "78b86a47dfdf7697c9bd15da78983fd80da7247d6e02fc106bdf07e0388b60a8",
+          "sha1": "72c0af50bc9156fb2a9429ed152abb4417bb6eaf",
+          "md5": "a21809036a0b6aa013ff7d6c51737a25"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "foojay-resolver-1.0.0-javadoc.jar",
+          "url": "foojay-resolver-1.0.0-javadoc.jar",
+          "size": 261,
+          "sha512": "13014457cc1f72b030cb21bcd7c54196cdb2fc0a664f653716e409d7f54201be7e06b8e72559d940ed310de75cf2e3bb84923b738d0e44814bf5775f37ba8b96",
+          "sha256": "0c315e730b3f2510b5d4d6cf9c6ae47e1e197e63f14090e8cbae87c0f514dbca",
+          "sha1": "39b29630638266c4c66882d4eeef985a035ceb8b",
+          "md5": "8c9253a318b1d26c392723caf24e6514"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "foojay-resolver-1.0.0-sources.jar",
+          "url": "foojay-resolver-1.0.0-sources.jar",
+          "size": 7993,
+          "sha512": "e4a3c4bd2649ccd1502cf45af4aaeeea15891dbc0c0696d9cc30b385a8fdd97ca9d36382ff399820a8ef17a3d2af447c2d4b89aec05ded01574985c4a644638f",
+          "sha256": "eb6b5a258cbeac827029a9515c9fba3b982da7ba9821ad23393e25afce2f74fd",
+          "sha1": "00488183445640913b40e622c513323ced549530",
+          "md5": "dce28e852b9dd008788f2aca5a325539"
+        }
+      ]
+    }
+  ]
+}

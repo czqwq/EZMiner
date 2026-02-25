@@ -1,0 +1,163 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "Mobs-Info",
+    "version": "0.5.4-GTNH",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.69-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "Mobs-Info-0.5.4-GTNH-dev.jar",
+          "url": "Mobs-Info-0.5.4-GTNH-dev.jar",
+          "size": 439783,
+          "sha512": "2b9ba76bd4e83c71416ae96ed5aae6eab48b1e7fd1c4cf084709593693db107dd4b563307c9e77c7dde87c4f4608517b931e39d3ef0cff19393b258680f27daf",
+          "sha256": "80ae29c78e5e7995242e3b6146f1a136bfb22db70d7e68f5ad92ed5b276aeade",
+          "sha1": "e332e6d64e7990c87914fed33ce492c90852119b",
+          "md5": "63cb96489b687759aff0baa59067761c"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.legacymoddingmc",
+          "module": "unimixins",
+          "version": {
+            "requires": "0.1.22"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "unimixins",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.69-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "Mobs-Info-0.5.4-GTNH-dev.jar",
+          "url": "Mobs-Info-0.5.4-GTNH-dev.jar",
+          "size": 439783,
+          "sha512": "2b9ba76bd4e83c71416ae96ed5aae6eab48b1e7fd1c4cf084709593693db107dd4b563307c9e77c7dde87c4f4608517b931e39d3ef0cff19393b258680f27daf",
+          "sha256": "80ae29c78e5e7995242e3b6146f1a136bfb22db70d7e68f5ad92ed5b276aeade",
+          "sha1": "e332e6d64e7990c87914fed33ce492c90852119b",
+          "md5": "63cb96489b687759aff0baa59067761c"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Mobs-Info-0.5.4-GTNH.jar",
+          "url": "Mobs-Info-0.5.4-GTNH.jar",
+          "size": 443022,
+          "sha512": "5a04cee299091ec7e7c8cd50ae1dc1d25394b42cf7533d23e5ec11f49e1ead36087bb085b3e3c62e54972639e9bbe1bffe02a4ed50c66f5f8f3a92cc41480c5a",
+          "sha256": "0a606a532f429ca4b7dc44a1bfecce24ea875e64b94ec6ed34f150d0f2044c27",
+          "sha1": "1675c28cbe4b1994dcc86e8c944a8327a6490104",
+          "md5": "781891e612731eb94a015771eadcf506"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Mobs-Info-0.5.4-GTNH-sources.jar",
+          "url": "Mobs-Info-0.5.4-GTNH-sources.jar",
+          "size": 239187,
+          "sha512": "ffb48dccc2b9e56e4dc33c5e05a1181b230de031747419be97bfec11dc04fe8db8a894452b362536f822fa530543e096a6b4a143ac2092ed546bb455a6670909",
+          "sha256": "7223370cfbaed3bc607acfebf5a02498aaacaaf72a888b9d7fdde699057b3085",
+          "sha1": "0883dcd424dfb71feef70af6f1e68817dfa37f7a",
+          "md5": "2cdfb501fbab32648e762e9ebb86cacf"
+        }
+      ]
+    }
+  ]
+}

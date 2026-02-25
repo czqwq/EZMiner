@@ -1,0 +1,293 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.gtnewhorizons",
+    "module": "gtnhgradle",
+    "version": "2.0.7",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.2.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 25,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.gtnewhorizons.retrofuturagradle",
+          "module": "com.gtnewhorizons.retrofuturagradle.gradle.plugin",
+          "version": {
+            "requires": "2.0.2"
+          }
+        },
+        {
+          "group": "com.diffplug.blowdryerSetup",
+          "module": "com.diffplug.blowdryerSetup.gradle.plugin",
+          "version": {
+            "requires": "1.7.1"
+          }
+        },
+        {
+          "group": "org.gradle.toolchains.foojay-resolver-convention",
+          "module": "org.gradle.toolchains.foojay-resolver-convention.gradle.plugin",
+          "version": {
+            "requires": "1.0.0"
+          }
+        },
+        {
+          "group": "com.gradleup.shadow",
+          "module": "com.gradleup.shadow.gradle.plugin",
+          "version": {
+            "requires": "9.2.2"
+          }
+        },
+        {
+          "group": "com.palantir.git-version",
+          "module": "com.palantir.git-version.gradle.plugin",
+          "version": {
+            "requires": "4.2.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.gradle.plugin.idea-ext",
+          "module": "org.jetbrains.gradle.plugin.idea-ext.gradle.plugin",
+          "version": {
+            "requires": "1.3"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin.jvm",
+          "module": "org.jetbrains.kotlin.jvm.gradle.plugin",
+          "version": {
+            "requires": "2.2.21"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin.kapt",
+          "module": "org.jetbrains.kotlin.kapt.gradle.plugin",
+          "version": {
+            "requires": "2.2.21"
+          }
+        },
+        {
+          "group": "com.google.devtools.ksp",
+          "module": "com.google.devtools.ksp.gradle.plugin",
+          "version": {
+            "requires": "2.2.21-2.0.4"
+          }
+        },
+        {
+          "group": "de.undercouch.download",
+          "module": "de.undercouch.download.gradle.plugin",
+          "version": {
+            "requires": "5.6.0"
+          }
+        },
+        {
+          "group": "com.github.gmazzo.buildconfig",
+          "module": "com.github.gmazzo.buildconfig.gradle.plugin",
+          "version": {
+            "requires": "5.7.1"
+          }
+        },
+        {
+          "group": "com.modrinth.minotaur",
+          "module": "com.modrinth.minotaur.gradle.plugin",
+          "version": {
+            "requires": "2.8.10"
+          }
+        },
+        {
+          "group": "net.darkhax.curseforgegradle",
+          "module": "net.darkhax.curseforgegradle.gradle.plugin",
+          "version": {
+            "requires": "1.1.28"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "gtnhgradle-2.0.7.jar",
+          "url": "gtnhgradle-2.0.7.jar",
+          "size": 132807,
+          "sha512": "20419e8114a27f96163c9d086f62bb4eb398c5f67cd45b60dab63609a46eff6bb5df0fa366e3cbf5b35350182f0a909c1af8e0d6063af3479e4dbd73f1376e0a",
+          "sha256": "38e0feaf0353cf8e55cbfcbb522a2a47f4b65c6296513172139d8ae8ba70f187",
+          "sha1": "4dc987672b9279e9c2415ca613c1ae1e440782f3",
+          "md5": "bb83f008d070b7328ea69f962036bd93"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 25,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.jdom",
+          "module": "jdom2",
+          "version": {
+            "requires": "2.0.6.1"
+          }
+        },
+        {
+          "group": "com.gtnewhorizons.retrofuturagradle",
+          "module": "com.gtnewhorizons.retrofuturagradle.gradle.plugin",
+          "version": {
+            "requires": "2.0.2"
+          }
+        },
+        {
+          "group": "com.diffplug.blowdryerSetup",
+          "module": "com.diffplug.blowdryerSetup.gradle.plugin",
+          "version": {
+            "requires": "1.7.1"
+          }
+        },
+        {
+          "group": "org.gradle.toolchains.foojay-resolver-convention",
+          "module": "org.gradle.toolchains.foojay-resolver-convention.gradle.plugin",
+          "version": {
+            "requires": "1.0.0"
+          }
+        },
+        {
+          "group": "com.gradleup.shadow",
+          "module": "com.gradleup.shadow.gradle.plugin",
+          "version": {
+            "requires": "9.2.2"
+          }
+        },
+        {
+          "group": "com.palantir.git-version",
+          "module": "com.palantir.git-version.gradle.plugin",
+          "version": {
+            "requires": "4.2.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.gradle.plugin.idea-ext",
+          "module": "org.jetbrains.gradle.plugin.idea-ext.gradle.plugin",
+          "version": {
+            "requires": "1.3"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin.jvm",
+          "module": "org.jetbrains.kotlin.jvm.gradle.plugin",
+          "version": {
+            "requires": "2.2.21"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin.kapt",
+          "module": "org.jetbrains.kotlin.kapt.gradle.plugin",
+          "version": {
+            "requires": "2.2.21"
+          }
+        },
+        {
+          "group": "com.google.devtools.ksp",
+          "module": "com.google.devtools.ksp.gradle.plugin",
+          "version": {
+            "requires": "2.2.21-2.0.4"
+          }
+        },
+        {
+          "group": "de.undercouch.download",
+          "module": "de.undercouch.download.gradle.plugin",
+          "version": {
+            "requires": "5.6.0"
+          }
+        },
+        {
+          "group": "com.github.gmazzo.buildconfig",
+          "module": "com.github.gmazzo.buildconfig.gradle.plugin",
+          "version": {
+            "requires": "5.7.1"
+          }
+        },
+        {
+          "group": "com.modrinth.minotaur",
+          "module": "com.modrinth.minotaur.gradle.plugin",
+          "version": {
+            "requires": "2.8.10"
+          }
+        },
+        {
+          "group": "net.darkhax.curseforgegradle",
+          "module": "net.darkhax.curseforgegradle.gradle.plugin",
+          "version": {
+            "requires": "1.1.28"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "gtnhgradle-2.0.7.jar",
+          "url": "gtnhgradle-2.0.7.jar",
+          "size": 132807,
+          "sha512": "20419e8114a27f96163c9d086f62bb4eb398c5f67cd45b60dab63609a46eff6bb5df0fa366e3cbf5b35350182f0a909c1af8e0d6063af3479e4dbd73f1376e0a",
+          "sha256": "38e0feaf0353cf8e55cbfcbb522a2a47f4b65c6296513172139d8ae8ba70f187",
+          "sha1": "4dc987672b9279e9c2415ca613c1ae1e440782f3",
+          "md5": "bb83f008d070b7328ea69f962036bd93"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "gtnhgradle-2.0.7-sources.jar",
+          "url": "gtnhgradle-2.0.7-sources.jar",
+          "size": 62383,
+          "sha512": "52712a647368f1243a090d47839c7ed87dcedc2c043f6c11d6d25abe70f7a5d7eef5700ffe5aa1ec226eff638283786d91983ad5454085f2c5ebcca505289735",
+          "sha256": "42e8afc07037f1b81a1ecac65c0f532c9f9a69233860aef188ab994d4fffbec3",
+          "sha1": "29996f88ace2a9f1d83203ee35971a12b5470bb1",
+          "md5": "3e4de9ab01f335cb791b4f119b4c61d5"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "gtnhgradle-2.0.7-javadoc.jar",
+          "url": "gtnhgradle-2.0.7-javadoc.jar",
+          "size": 4326556,
+          "sha512": "fc09906cf5f253ec5e856705ec0a3b5cad9a81d143cd5ddf83fa4a58665938abb4661834e09c6351c5998e0b462fc9dbcffa3501ed4f7772ba35e958a231a864",
+          "sha256": "75a352313162e821cfef5ddc7683f8d29980436752888308c6b34b098ecf39a1",
+          "sha1": "7a2f05b092e7bed51b3ccdde26248b76f95e817a",
+          "md5": "49a0562f8bbb406b3a4eb2c79d92eff8"
+        }
+      ]
+    }
+  ]
+}

@@ -85,6 +85,7 @@ public class KeyListener {
             EZMiner.network.network.sendToServer(new PacketChainSwitcher(false));
             ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = false;
             ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = false;
+            ((ClientProxy) EZMiner.proxy).clientState.chainedBlockCount = 0;
             wasHoldingChain = false;
         }
     }

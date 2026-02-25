@@ -1,0 +1,255 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "EnderIO",
+    "version": "2.9.26",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "EnderCore",
+          "version": {
+            "requires": "0.4.8"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "EnderCore",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.39"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "curse.maven",
+          "module": "cofh-lib-220333",
+          "version": {
+            "requires": "2388748"
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "TinkersConstruct",
+          "version": {
+            "requires": "1.13.54-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "TinkersConstruct",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Angelica",
+          "version": {
+            "requires": "1.0.0-beta56"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Angelica",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "api"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "EnderIO-2.9.26-dev.jar",
+          "url": "EnderIO-2.9.26-dev.jar",
+          "size": 5060431,
+          "sha512": "6b77747e2228a8f63bd2a674571f35555a31013a22bdde5a13c58d6e078422c833f7c6070be315b38883277db16937da4ce6be269ee486662c7a945ada20100b",
+          "sha256": "704b5c1a13b3e79ed91ec778dc68535cde4d1978f75060e63fae8b944349d70c",
+          "sha1": "f788ea674beb5dba9bdff23969d48399add03e14",
+          "md5": "fac26f363747ea9cb256fa2ff6f6ed96"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "EnderCore",
+          "version": {
+            "requires": "0.4.8"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "EnderCore",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.39"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "curse.maven",
+          "module": "cofh-lib-220333",
+          "version": {
+            "requires": "2388748"
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "TinkersConstruct",
+          "version": {
+            "requires": "1.13.54-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "TinkersConstruct",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "EnderIO-2.9.26-dev.jar",
+          "url": "EnderIO-2.9.26-dev.jar",
+          "size": 5060431,
+          "sha512": "6b77747e2228a8f63bd2a674571f35555a31013a22bdde5a13c58d6e078422c833f7c6070be315b38883277db16937da4ce6be269ee486662c7a945ada20100b",
+          "sha256": "704b5c1a13b3e79ed91ec778dc68535cde4d1978f75060e63fae8b944349d70c",
+          "sha1": "f788ea674beb5dba9bdff23969d48399add03e14",
+          "md5": "fac26f363747ea9cb256fa2ff6f6ed96"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "EnderIO-2.9.26.jar",
+          "url": "EnderIO-2.9.26.jar",
+          "size": 5106736,
+          "sha512": "8a65a1ac5ca854ee19cee9b32414097613f210d7ead9036a295c56761a1300858c4a08788a2beb808a4dc7776f74cc412bc5e10dd76b89132fe01f4a5807d375",
+          "sha256": "e8acff1199b444526722945559d5d54d515e3c209ffe17d4088e68237782419a",
+          "sha1": "a440dfac9a123a25dc42fafdd6644c68b1a62917",
+          "md5": "cec92afaa02a20f747f1f2e69e71f924"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "EnderIO-2.9.26-sources.jar",
+          "url": "EnderIO-2.9.26-sources.jar",
+          "size": 3465872,
+          "sha512": "acbfb32262d5e69f7d58cf4df9771ed2b585535c155531039f51b37715c4afb44da3f30e0249f584d7768664f617b9733e9d96d1b0d722a7898c888f2d1a1274",
+          "sha256": "13a9e284001e1cb24d4e9c29ee2da19b9c785c8fc03e0b1507b3ee1cdfa27856",
+          "sha1": "a9ea9990627759d7c609139338c16f866d2c6c1f",
+          "md5": "577eb463ffcca2c6b61b1b012d48d78d"
+        }
+      ]
+    }
+  ]
+}

@@ -45,6 +45,7 @@ public class HudRenderer {
 
         String mainModeName = I18n.format(state.currentMainMode());
         String subModeName = I18n.format(state.currentSubMode());
+        int chainCount = ((ClientProxy) EZMiner.proxy).clientState.chainedBlockCount;
 
         int x = 5;
         int y = 5;
@@ -60,6 +61,16 @@ public class HudRenderer {
 
         // Line 3: sub mode (chain link second node, indented)
         fr.drawStringWithShadow("\u00a77  \u2514\u2500 \u00a7f" + subModeName, x, y, 0xFFFFFF);
+
+        // Line 4: chain count (only while a chain operation is actually running)
+        if (chainCount > 0) {
+            y += lineH;
+            fr.drawStringWithShadow(
+                "\u00a77  \u2514\u2500 " + I18n.format("ezminer.hud.chainCount") + ": \u00a7e" + chainCount,
+                x,
+                y,
+                0xFFFFFF);
+        }
     }
 
     public void registry() {

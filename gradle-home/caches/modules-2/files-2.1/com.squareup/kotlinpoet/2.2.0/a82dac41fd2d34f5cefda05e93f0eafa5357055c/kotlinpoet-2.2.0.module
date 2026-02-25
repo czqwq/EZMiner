@@ -1,0 +1,219 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.squareup",
+    "module": "kotlinpoet",
+    "version": "2.2.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14"
+    }
+  },
+  "variants": [
+    {
+      "name": "metadataApiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.platform.type": "common"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinpoet-metadata-2.2.0.jar",
+          "url": "kotlinpoet-2.2.0.jar",
+          "size": 10838,
+          "sha512": "d267eab78b083ba81291ba45fd263524584fa87904b65ff61d9ef2d271c080ca38cba38ee05dc8492224208907240b163a5ce80ccd396dc45bd291b9e740f80f",
+          "sha256": "0c0ed48624120b23f34ba32ad81efedbbdd46e6c0b6315dde448f6119cac8d78",
+          "sha1": "97acebdc73c7e1ffcafb7a66eaf474e04dc2081b",
+          "md5": "2463f423849ea60765c6d37b09830189"
+        }
+      ]
+    },
+    {
+      "name": "metadataSourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "common"
+      },
+      "files": [
+        {
+          "name": "kotlinpoet-kotlin-2.2.0-sources.jar",
+          "url": "kotlinpoet-2.2.0-sources.jar",
+          "size": 17465,
+          "sha512": "67e625500bda9239475b11080d74c628f275d73fb31775fcdc37b4dc9b6a0b8c379ca9979c541d33bae5c9ac4ebe4558bcf14ebbd13453a87c4b2ef7bd26d408",
+          "sha256": "0a5f92c9cc425aeeaf6624fb4ba5b4f7a05141884796ec707845e6f013466c94",
+          "sha1": "f5bfb8f81203757396b16fd482480cc364d423cb",
+          "md5": "1b6bc3bf1c4d04f2000723a25dd996ab"
+        }
+      ]
+    },
+    {
+      "name": "jsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "available-at": {
+        "url": "../../kotlinpoet-js/2.2.0/kotlinpoet-js-2.2.0.module",
+        "group": "com.squareup",
+        "module": "kotlinpoet-js",
+        "version": "2.2.0"
+      }
+    },
+    {
+      "name": "jsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "available-at": {
+        "url": "../../kotlinpoet-js/2.2.0/kotlinpoet-js-2.2.0.module",
+        "group": "com.squareup",
+        "module": "kotlinpoet-js",
+        "version": "2.2.0"
+      }
+    },
+    {
+      "name": "jsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "available-at": {
+        "url": "../../kotlinpoet-js/2.2.0/kotlinpoet-js-2.2.0.module",
+        "group": "com.squareup",
+        "module": "kotlinpoet-js",
+        "version": "2.2.0"
+      }
+    },
+    {
+      "name": "jvmApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "available-at": {
+        "url": "../../kotlinpoet-jvm/2.2.0/kotlinpoet-jvm-2.2.0.module",
+        "group": "com.squareup",
+        "module": "kotlinpoet-jvm",
+        "version": "2.2.0"
+      }
+    },
+    {
+      "name": "jvmRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "available-at": {
+        "url": "../../kotlinpoet-jvm/2.2.0/kotlinpoet-jvm-2.2.0.module",
+        "group": "com.squareup",
+        "module": "kotlinpoet-jvm",
+        "version": "2.2.0"
+      }
+    },
+    {
+      "name": "jvmSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "available-at": {
+        "url": "../../kotlinpoet-jvm/2.2.0/kotlinpoet-jvm-2.2.0.module",
+        "group": "com.squareup",
+        "module": "kotlinpoet-jvm",
+        "version": "2.2.0"
+      }
+    },
+    {
+      "name": "wasmJsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "available-at": {
+        "url": "../../kotlinpoet-wasm-js/2.2.0/kotlinpoet-wasm-js-2.2.0.module",
+        "group": "com.squareup",
+        "module": "kotlinpoet-wasm-js",
+        "version": "2.2.0"
+      }
+    },
+    {
+      "name": "wasmJsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "available-at": {
+        "url": "../../kotlinpoet-wasm-js/2.2.0/kotlinpoet-wasm-js-2.2.0.module",
+        "group": "com.squareup",
+        "module": "kotlinpoet-wasm-js",
+        "version": "2.2.0"
+      }
+    },
+    {
+      "name": "wasmJsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "available-at": {
+        "url": "../../kotlinpoet-wasm-js/2.2.0/kotlinpoet-wasm-js-2.2.0.module",
+        "group": "com.squareup",
+        "module": "kotlinpoet-wasm-js",
+        "version": "2.2.0"
+      }
+    }
+  ]
+}

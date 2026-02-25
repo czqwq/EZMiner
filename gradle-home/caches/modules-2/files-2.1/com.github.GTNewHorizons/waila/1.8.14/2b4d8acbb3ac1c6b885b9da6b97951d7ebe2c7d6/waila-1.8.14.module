@@ -1,0 +1,131 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "waila",
+    "version": "1.8.14",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "waila-1.8.14-dev.jar",
+          "url": "waila-1.8.14-dev.jar",
+          "size": 524863,
+          "sha512": "b1b37a8d224520c313100d9ae9feb8a5e125f11a3c8df2365284fe1da72aefc67d51a7441775e8d9759ceae518a00bbbcdb035492612a6fb924cf92302c83b93",
+          "sha256": "31c49d34eb486d128648812bffb09f88b17daed2f49dcffa22df2d7466f62cf1",
+          "sha1": "10154810c65843b25efb343ad25960fe1269ab4a",
+          "md5": "58eff80a4bdebb7a3e4ca91fc5ee40b8"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.87-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "waila-1.8.14-dev.jar",
+          "url": "waila-1.8.14-dev.jar",
+          "size": 524863,
+          "sha512": "b1b37a8d224520c313100d9ae9feb8a5e125f11a3c8df2365284fe1da72aefc67d51a7441775e8d9759ceae518a00bbbcdb035492612a6fb924cf92302c83b93",
+          "sha256": "31c49d34eb486d128648812bffb09f88b17daed2f49dcffa22df2d7466f62cf1",
+          "sha1": "10154810c65843b25efb343ad25960fe1269ab4a",
+          "md5": "58eff80a4bdebb7a3e4ca91fc5ee40b8"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "waila-1.8.14.jar",
+          "url": "waila-1.8.14.jar",
+          "size": 530211,
+          "sha512": "0dcb1e18549b1e5abaf322b3e37e99810955bd5c45d7d98b15d28969c6824b48355033a642644b2a31986b8e827ee35d7779d6c7559cdcfda33ecedf748071cd",
+          "sha256": "9744085b817704e93e8622a6048f18c83180f9350f32262574571bdb42eb797d",
+          "sha1": "09f67826b5e34d243a7138a71918fbac60f29b33",
+          "md5": "667487f57aac762c0df07966fdc7be8d"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "waila-1.8.14-sources.jar",
+          "url": "waila-1.8.14-sources.jar",
+          "size": 379230,
+          "sha512": "a0782b3c46b21acb15b81ac6805d73f565dca00200d15be61ad374ffb0d454223220bc1866d8bd784a5dc477bffeb00d118608741068e39ff9fac40c7e915d25",
+          "sha256": "f5b329831785e4ed166bfdb065ed72e7368237abb2f0aaed3d22ecc5b4198aae",
+          "sha1": "3f3fc904faa48cfb1d9ac69918ed5edf270ddc84",
+          "md5": "2dad60f466762c0b7b2ffafed158a75d"
+        }
+      ]
+    }
+  ]
+}

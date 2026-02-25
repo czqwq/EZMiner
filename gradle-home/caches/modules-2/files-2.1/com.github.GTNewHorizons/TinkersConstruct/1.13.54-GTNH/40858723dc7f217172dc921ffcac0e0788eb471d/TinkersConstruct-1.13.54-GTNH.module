@@ -1,0 +1,245 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "TinkersConstruct",
+    "version": "1.13.54-GTNH",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Mantle",
+          "version": {
+            "requires": "0.5.1"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Mantle",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ForgeMultipart",
+          "version": {
+            "requires": "1.6.8"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ForgeMultipart",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Angelica",
+          "version": {
+            "requires": "1.0.0-beta56"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Angelica",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "api"
+            }
+          }
+        },
+        {
+          "group": "curse.maven",
+          "module": "cofh-core-69162",
+          "version": {
+            "requires": "2388751"
+          }
+        },
+        {
+          "group": "net.industrial-craft",
+          "module": "industrialcraft-2",
+          "version": {
+            "requires": "2.2.828-experimental"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "industrialcraft-2",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Natura",
+          "version": {
+            "requires": "2.8.9"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Natura",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "TinkersConstruct-1.13.54-GTNH-dev.jar",
+          "url": "TinkersConstruct-1.13.54-GTNH-dev.jar",
+          "size": 5647159,
+          "sha512": "c69c815cd47a72abed44229c6885bc586799962df75b1cc127a5e65372fa5fec2777393008d46c65b0fa936ab5e89ed669677ea79c54955dd3cb2c925a42af31",
+          "sha256": "9c17683947fe9649d8ac5dc087b5047be51450b9823b34b6b77799bbb88a3453",
+          "sha1": "c618fe6ddb272ae533a5938ac323af01f6fd7f4c",
+          "md5": "c040a50417be23976f52045a524188e5"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.87-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Mantle",
+          "version": {
+            "requires": "0.5.1"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Mantle",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ForgeMultipart",
+          "version": {
+            "requires": "1.6.8"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ForgeMultipart",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "TinkersConstruct-1.13.54-GTNH-dev.jar",
+          "url": "TinkersConstruct-1.13.54-GTNH-dev.jar",
+          "size": 5647159,
+          "sha512": "c69c815cd47a72abed44229c6885bc586799962df75b1cc127a5e65372fa5fec2777393008d46c65b0fa936ab5e89ed669677ea79c54955dd3cb2c925a42af31",
+          "sha256": "9c17683947fe9649d8ac5dc087b5047be51450b9823b34b6b77799bbb88a3453",
+          "sha1": "c618fe6ddb272ae533a5938ac323af01f6fd7f4c",
+          "md5": "c040a50417be23976f52045a524188e5"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "TinkersConstruct-1.13.54-GTNH.jar",
+          "url": "TinkersConstruct-1.13.54-GTNH.jar",
+          "size": 5720291,
+          "sha512": "a9d3e8e9b5a997bde82fed25294ed4ba180ad302411c8c9939ef8d8a1d68ecb0e3d14dee373de590c7211d373c9649a1ffc7e4eeb0fe0aca321d453d25554577",
+          "sha256": "7bea861e7aa122bc4b2e7024fd77bdc0f8eec9598e4a31ba552919b001533aef",
+          "sha1": "a8c0c1cf4c9c4acf1a606e0701d75dfb6e733afd",
+          "md5": "c08fa9d5f76d37da750f8bcb251f9877"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "TinkersConstruct-1.13.54-GTNH-sources.jar",
+          "url": "TinkersConstruct-1.13.54-GTNH-sources.jar",
+          "size": 5080822,
+          "sha512": "312ebc2a2463591afc6d882db28d1766344a36c794d0a6ef940c8464ff61a86e82fbc60878659f7c083cfcfe7a7cea78f46687e9d3fb16fd8653538a47417c8b",
+          "sha256": "bc9c11dbfcf72f8a450b18ac34597e02da7f7237cb148383ab9234ed7b1cde87",
+          "sha1": "8169811edc9dd9c3301597782762eaf137204a0f",
+          "md5": "06abf483601503fcce613c5b831ee0cc"
+        }
+      ]
+    }
+  ]
+}

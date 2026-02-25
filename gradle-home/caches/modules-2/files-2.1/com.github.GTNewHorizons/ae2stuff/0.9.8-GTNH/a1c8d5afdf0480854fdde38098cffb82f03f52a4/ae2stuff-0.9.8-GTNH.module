@@ -1,0 +1,259 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "ae2stuff",
+    "version": "0.9.8-GTNH",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Applied-Energistics-2-Unofficial",
+          "version": {
+            "requires": "rv3-beta-673-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Applied-Energistics-2-Unofficial",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "bdlib",
+          "version": {
+            "requires": "1.11.0-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "bdlib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.39"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Baubles-Expanded",
+          "version": {
+            "requires": "2.1.9-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Baubles-Expanded",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "api"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "ae2stuff-0.9.8-GTNH-dev.jar",
+          "url": "ae2stuff-0.9.8-GTNH-dev.jar",
+          "size": 648131,
+          "sha512": "27823c44b432736374322b3eb2d3b64b050ff9979d049c9a6afca1c982e30befa15afb7dd9b916acaf17ffa07214e192e70d084ae542340e568c9dcd200071c9",
+          "sha256": "c39c02a6e4702c7d3109f4880daf4768bc9b2238d4a7ac6f5f958db02eb5e6db",
+          "sha1": "730fdec704f20efb12e96968077a44e26f612928",
+          "md5": "0b3974f8525c8537a6771e58c6173601"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "waila",
+          "version": {
+            "requires": "1.8.12"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "waila",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Applied-Energistics-2-Unofficial",
+          "version": {
+            "requires": "rv3-beta-673-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Applied-Energistics-2-Unofficial",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "bdlib",
+          "version": {
+            "requires": "1.11.0-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "bdlib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.39"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Baubles-Expanded",
+          "version": {
+            "requires": "2.1.9-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Baubles-Expanded",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "api"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "ae2stuff-0.9.8-GTNH-dev.jar",
+          "url": "ae2stuff-0.9.8-GTNH-dev.jar",
+          "size": 648131,
+          "sha512": "27823c44b432736374322b3eb2d3b64b050ff9979d049c9a6afca1c982e30befa15afb7dd9b916acaf17ffa07214e192e70d084ae542340e568c9dcd200071c9",
+          "sha256": "c39c02a6e4702c7d3109f4880daf4768bc9b2238d4a7ac6f5f958db02eb5e6db",
+          "sha1": "730fdec704f20efb12e96968077a44e26f612928",
+          "md5": "0b3974f8525c8537a6771e58c6173601"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "ae2stuff-0.9.8-GTNH.jar",
+          "url": "ae2stuff-0.9.8-GTNH.jar",
+          "size": 659451,
+          "sha512": "5c5f35ec7accf095d88ed84427da871665d5b7d9089639b2d56474338dc4bfd581b22b492746b24b862e89a1af1e1e2a6dd7126c9d96a72ea3e5939a9a06285f",
+          "sha256": "768326b6799d1be2f5c1d13a8d23c605aea9c9d68c1a0df44a6b3cda624e1339",
+          "sha1": "eb1660fcc05dd28e6ea3f14006b273c52880f262",
+          "md5": "810b65b9381196209ce2a8deb0d68784"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "ae2stuff-0.9.8-GTNH-sources.jar",
+          "url": "ae2stuff-0.9.8-GTNH-sources.jar",
+          "size": 190493,
+          "sha512": "0be9cc3d2e8638a89be7fb36a846c04b9e90d8f28f14824ec4084476aa46ea3144bad5f5ec270009ca156cccf7253b5c8751c01addd86ecc90d0e6e95d2c0539",
+          "sha256": "734bde1e83518fbed7638da79421f0f47ff34e5ba6957034efc723e6f5db76a8",
+          "sha1": "3c4c0380debd431ff4adeee1284559f3e650b9b5",
+          "md5": "d543deebfec0a2138f04b8ddf76b3f16"
+        }
+      ]
+    }
+  ]
+}

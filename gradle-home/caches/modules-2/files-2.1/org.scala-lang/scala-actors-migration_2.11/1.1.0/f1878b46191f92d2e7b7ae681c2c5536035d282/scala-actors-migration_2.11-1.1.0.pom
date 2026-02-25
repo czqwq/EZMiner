@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.scala-lang</groupId>
+    <artifactId>scala-actors-migration_2.11</artifactId>
+    <packaging>jar</packaging>
+    <description>scala-actors-migration</description>
+    <url>http://scala.github.com/actors-migration</url>
+    <version>1.1.0</version>
+    <licenses>
+        <license>
+            <name>BSD 3-clause</name>
+            <url>http://opensource.org/licenses/BSD-3-Clause</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <name>scala-actors-migration</name>
+    <organization>
+        <name>org.scala-lang</name>
+        <url>http://www.scala-lang.org</url>
+    </organization>
+    <scm>
+        <url>https://github.com/scala/actors-migration.git</url>
+        <connection>git://github.com/scala/actors-migration.git</connection>
+    </scm>
+    <developers>
+        <developer>
+            <id>vjovanov</id>
+            <name>Vojin Jovanovic</name>
+            <url>http://www.vjovanov.com</url>
+        </developer>
+    </developers>
+    <dependencies>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-actors</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang.plugins</groupId>
+            <artifactId>scala-continuations-library_2.11</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.10</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.novocode</groupId>
+            <artifactId>junit-interface</artifactId>
+            <version>0.10</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

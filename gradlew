@@ -88,6 +88,12 @@ APP_BASE_NAME=${0##*/}
 # Discard cd standard output in case $CDPATH is set (https://github.com/gradle/gradle/issues/25036)
 APP_HOME=$( cd -P "${APP_HOME:-./}" > /dev/null && printf '%s\n' "$PWD" ) || exit
 
+# Use project-local gradle-home as GRADLE_USER_HOME so dependency JARs cached in the
+# repo are reused automatically and don't need to be re-downloaded on every fresh clone.
+if [ -z "${GRADLE_USER_HOME}" ]; then
+    export GRADLE_USER_HOME="${APP_HOME}/gradle-home"
+fi
+
 # Use the maximum available, or set MAX_FD != -1 to use that value.
 MAX_FD=maximum
 

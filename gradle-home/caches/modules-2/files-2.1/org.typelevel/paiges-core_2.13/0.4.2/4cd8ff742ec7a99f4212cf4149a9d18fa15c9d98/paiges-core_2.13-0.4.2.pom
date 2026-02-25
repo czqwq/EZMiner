@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.typelevel</groupId>
+    <artifactId>paiges-core_2.13</artifactId>
+    <packaging>jar</packaging>
+    <description>paiges-core</description>
+    <url>https://github.com/typelevel/paiges</url>
+    <version>0.4.2</version>
+    <licenses>
+        <license>
+            <name>Apache-2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <name>paiges-core</name>
+    <organization>
+        <name>org.typelevel</name>
+        <url>https://github.com/typelevel/paiges</url>
+    </organization>
+    <developers>
+        <developer>
+            <id>johnynek</id>
+            <name>Oscar Boykin</name>
+            <url>http://github.com/johnynek/</url>
+        </developer>
+        <developer>
+            <id>coltfred</id>
+            <name>Colt Frederickson</name>
+            <url>http://github.com/coltfred/</url>
+        </developer>
+        <developer>
+            <id>non</id>
+            <name>Erik Osheim</name>
+            <url>http://github.com/non/</url>
+        </developer>
+    </developers>
+    <scm>
+        <url>https://github.com/typelevel/paiges</url>
+        <connection>scm:git:git://github.com/typelevel/paiges.git</connection>
+    </scm>
+    <dependencies>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>2.13.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scalatestplus</groupId>
+            <artifactId>scalacheck-1-15_2.13</artifactId>
+            <version>3.2.9.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest-funsuite_2.13</artifactId>
+            <version>3.2.9</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

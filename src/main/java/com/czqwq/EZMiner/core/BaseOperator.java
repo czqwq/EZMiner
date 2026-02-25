@@ -10,6 +10,7 @@ import org.joml.Vector3i;
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.core.founder.BasePositionFounder;
+import com.czqwq.EZMiner.network.PacketChainCount;
 import com.czqwq.EZMiner.utils.MessageUtils;
 
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -68,8 +69,15 @@ public class BaseOperator {
             }
             operatorCount++;
             countThisTick++;
-            if (countThisTick >= 64) return;
+            if (countThisTick >= 64) {
+                // Send real-time count update to client
+                EZMiner.network.network.sendTo(new PacketChainCount(operatorCount), playerMP);
+                return;
+            }
         }
+
+        // Send real-time count update to client each tick
+        EZMiner.network.network.sendTo(new PacketChainCount(operatorCount), playerMP);
 
         if (positionFounder.stopped.get()) unRegistry();
     }

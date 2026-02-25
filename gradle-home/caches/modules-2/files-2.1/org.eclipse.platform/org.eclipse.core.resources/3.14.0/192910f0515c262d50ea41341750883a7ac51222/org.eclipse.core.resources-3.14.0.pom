@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) 2016, 2018 GK Software SE and others.
+
+  This program and the accompanying materials
+  are made available under the terms of the Eclipse Public License 2.0
+  which accompanies this distribution, and is available at
+  https://www.eclipse.org/legal/epl-2.0/
+
+  SPDX-License-Identifier: EPL-2.0
+
+  Contributors:
+      Stephan Herrmann - initial implementation
+-->
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd" xsi:noNamespaceSchemaLocation="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.eclipse.platform</groupId>
+  <artifactId>org.eclipse.core.resources</artifactId>
+  <version>3.14.0</version>
+  <description>Core Resource Management</description>
+  <name>Core Resource Management</name>
+  <url>http://www.eclipse.org/platform</url>
+  <licenses>
+    <license>
+      <name>Eclipse Public License - v 2.0</name>
+      <url>https://www.eclipse.org/legal/epl-2.0/</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <organization>
+    <name>Eclipse Foundation</name>
+    <url>http://www.eclipse.org/</url>
+  </organization>
+  <issueManagement>
+    <system>Bugzilla</system>
+    <url>https://bugs.eclipse.org/</url>
+  </issueManagement>
+  <scm>
+    <connection>scm:git:git://git.eclipse.org/gitroot/platform/eclipse.platform.resources.git</connection>
+    <tag>I20210215-0600</tag>
+    <url>https://git.eclipse.org/c/platform/eclipse.platform.resources.git</url>
+  </scm>
+  <developers>
+    <developer>
+      <url>https://projects.eclipse.org/projects/eclipse.platform/who</url>
+    </developer>
+  </developers>
+  <dependencies>
+    <dependency>
+      <groupId>org.eclipse.platform</groupId>
+      <artifactId>org.eclipse.ant.core</artifactId>
+      <version>[3.1.0,4.0.0)</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.platform</groupId>
+      <artifactId>org.eclipse.core.expressions</artifactId>
+      <version>[3.2.0,4.0.0)</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.platform</groupId>
+      <artifactId>org.eclipse.core.filesystem</artifactId>
+      <version>[1.3.0,2.0.0)</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.platform</groupId>
+      <artifactId>org.eclipse.core.runtime</artifactId>
+      <version>[3.12.0,4.0.0)</version>
+    </dependency>
+  </dependencies>
+</project>

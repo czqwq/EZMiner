@@ -1,0 +1,178 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "Botania",
+    "version": "1.12.26-GTNH",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Baubles-Expanded",
+          "version": {
+            "requires": "2.1.15-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Baubles-Expanded",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.40"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "Botania-1.12.26-GTNH-dev.jar",
+          "url": "Botania-1.12.26-GTNH-dev.jar",
+          "size": 16072284,
+          "sha512": "facb6d6aaf58e3efacaa29c64c23c837a76c6e4ff73a99e30362a651ab22ebf6461a86bf45ed3740dab8743ccfacb99e003a644124a3f568b38585ea530cf6e9",
+          "sha256": "be5e3089954339ea05b60ab46aaf48fa83ac1a077e7eeb986fefb47261509c0a",
+          "sha1": "840288ca30707c5eb73d09ded903d53596a8a628",
+          "md5": "e03d570da6f8191f84421a391beb2176"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Baubles-Expanded",
+          "version": {
+            "requires": "2.1.15-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Baubles-Expanded",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.40"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "Botania-1.12.26-GTNH-dev.jar",
+          "url": "Botania-1.12.26-GTNH-dev.jar",
+          "size": 16072284,
+          "sha512": "facb6d6aaf58e3efacaa29c64c23c837a76c6e4ff73a99e30362a651ab22ebf6461a86bf45ed3740dab8743ccfacb99e003a644124a3f568b38585ea530cf6e9",
+          "sha256": "be5e3089954339ea05b60ab46aaf48fa83ac1a077e7eeb986fefb47261509c0a",
+          "sha1": "840288ca30707c5eb73d09ded903d53596a8a628",
+          "md5": "e03d570da6f8191f84421a391beb2176"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Botania-1.12.26-GTNH.jar",
+          "url": "Botania-1.12.26-GTNH.jar",
+          "size": 16093646,
+          "sha512": "cf9de1ea7479ba4313c3ad2007617832b82bad80137fc09f988e4f0d34768ace9e80a594b5bda0c26d26e02ef4bc6973f2bc2e82ff6267bc98642fad5814338f",
+          "sha256": "8d0ebffbd299ab4886c4a4a1147c74c2433b66242fab9dd073b7edaf1ee233ae",
+          "sha1": "414f1765fdc7b511d61e3a6e5d7117ea46b642e7",
+          "md5": "54243766bc751e3a5accd79051d0575f"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Botania-1.12.26-GTNH-sources.jar",
+          "url": "Botania-1.12.26-GTNH-sources.jar",
+          "size": 15280854,
+          "sha512": "d2324e25ab3e164c418ccbd76ca15d522eb4f500409f1db9bb5ca744bc0e6baa1a14b9a3c50ead93732ad01ee8acdb9d7e975da396028dc58e8ddecfecafdc8f",
+          "sha256": "ae0a9f26295ad26de4fb208a66b24436c8dbd7055d54788a555c76573046ca4f",
+          "sha1": "d833c95d3677548e2782d440beb7f64150153f93",
+          "md5": "c119da96825c9b939b198bd85d7cc87d"
+        }
+      ]
+    }
+  ]
+}

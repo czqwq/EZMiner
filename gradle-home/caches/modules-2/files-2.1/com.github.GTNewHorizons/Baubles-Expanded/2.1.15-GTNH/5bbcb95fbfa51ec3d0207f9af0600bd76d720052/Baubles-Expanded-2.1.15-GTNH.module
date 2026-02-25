@@ -1,0 +1,131 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "Baubles-Expanded",
+    "version": "2.1.15-GTNH",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "Baubles-Expanded-2.1.15-GTNH-dev.jar",
+          "url": "Baubles-Expanded-2.1.15-GTNH-dev.jar",
+          "size": 102351,
+          "sha512": "37f47710528442f6102d1551125b29741c66f70fe48b2eca450dff15e5800aa8889969bab2492e907c40b094cccffe89614f9034a51c1f3d461f3553b105bc4a",
+          "sha256": "e7176be9ef9637bfb58a052c47af85963f6c7263886ae21c93e7a7e753df373d",
+          "sha1": "12274c032f141865f5f7dc34b09877ed792e6b36",
+          "md5": "88600b30ce4a7926a9c55e5b269d6e50"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.87-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "Baubles-Expanded-2.1.15-GTNH-dev.jar",
+          "url": "Baubles-Expanded-2.1.15-GTNH-dev.jar",
+          "size": 102351,
+          "sha512": "37f47710528442f6102d1551125b29741c66f70fe48b2eca450dff15e5800aa8889969bab2492e907c40b094cccffe89614f9034a51c1f3d461f3553b105bc4a",
+          "sha256": "e7176be9ef9637bfb58a052c47af85963f6c7263886ae21c93e7a7e753df373d",
+          "sha1": "12274c032f141865f5f7dc34b09877ed792e6b36",
+          "md5": "88600b30ce4a7926a9c55e5b269d6e50"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Baubles-Expanded-2.1.15-GTNH.jar",
+          "url": "Baubles-Expanded-2.1.15-GTNH.jar",
+          "size": 103326,
+          "sha512": "6ad6171ccdb62688d34ba026d12a210fcc9922efb9665486c016081c051fb504132a98f5ac2583caf89afcad71fa32f38f50c75a7f87903f6e37824a4ef5e963",
+          "sha256": "58c72ac357098633fb9c9dd1a985a4dcddc5f14d48079be906e6a17932e092f6",
+          "sha1": "ab58024b04f8ce17c25bc110fd25370d9e488888",
+          "md5": "36572e6802a2363c81f595afc3ca0bbd"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "Baubles-Expanded-2.1.15-GTNH-sources.jar",
+          "url": "Baubles-Expanded-2.1.15-GTNH-sources.jar",
+          "size": 78545,
+          "sha512": "91ecbdeacdd697f80b2169dafb72d7f3db7cb39c113887ab10146c9edadf2177625ce46874d0b78efc500ecd580d7f065c1713322f53cb4fa479df8197198c1a",
+          "sha256": "0880479cc5350034ce67fe7cd1eb6624351d45432b4be6c9fb9fe84c033611f0",
+          "sha1": "27faafbaaafffac38e7a3b73a6ff4a7cf9f67292",
+          "md5": "dee29b75f998da1099cea1b2ce273151"
+        }
+      ]
+    }
+  ]
+}

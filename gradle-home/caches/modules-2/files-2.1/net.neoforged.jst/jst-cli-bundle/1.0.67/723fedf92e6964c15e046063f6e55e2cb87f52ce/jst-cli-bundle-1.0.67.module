@@ -1,0 +1,38 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.neoforged.jst",
+    "module": "jst-cli-bundle",
+    "version": "1.0.67",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.8"
+    }
+  },
+  "variants": [
+    {
+      "name": "shadowRuntimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "shadowed",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "jst-cli-bundle-1.0.67.jar",
+          "url": "jst-cli-bundle-1.0.67.jar",
+          "size": 34814649,
+          "sha512": "0d19d588605818ff2608b12a0bb2cf86a8184c851a99f4954ee2ae317447d7969b4d8a0a9213fc4e802bd66acb889ddb2458301a0e17a3144650fe64a2960395",
+          "sha256": "8cd44c8319078349ec533048f8f223c297e77d503233bc8abc8a77fb84d39f49",
+          "sha1": "20d7d42f8a0d0126e34806ed97ca299a95629cb3",
+          "md5": "1dca8fa828b88fb4a55b8ace8b9d3e96"
+        }
+      ]
+    }
+  ]
+}

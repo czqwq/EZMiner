@@ -1,0 +1,273 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "AE2FluidCraft-Rework",
+    "version": "1.4.115-gtnh",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.91-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Applied-Energistics-2-Unofficial",
+          "version": {
+            "requires": "rv3-beta-690-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Applied-Energistics-2-Unofficial",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "curse.maven",
+          "module": "cofh-core-69162",
+          "version": {
+            "requires": "2388751"
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "waila",
+          "version": {
+            "requires": "1.8.14"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "waila",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.40"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "AE2FluidCraft-Rework-1.4.115-gtnh-dev.jar",
+          "url": "AE2FluidCraft-Rework-1.4.115-gtnh-dev.jar",
+          "size": 1284282,
+          "sha512": "abbb26fdd76e910a439bcf6057bf1f718e4d9454f551398d5e2f7b78f22d025e33b07e589aaadff4135ef194660f55fc1b88beef068c25e9fac215914a32a0f0",
+          "sha256": "68e4ae1452b9a2f03a9d161b499dae709d59e6b044e8685f73c2afa210af3828",
+          "sha1": "a09cf1821f7ef55bbb7f973c6d2f62907fef61ee",
+          "md5": "b54c0dc593931632f9a836f2731107dd"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "WirelessCraftingTerminal",
+          "version": {
+            "requires": "1.12.7"
+          },
+          "excludes": [
+            {
+              "group": "com.github.GTNewHorizons",
+              "module": "Applied-Energistics-2-Unofficial"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "WirelessCraftingTerminal",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.91-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Applied-Energistics-2-Unofficial",
+          "version": {
+            "requires": "rv3-beta-690-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Applied-Energistics-2-Unofficial",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "curse.maven",
+          "module": "cofh-core-69162",
+          "version": {
+            "requires": "2388751"
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "waila",
+          "version": {
+            "requires": "1.8.14"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "waila",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.40"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "AE2FluidCraft-Rework-1.4.115-gtnh-dev.jar",
+          "url": "AE2FluidCraft-Rework-1.4.115-gtnh-dev.jar",
+          "size": 1284282,
+          "sha512": "abbb26fdd76e910a439bcf6057bf1f718e4d9454f551398d5e2f7b78f22d025e33b07e589aaadff4135ef194660f55fc1b88beef068c25e9fac215914a32a0f0",
+          "sha256": "68e4ae1452b9a2f03a9d161b499dae709d59e6b044e8685f73c2afa210af3828",
+          "sha1": "a09cf1821f7ef55bbb7f973c6d2f62907fef61ee",
+          "md5": "b54c0dc593931632f9a836f2731107dd"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "AE2FluidCraft-Rework-1.4.115-gtnh.jar",
+          "url": "AE2FluidCraft-Rework-1.4.115-gtnh.jar",
+          "size": 1291265,
+          "sha512": "a0029ff295c3c2d22f0d0d7b77bcb3f154e9191ff56ed4091034af8a33b62b267e04e2ea874aaec76256d9fca9949377122a732bba53d2d610c5aed2c38bd5ca",
+          "sha256": "272d17a0a03f7284320504f6fe82502d824347446b65e108398389a3d02a681e",
+          "sha1": "5ce80d8421a7ffac2d5732d0ee462ba5031151a5",
+          "md5": "95f6e9f3b57aca13c4ef2810e57ed2d8"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "AE2FluidCraft-Rework-1.4.115-gtnh-sources.jar",
+          "url": "AE2FluidCraft-Rework-1.4.115-gtnh-sources.jar",
+          "size": 714521,
+          "sha512": "7eaa68dcd84f4bce77b23f76a8b1980bf994685b24ac935ab74fe88787ccba423936f0e0d30b13dad16cef634dabd58a8b43af4c2979c2f62b0e2751e195243a",
+          "sha256": "8cb0d450fef871be92928eaeaf3aa30e258544c5a82dcac48f1305e64f5c2ea4",
+          "sha1": "efac263a4b58d8bd0cfa29cbdf2bf6debbfddb9c",
+          "md5": "de67c2546cb587632c3669b1537f9451"
+        }
+      ]
+    }
+  ]
+}

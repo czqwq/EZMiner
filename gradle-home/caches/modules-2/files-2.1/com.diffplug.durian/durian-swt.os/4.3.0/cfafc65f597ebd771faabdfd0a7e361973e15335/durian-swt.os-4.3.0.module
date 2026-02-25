@@ -1,0 +1,100 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.diffplug.durian",
+    "module": "durian-swt.os",
+    "version": "4.3.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.1.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "durian-swt.os-4.3.0.jar",
+          "url": "durian-swt.os-4.3.0.jar",
+          "size": 13463,
+          "sha512": "f1a601d4cafca89cc01f2b35429b2db253799509082fd2cefb28040730d384659f3b58f7acda5e10b651963c985082b5d277e0e0b5c9438723529459057c0d25",
+          "sha256": "81e2b639a7e4be6dc9b7245713cf06f5cab51f29db2e16b9b57645c96fde2884",
+          "sha1": "9555b0c3473801dc074388ae3de4648f747f1303",
+          "md5": "3c88b577c20e5745633276105693bfcb"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "durian-swt.os-4.3.0.jar",
+          "url": "durian-swt.os-4.3.0.jar",
+          "size": 13463,
+          "sha512": "f1a601d4cafca89cc01f2b35429b2db253799509082fd2cefb28040730d384659f3b58f7acda5e10b651963c985082b5d277e0e0b5c9438723529459057c0d25",
+          "sha256": "81e2b639a7e4be6dc9b7245713cf06f5cab51f29db2e16b9b57645c96fde2884",
+          "sha1": "9555b0c3473801dc074388ae3de4648f747f1303",
+          "md5": "3c88b577c20e5745633276105693bfcb"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "durian-swt.os-4.3.0-javadoc.jar",
+          "url": "durian-swt.os-4.3.0-javadoc.jar",
+          "size": 323803,
+          "sha512": "02270c1d04f422613a971cb9712142c5db94bf54c9f29f4020cc69f37f0a359e961676de63007e0de10ebb9c189f83ea1d7d1212d5198c79cbf9fd4dcd903da5",
+          "sha256": "644fa0be4c7c9f679ef60391611260a05c4ed8fea9620075fdc896aed3758c39",
+          "sha1": "6a7eb189c34d78dac0d62b06fe20825f2818efe4",
+          "md5": "57a112237149599f21be4304d84e0935"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "durian-swt.os-4.3.0-sources.jar",
+          "url": "durian-swt.os-4.3.0-sources.jar",
+          "size": 7210,
+          "sha512": "4e99d135dc0d7ec5efe6a7ae7fac088e8326fa5d062a261ceeb08a17d83affca9a9ae6bbb30c424da30644d022910adebf95e82e9042750bd9d2f668f96a2a3a",
+          "sha256": "73d6dafe77f28d649dd56a2ae2cc4f365c25e956234f0dd01940a35f6f27714a",
+          "sha1": "bc63aa1c74b7e4fbbfc2599980c62663de602386",
+          "md5": "c41af2674b6a859aebddd15a85f8b512"
+        }
+      ]
+    }
+  ]
+}

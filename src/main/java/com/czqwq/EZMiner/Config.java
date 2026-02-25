@@ -36,6 +36,8 @@ public class Config {
     }
 
     public static void load() {
+        // Re-read from disk so that external edits (including via text editor) are picked up.
+        configuration.load();
         bigRadius = configuration
             .getInt("bigRadius", Configuration.CATEGORY_GENERAL, 8, 0, Integer.MAX_VALUE, "ezminer.config.bigRadius");
         blockLimit = configuration.getInt(

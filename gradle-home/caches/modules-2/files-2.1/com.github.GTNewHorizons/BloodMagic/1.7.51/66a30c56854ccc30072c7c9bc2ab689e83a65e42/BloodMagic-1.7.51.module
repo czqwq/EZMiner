@@ -1,0 +1,178 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "BloodMagic",
+    "version": "1.7.51",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "waila",
+          "version": {
+            "requires": "1.8.13"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "waila",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.87-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "BloodMagic-1.7.51-dev.jar",
+          "url": "BloodMagic-1.7.51-dev.jar",
+          "size": 9274427,
+          "sha512": "a070ec36582c7fe020fe0144486f9eee910c3fed09799ec6e26ead8fa7a7a58f155527c6ccd50e8306ee9c1470d5c5cb06838b640ec60e1eedddd41265cfdd91",
+          "sha256": "d36aaa8e9e6efa97b4d07c6cdf18637119ce4a6e24102248b544d4d53a2d258a",
+          "sha1": "7b6b6e16b40f53afc5a9de88e7cbb25b37647f5b",
+          "md5": "e2980f3ee55e991c8e37e4b4c1eb27e3"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "waila",
+          "version": {
+            "requires": "1.8.13"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "waila",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.87-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "BloodMagic-1.7.51-dev.jar",
+          "url": "BloodMagic-1.7.51-dev.jar",
+          "size": 9274427,
+          "sha512": "a070ec36582c7fe020fe0144486f9eee910c3fed09799ec6e26ead8fa7a7a58f155527c6ccd50e8306ee9c1470d5c5cb06838b640ec60e1eedddd41265cfdd91",
+          "sha256": "d36aaa8e9e6efa97b4d07c6cdf18637119ce4a6e24102248b544d4d53a2d258a",
+          "sha1": "7b6b6e16b40f53afc5a9de88e7cbb25b37647f5b",
+          "md5": "e2980f3ee55e991c8e37e4b4c1eb27e3"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "BloodMagic-1.7.51.jar",
+          "url": "BloodMagic-1.7.51.jar",
+          "size": 9289734,
+          "sha512": "a27855b3bfe802f85dfbacac8a4129b11bab2073b565b2eb9edc60f1d0e0c5babeb35fadef1e5f776f9de76064267d6ff5838a2bcdacf375d68aa970a0cf439b",
+          "sha256": "1b61f0116b00288c590dbf4674b4412a2c30a548936264d46d5039d9906ad6fa",
+          "sha1": "546fe50d57e662e05b454dd6b92efa95d4ae257b",
+          "md5": "5d2fa0fd625cdf12157a31caea450374"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "BloodMagic-1.7.51-sources.jar",
+          "url": "BloodMagic-1.7.51-sources.jar",
+          "size": 8533353,
+          "sha512": "bcb2b22cef5c60fc8fc2b34a17bb348bfc0ca5c3838b1e7ffffdf4e865227cec14cdff7eaf33997952b73f4ab877187fe786f86f9d45a2616eb860580e876c00",
+          "sha256": "1d7a502f5d5b7a497d43b4e90c789837b2bfb4bbb3b75dd05089ea28594a5409",
+          "sha1": "10b2637db079d646aba129c235393c7034216da5",
+          "md5": "c765c8d8bc3b34a9616e77c3efcbbb6e"
+        }
+      ]
+    }
+  ]
+}

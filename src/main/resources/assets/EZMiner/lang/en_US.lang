@@ -1,4 +1,5 @@
 ezminer.hud.active=Chain Active
+ezminer.hud.chainCount=Chained Blocks
 
 key.ezminer.chainKey=Chain Key
 key.ezminer.modeSwitch=Mode Switch

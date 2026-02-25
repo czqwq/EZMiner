@@ -1,0 +1,779 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.GTNewHorizons",
+    "module": "GT5-Unofficial",
+    "version": "5.09.51.470",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "StructureLib",
+          "version": {
+            "requires": "1.4.23"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "StructureLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "net.industrial-craft",
+          "module": "industrialcraft-2",
+          "version": {
+            "requires": "2.2.828-experimental"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "industrialcraft-2",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.90-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughIds",
+          "version": {
+            "requires": "2.1.10"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughIds",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.40"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ModularUI",
+          "version": {
+            "requires": "1.2.20"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ModularUI",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ModularUI2",
+          "version": {
+            "requires": "2.2.18-1.7.10"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ModularUI2",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "waila",
+          "version": {
+            "requires": "1.8.14"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "waila",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Applied-Energistics-2-Unofficial",
+          "version": {
+            "requires": "rv3-beta-689-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Applied-Energistics-2-Unofficial",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "AE2FluidCraft-Rework",
+          "version": {
+            "requires": "1.4.114-gtnh"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "AE2FluidCraft-Rework",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Yamcl",
+          "version": {
+            "requires": "0.7.1"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Yamcl",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Postea",
+          "version": {
+            "requires": "1.1.3"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Postea",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ThaumicTinkerer",
+          "version": {
+            "requires": "2.11.26"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ThaumicTinkerer",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Mobs-Info",
+          "version": {
+            "requires": "0.5.4-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Mobs-Info",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Navigator",
+          "version": {
+            "requires": "1.0.17"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Navigator",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Avaritia",
+          "version": {
+            "requires": "1.75"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Avaritia",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Angelica",
+          "version": {
+            "requires": "1.0.0-beta56"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Angelica",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "AppleCore",
+          "version": {
+            "requires": "3.3.7"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "AppleCore",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "BuildCraft",
+          "version": {
+            "requires": "7.1.44"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "BuildCraft",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "EnderIO",
+          "version": {
+            "requires": "2.9.25"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "EnderIO",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ForestryMC",
+          "version": {
+            "requires": "4.10.17"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ForestryMC",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Galacticraft",
+          "version": {
+            "requires": "3.3.12-GTNH"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Galacticraft",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ProjectRed",
+          "version": {
+            "requires": "4.11.13-GTNH"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ProjectRed",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Railcraft",
+          "version": {
+            "requires": "9.16.33"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Railcraft",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "curse.maven",
+          "module": "advsolar-362768",
+          "version": {
+            "requires": "2885953"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "GT5-Unofficial-5.09.51.470-dev.jar",
+          "url": "GT5-Unofficial-5.09.51.470-dev.jar",
+          "size": 58279862,
+          "sha512": "f6e7f75f51320466cafafae3a75b333fff0eee5c7e3f87b588beb188338ca1eb71bd79cd8317875b584473f03fe6812600fe1a49c3aa4454469166d229104a6a",
+          "sha256": "8ebd4c864251b888b55b240e32cfecd2269ce3b798d70289b559901d83361527",
+          "sha1": "f497797119e70a7e1040ab34b7cfa2c48629ba71",
+          "md5": "d3b02dc4d06dfe224a99ce6f4edbbc0f"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.legacymoddingmc",
+          "module": "unimixins",
+          "version": {
+            "requires": "0.1.23"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "unimixins",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Baubles-Expanded",
+          "version": {
+            "requires": "2.1.15-GTNH"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Baubles-Expanded",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "TinkersConstruct",
+          "version": {
+            "requires": "1.13.54-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "TinkersConstruct",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Hodgepodge",
+          "version": {
+            "requires": "2.6.107"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Hodgepodge",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "StructureLib",
+          "version": {
+            "requires": "1.4.23"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "StructureLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "net.industrial-craft",
+          "module": "industrialcraft-2",
+          "version": {
+            "requires": "2.2.828-experimental"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "industrialcraft-2",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughItems",
+          "version": {
+            "requires": "2.7.90-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughItems",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "NotEnoughIds",
+          "version": {
+            "requires": "2.1.10"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "NotEnoughIds",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.40"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "GTNHLib",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ModularUI",
+          "version": {
+            "requires": "1.2.20"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ModularUI",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "ModularUI2",
+          "version": {
+            "requires": "2.2.18-1.7.10"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "ModularUI2",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "waila",
+          "version": {
+            "requires": "1.8.14"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "waila",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Applied-Energistics-2-Unofficial",
+          "version": {
+            "requires": "rv3-beta-689-GTNH"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Applied-Energistics-2-Unofficial",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "AE2FluidCraft-Rework",
+          "version": {
+            "requires": "1.4.114-gtnh"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "AE2FluidCraft-Rework",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Yamcl",
+          "version": {
+            "requires": "0.7.1"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Yamcl",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        },
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "Postea",
+          "version": {
+            "requires": "1.1.3"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "Postea",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.6.37"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "GT5-Unofficial-5.09.51.470-dev.jar",
+          "url": "GT5-Unofficial-5.09.51.470-dev.jar",
+          "size": 58279862,
+          "sha512": "f6e7f75f51320466cafafae3a75b333fff0eee5c7e3f87b588beb188338ca1eb71bd79cd8317875b584473f03fe6812600fe1a49c3aa4454469166d229104a6a",
+          "sha256": "8ebd4c864251b888b55b240e32cfecd2269ce3b798d70289b559901d83361527",
+          "sha1": "f497797119e70a7e1040ab34b7cfa2c48629ba71",
+          "md5": "d3b02dc4d06dfe224a99ce6f4edbbc0f"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "GT5-Unofficial-5.09.51.470.jar",
+          "url": "GT5-Unofficial-5.09.51.470.jar",
+          "size": 58578281,
+          "sha512": "a1a3dc7543cbcb138395efe2eeea6d9f400c76b0aef6071d7154b75ce7ec2b09c76b52c327105336bef98b74652a27eebb9819020cb8ca0d5864c36298383e3a",
+          "sha256": "c2054a2a6e233dd6d2d259b5a622c726dd8078a8955cd3d76cdaadc063b91e7c",
+          "sha1": "dbf998fec4f2cc28713f9b901da71b59e2b9b769",
+          "md5": "24b6a8662fbb88fb1805dc8d5d9a7899"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "GT5-Unofficial-5.09.51.470-sources.jar",
+          "url": "GT5-Unofficial-5.09.51.470-sources.jar",
+          "size": 52788643,
+          "sha512": "e36106b96daa1d40a3bfc0a4f7b970768ab70878d3d731b631d0ca6294cb4a9ce01ad4dd6c01446013b8b84b0f4597bde788bcdc024298aafed4d37a40bb47cc",
+          "sha256": "63febe5fa3772b15a6ce2d1198ea79a8f863ed1fcee375c4aeb1f738ad2eb016",
+          "sha1": "38a90ba53059f5efb842ed64d3410f72dd5c220d",
+          "md5": "c035b4b55e80499b9bd1658ebe224885"
+        }
+      ]
+    }
+  ]
+}
