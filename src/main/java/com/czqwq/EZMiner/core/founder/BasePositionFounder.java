@@ -78,6 +78,13 @@ public class BasePositionFounder extends Pauseable {
     public boolean checkCanAdd(Vector3i pos) {
         if (foundedPositions.contains(pos)) return false;
         if (player.worldObj == null) return false; // player logged out
+        // Skip blocks whose chunk is not loaded. Calling getBlock() on an unloaded chunk
+        // triggers WorldServer to generate it on this background thread, which corrupts
+        // Minecraft's TickNextTick lists and causes "TickNextTick list out of synch" crashes.
+        // This guard is relevant when tunnelWidth is very large (many positions fall outside
+        // the server's loaded-chunk radius); for all other modes the radius is small enough
+        // that every accessed chunk is already loaded.
+        if (!player.worldObj.blockExists(pos.x, pos.y, pos.z)) return false;
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
         if (block.equals(Blocks.air) || block.getMaterial()
             .isLiquid() || block.equals(Blocks.bedrock)) return false;
