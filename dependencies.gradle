@@ -16,7 +16,6 @@ dependencies {
     implementation(gtnhDev("Infernal-Mobs"))
     implementation(gtnhDev("Galaxy-Space-GTNH"))
     implementation(gtnhDev("SGCraft"))
-    implementation(gtnhDev("twilightforest"))
     implementation(gtnhDev("AE2FluidCraft-Rework"))
     implementation(gtnhDev("ae2stuff"))
     implementation(gtnhDev("Avaritia"))
@@ -34,11 +33,8 @@ dependencies {
     implementation(gtnhDev("NotEnoughItems"))
     implementation(gtnhDev("OpenComputers"))
     implementation(gtnhDev("supersolarpanels"))
-    implementation(gtnhDev("ThaumicEnergistics"))
     implementation(gtnhDev("Universal-Singularities"))
-    implementation(gtnhDev("WitcheryExtras"))
 
-    implementation('thaumcraft:Thaumcraft:1.7.10-4.2.3.5:dev')
     implementation('com.github.GTNewHorizons:worldedit-gtnh:v0.0.8:dev')
 
     // runtime
