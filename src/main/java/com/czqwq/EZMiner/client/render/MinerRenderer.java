@@ -4,6 +4,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.MovingObjectPosition;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.common.MinecraftForge;
 
@@ -61,6 +62,11 @@ public class MinerRenderer {
             return;
         }
         if (event.target == null) return;
+        // Only render when actually looking at a block (not air/entity/miss).
+        if (event.target.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
+            stopViewer();
+            return;
+        }
 
         // Capture GL matrices here while we are in a render context
         MatrixUtils.captureMatrices();

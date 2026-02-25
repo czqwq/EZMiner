@@ -6,7 +6,6 @@ import java.util.UUID;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
@@ -42,6 +41,12 @@ public class Manager {
 
     public BaseOperator operator = null;
 
+    /**
+     * World position of the first block that triggered this chain operation.
+     * Used as the drop spawn point when {@link Config#dropToInventory} is false.
+     */
+    public Vector3i originPos = null;
+
     /** Collected drops during the current chain operation. */
     public final ArrayList<ItemStack> drops = new ArrayList<>();
 
@@ -59,6 +64,7 @@ public class Manager {
         inOperate = true;
         player = (EntityPlayerMP) event.getPlayer();
         Vector3i pos = new Vector3i(event.x, event.y, event.z);
+        originPos = pos;
         operator = new BaseOperator(pos, this);
         operator.registry();
     }
@@ -71,15 +77,26 @@ public class Manager {
         if (!inOperate) return;
 
         for (ItemStack drop : event.drops) {
-            boolean merged = false;
-            for (ItemStack existing : new ArrayList<>(drops)) {
+            if (drop == null || drop.stackSize <= 0) continue;
+            int remaining = drop.stackSize;
+            // Try to fill into existing matching stacks first (respecting maxStackSize).
+            for (ItemStack existing : drops) {
                 if (!DeterminingIdentical.isSame(existing, drop)) continue;
-                existing.stackSize += drop.stackSize;
-                drop.stackSize = 0;
-                merged = true;
-                break;
+                int space = existing.getMaxStackSize() - existing.stackSize;
+                if (space <= 0) continue;
+                int toAdd = Math.min(space, remaining);
+                existing.stackSize += toAdd;
+                remaining -= toAdd;
+                if (remaining <= 0) break;
             }
-            if (!merged) drops.add(drop.copy());
+            // Whatever didn't fit: create new stack(s), each capped at maxStackSize.
+            while (remaining > 0) {
+                int take = Math.min(remaining, drop.getMaxStackSize());
+                ItemStack newStack = drop.copy();
+                newStack.stackSize = take;
+                drops.add(newStack);
+                remaining -= take;
+            }
         }
         event.drops.clear();
     }
@@ -94,44 +111,36 @@ public class Manager {
 
     public void flushDrops() {
         if (drops.isEmpty()) return;
+        if (player == null || player.worldObj == null) {
+            drops.clear();
+            return;
+        }
+        // Determine drop position:
+        // dropToInventory=true → at the player's current feet position
+        // dropToInventory=false → at the center of the originally mined block
+        double spawnX, spawnY, spawnZ;
+        if (Config.dropToInventory || originPos == null) {
+            spawnX = player.posX;
+            spawnY = player.posY;
+            spawnZ = player.posZ;
+        } else {
+            spawnX = originPos.x + 0.5;
+            spawnY = originPos.y + 0.5;
+            spawnZ = originPos.z + 0.5;
+        }
         for (ItemStack stack : drops) {
             if (stack == null || stack.stackSize <= 0) continue;
-            if (Config.dropToInventory) {
-                giveItemToPlayer(stack);
-            } else {
-                spawnItemAt(stack);
+            // Ensure each spawned entity has a valid stack size.
+            int remaining = stack.stackSize;
+            while (remaining > 0) {
+                int take = Math.min(remaining, stack.getMaxStackSize());
+                ItemStack toSpawn = stack.copy();
+                toSpawn.stackSize = take;
+                player.worldObj.spawnEntityInWorld(new EntityItem(player.worldObj, spawnX, spawnY, spawnZ, toSpawn));
+                remaining -= take;
             }
         }
         drops.clear();
-    }
-
-    private void giveItemToPlayer(ItemStack stack) {
-        // Try each inventory slot; overflow falls at player feet
-        IInventory inv = player.inventory;
-        ItemStack remainder = stack;
-        for (int i = 0; i < inv.getSizeInventory() && remainder != null && remainder.stackSize > 0; i++) {
-            ItemStack slot = inv.getStackInSlot(i);
-            if (slot == null) {
-                inv.setInventorySlotContents(i, remainder.copy());
-                remainder = null;
-            } else if (DeterminingIdentical.isSame(slot, remainder)) {
-                int space = slot.getMaxStackSize() - slot.stackSize;
-                if (space > 0) {
-                    int toAdd = Math.min(space, remainder.stackSize);
-                    slot.stackSize += toAdd;
-                    remainder.stackSize -= toAdd;
-                }
-            }
-        }
-        player.inventory.markDirty();
-        if (remainder != null && remainder.stackSize > 0) {
-            spawnItemAt(remainder);
-        }
-    }
-
-    private void spawnItemAt(ItemStack stack) {
-        player.worldObj
-            .spawnEntityInWorld(new EntityItem(player.worldObj, player.posX, player.posY, player.posZ, stack));
     }
 
     // ===== Lifecycle =====
