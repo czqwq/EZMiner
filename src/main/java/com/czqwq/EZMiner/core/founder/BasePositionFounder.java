@@ -59,9 +59,15 @@ public class BasePositionFounder extends Pauseable {
     public void run1() {
         int curRadius = 1;
         while (curCount < minerConfig.blockLimit && curRadius <= minerConfig.bigRadius) {
-            for (int x = center.x - curRadius; x <= center.x + curRadius; x++) {
-                for (int y = center.y - curRadius; y <= center.y + curRadius; y++) {
-                    for (int z = center.z - curRadius; z <= center.z + curRadius; z++) {
+            int xMin = center.x - curRadius, xMax = center.x + curRadius;
+            int yMin = center.y - curRadius, yMax = center.y + curRadius;
+            int zMin = center.z - curRadius, zMax = center.z + curRadius;
+            for (int x = xMin; x <= xMax; x++) {
+                for (int y = yMin; y <= yMax; y++) {
+                    for (int z = zMin; z <= zMax; z++) {
+                        // Only scan the shell at curRadius; interior positions were already
+                        // covered when processing smaller radii, so skip them here.
+                        if (x != xMin && x != xMax && y != yMin && y != yMax && z != zMin && z != zMax) continue;
                         Vector3i pos = new Vector3i(x, y, z);
                         if (checkCanAdd(pos)) addResult(pos);
                         if (curCount >= minerConfig.blockLimit) return;
