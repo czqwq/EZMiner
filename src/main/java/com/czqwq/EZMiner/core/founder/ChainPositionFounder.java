@@ -60,6 +60,11 @@ public class ChainPositionFounder extends BasePositionFounder {
                     }
                 }
             }
+            // Yield to the tick-pause mechanism once per frontier node rather than per
+            // neighbour to avoid spinning on the AtomicBoolean check (2*r+1)³ times.
+            waitUntil();
+            if (Thread.currentThread()
+                .isInterrupted()) return;
         }
     }
 
@@ -77,6 +82,10 @@ public class ChainPositionFounder extends BasePositionFounder {
     /**
      * No explicit adjacency check needed – PQ-BFS guarantees we only visit positions
      * reachable from an already-found block within {@code smallRadius}.
+     *
+     * <p>
+     * Pre-fetches block and metadata once and passes them to
+     * {@link DeterminingIdentical#identical} to avoid duplicate world lookups.
      */
     @Override
     public boolean checkCanAdd(Vector3i pos) {
@@ -88,7 +97,8 @@ public class ChainPositionFounder extends BasePositionFounder {
         int blockMeta = player.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
         Vector3i playerPos = playerFloorPos();
         if (pos.x == playerPos.x && pos.y == (playerPos.y - 1) && pos.z == playerPos.z) return false;
-        if (!DeterminingIdentical.identical(sampleBlock, sampleBlockMeta, sampleTileEntity, pos, player)) return false;
+        if (!DeterminingIdentical
+            .identical(sampleBlock, sampleBlockMeta, sampleTileEntity, block, blockMeta, pos, player)) return false;
         if (player.capabilities.isCreativeMode) return true;
         return block.canHarvestBlock(player, blockMeta);
     }
