@@ -9,6 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ChatComponentTranslation;
 
 import org.joml.Vector3i;
 
@@ -82,9 +83,10 @@ public class BaseOperator {
                 // Add configured exhaustion per block
                 playerMP.addExhaustion((float) Config.addExhaustion);
             } catch (Exception e) {
-                String msg = "EZMiner: Error while harvesting block at " + pos + ": " + e;
-                EZMiner.LOG.error(msg, e);
-                MessageUtils.serverSendPlayerMessage(msg, manager.playerUUID);
+                EZMiner.LOG.error("EZMiner: Error while harvesting block at {}: {}", pos, e.getMessage(), e);
+                MessageUtils.serverSendPlayerMessage(
+                    new ChatComponentTranslation("ezminer.message.chain.error", pos, e.toString()),
+                    manager.playerUUID);
             }
             operatorCount++;
             countThisTick++;
@@ -125,7 +127,10 @@ public class BaseOperator {
         long ms = System.currentTimeMillis() - startTime;
         if (manager.pConfig.useChainDoneMessage) {
             MessageUtils.serverSendPlayerMessage(
-                "EZMiner: chain done; blocks=" + operatorCount + "; time=" + (Math.round(ms / 10.0) / 100.0f) + "s",
+                new ChatComponentTranslation(
+                    "ezminer.message.chain.done",
+                    operatorCount,
+                    Math.round(ms / 10.0) / 100.0f),
                 manager.playerUUID);
         }
         FMLCommonHandler.instance()
@@ -232,6 +237,9 @@ public class BaseOperator {
      * This method is a no-op when VP is not installed or the block is not a GT ore.
      */
     private void triggerVPOreDiscovery(Vector3i pos) {
+        // Thread-safety: checkCompatibility() writes vpProspectMethod and vpSendToClientMethod
+        // BEFORE writing hasVP_API=true (all volatile). A volatile read of hasVP_API==true
+        // establishes happens-before over those prior writes, so the null checks below are safe.
         if (!hasVP_API || vpProspectMethod == null || vpSendToClientMethod == null) return;
         if (!DeterminingIdentical.isGTOreBlock(pos, playerMP)) return;
 

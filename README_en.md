@@ -77,8 +77,8 @@ Aim at a block with the chain key held and EZMiner will render glowing outlines 
 
 All drops generated during a chain are **collected silently** and delivered in one batch when the operation finishes, preventing item-entity lag spikes.
 
-- `dropToInventory = true` (default): drops go directly into the player's inventory; overflow falls at their feet
-- `dropToInventory = false`: drops fall at the location of the first mined block
+- `dropToPlayer = true` (default): drops spawn as item entities at the player's current feet position
+- `dropToPlayer = false`: drops spawn as item entities at the location of the first mined block
 
 Stack sizes always respect each item's `maxStackSize`.
 
