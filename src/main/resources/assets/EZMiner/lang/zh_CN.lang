@@ -29,14 +29,14 @@ ezminer.config.usePreview=按住连锁键时显示方块轮廓预览
 ezminer.config.useChainDoneMessage=连锁结束后显示提示消息
 ezminer.config.chainActivationMode=连锁键激活方式: 0 = 按住激活（默认）, 1 = 点击切换开关
 
-ezminer.command.nopermission=\u00a7c你没有OP权限，无法重新加载配置。
+ezminer.command.nopermission=§c你没有OP权限，无法重新加载配置。
 ezminer.command.reloadconfig.success=EZMiner 配置已重新加载。
-ezminer.command.active_mode.set=EZMiner: 连锁键激活模式已设为 \u00a7e%s\u00a7r（%s）。已保存至配置。
+ezminer.command.active_mode.set=EZMiner: 连锁键激活模式已设为 §e%s§r（%s）。已保存至配置。
 ezminer.command.active_mode.desc.0=按住激活
 ezminer.command.active_mode.desc.1=点击切换
-ezminer.command.usage.reloadconfig=\u00a7e/EZMiner reloadConfig\u00a7r - 从磁盘重新加载配置（仅OP）
-ezminer.command.usage.active_mode=\u00a7e/EZMiner active_mode <0|1>\u00a7r - 设置连锁键激活模式
-ezminer.command.active_mode.usage.0=\u00a7e/EZMiner active_mode 0\u00a7r - 按住：按住连锁键进行挖掘，松开则停止
-ezminer.command.active_mode.usage.1=\u00a7e/EZMiner active_mode 1\u00a7r - 切换：按一次开始挖掘，再按一次停止
+ezminer.command.usage.reloadconfig=§e/EZMiner reloadConfig§r - 从磁盘重新加载配置（仅OP）
+ezminer.command.usage.active_mode=§e/EZMiner active_mode <0|1>§r - 设置连锁键激活模式
+ezminer.command.active_mode.usage.0=§e/EZMiner active_mode 0§r - 按住：按住连锁键进行挖掘，松开则停止
+ezminer.command.active_mode.usage.1=§e/EZMiner active_mode 1§r - 切换：按下激活连锁，再按一次停止
 ezminer.message.chain.done=EZMiner: 连锁完成；方块数=%s；耗时=%ss
 ezminer.message.chain.error=EZMiner: 挖掘方块 %s 时出错：%s
