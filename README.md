@@ -103,7 +103,7 @@
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
 | `addExhaustion` | `0.025` | 每挖一个方块消耗的饥饿值（负值可恢复饥饿） |
-| `dropToInventory` | `true` | 掉落物投放位置（`true` = 玩家脚下，`false` = 原始方块处） |
+| `dropToPlayer` | `true` | 掉落物处理方式（`true` = 直接掉落到玩家脚下（默认）；`false` = 掉落在首个被挖掘的方块处） |
 | `usePreview` | `true` | 是否显示方块边框预览 |
 | `useChainDoneMessage` | `true` | 连锁结束后是否在聊天栏显示统计消息 |
 | `chainActivationMode` | `0` | 连锁键激活方式：`0` = **按住**激活（默认），`1` = **点击切换**开关 |

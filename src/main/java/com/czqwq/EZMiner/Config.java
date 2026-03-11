@@ -23,8 +23,8 @@ public class Config {
     public static final String CLIENT_CATEGORY = "Client";
     /** Exhaustion added per block mined via chain. Negative values restore food. */
     public static double addExhaustion = 0.025;
-    /** When true, drops are placed into the player's inventory; overflow falls at feet. */
-    public static boolean dropToInventory = true;
+    /** When true, batched drops spawn at the player's feet; when false they spawn at the origin block. */
+    public static boolean dropToPlayer = true;
     public static boolean usePreview = true;
     public static boolean useChainDoneMessage = true;
     /**
@@ -85,12 +85,13 @@ public class Config {
                 -Double.MAX_VALUE,
                 Double.MAX_VALUE)
             .getDouble();
-        dropToInventory = configuration.getBoolean(
-            "dropToInventory",
+        dropToPlayer = configuration.getBoolean(
+            "dropToPlayer",
             CLIENT_CATEGORY,
             true,
-            "When true, all drops from a chain operation are placed directly into the player's inventory. "
-                + "Any items that do not fit will fall at the player's feet.");
+            "Controls where batched drops are spawned after a chain operation. "
+                + "true = at the player's current feet position (default). "
+                + "false = at the center of the first block that was mined.");
         usePreview = configuration.getBoolean(
             "usePreview",
             CLIENT_CATEGORY,
@@ -123,6 +124,28 @@ public class Config {
         if (!event.modID.equalsIgnoreCase(EZMiner.MODID)) return;
         EZMiner.LOG.info("Config change event triggered, reloading...");
         load();
+    }
+
+    /**
+     * Updates {@link #chainActivationMode} in memory and writes only that value
+     * back to the config file immediately, without touching any other entries.
+     *
+     * @param mode 0 = hold to activate; 1 = click to toggle
+     */
+    public static void saveChainActivationMode(int mode) {
+        chainActivationMode = mode;
+        configuration
+            .get(
+                CLIENT_CATEGORY,
+                "chainActivationMode",
+                0,
+                "Controls how the chain key activates mining. "
+                    + "0 = Hold (keep the key held to keep mining, release to stop). "
+                    + "1 = Toggle (press once to start, press again to stop).",
+                0,
+                1)
+            .set(mode);
+        configuration.save();
     }
 
     public static void register() {

@@ -109,7 +109,7 @@ Hot-reload command: `/EZMiner reloadConfig`
 | Key | Default | Description |
 |-----|---------|-------------|
 | `addExhaustion` | `0.025` | Food exhaustion added per block mined (negative values restore food) |
-| `dropToInventory` | `true` | Where to deliver drops: `true` = player's feet, `false` = origin block |
+| `dropToPlayer` | `true` | Where to deliver batched drops: `true` = at the player's feet (default), `false` = at the origin block where mining started |
 | `usePreview` | `true` | Show block outline preview while chain is active |
 | `useChainDoneMessage` | `true` | Show a chat summary when a chain operation finishes |
 | `chainActivationMode` | `0` | Chain key behaviour: `0` = **hold** to activate (default), `1` = **click to toggle** on/off |

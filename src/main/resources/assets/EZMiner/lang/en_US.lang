@@ -24,7 +24,7 @@ ezminer.config.blockLimit=Maximum blocks per chain
 ezminer.config.smallRadius=Adjacency radius for chain mode
 ezminer.config.tunnelWidth=Tunnel half-width
 ezminer.config.addExhaustion=Exhaustion added per block mined (negative restores food)
-ezminer.config.dropToInventory=Place drops directly into player inventory (overflow falls at feet)
+ezminer.config.dropToPlayer=Drop batched items at player's feet (true) or at the origin block (false)
 ezminer.config.usePreview=Show block outline preview while chain key is held
 ezminer.config.useChainDoneMessage=Show completion message after each chain operation
 ezminer.config.chainActivationMode=Chain key activation mode: 0 = hold key to activate, 1 = click to toggle on/off

@@ -24,7 +24,7 @@ ezminer.config.blockLimit=每次连锁最大方块数
 ezminer.config.smallRadius=连锁模式邻接检测半径
 ezminer.config.tunnelWidth=隧道半宽度
 ezminer.config.addExhaustion=每次挖掘消耗的饥饿值（负值恢复饥饿）
-ezminer.config.dropToInventory=将掉落物直接放入背包（超出则掉落到脚下）
+ezminer.config.dropToPlayer=掉落物位置：true=掉到玩家脚下，false=掉到首个开采方块处
 ezminer.config.usePreview=按住连锁键时显示方块轮廓预览
 ezminer.config.useChainDoneMessage=连锁结束后显示提示消息
 ezminer.config.chainActivationMode=连锁键激活方式: 0 = 按住激活（默认）, 1 = 点击切换开关

@@ -171,10 +171,16 @@ public class BaseOperator {
      * Detects the optional Visual Prospecting API once per JVM lifetime and
      * caches the two reflection method references needed for ore-vein discovery.
      * Synchronized so the once-only guarantee holds even under concurrent access.
+     *
+     * <p>
+     * {@code compatibilityChecked} is written <em>last</em>, after all other
+     * fields, so any thread that reads {@code compatibilityChecked == true} via
+     * its {@code volatile} read is guaranteed (by the JMM happens-before rule
+     * for volatile stores/loads) to see the fully-initialized values of
+     * {@code hasVP_API}, {@code vpProspectMethod}, and {@code vpSendToClientMethod}.
      */
     public static synchronized void checkCompatibility() {
         if (compatibilityChecked) return;
-        compatibilityChecked = true;
         try {
             Class<?> vpAPIClass = Class.forName("com.sinthoras.visualprospecting.VisualProspecting_API");
             Class<?> logicalServerClass = null;
@@ -186,14 +192,14 @@ public class BaseOperator {
             }
             if (logicalServerClass == null) {
                 EZMiner.LOG.warn("EZMiner: VisualProspecting_API found but LogicalServer class is missing.");
-                return;
+            } else {
+                vpProspectMethod = logicalServerClass
+                    .getMethod("prospectOreVeinsWithinRadius", int.class, int.class, int.class, int.class);
+                vpSendToClientMethod = logicalServerClass
+                    .getMethod("sendProspectionResultsToClient", EntityPlayerMP.class, List.class, List.class);
+                hasVP_API = true;
+                EZMiner.LOG.info("EZMiner: VisualProspecting_API detected – ore vein discovery enabled.");
             }
-            vpProspectMethod = logicalServerClass
-                .getMethod("prospectOreVeinsWithinRadius", int.class, int.class, int.class, int.class);
-            vpSendToClientMethod = logicalServerClass
-                .getMethod("sendProspectionResultsToClient", EntityPlayerMP.class, List.class, List.class);
-            hasVP_API = true;
-            EZMiner.LOG.info("EZMiner: VisualProspecting_API detected – ore vein discovery enabled.");
         } catch (ClassNotFoundException e) {
             EZMiner.LOG.debug("EZMiner: VisualProspecting_API not found – ore vein discovery disabled.");
         } catch (NoSuchMethodException | SecurityException e) {
@@ -201,6 +207,9 @@ public class BaseOperator {
                 "EZMiner: VisualProspecting_API found but required methods could not be resolved: {}",
                 e.getMessage());
         }
+        // Written last so that any volatile read of `compatibilityChecked == true`
+        // establishes happens-before over all the field writes above.
+        compatibilityChecked = true;
     }
 
     /**

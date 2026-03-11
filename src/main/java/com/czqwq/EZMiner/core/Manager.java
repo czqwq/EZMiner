@@ -42,8 +42,8 @@ public class Manager {
     public BaseOperator operator = null;
 
     /**
-     * World position of the first block that triggered this chain operation.
-     * Used as the drop spawn point when {@link Config#dropToInventory} is false.
+     * Position of the first block broken in this chain; used as the drop-spawn point when {@code dropToPlayer} is
+     * false.
      */
     public Vector3i originPos = null;
 
@@ -115,11 +115,10 @@ public class Manager {
             drops.clear();
             return;
         }
-        // Determine drop position:
-        // dropToInventory=true → at the player's current feet position
-        // dropToInventory=false → at the center of the originally mined block
-        double spawnX, spawnY, spawnZ;
-        if (Config.dropToInventory || originPos == null) {
+        // dropToPlayer=true → spawn at the player's current feet position (default)
+        // dropToPlayer=false → spawn at the center of the first mined block
+        final double spawnX, spawnY, spawnZ;
+        if (Config.dropToPlayer || originPos == null) {
             spawnX = player.posX;
             spawnY = player.posY;
             spawnZ = player.posZ;
@@ -130,7 +129,6 @@ public class Manager {
         }
         for (ItemStack stack : drops) {
             if (stack == null || stack.stackSize <= 0) continue;
-            // Ensure each spawned entity has a valid stack size.
             int remaining = stack.stackSize;
             while (remaining > 0) {
                 int take = Math.min(remaining, stack.getMaxStackSize());
