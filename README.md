@@ -1,18 +1,21 @@
 # EZMiner
 
+> 🌐 [English README](README_en.md)
+
 一个专为 **GregTech: New Horizons (GTNH)** 设计的高性能连锁采矿模组，适用于 Minecraft 1.7.10。
 
 ---
 
 ## 功能概览
 
-- 按住连锁键即可启动连锁，松开立即停止
+- 按住连锁键即可启动连锁，松开立即停止；或通过配置改为**点击切换**模式
 - 支持**连锁模式**与**爆破模式**两大主模式
 - 爆破模式下拥有 5 种子模式，可用鼠标滚轮切换
 - 按住连锁键时，左上角 HUD 实时显示当前模式链与已连锁方块数
 - 对准方块时，方块边框会被实时渲染高亮（可穿透遮挡），直观展示将被连锁的范围
 - 所有配置均可通过配置文件热重载（`/EZMiner reloadConfig`），无需重启游戏
 - 完整中英文本地化支持
+- 安装 [Visual Prospecting](https://github.com/GTNewHorizons/VisualProspecting) 后，挖矿时自动同步矿脉信息至地图标注
 
 ---
 
@@ -20,7 +23,7 @@
 
 | 按键 | 默认键 | 说明 |
 |------|--------|------|
-| 连锁键 | `` ` ``（波浪号/反引号） | 按住启动连锁，松开停止 |
+| 连锁键 | `` ` ``（波浪号/反引号） | 按住启动/松开停止（按住模式）；或点击切换开关（切换模式，见配置）|
 | 模式切换键 | `V` | 切换主模式（连锁 ↔ 爆破） |
 | 鼠标滚轮 | — | 按住连锁键时，滚轮切换当前主模式的子模式 |
 
@@ -103,6 +106,13 @@
 | `dropToInventory` | `true` | 掉落物投放位置（`true` = 玩家脚下，`false` = 原始方块处） |
 | `usePreview` | `true` | 是否显示方块边框预览 |
 | `useChainDoneMessage` | `true` | 连锁结束后是否在聊天栏显示统计消息 |
+| `chainActivationMode` | `0` | 连锁键激活方式：`0` = **按住**激活（默认），`1` = **点击切换**开关 |
+
+---
+
+## Visual Prospecting 集成
+
+安装 [Visual Prospecting](https://github.com/GTNewHorizons/VisualProspecting) 后，EZMiner 在挖掘 GregTech 矿石方块时会**自动将矿脉信息同步到地图标注**，无需手动右键每个矿石。所有挖矿模式均支持此功能。
 
 ---
 
