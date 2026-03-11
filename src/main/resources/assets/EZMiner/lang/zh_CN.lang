@@ -27,3 +27,4 @@ ezminer.config.addExhaustion=每次挖掘消耗的饥饿值（负值恢复饥饿
 ezminer.config.dropToInventory=将掉落物直接放入背包（超出则掉落到脚下）
 ezminer.config.usePreview=按住连锁键时显示方块轮廓预览
 ezminer.config.useChainDoneMessage=连锁结束后显示提示消息
+ezminer.config.chainActivationMode=连锁键激活方式: 0 = 按住激活（默认）, 1 = 点击切换开关

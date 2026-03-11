@@ -27,6 +27,14 @@ public class Config {
     public static boolean dropToInventory = true;
     public static boolean usePreview = true;
     public static boolean useChainDoneMessage = true;
+    /**
+     * Chain key activation mode.
+     * <ul>
+     * <li>0 = Hold – keep the key pressed to keep chain active (default).</li>
+     * <li>1 = Toggle – press once to start chain, press again to stop.</li>
+     * </ul>
+     */
+    public static int chainActivationMode = 0;
 
     public static void init(File configFile) {
         if (configuration == null) {
@@ -75,6 +83,8 @@ public class Config {
         usePreview = configuration.getBoolean("usePreview", CLIENT_CATEGORY, true, "ezminer.config.usePreview");
         useChainDoneMessage = configuration
             .getBoolean("useChainDoneMessage", CLIENT_CATEGORY, true, "ezminer.config.useChainDoneMessage");
+        chainActivationMode = configuration
+            .getInt("chainActivationMode", CLIENT_CATEGORY, 0, 0, 1, "ezminer.config.chainActivationMode");
 
         if (configuration.hasChanged()) {
             configuration.save();

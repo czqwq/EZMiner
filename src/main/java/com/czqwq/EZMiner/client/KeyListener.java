@@ -8,6 +8,7 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import com.czqwq.EZMiner.ClientProxy;
+import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.core.MinerModeState;
@@ -43,6 +44,8 @@ public class KeyListener {
         "key.categories.ezminer");
 
     private boolean wasHoldingChain = false;
+    /** Tracks whether chain is currently toggled on (only used in toggle mode). */
+    private boolean chainToggled = false;
 
     @SubscribeEvent
     public void onInput(InputEvent event) {
@@ -56,37 +59,68 @@ public class KeyListener {
         }
 
         boolean holding = KEY_CHAIN.getIsKeyPressed();
+        boolean risingEdge = holding && !wasHoldingChain;
 
-        // ===== Chain key pressed =====
-        if (holding) {
-            if (!wasHoldingChain) {
-                // Rising edge: start chain
-                EZMiner.network.network.sendToServer(new PacketChainSwitcher(true));
-                ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = true;
-                ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = true;
-                // Sync config to server
-                EZMiner.network.network.sendToServer(new PacketMinerConfig(new MinerConfig()));
-            }
-            wasHoldingChain = true;
-
-            // Scroll wheel → switch sub-mode
-            if (event instanceof InputEvent.MouseInputEvent) {
-                int dWheel = Mouse.getEventDWheel();
-                if (dWheel != 0) {
-                    String subMode = (dWheel < 0) ? state.nextSubMode() : state.previousSubMode();
-                    EZMiner.network.network.sendToServer(new PacketMinerModeState(state));
-                    MessageUtils.printSelfMessage(I18n.format("ezminer.message.subMode") + ": " + I18n.format(subMode));
+        if (Config.chainActivationMode == 1) {
+            // ===== Toggle mode: one press activates, next press deactivates =====
+            if (risingEdge) {
+                chainToggled = !chainToggled;
+                if (chainToggled) {
+                    startChain(state);
+                } else {
+                    stopChain();
                 }
+            }
+            // Scroll wheel switches sub-mode while chain is toggled on
+            if (chainToggled && event instanceof InputEvent.MouseInputEvent) {
+                handleSubModeScroll(state);
+            }
+        } else {
+            // ===== Hold mode (default): key held activates, release deactivates =====
+            if (holding) {
+                if (risingEdge) {
+                    startChain(state);
+                }
+                // Scroll wheel switches sub-mode while chain key is held
+                if (event instanceof InputEvent.MouseInputEvent) {
+                    handleSubModeScroll(state);
+                }
+            }
+            if (!holding && wasHoldingChain) {
+                stopChain();
             }
         }
 
-        // ===== Chain key released =====
-        if (!holding && wasHoldingChain) {
-            EZMiner.network.network.sendToServer(new PacketChainSwitcher(false));
-            ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = false;
-            ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = false;
-            ((ClientProxy) EZMiner.proxy).clientState.chainedBlockCount = 0;
-            wasHoldingChain = false;
+        wasHoldingChain = holding;
+    }
+
+    private void startChain(MinerModeState state) {
+        EZMiner.network.network.sendToServer(new PacketChainSwitcher(true));
+        ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = true;
+        ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = true;
+        // Sync config to server on activation
+        EZMiner.network.network.sendToServer(new PacketMinerConfig(new MinerConfig()));
+    }
+
+    private void stopChain() {
+        EZMiner.network.network.sendToServer(new PacketChainSwitcher(false));
+        ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = false;
+        ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = false;
+        ((ClientProxy) EZMiner.proxy).clientState.chainedBlockCount = 0;
+        // Reset toggle so the next key press starts a new chain.
+        // stopChain() is only ever called on explicit user key input, so resetting
+        // chainToggled here is correct. When a chain ends naturally (ore exhausted)
+        // the toggle intentionally stays on, allowing the player to immediately chain
+        // another ore block without pressing the key again.
+        chainToggled = false;
+    }
+
+    private void handleSubModeScroll(MinerModeState state) {
+        int dWheel = Mouse.getEventDWheel();
+        if (dWheel != 0) {
+            String subMode = (dWheel < 0) ? state.nextSubMode() : state.previousSubMode();
+            EZMiner.network.network.sendToServer(new PacketMinerModeState(state));
+            MessageUtils.printSelfMessage(I18n.format("ezminer.message.subMode") + ": " + I18n.format(subMode));
         }
     }
 

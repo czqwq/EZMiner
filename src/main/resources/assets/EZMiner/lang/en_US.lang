@@ -27,3 +27,4 @@ ezminer.config.addExhaustion=Exhaustion added per block mined (negative restores
 ezminer.config.dropToInventory=Place drops directly into player inventory (overflow falls at feet)
 ezminer.config.usePreview=Show block outline preview while chain key is held
 ezminer.config.useChainDoneMessage=Show completion message after each chain operation
+ezminer.config.chainActivationMode=Chain key activation mode: 0 = hold key to activate, 1 = click to toggle on/off

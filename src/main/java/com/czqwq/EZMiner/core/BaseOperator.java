@@ -2,6 +2,7 @@ package com.czqwq.EZMiner.core;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
+import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 
@@ -10,6 +11,7 @@ import org.joml.Vector3i;
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.core.founder.BasePositionFounder;
+import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
 import com.czqwq.EZMiner.network.PacketChainCount;
 import com.czqwq.EZMiner.utils.MessageUtils;
 
@@ -32,6 +34,7 @@ public class BaseOperator {
     private int operatorCount = 0;
 
     public BaseOperator(Vector3i pos, Manager manager) {
+        checkCompatibility();
         this.playerMP = manager.player;
         this.manager = manager;
         this.positionFounder = manager.minerModeState
@@ -60,6 +63,10 @@ public class BaseOperator {
                 return;
             }
             try {
+                // Trigger Visual Prospecting ore vein discovery BEFORE the block is mined.
+                // GT's onBlockActivated fires OreInteractEvent which VP's ServerCache intercepts
+                // to send vein data to the player's map overlay.
+                triggerVPOreDiscovery(pos);
                 playerMP.theItemInWorldManager.tryHarvestBlock(pos.x, pos.y, pos.z);
                 // Add configured exhaustion per block
                 playerMP.addExhaustion((float) Config.addExhaustion);
@@ -132,5 +139,50 @@ public class BaseOperator {
             // already unregistered – safe to ignore
         }
         manager.inOperate = false;
+    }
+
+    // ===== Optional Visual Prospecting API compatibility =====
+    private static volatile boolean compatibilityChecked = false;
+    /** True when the Visual Prospecting mod is available on this installation. */
+    public static volatile boolean hasVP_API = false;
+
+    /**
+     * Detects the optional Visual Prospecting API once per JVM lifetime.
+     * Synchronized so the once-only guarantee holds even if called from multiple
+     * threads during startup (e.g. two players connecting near-simultaneously).
+     */
+    public static synchronized void checkCompatibility() {
+        if (compatibilityChecked) return;
+        compatibilityChecked = true;
+        try {
+            Class.forName("com.sinthoras.visualprospecting.VisualProspecting_API");
+            hasVP_API = true;
+            EZMiner.LOG.info("EZMiner: VisualProspecting_API detected – ore vein discovery enabled.");
+        } catch (ClassNotFoundException e) {
+            EZMiner.LOG.debug("EZMiner: VisualProspecting_API not found – ore vein discovery disabled.");
+        }
+    }
+
+    /**
+     * Calls {@code Block.onBlockActivated} on a GregTech ore block, which GT
+     * handles by firing {@code OreInteractEvent}. Visual Prospecting's
+     * {@code ServerCache} listens to that event server-side and immediately sends
+     * the ore-vein prospection result to the player's client, so the vein appears
+     * on the map overlay without the player needing to right-click the ore.
+     *
+     * <p>
+     * Must be called <em>before</em> {@code tryHarvestBlock} removes the block.
+     * This method is a no-op when VP is not installed or the block is not a GT ore.
+     */
+    private void triggerVPOreDiscovery(Vector3i pos) {
+        if (!hasVP_API) return;
+        if (playerMP.worldObj == null || playerMP.worldObj.isRemote) return;
+        if (!DeterminingIdentical.isGTOreBlock(pos, playerMP)) return;
+        try {
+            Block block = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
+            block.onBlockActivated(playerMP.worldObj, pos.x, pos.y, pos.z, playerMP, 0, 0.5f, 0.5f, 0.5f);
+        } catch (Exception e) {
+            EZMiner.LOG.debug("EZMiner: VP ore vein discovery call failed at {}: {}", pos, e.getMessage());
+        }
     }
 }
