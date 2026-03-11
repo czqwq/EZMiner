@@ -1,8 +1,12 @@
 package com.czqwq.EZMiner.core;
 
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 
@@ -32,6 +36,13 @@ public class BaseOperator {
 
     private long startTime;
     private int operatorCount = 0;
+    /**
+     * Tracks chunk coords (encoded as a single long) for which VP ore-vein
+     * discovery has already been triggered this operation. Multiple ore blocks
+     * in the same 16×16 chunk belong to the same vein; querying VP once per
+     * chunk is sufficient and avoids redundant network packets in multiplayer.
+     */
+    private final Set<Long> vpNotifiedChunks = new HashSet<>();
 
     public BaseOperator(Vector3i pos, Manager manager) {
         checkCompatibility();
@@ -145,42 +156,86 @@ public class BaseOperator {
     private static volatile boolean compatibilityChecked = false;
     /** True when the Visual Prospecting mod is available on this installation. */
     public static volatile boolean hasVP_API = false;
+    /**
+     * Cached reference to {@code VisualProspecting_API.LogicalServer
+     * .prospectOreVeinsWithinRadius(int, int, int, int)}.
+     */
+    private static volatile Method vpProspectMethod = null;
+    /**
+     * Cached reference to {@code VisualProspecting_API.LogicalServer
+     * .sendProspectionResultsToClient(EntityPlayerMP, List, List)}.
+     */
+    private static volatile Method vpSendToClientMethod = null;
 
     /**
-     * Detects the optional Visual Prospecting API once per JVM lifetime.
-     * Synchronized so the once-only guarantee holds even if called from multiple
-     * threads during startup (e.g. two players connecting near-simultaneously).
+     * Detects the optional Visual Prospecting API once per JVM lifetime and
+     * caches the two reflection method references needed for ore-vein discovery.
+     * Synchronized so the once-only guarantee holds even under concurrent access.
      */
     public static synchronized void checkCompatibility() {
         if (compatibilityChecked) return;
         compatibilityChecked = true;
         try {
-            Class.forName("com.sinthoras.visualprospecting.VisualProspecting_API");
+            Class<?> vpAPIClass = Class.forName("com.sinthoras.visualprospecting.VisualProspecting_API");
+            Class<?> logicalServerClass = null;
+            for (Class<?> inner : vpAPIClass.getDeclaredClasses()) {
+                if ("LogicalServer".equals(inner.getSimpleName())) {
+                    logicalServerClass = inner;
+                    break;
+                }
+            }
+            if (logicalServerClass == null) {
+                EZMiner.LOG.warn("EZMiner: VisualProspecting_API found but LogicalServer class is missing.");
+                return;
+            }
+            vpProspectMethod = logicalServerClass
+                .getMethod("prospectOreVeinsWithinRadius", int.class, int.class, int.class, int.class);
+            vpSendToClientMethod = logicalServerClass
+                .getMethod("sendProspectionResultsToClient", EntityPlayerMP.class, List.class, List.class);
             hasVP_API = true;
             EZMiner.LOG.info("EZMiner: VisualProspecting_API detected – ore vein discovery enabled.");
         } catch (ClassNotFoundException e) {
             EZMiner.LOG.debug("EZMiner: VisualProspecting_API not found – ore vein discovery disabled.");
+        } catch (NoSuchMethodException | SecurityException e) {
+            EZMiner.LOG.warn(
+                "EZMiner: VisualProspecting_API found but required methods could not be resolved: {}",
+                e.getMessage());
         }
     }
 
     /**
-     * Calls {@code Block.onBlockActivated} on a GregTech ore block, which GT
-     * handles by firing {@code OreInteractEvent}. Visual Prospecting's
-     * {@code ServerCache} listens to that event server-side and immediately sends
-     * the ore-vein prospection result to the player's client, so the vein appears
-     * on the map overlay without the player needing to right-click the ore.
+     * Notifies Visual Prospecting of the ore vein at the given block position so
+     * that it appears on the player's map overlay.
      *
      * <p>
-     * Must be called <em>before</em> {@code tryHarvestBlock} removes the block.
+     * Uses {@code VisualProspecting_API.LogicalServer.prospectOreVeinsWithinRadius}
+     * to look up the vein in VP's server-side cache (a pure HashMap lookup — no
+     * world access), then calls
+     * {@code VisualProspecting_API.LogicalServer.sendProspectionResultsToClient}
+     * which handles single-player (direct {@code ClientCache} update + chat
+     * notification) and multiplayer (network packet) transparently.
+     *
+     * <p>
+     * Each 16×16 chunk is only queried once per chain operation to avoid redundant
+     * network traffic in multiplayer.
+     *
+     * <p>
      * This method is a no-op when VP is not installed or the block is not a GT ore.
      */
     private void triggerVPOreDiscovery(Vector3i pos) {
-        if (!hasVP_API) return;
-        if (playerMP.worldObj == null || playerMP.worldObj.isRemote) return;
+        if (!hasVP_API || vpProspectMethod == null || vpSendToClientMethod == null) return;
         if (!DeterminingIdentical.isGTOreBlock(pos, playerMP)) return;
+
+        // One VP lookup per 16×16 chunk is enough – all blocks in the same chunk
+        // belong to the same ore vein, and VP deduplicates on the client anyway.
+        long chunkKey = ((long) (pos.x >> 4) << 32) | ((pos.z >> 4) & 0xFFFFFFFFL);
+        if (!vpNotifiedChunks.add(chunkKey)) return;
+
         try {
-            Block block = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
-            block.onBlockActivated(playerMP.worldObj, pos.x, pos.y, pos.z, playerMP, 0, 0.5f, 0.5f, 0.5f);
+            List<?> veins = (List<?>) vpProspectMethod.invoke(null, playerMP.dimension, pos.x, pos.z, 0);
+            if (!veins.isEmpty()) {
+                vpSendToClientMethod.invoke(null, playerMP, veins, Collections.emptyList());
+            }
         } catch (Exception e) {
             EZMiner.LOG.debug("EZMiner: VP ore vein discovery call failed at {}: {}", pos, e.getMessage());
         }

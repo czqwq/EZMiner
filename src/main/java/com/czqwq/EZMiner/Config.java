@@ -46,45 +46,72 @@ public class Config {
     public static void load() {
         // Re-read from disk so that external edits (including via text editor) are picked up.
         configuration.load();
-        bigRadius = configuration
-            .getInt("bigRadius", Configuration.CATEGORY_GENERAL, 8, 0, Integer.MAX_VALUE, "ezminer.config.bigRadius");
+        bigRadius = configuration.getInt(
+            "bigRadius",
+            Configuration.CATEGORY_GENERAL,
+            8,
+            0,
+            Integer.MAX_VALUE,
+            "Maximum radius (in blocks) for chain and blast operations.");
         blockLimit = configuration.getInt(
             "blockLimit",
             Configuration.CATEGORY_GENERAL,
             1024,
             0,
             Integer.MAX_VALUE,
-            "ezminer.config.blockLimit");
+            "Maximum number of blocks that can be harvested in a single chain operation.");
         smallRadius = configuration.getInt(
             "smallRadius",
             Configuration.CATEGORY_GENERAL,
             2,
             0,
             Integer.MAX_VALUE,
-            "ezminer.config.smallRadius");
+            "Adjacency detection radius for chain mode. Two ore blocks are considered connected "
+                + "if they are within this many blocks of each other.");
         tunnelWidth = configuration.getInt(
             "tunnelWidth",
             Configuration.CATEGORY_GENERAL,
             1,
             0,
             Integer.MAX_VALUE,
-            "ezminer.config.tunnelWidth");
+            "Half-width of the tunnel dug by Tunnel blast sub-mode (0 = 1-block wide, 1 = 3-block wide, etc.).");
         addExhaustion = configuration
             .get(
                 CLIENT_CATEGORY,
                 "addExhaustion",
                 0.025,
-                "ezminer.config.addExhaustion",
+                "Food exhaustion added to the player for each block mined during a chain operation. "
+                    + "Set to a negative value to restore food instead.",
                 -Double.MAX_VALUE,
                 Double.MAX_VALUE)
             .getDouble();
-        dropToInventory = configuration
-            .getBoolean("dropToInventory", CLIENT_CATEGORY, true, "ezminer.config.dropToInventory");
-        usePreview = configuration.getBoolean("usePreview", CLIENT_CATEGORY, true, "ezminer.config.usePreview");
-        useChainDoneMessage = configuration
-            .getBoolean("useChainDoneMessage", CLIENT_CATEGORY, true, "ezminer.config.useChainDoneMessage");
-        chainActivationMode = configuration
-            .getInt("chainActivationMode", CLIENT_CATEGORY, 0, 0, 1, "ezminer.config.chainActivationMode");
+        dropToInventory = configuration.getBoolean(
+            "dropToInventory",
+            CLIENT_CATEGORY,
+            true,
+            "When true, all drops from a chain operation are placed directly into the player's inventory. "
+                + "Any items that do not fit will fall at the player's feet.");
+        usePreview = configuration.getBoolean(
+            "usePreview",
+            CLIENT_CATEGORY,
+            true,
+            "When true, block outlines are rendered around all blocks that would be included in the "
+                + "current chain while the chain key is held.");
+        useChainDoneMessage = configuration.getBoolean(
+            "useChainDoneMessage",
+            CLIENT_CATEGORY,
+            true,
+            "When true, a summary message is shown in chat after each chain operation finishes, "
+                + "reporting the number of blocks mined and the time taken.");
+        chainActivationMode = configuration.getInt(
+            "chainActivationMode",
+            CLIENT_CATEGORY,
+            0,
+            0,
+            1,
+            "Controls how the chain key activates mining. "
+                + "0 = Hold (keep the key held to keep mining, release to stop). "
+                + "1 = Toggle (press once to start, press again to stop).");
 
         if (configuration.hasChanged()) {
             configuration.save();
