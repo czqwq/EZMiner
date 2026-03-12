@@ -36,6 +36,10 @@ public class Config {
      */
     public static int chainActivationMode = 0;
 
+    private static final String CHAIN_ACTIVATION_MODE_COMMENT = "Controls how the chain key activates mining. "
+        + "0 = Hold (keep the key held to keep mining, release to stop). "
+        + "1 = Toggle (press once to start, press again to stop).";
+
     public static void init(File configFile) {
         if (configuration == null) {
             configuration = new Configuration(configFile);
@@ -104,15 +108,8 @@ public class Config {
             true,
             "When true, a summary message is shown in chat after each chain operation finishes, "
                 + "reporting the number of blocks mined and the time taken.");
-        chainActivationMode = configuration.getInt(
-            "chainActivationMode",
-            CLIENT_CATEGORY,
-            0,
-            0,
-            1,
-            "Controls how the chain key activates mining. "
-                + "0 = Hold (keep the key held to keep mining, release to stop). "
-                + "1 = Toggle (press once to start, press again to stop).");
+        chainActivationMode = configuration
+            .getInt("chainActivationMode", CLIENT_CATEGORY, 0, 0, 1, CHAIN_ACTIVATION_MODE_COMMENT);
 
         if (configuration.hasChanged()) {
             configuration.save();
@@ -134,16 +131,7 @@ public class Config {
      */
     public static void saveChainActivationMode(int mode) {
         chainActivationMode = mode;
-        configuration
-            .get(
-                CLIENT_CATEGORY,
-                "chainActivationMode",
-                0,
-                "Controls how the chain key activates mining. "
-                    + "0 = Hold (keep the key held to keep mining, release to stop). "
-                    + "1 = Toggle (press once to start, press again to stop).",
-                0,
-                1)
+        configuration.get(CLIENT_CATEGORY, "chainActivationMode", 0, CHAIN_ACTIVATION_MODE_COMMENT, 0, 1)
             .set(mode);
         configuration.save();
     }

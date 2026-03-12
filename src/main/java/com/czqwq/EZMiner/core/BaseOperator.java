@@ -187,24 +187,17 @@ public class BaseOperator {
     public static synchronized void checkCompatibility() {
         if (compatibilityChecked) return;
         try {
-            Class<?> vpAPIClass = Class.forName("com.sinthoras.visualprospecting.VisualProspecting_API");
-            Class<?> logicalServerClass = null;
-            for (Class<?> inner : vpAPIClass.getDeclaredClasses()) {
-                if ("LogicalServer".equals(inner.getSimpleName())) {
-                    logicalServerClass = inner;
-                    break;
-                }
-            }
-            if (logicalServerClass == null) {
-                EZMiner.LOG.warn("EZMiner: VisualProspecting_API found but LogicalServer class is missing.");
-            } else {
-                vpProspectMethod = logicalServerClass
-                    .getMethod("prospectOreVeinsWithinRadius", int.class, int.class, int.class, int.class);
-                vpSendToClientMethod = logicalServerClass
-                    .getMethod("sendProspectionResultsToClient", EntityPlayerMP.class, List.class, List.class);
-                hasVP_API = true;
-                EZMiner.LOG.info("EZMiner: VisualProspecting_API detected – ore vein discovery enabled.");
-            }
+            // Load LogicalServer directly by name to avoid triggering Class.getDeclaredClasses(),
+            // which would also load the @SideOnly(CLIENT) LogicalClient inner class and crash on
+            // a dedicated server with NoClassDefFoundError / SideTransformer rejection.
+            Class<?> logicalServerClass = Class
+                .forName("com.sinthoras.visualprospecting.VisualProspecting_API$LogicalServer");
+            vpProspectMethod = logicalServerClass
+                .getMethod("prospectOreVeinsWithinRadius", int.class, int.class, int.class, int.class);
+            vpSendToClientMethod = logicalServerClass
+                .getMethod("sendProspectionResultsToClient", EntityPlayerMP.class, List.class, List.class);
+            hasVP_API = true;
+            EZMiner.LOG.info("EZMiner: VisualProspecting_API detected – ore vein discovery enabled.");
         } catch (ClassNotFoundException e) {
             EZMiner.LOG.debug("EZMiner: VisualProspecting_API not found – ore vein discovery disabled.");
         } catch (NoSuchMethodException | SecurityException e) {
