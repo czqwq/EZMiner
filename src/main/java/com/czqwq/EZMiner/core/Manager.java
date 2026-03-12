@@ -17,6 +17,7 @@ import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
 
 import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
@@ -28,6 +29,20 @@ import cpw.mods.fml.common.gameevent.TickEvent;
  * All mutation happens on the server thread.
  */
 public class Manager {
+
+    /**
+     * True when the Bandit mod (vein-mining mod) is present on this installation.
+     *
+     * <p>
+     * Bandit collects drops by intercepting {@code EntityJoinWorldEvent} inside a
+     * {@code HarvestCollector.withHarvestCollectorScope} wrapper. EZMiner's
+     * {@link #onHarvestDrops} runs at {@code LOWEST} priority and clears
+     * {@code event.drops} before Minecraft can spawn the {@code EntityItem}s that
+     * Bandit expects to intercept. This causes Bandit to receive zero drops and
+     * items to disappear. When Bandit is present, EZMiner therefore skips its own
+     * drop-collection logic so that Bandit can handle drops normally.
+     */
+    private static final boolean BANDIT_LOADED = Loader.isModLoaded("bandit");
 
     public final UUID playerUUID;
     public EntityPlayerMP player;
@@ -75,6 +90,11 @@ public class Manager {
     public void onHarvestDrops(BlockEvent.HarvestDropsEvent event) {
         if (event.harvester == null || !isSamePlayer(event.harvester)) return;
         if (!inOperate) return;
+        // When Bandit is loaded it collects drops via EntityJoinWorldEvent inside its own
+        // HarvestCollector scope. Clearing event.drops here would prevent those EntityItems
+        // from ever being spawned, leaving Bandit with zero drops. Yield to Bandit so that
+        // items drop normally and Bandit can intercept them as designed.
+        if (BANDIT_LOADED) return;
 
         for (ItemStack drop : event.drops) {
             if (drop == null || drop.stackSize <= 0) continue;
