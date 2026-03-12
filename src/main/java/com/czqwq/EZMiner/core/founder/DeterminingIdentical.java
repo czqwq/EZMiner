@@ -239,6 +239,16 @@ public class DeterminingIdentical {
         return false;
     }
 
+    /**
+     * Returns true if the block at pos is specifically a GregTech ore ({@code BlockOresAbstract}).
+     * Used to gate Visual Prospecting ore-vein discovery calls.
+     */
+    public static boolean isGTOreBlock(Vector3i pos, EntityPlayer player) {
+        if (!hasBlockOresAbstract || gtBlockOresAbstractClass == null) return false;
+        Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
+        return gtBlockOresAbstractClass.isInstance(block);
+    }
+
     /** Returns true if two ItemStacks are identical (type, damage, NBT). */
     public static boolean isSame(ItemStack a, ItemStack b) {
         if (a == null || b == null) return a == b;

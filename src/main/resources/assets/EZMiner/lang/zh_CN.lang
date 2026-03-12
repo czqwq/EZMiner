@@ -24,6 +24,19 @@ ezminer.config.blockLimit=每次连锁最大方块数
 ezminer.config.smallRadius=连锁模式邻接检测半径
 ezminer.config.tunnelWidth=隧道半宽度
 ezminer.config.addExhaustion=每次挖掘消耗的饥饿值（负值恢复饥饿）
-ezminer.config.dropToInventory=将掉落物直接放入背包（超出则掉落到脚下）
+ezminer.config.dropToPlayer=掉落物位置：true=掉到玩家脚下，false=掉到首个开采方块处
 ezminer.config.usePreview=按住连锁键时显示方块轮廓预览
 ezminer.config.useChainDoneMessage=连锁结束后显示提示消息
+ezminer.config.chainActivationMode=连锁键激活方式: 0 = 按住激活（默认）, 1 = 点击切换开关
+
+ezminer.command.nopermission=§c你没有OP权限，无法重新加载配置。
+ezminer.command.reloadconfig.success=EZMiner 配置已重新加载。
+ezminer.command.active_mode.set=EZMiner: 连锁键激活模式已设为 §e%s§r（%s）。已保存至配置。
+ezminer.command.active_mode.desc.0=按住激活
+ezminer.command.active_mode.desc.1=点击切换
+ezminer.command.usage.reloadconfig=§e/EZMiner reloadConfig§r - 从磁盘重新加载配置（仅OP）
+ezminer.command.usage.active_mode=§e/EZMiner active_mode <0|1>§r - 设置连锁键激活模式
+ezminer.command.active_mode.usage.0=§e/EZMiner active_mode 0§r - 按住：按住连锁键进行挖掘，松开则停止
+ezminer.command.active_mode.usage.1=§e/EZMiner active_mode 1§r - 切换：按下激活连锁，再按一次停止
+ezminer.message.chain.done=EZMiner: 连锁完成；方块数=%s；耗时=%ss
+ezminer.message.chain.error=EZMiner: 挖掘方块 %s 时出错：%s
