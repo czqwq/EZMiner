@@ -22,20 +22,17 @@ dependencies {
     implementation(gtnhDev("Avaritiaddons"))
     implementation(gtnhDev("neiaddons"))
     implementation('com.github.GTNewHorizons:Binnie:2.5.16:dev')
-//    implementation(gtnhDev("Binnie"))
     implementation(gtnhDev("BloodMagic"))
     implementation(gtnhDev("Botania"))
     implementation(gtnhDev("Draconic-Evolution"))
     implementation(gtnhDev("EnderIO"))
-    implementation(gtnhDev("Eternal-Singularity"))
     implementation(gtnhDev("ForestryMC"))
     implementation(gtnhDev("MagicBees"))
     implementation(gtnhDev("NotEnoughItems"))
     implementation(gtnhDev("OpenComputers"))
     implementation(gtnhDev("supersolarpanels"))
-    implementation(gtnhDev("Universal-Singularities"))
 
-    implementation('com.github.GTNewHorizons:worldedit-gtnh:v0.0.8:dev')
+    runtimeOnlyNonPublishable('com.github.GTNewHorizons:worldedit-gtnh:v0.0.8:dev')
 
     // runtime
     runtimeOnlyNonPublishable(gtnhDev("BetterP2P"))
