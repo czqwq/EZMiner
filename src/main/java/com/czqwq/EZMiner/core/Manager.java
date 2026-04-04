@@ -98,25 +98,16 @@ public class Manager {
 
         for (ItemStack drop : event.drops) {
             if (drop == null || drop.stackSize <= 0) continue;
-            int remaining = drop.stackSize;
-            // Try to fill into existing matching stacks first (respecting maxStackSize).
+            boolean merged = false;
             for (ItemStack existing : drops) {
                 if (!DeterminingIdentical.isSame(existing, drop)) continue;
-                int space = existing.getMaxStackSize() - existing.stackSize;
-                if (space <= 0) continue;
-                int toAdd = Math.min(space, remaining);
-                existing.stackSize += toAdd;
-                remaining -= toAdd;
-                if (remaining <= 0) break;
+                // Accumulate into one super-stack regardless of maxStackSize.
+                // Fewer EntityItems = less server lag when mining large veins.
+                existing.stackSize += drop.stackSize;
+                merged = true;
+                break;
             }
-            // Whatever didn't fit: create new stack(s), each capped at maxStackSize.
-            while (remaining > 0) {
-                int take = Math.min(remaining, drop.getMaxStackSize());
-                ItemStack newStack = drop.copy();
-                newStack.stackSize = take;
-                drops.add(newStack);
-                remaining -= take;
-            }
+            if (!merged) drops.add(drop.copy());
         }
         event.drops.clear();
     }
@@ -149,14 +140,7 @@ public class Manager {
         }
         for (ItemStack stack : drops) {
             if (stack == null || stack.stackSize <= 0) continue;
-            int remaining = stack.stackSize;
-            while (remaining > 0) {
-                int take = Math.min(remaining, stack.getMaxStackSize());
-                ItemStack toSpawn = stack.copy();
-                toSpawn.stackSize = take;
-                player.worldObj.spawnEntityInWorld(new EntityItem(player.worldObj, spawnX, spawnY, spawnZ, toSpawn));
-                remaining -= take;
-            }
+            player.worldObj.spawnEntityInWorld(new EntityItem(player.worldObj, spawnX, spawnY, spawnZ, stack));
         }
         drops.clear();
     }
