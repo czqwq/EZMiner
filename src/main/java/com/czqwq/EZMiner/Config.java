@@ -155,8 +155,10 @@ public class Config {
     public static void saveHudPos(int x, int z) {
         hudPosX = x;
         hudPosZ = z;
-        configuration.get(CLIENT_CATEGORY, "hudPosX", 5).set(x);
-        configuration.get(CLIENT_CATEGORY, "hudPosZ", 5).set(z);
+        configuration.get(CLIENT_CATEGORY, "hudPosX", 5)
+            .set(x);
+        configuration.get(CLIENT_CATEGORY, "hudPosZ", 5)
+            .set(z);
         configuration.save();
     }
 
