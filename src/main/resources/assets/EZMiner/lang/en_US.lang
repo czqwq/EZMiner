@@ -1,5 +1,6 @@
 ezminer.hud.active=Chain Active
 ezminer.hud.chainCount=Chained Blocks
+ezminer.hud.previewCount=Client Rendered Blocks
 
 key.ezminer.chainKey=Chain Key
 key.ezminer.modeSwitch=Mode Switch
@@ -13,6 +14,7 @@ ezminer.mode.blast.sameType=Blast: Same Type
 ezminer.mode.blast.tunnel=Blast: Tunnel
 ezminer.mode.blast.oreOnly=Blast: Ore Only
 ezminer.mode.blast.logging=Blast: Logging
+ezminer.mode.blast.crop=Blast: Crop Harvest
 
 ezminer.mode.chain.basic=Chain: Basic
 
@@ -36,7 +38,10 @@ ezminer.command.active_mode.desc.0=Hold to activate
 ezminer.command.active_mode.desc.1=Click to toggle
 ezminer.command.usage.reloadconfig=§e/EZMiner reloadConfig§r - reload config from disk (OP only)
 ezminer.command.usage.active_mode=§e/EZMiner active_mode <0|1>§r - set chain key activation mode
+ezminer.command.usage.hud_pos=§e/EZMiner hud pos <x> <z>§r - set HUD position (top-left origin)
 ezminer.command.active_mode.usage.0=§e/EZMiner active_mode 0§r - Hold: keep the chain key held to mine, release to stop
 ezminer.command.active_mode.usage.1=§e/EZMiner active_mode 1§r - Toggle: press once to active, press again to stop
+ezminer.command.hud.pos.usage=§e/EZMiner hud pos <x> <z>§r - set HUD position (top-left origin)
+ezminer.command.hud.pos.set=EZMiner: HUD position set to x=%s, z=%s.
 ezminer.message.chain.done=EZMiner: chain done; blocks=%s; time=%ss
 ezminer.message.chain.error=EZMiner: Error while harvesting block at %s: %s

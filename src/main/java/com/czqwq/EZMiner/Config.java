@@ -27,6 +27,8 @@ public class Config {
     public static boolean dropToPlayer = true;
     public static boolean usePreview = true;
     public static boolean useChainDoneMessage = true;
+    public static int hudPosX = 5;
+    public static int hudPosZ = 5;
     /**
      * Chain key activation mode.
      * <ul>
@@ -108,6 +110,20 @@ public class Config {
             true,
             "When true, a summary message is shown in chat after each chain operation finishes, "
                 + "reporting the number of blocks mined and the time taken.");
+        hudPosX = configuration.getInt(
+            "hudPosX",
+            CLIENT_CATEGORY,
+            5,
+            Integer.MIN_VALUE,
+            Integer.MAX_VALUE,
+            "HUD X position in screen pixels (origin at top-left).");
+        hudPosZ = configuration.getInt(
+            "hudPosZ",
+            CLIENT_CATEGORY,
+            5,
+            Integer.MIN_VALUE,
+            Integer.MAX_VALUE,
+            "HUD Y position in screen pixels (origin at top-left).");
         chainActivationMode = configuration
             .getInt("chainActivationMode", CLIENT_CATEGORY, 0, 0, 1, CHAIN_ACTIVATION_MODE_COMMENT);
 
@@ -133,6 +149,14 @@ public class Config {
         chainActivationMode = mode;
         configuration.get(CLIENT_CATEGORY, "chainActivationMode", 0, CHAIN_ACTIVATION_MODE_COMMENT, 0, 1)
             .set(mode);
+        configuration.save();
+    }
+
+    public static void saveHudPos(int x, int z) {
+        hudPosX = x;
+        hudPosZ = z;
+        configuration.get(CLIENT_CATEGORY, "hudPosX", 5).set(x);
+        configuration.get(CLIENT_CATEGORY, "hudPosZ", 5).set(z);
         configuration.save();
     }
 

@@ -1,5 +1,6 @@
 ezminer.hud.active=连锁已启用
 ezminer.hud.chainCount=已连锁方块
+ezminer.hud.previewCount=客户端已渲染方块
 
 key.ezminer.chainKey=连锁键
 key.ezminer.modeSwitch=模式切换
@@ -13,6 +14,7 @@ ezminer.mode.blast.sameType=爆破: 同类筛选
 ezminer.mode.blast.tunnel=爆破: 隧道爆破
 ezminer.mode.blast.oreOnly=爆破: 矿石爆破
 ezminer.mode.blast.logging=爆破: 爆破伐木
+ezminer.mode.blast.crop=爆破: 一键收作物
 
 ezminer.mode.chain.basic=连锁: 基础连锁
 
@@ -36,7 +38,10 @@ ezminer.command.active_mode.desc.0=按住激活
 ezminer.command.active_mode.desc.1=点击切换
 ezminer.command.usage.reloadconfig=§e/EZMiner reloadConfig§r - 从磁盘重新加载配置（仅OP）
 ezminer.command.usage.active_mode=§e/EZMiner active_mode <0|1>§r - 设置连锁键激活模式
+ezminer.command.usage.hud_pos=§e/EZMiner hud pos <x> <z>§r - 设置HUD位置（左上角为原点）
 ezminer.command.active_mode.usage.0=§e/EZMiner active_mode 0§r - 按住：按住连锁键进行挖掘，松开则停止
 ezminer.command.active_mode.usage.1=§e/EZMiner active_mode 1§r - 切换：按下激活连锁，再按一次停止
+ezminer.command.hud.pos.usage=§e/EZMiner hud pos <x> <z>§r - 设置HUD位置（左上角为原点）
+ezminer.command.hud.pos.set=EZMiner: HUD位置已设置为 x=%s, z=%s。
 ezminer.message.chain.done=EZMiner: 连锁完成；方块数=%s；耗时=%ss
 ezminer.message.chain.error=EZMiner: 挖掘方块 %s 时出错：%s

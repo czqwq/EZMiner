@@ -73,6 +73,7 @@ public class LogFounder extends BasePositionFounder {
         Vector3i playerPos = playerFloorPos();
         if (pos.x == playerPos.x && pos.y == (playerPos.y - 1) && pos.z == playerPos.z) return false;
         if (!woodLeafCache.computeIfAbsent(block, LogFounder::isWoodOrLeaf)) return false;
+        if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
         return block.canHarvestBlock(player, blockMeta);
     }

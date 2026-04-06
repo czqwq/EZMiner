@@ -91,6 +91,9 @@ public class MinerRenderer {
 
         EntityPlayer player = Minecraft.getMinecraft().thePlayer;
         founder = clientState.minerModeState.createPositionFounder(target, foundQueue, player, new MinerConfig());
+        if (founder != null) {
+            founder.setSkipHarvestCheck(true);
+        }
         EZMiner.parallelTick.addNormalTask(founder);
     }
 
@@ -104,6 +107,7 @@ public class MinerRenderer {
         spaceCalc.positions.clear();
         spaceCalc.hasChange = false;
         lastIndexCount = 0;
+        clientState.previewRenderedCount = 0;
         // Reset so that pressing the key again while looking at the same block
         // correctly triggers restartViewer (lastTarget != any real block).
         lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -134,6 +138,7 @@ public class MinerRenderer {
             SpaceCalculator.VertexAndIndex vi = spaceCalc.getVertexAndIndex();
             lastIndexCount = vi.indices.length;
             renderCache.updateData(vi.vertices, vi.indices);
+            clientState.previewRenderedCount = spaceCalc.positions.size();
         }
     }
 

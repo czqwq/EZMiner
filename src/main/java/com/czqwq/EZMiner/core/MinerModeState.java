@@ -9,6 +9,7 @@ import org.joml.Vector3i;
 import com.czqwq.EZMiner.core.founder.BasePositionFounder;
 import com.czqwq.EZMiner.core.founder.BlastPositionFounder;
 import com.czqwq.EZMiner.core.founder.ChainPositionFounder;
+import com.czqwq.EZMiner.core.founder.CropFounder;
 import com.czqwq.EZMiner.core.founder.LogFounder;
 import com.czqwq.EZMiner.core.founder.OreFounder;
 import com.czqwq.EZMiner.core.founder.ScreenBlastFounder;
@@ -42,6 +43,7 @@ public class MinerModeState {
         "ezminer.mode.blast.tunnel", // 2
         "ezminer.mode.blast.oreOnly", // 3
         "ezminer.mode.blast.logging", // 4
+        "ezminer.mode.blast.crop", // 5
     };
 
     public static final String[] CHAIN_MODES = { "ezminer.mode.chain.basic", // 0
@@ -131,6 +133,8 @@ public class MinerModeState {
                         return new OreFounder(center, results, player, config);
                     case 4:
                         return new LogFounder(center, results, player, config);
+                    case 5:
+                        return new CropFounder(center, results, player, config);
                     default: // 0 all-blocks
                         return new BlastPositionFounder(center, results, player, config);
                 }

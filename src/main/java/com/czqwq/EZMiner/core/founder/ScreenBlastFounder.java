@@ -30,6 +30,7 @@ public class ScreenBlastFounder extends BasePositionFounder {
         if (pos.x == playerPos.x && pos.y == (playerPos.y - 1) && pos.z == playerPos.z) return false;
         if (!DeterminingIdentical
             .identical(sampleBlock, sampleBlockMeta, sampleTileEntity, block, blockMeta, pos, player)) return false;
+        if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
         return block.canHarvestBlock(player, blockMeta);
     }

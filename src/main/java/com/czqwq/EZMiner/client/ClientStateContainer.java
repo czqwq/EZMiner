@@ -8,4 +8,6 @@ public class ClientStateContainer {
     public MinerModeState minerModeState = new MinerModeState();
     /** Number of blocks mined in the current chain operation. Updated by PacketChainCount. */
     public volatile int chainedBlockCount = 0;
+    /** Number of blocks currently rendered in preview on the client. */
+    public volatile int previewRenderedCount = 0;
 }

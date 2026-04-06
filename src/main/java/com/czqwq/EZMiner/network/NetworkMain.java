@@ -17,5 +17,6 @@ public class NetworkMain {
         network
             .registerMessage(PacketMinerModeState.Handler.class, PacketMinerModeState.class, packetId++, Side.SERVER);
         network.registerMessage(PacketChainCount.Handler.class, PacketChainCount.class, packetId++, Side.CLIENT);
+        network.registerMessage(PacketHudPos.Handler.class, PacketHudPos.class, packetId++, Side.CLIENT);
     }
 }

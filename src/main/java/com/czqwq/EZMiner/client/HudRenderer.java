@@ -46,23 +46,32 @@ public class HudRenderer {
         String mainModeName = I18n.format(state.currentMainMode());
         String subModeName = I18n.format(state.currentSubMode());
         int chainCount = ((ClientProxy) EZMiner.proxy).clientState.chainedBlockCount;
+        int previewCount = ((ClientProxy) EZMiner.proxy).clientState.previewRenderedCount;
 
-        int x = 5;
-        int y = 5;
+        int x = Config.hudPosX;
+        int y = Config.hudPosZ;
         int lineH = fr.FONT_HEIGHT + 2;
 
         // Line 1: header
         fr.drawStringWithShadow("\u00a7b[EZMiner] \u00a7a\u25a0 " + I18n.format("ezminer.hud.active"), x, y, 0xFFFFFF);
         y += lineH;
 
-        // Line 2: main mode (chain link first node)
+        // Line 2: preview rendered count
+        fr.drawStringWithShadow(
+            "\u00a77  \u2514\u2500 " + I18n.format("ezminer.hud.previewCount") + ": \u00a7e" + previewCount,
+            x,
+            y,
+            0xFFFFFF);
+        y += lineH;
+
+        // Line 3: main mode (chain link first node)
         fr.drawStringWithShadow("\u00a76  \u25cb\u2500 \u00a7e" + mainModeName, x, y, 0xFFFFFF);
         y += lineH;
 
-        // Line 3: sub mode (chain link second node, indented)
+        // Line 4: sub mode (chain link second node, indented)
         fr.drawStringWithShadow("\u00a77  \u2514\u2500 \u00a7f" + subModeName, x, y, 0xFFFFFF);
 
-        // Line 4: chain count (only while a chain operation is actually running)
+        // Line 5: chain count (only while a chain operation is actually running)
         if (chainCount > 0) {
             y += lineH;
             fr.drawStringWithShadow(
