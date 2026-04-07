@@ -31,6 +31,18 @@ import cpw.mods.fml.relauncher.SideOnly;
  * fixed-function OpenGL — no custom shaders are required. The coordinate system is shifted by
  * {@code -RenderManager.renderPos} so block positions stored in world space map directly onto
  * the rendered scene, matching Qz-Miner's approach which works on all supported OpenGL versions.
+ *
+ * <p>
+ * Preview lifecycle:
+ * <ol>
+ * <li>While the chain key is <em>not</em> held the renderer continuously updates the preview
+ * as the player looks around (normal mode).</li>
+ * <li>When the chain key is pressed ({@link #freeze()}): the current preview is frozen in
+ * place – no new searches are started, the existing wireframe keeps rendering during the
+ * chain operation.</li>
+ * <li>When the chain key is released ({@link #unfreeze()}): the frozen frame is cleared and
+ * the renderer returns to normal mode, ready for the next chain.</li>
+ * </ol>
  */
 @SideOnly(Side.CLIENT)
 public class MinerRenderer {
@@ -46,10 +58,42 @@ public class MinerRenderer {
     private boolean searchComplete = false;
     private int lastIndexCount = 0;
 
+    /**
+     * When {@code true} the renderer is in frozen mode: it renders the existing wireframe but
+     * does not start new searches or drain the queue for new positions. Set by
+     * {@link #freeze()} on chain-key press, cleared by {@link #unfreeze()} on release.
+     */
+    private boolean frozen = false;
+
     private final ClientStateContainer clientState;
 
     public MinerRenderer(ClientStateContainer state) {
         this.clientState = state;
+    }
+
+    /**
+     * Freezes the preview: stops any in-progress search and holds the current wireframe.
+     * Called when the chain operation begins so that the preview does not update while
+     * blocks are being broken.
+     */
+    public void freeze() {
+        frozen = true;
+        // Stop the search thread – no new positions will arrive, the frozen frame is final.
+        if (founder != null) {
+            founder.interrupt();
+            founder = null;
+        }
+        foundQueue.clear();
+    }
+
+    /**
+     * Unfreezes the preview and clears the display.
+     * Called when the chain key is released so that the renderer returns to normal mode for
+     * the next activation.
+     */
+    public void unfreeze() {
+        frozen = false;
+        stopViewer();
     }
 
     @SubscribeEvent
@@ -60,6 +104,12 @@ public class MinerRenderer {
         }
         if (!inPressChainKey) {
             stopViewer();
+            return;
+        }
+
+        // ── Frozen mode: chain is active, just render the locked-in preview. ──
+        if (frozen) {
+            doRender();
             return;
         }
 
@@ -90,7 +140,12 @@ public class MinerRenderer {
         spaceCalc.positions.clear();
 
         EntityPlayer player = mc.thePlayer;
-        founder = clientState.minerModeState.createPositionFounder(target, foundQueue, player, new MinerConfig());
+        // Use preview-specific limits so the search stays responsive and GPU vertex data
+        // stays small, independently of the (potentially larger) server mining limits.
+        MinerConfig previewConfig = new MinerConfig();
+        previewConfig.bigRadius = Config.previewBigRadius;
+        previewConfig.blockLimit = Config.previewBlockLimit;
+        founder = clientState.minerModeState.createPositionFounder(target, foundQueue, player, previewConfig);
         if (founder != null) {
             founder.setSkipHarvestCheck(true);
         }

@@ -36,6 +36,17 @@ public class Config {
     public static int hudPosX = 5;
     public static int hudPosY = 5;
     /**
+     * Maximum search radius used by the client-side preview renderer.
+     * Independent of the server's {@code bigRadius}: the preview can use a smaller value
+     * to keep frame-rate smooth on large ore veins.
+     */
+    public static int previewBigRadius = 8;
+    /**
+     * Maximum number of blocks shown in the client-side preview.
+     * A lower limit makes the preview search finish faster and keeps GPU vertex data small.
+     */
+    public static int previewBlockLimit = 256;
+    /**
      * Chain key activation mode.
      * <ul>
      * <li>0 = Hold – keep the key pressed to keep chain active (default).</li>
@@ -125,6 +136,22 @@ public class Config {
             true,
             "When true, a summary message is shown in chat after each chain operation finishes, "
                 + "reporting the number of blocks mined and the time taken.");
+        previewBigRadius = configuration.getInt(
+            "previewBigRadius",
+            CLIENT_CATEGORY,
+            8,
+            0,
+            Integer.MAX_VALUE,
+            "Maximum search radius for the client-side block-outline preview. "
+                + "Use a smaller value than bigRadius to keep preview snappy on large veins.");
+        previewBlockLimit = configuration.getInt(
+            "previewBlockLimit",
+            CLIENT_CATEGORY,
+            256,
+            0,
+            Integer.MAX_VALUE,
+            "Maximum number of blocks shown in the client-side block-outline preview. "
+                + "Lower values finish the preview search faster and reduce GPU vertex load.");
         hudPosX = configuration.getInt(
             "hudPosX",
             CLIENT_CATEGORY,

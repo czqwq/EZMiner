@@ -103,6 +103,9 @@ public class KeyListener {
         EZMiner.network.network.sendToServer(new PacketChainSwitcher(true));
         ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = true;
         ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = true;
+        // Freeze preview: lock the current wireframe in place while chain blocks are broken.
+        // No new searches will start until unfreeze() is called on key release.
+        ((ClientProxy) EZMiner.proxy).minerRenderer.freeze();
         // Sync config to server on activation
         EZMiner.network.network.sendToServer(new PacketMinerConfig(new MinerConfig()));
     }
@@ -112,6 +115,9 @@ public class KeyListener {
         ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = false;
         ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = false;
         ((ClientProxy) EZMiner.proxy).clientState.chainedBlockCount = 0;
+        // Unfreeze preview: clear the frozen wireframe and allow the renderer to start a
+        // fresh search when the player next aims at a block.
+        ((ClientProxy) EZMiner.proxy).minerRenderer.unfreeze();
         // Reset toggle so the next key press starts a new chain.
         // stopChain() is only ever called on explicit user key input, so resetting
         // chainToggled here is correct. When a chain ends naturally (ore exhausted)

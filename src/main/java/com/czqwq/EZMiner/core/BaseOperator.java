@@ -1,5 +1,6 @@
 package com.czqwq.EZMiner.core;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
@@ -10,6 +11,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentTranslation;
+import net.minecraft.util.FoodStats;
 
 import org.joml.Vector3i;
 
@@ -23,12 +25,23 @@ import com.czqwq.EZMiner.utils.MessageUtils;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
+import cpw.mods.fml.relauncher.ReflectionHelper;
 
 /**
  * Server-side chain operator. Dequeues block positions and harvests them
  * at a rate of up to 64 blocks per server tick.
  */
 public class BaseOperator {
+
+    /**
+     * Reflected access to {@code FoodStats.foodExhaustionLevel} (private in 1.7.10).
+     * Used to implement "replace vanilla exhaustion" semantics: save the value before
+     * {@code tryHarvestBlock}, then write {@code saved + configuredAmount} after,
+     * so that {@code addExhaustion = 0.0} truly means zero hunger cost.
+     * SRG name: {@code field_75126_c}.
+     */
+    private static final Field FOOD_EXHAUSTION_LEVEL = ReflectionHelper
+        .findField(FoodStats.class, "foodExhaustionLevel", "field_75126_c");
 
     public final EntityPlayerMP playerMP;
     public final Manager manager;
@@ -79,12 +92,25 @@ public class BaseOperator {
                 // GT's onBlockActivated fires OreInteractEvent which VP's ServerCache intercepts
                 // to send vein data to the player's map overlay.
                 triggerVPOreDiscovery(pos);
+                // Implement "replace vanilla exhaustion" semantics: snapshot exhaustion before
+                // the break, then overwrite it with the configured amount afterward.
+                // 0.0 → no food cost at all
+                // negative → food recovery
+                // 0.025 → vanilla single-block cost
+                FoodStats food = playerMP.getFoodStats();
+                float exhaustionBefore;
+                try {
+                    exhaustionBefore = FOOD_EXHAUSTION_LEVEL.getFloat(food);
+                } catch (IllegalAccessException ex) {
+                    exhaustionBefore = 0f;
+                }
                 playerMP.theItemInWorldManager.tryHarvestBlock(pos.x, pos.y, pos.z);
-                // Apply the client's configured exhaustion per chain block, replacing the
-                // vanilla per-block exhaustion (which is only applied client-side in
-                // PlayerControllerMP and therefore does not fire for server-side chain
-                // breaks). 0.0 means no food cost; negative values restore food.
-                playerMP.addExhaustion((float) manager.pConfig.addExhaustion);
+                try {
+                    FOOD_EXHAUSTION_LEVEL.setFloat(food, exhaustionBefore + (float) manager.pConfig.addExhaustion);
+                } catch (IllegalAccessException ex) {
+                    // Field inaccessible – fall back to additive mode.
+                    playerMP.addExhaustion((float) manager.pConfig.addExhaustion);
+                }
             } catch (Exception e) {
                 EZMiner.LOG.error("EZMiner: Error while harvesting block at {}: {}", pos, e.getMessage(), e);
                 MessageUtils.serverSendPlayerMessage(
