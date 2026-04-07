@@ -71,8 +71,11 @@ public class MinerRenderer {
 
         Vector3i target = new Vector3i(mc.objectMouseOver.blockX, mc.objectMouseOver.blockY, mc.objectMouseOver.blockZ);
         if (!lastTarget.equals(target)) {
-            lastTarget = new Vector3i(target);
             restartViewer(mc, target);
+            // Set lastTarget AFTER restartViewer, because stopViewer() inside it resets
+            // lastTarget to (MIN,MIN,MIN). Setting it here prevents the per-frame restart
+            // loop that caused only 1 block (the center) to ever appear.
+            lastTarget = new Vector3i(target);
         }
 
         drainQueue(mc);
