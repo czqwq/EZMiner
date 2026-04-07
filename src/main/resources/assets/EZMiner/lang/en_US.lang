@@ -43,6 +43,6 @@ ezminer.command.usage.hud_pos=§e/EZMiner hud pos <x> <y>§r - set HUD position 
 ezminer.command.active_mode.usage.0=§e/EZMiner active_mode 0§r - Hold: keep the chain key held to mine, release to stop
 ezminer.command.active_mode.usage.1=§e/EZMiner active_mode 1§r - Toggle: press once to active, press again to stop
 ezminer.command.hud.pos.usage=§e/EZMiner hud pos <x> <y>§r - set HUD position (top-left origin)
-ezminer.command.hud.pos.set=EZMiner: HUD position set to x=%s, z=%s.
+ezminer.command.hud.pos.set=EZMiner: HUD position set to x=%s, y=%s.
 ezminer.message.chain.done=EZMiner: chain done; blocks=%s; time=%ss
 ezminer.message.chain.error=EZMiner: Error while harvesting block at %s: %s
