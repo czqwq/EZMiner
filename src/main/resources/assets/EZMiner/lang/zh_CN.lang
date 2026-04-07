@@ -1,5 +1,6 @@
 ezminer.hud.active=连锁已启用
 ezminer.hud.chainCount=已连锁方块
+ezminer.hud.chainElapsed=已连锁时间
 ezminer.hud.previewCount=客户端已渲染方块
 
 key.ezminer.chainKey=连锁键

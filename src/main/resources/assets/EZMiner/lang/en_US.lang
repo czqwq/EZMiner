@@ -1,5 +1,6 @@
 ezminer.hud.active=Chain Active
 ezminer.hud.chainCount=Chained Blocks
+ezminer.hud.chainElapsed=Chain Elapsed
 ezminer.hud.previewCount=Client Rendered Blocks
 
 key.ezminer.chainKey=Chain Key

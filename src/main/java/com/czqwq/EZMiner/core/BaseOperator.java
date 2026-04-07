@@ -91,14 +91,16 @@ public class BaseOperator {
             operatorCount++;
             countThisTick++;
             if (countThisTick >= 64) {
-                // Send real-time count update to client
-                EZMiner.network.network.sendTo(new PacketChainCount(operatorCount), playerMP);
+                // Send real-time count + elapsed time update to client
+                EZMiner.network.network
+                    .sendTo(new PacketChainCount(operatorCount, System.currentTimeMillis() - startTime), playerMP);
                 return;
             }
         }
 
-        // Send real-time count update to client each tick
-        EZMiner.network.network.sendTo(new PacketChainCount(operatorCount), playerMP);
+        // Send real-time count + elapsed time update to client each tick
+        EZMiner.network.network
+            .sendTo(new PacketChainCount(operatorCount, System.currentTimeMillis() - startTime), playerMP);
 
         if (positionFounder.stopped.get()) unRegistry();
     }
@@ -132,6 +134,10 @@ public class BaseOperator {
                     operatorCount,
                     Math.round(ms / 10.0) / 100.0f),
                 manager.playerUUID);
+        }
+        // Reset client-side chain count and elapsed time display
+        if (playerMP != null && !playerMP.isDead) {
+            EZMiner.network.network.sendTo(new PacketChainCount(0, 0L), playerMP);
         }
         FMLCommonHandler.instance()
             .bus()
