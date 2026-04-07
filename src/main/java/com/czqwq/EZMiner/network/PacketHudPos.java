@@ -10,25 +10,25 @@ import io.netty.buffer.ByteBuf;
 public class PacketHudPos implements IMessage {
 
     public int x;
-    public int z;
+    public int y;
 
     public PacketHudPos() {}
 
-    public PacketHudPos(int x, int z) {
+    public PacketHudPos(int x, int y) {
         this.x = x;
-        this.z = z;
+        this.y = y;
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
         x = buf.readInt();
-        z = buf.readInt();
+        y = buf.readInt();
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeInt(x);
-        buf.writeInt(z);
+        buf.writeInt(y);
     }
 
     public static class Handler implements IMessageHandler<PacketHudPos, IMessage> {
@@ -36,7 +36,7 @@ public class PacketHudPos implements IMessage {
         @Override
         public IMessage onMessage(PacketHudPos msg, MessageContext ctx) {
             if (ctx.side.isClient()) {
-                Config.saveHudPos(msg.x, msg.z);
+                Config.saveHudPos(msg.x, msg.y);
             }
             return null;
         }

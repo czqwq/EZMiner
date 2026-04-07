@@ -53,7 +53,7 @@ public class HudRenderer {
         int previewCount = state.previewRenderedCount;
 
         int x = Config.hudPosX;
-        int y = Config.hudPosZ;
+        int y = Config.hudPosY;
         int lineH = fr.FONT_HEIGHT + 2;
 
         // Line 1: header

@@ -31,7 +31,7 @@ public class ReloadConfigCommand extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/EZMiner <reloadConfig | active_mode <0|1> | hud pos <x> <z>>";
+        return "/EZMiner <reloadConfig | active_mode <0|1> | hud pos <x> <y>>";
     }
 
     /** Allow all players to run /EZMiner (active_mode is a personal setting). */
@@ -108,25 +108,25 @@ public class ReloadConfigCommand extends CommandBase {
             return;
         }
 
-        // ── hud pos <x> <z> ────────────────────────────────────────────────────
+        // ── hud pos <x> <y> ────────────────────────────────────────────────────
         if (sub.equalsIgnoreCase("hud")) {
             if (args.length != 4 || !args[1].equalsIgnoreCase("pos")) {
                 sendHudPosUsage(sender);
                 return;
             }
-            int x, z;
+            int x, y;
             try {
                 x = Integer.parseInt(args[2]);
-                z = Integer.parseInt(args[3]);
+                y = Integer.parseInt(args[3]);
             } catch (NumberFormatException e) {
                 sendHudPosUsage(sender);
                 return;
             }
-            Config.saveHudPos(x, z);
-            sender.addChatMessage(new ChatComponentTranslation("ezminer.command.hud.pos.set", x, z));
+            Config.saveHudPos(x, y);
+            sender.addChatMessage(new ChatComponentTranslation("ezminer.command.hud.pos.set", x, y));
             if (sender instanceof net.minecraft.entity.player.EntityPlayerMP) {
                 net.minecraft.entity.player.EntityPlayerMP player = (net.minecraft.entity.player.EntityPlayerMP) sender;
-                EZMiner.network.network.sendTo(new PacketHudPos(x, z), player);
+                EZMiner.network.network.sendTo(new PacketHudPos(x, y), player);
             }
             return;
         }

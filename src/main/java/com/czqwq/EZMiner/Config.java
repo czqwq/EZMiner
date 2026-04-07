@@ -28,7 +28,7 @@ public class Config {
     public static boolean usePreview = true;
     public static boolean useChainDoneMessage = true;
     public static int hudPosX = 5;
-    public static int hudPosZ = 5;
+    public static int hudPosY = 5;
     /**
      * Chain key activation mode.
      * <ul>
@@ -117,8 +117,8 @@ public class Config {
             Integer.MIN_VALUE,
             Integer.MAX_VALUE,
             "HUD X position in screen pixels (origin at top-left).");
-        hudPosZ = configuration.getInt(
-            "hudPosZ",
+        hudPosY = configuration.getInt(
+            "hudPosY",
             CLIENT_CATEGORY,
             5,
             Integer.MIN_VALUE,
@@ -152,13 +152,13 @@ public class Config {
         configuration.save();
     }
 
-    public static void saveHudPos(int x, int z) {
+    public static void saveHudPos(int x, int y) {
         hudPosX = x;
-        hudPosZ = z;
+        hudPosY = y;
         configuration.get(CLIENT_CATEGORY, "hudPosX", 5)
             .set(x);
-        configuration.get(CLIENT_CATEGORY, "hudPosZ", 5)
-            .set(z);
+        configuration.get(CLIENT_CATEGORY, "hudPosY", 5)
+            .set(y);
         configuration.save();
     }
 
