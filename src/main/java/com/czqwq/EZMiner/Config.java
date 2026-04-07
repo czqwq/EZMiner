@@ -18,6 +18,12 @@ public class Config {
     public static int blockLimit = 1024;
     public static int smallRadius = 2;
     public static int tunnelWidth = 1;
+    /**
+     * Maximum number of blocks broken per server tick during a chain operation.
+     * Lower values reduce per-tick light-propagation and entity-tracking load;
+     * higher values complete the chain faster. Hard cap: 64.
+     */
+    public static int breakPerTick = 16;
 
     // ===== Client-side settings =====
     public static final String CLIENT_CATEGORY = "Client";
@@ -81,6 +87,15 @@ public class Config {
             0,
             Integer.MAX_VALUE,
             "Half-width of the tunnel dug by Tunnel blast sub-mode (0 = 1-block wide, 1 = 3-block wide, etc.).");
+        breakPerTick = configuration.getInt(
+            "breakPerTick",
+            Configuration.CATEGORY_GENERAL,
+            16,
+            1,
+            64,
+            "Maximum blocks broken per server tick during a chain operation. "
+                + "Lower values reduce light-update lag on large veins (recommended: 16). "
+                + "Hard cap: 64.");
         addExhaustion = configuration
             .get(
                 CLIENT_CATEGORY,

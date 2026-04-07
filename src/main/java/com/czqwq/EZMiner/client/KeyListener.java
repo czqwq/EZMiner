@@ -95,6 +95,11 @@ public class KeyListener {
     }
 
     private void startChain(MinerModeState state) {
+        // Sync mode to server BEFORE the chain-switcher packet so that when the server
+        // receives the BreakEvent it already has the correct mode. Without this, the
+        // server's Manager.minerModeState stays at its default (chain/basic) and ignores
+        // whatever mode the client HUD is showing.
+        EZMiner.network.network.sendToServer(new PacketMinerModeState(state));
         EZMiner.network.network.sendToServer(new PacketChainSwitcher(true));
         ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = true;
         ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = true;

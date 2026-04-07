@@ -90,7 +90,7 @@ public class BaseOperator {
             }
             operatorCount++;
             countThisTick++;
-            if (countThisTick >= 64) {
+            if (countThisTick >= Config.breakPerTick) {
                 // Send real-time count + elapsed time update to client
                 EZMiner.network.network
                     .sendTo(new PacketChainCount(operatorCount, System.currentTimeMillis() - startTime), playerMP);
