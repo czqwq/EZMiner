@@ -192,6 +192,9 @@ public class Manager {
         pConfig.smallRadius = Math.max(0, Math.min(cfg.smallRadius, Config.smallRadius));
         pConfig.tunnelWidth = Math.max(0, Math.min(cfg.tunnelWidth, Config.tunnelWidth));
         pConfig.useChainDoneMessage = cfg.useChainDoneMessage;
+        // addExhaustion is a client-side preference (replaces vanilla mining exhaustion).
+        // Clamp to [-1.0, 1.0] to prevent degenerate values; no further server cap needed.
+        pConfig.addExhaustion = Math.max(-1.0, Math.min(cfg.addExhaustion, 1.0));
     }
 
     // ===== Guard =====

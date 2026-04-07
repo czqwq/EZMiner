@@ -9,6 +9,10 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.czqwq.EZMiner.Config;
+import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.network.PacketServerConfig;
+
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
@@ -32,6 +36,16 @@ public class PlayerManager {
         Manager mgr = new Manager(mp);
         managers.put(mp.getUniqueID(), mgr);
         mgr.registry();
+        // Push server config limits to the client so preview/HUD reflects actual constraints
+        // immediately on join, before any chain operation is started.
+        EZMiner.network.network.sendTo(
+            new PacketServerConfig(
+                Config.bigRadius,
+                Config.blockLimit,
+                Config.smallRadius,
+                Config.tunnelWidth,
+                Config.breakPerTick),
+            mp);
         LOG.info("Registered manager for player: {} ({})", mp.getDisplayName(), mp.getUniqueID());
     }
 

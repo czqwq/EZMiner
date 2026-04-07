@@ -29,6 +29,7 @@ public class PacketMinerConfig implements IMessage {
         minerConfig.smallRadius = buf.readInt();
         minerConfig.tunnelWidth = buf.readInt();
         minerConfig.useChainDoneMessage = buf.readBoolean();
+        minerConfig.addExhaustion = buf.readDouble();
     }
 
     @Override
@@ -38,6 +39,7 @@ public class PacketMinerConfig implements IMessage {
         buf.writeInt(minerConfig.smallRadius);
         buf.writeInt(minerConfig.tunnelWidth);
         buf.writeBoolean(minerConfig.useChainDoneMessage);
+        buf.writeDouble(minerConfig.addExhaustion);
     }
 
     public static class Handler implements IMessageHandler<PacketMinerConfig, IMessage> {

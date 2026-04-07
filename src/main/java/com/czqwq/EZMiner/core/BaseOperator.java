@@ -80,8 +80,11 @@ public class BaseOperator {
                 // to send vein data to the player's map overlay.
                 triggerVPOreDiscovery(pos);
                 playerMP.theItemInWorldManager.tryHarvestBlock(pos.x, pos.y, pos.z);
-                // Add configured exhaustion per block
-                playerMP.addExhaustion((float) Config.addExhaustion);
+                // Apply the client's configured exhaustion per chain block, replacing the
+                // vanilla per-block exhaustion (which is only applied client-side in
+                // PlayerControllerMP and therefore does not fire for server-side chain
+                // breaks). 0.0 means no food cost; negative values restore food.
+                playerMP.addExhaustion((float) manager.pConfig.addExhaustion);
             } catch (Exception e) {
                 EZMiner.LOG.error("EZMiner: Error while harvesting block at {}: {}", pos, e.getMessage(), e);
                 MessageUtils.serverSendPlayerMessage(
