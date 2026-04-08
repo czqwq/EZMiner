@@ -4,7 +4,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockCrops;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentTranslation;
 
@@ -79,13 +82,18 @@ public class BaseOperator {
             }
             try {
                 if (shouldHarvest(pos)) {
+                    Block preHarvestBlock = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
+                    int preHarvestMeta = playerMP.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
                     vpBridge.notifyOreDiscovery(playerMP, pos, vpNotifiedChunks);
-                    exhaustionStrategy.harvestWithConfiguredExhaustion(
+                    boolean harvested = exhaustionStrategy.harvestWithConfiguredExhaustion(
                         playerMP,
                         pos,
                         (float) manager.pConfig.addExhaustion,
                         harvestActionExecutor);
-                    operatorCount++;
+                    if (harvested) {
+                        replantVanillaCropIfNeeded(pos, preHarvestBlock, preHarvestMeta);
+                        operatorCount++;
+                    }
                 }
             } catch (Exception e) {
                 ChainExecutionErrorReporter.reportHarvestError(manager, pos, e);
@@ -183,5 +191,15 @@ public class BaseOperator {
     private boolean shouldHarvest(Vector3i pos) {
         if (!manager.isBlastCropMode()) return true;
         return Manager.isMatureCrop(playerMP.worldObj, pos.x, pos.y, pos.z);
+    }
+
+    private void replantVanillaCropIfNeeded(Vector3i pos, Block preHarvestBlock, int preHarvestMeta) {
+        if (!manager.isBlastCropMode()) return;
+        if (!(preHarvestBlock instanceof BlockCrops)) return;
+        if (preHarvestMeta < 7) return;
+        Block current = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
+        if (current == Blocks.air) {
+            playerMP.worldObj.setBlock(pos.x, pos.y, pos.z, preHarvestBlock, 0, 3);
+        }
     }
 }
