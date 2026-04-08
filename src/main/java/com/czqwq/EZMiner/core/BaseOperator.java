@@ -20,7 +20,6 @@ import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
 import com.czqwq.EZMiner.core.founder.BasePositionFounder;
 import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
-import com.czqwq.EZMiner.network.PacketChainCount;
 import com.czqwq.EZMiner.utils.MessageUtils;
 
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -121,9 +120,7 @@ public class BaseOperator {
             operatorCount++;
             countThisTick++;
             if (countThisTick >= Config.breakPerTick) {
-                // Send real-time count + elapsed time update to client
-                EZMiner.network.network
-                    .sendTo(new PacketChainCount(operatorCount, System.currentTimeMillis() - startTime), playerMP);
+                // Send server-authoritative runtime projection to client.
                 EZMiner.network.network.sendTo(
                     new PacketChainStateSync(
                         manager.playerUUID,
@@ -135,9 +132,7 @@ public class BaseOperator {
             }
         }
 
-        // Send real-time count + elapsed time update to client each tick
-        EZMiner.network.network
-            .sendTo(new PacketChainCount(operatorCount, System.currentTimeMillis() - startTime), playerMP);
+        // Send server-authoritative runtime projection to client each tick.
         EZMiner.network.network.sendTo(
             new PacketChainStateSync(manager.playerUUID, operatorCount, System.currentTimeMillis() - startTime, true),
             playerMP);
@@ -177,7 +172,6 @@ public class BaseOperator {
         }
         // Reset client-side chain count and elapsed time display
         if (playerMP != null && !playerMP.isDead) {
-            EZMiner.network.network.sendTo(new PacketChainCount(0, 0L), playerMP);
             EZMiner.network.network.sendTo(new PacketChainStateSync(null, 0, 0L, false), playerMP);
         }
         FMLCommonHandler.instance()

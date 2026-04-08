@@ -89,7 +89,7 @@
 - [x] `PacketKeyState`：客户端输入态变化（按下/松开/toggle）
 - [x] `PacketChainModeSwitch`：模式切换命令
 - [x] `PacketChainStateSync`：服务端权威运行态同步（count/elapsed/session/mode snapshot）
-- [ ] 协议改造为“命令 + 权威回传”，避免双向盲写同一字段
+- [x] 协议改造为“命令 + 权威回传”，避免双向盲写同一字段（运行态计数/耗时已统一以 PacketChainStateSync 为权威回传）
 - [ ] 补充非法状态保护（过期 sessionId、跨维度旧包、重复包去重）
 
 ## 9. 生命周期与清理（稳定性关键）
@@ -158,3 +158,4 @@
 - [x] 启动 Phase B：规划层替换入口（Founder 构建已迁移至 planning runtime factory 兼容桥）
 - [x] 生命周期治理：新增 chain/lifecycle 并统一玩家/世界事件运行态清理
 - [x] 客户端显示态收敛：HUD 执行态改为 ChainClientState + PacketChainStateSync 投影
+- [x] 协议收敛：运行态同步从双包并行改为 PacketChainStateSync 单一权威回传

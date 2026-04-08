@@ -9,9 +9,10 @@ import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 
 /**
- * Server → Client: real-time update of how many blocks have been mined in the current
- * chain operation, plus elapsed time in milliseconds.
- * Sent once per operator tick and a final reset (count=0, elapsedMs=0) when the operation ends.
+ * Legacy Server → Client runtime count packet.
+ * <p>
+ * Kept for compatibility during migration; authoritative runtime HUD state is now
+ * projected by {@code chain.network.PacketChainStateSync}.
  */
 public class PacketChainCount implements IMessage {
 
