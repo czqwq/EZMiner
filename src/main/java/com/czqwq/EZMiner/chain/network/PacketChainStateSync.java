@@ -81,6 +81,7 @@ public class PacketChainStateSync implements IMessage {
                 UUID msgSession = msg.hasSession ? new UUID(msg.sessionMost, msg.sessionLeast) : null;
                 if (msg.hasSession) {
                     if (proxy.clientState.chainClientState.sessionId != null) {
+                        // Guard against out-of-order packets from older sessions.
                         if (msg.sessionStartMs < proxy.clientState.chainClientState.sessionStartMs) return null;
                         if (msg.sessionStartMs == proxy.clientState.chainClientState.sessionStartMs
                             && !proxy.clientState.chainClientState.sessionId.equals(msgSession)) {
