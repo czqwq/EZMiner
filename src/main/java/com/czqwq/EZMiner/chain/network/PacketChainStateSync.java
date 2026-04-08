@@ -2,8 +2,6 @@ package com.czqwq.EZMiner.chain.network;
 
 import java.util.UUID;
 
-import net.minecraft.client.Minecraft;
-
 import com.czqwq.EZMiner.ClientProxy;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.chain.state.ChainSession;
@@ -82,13 +80,6 @@ public class PacketChainStateSync implements IMessage {
                 ClientProxy proxy = (ClientProxy) EZMiner.proxy;
                 UUID msgSession = msg.hasSession ? new UUID(msg.sessionMost, msg.sessionLeast) : null;
                 if (msg.hasSession) {
-                    if (Minecraft.getMinecraft().thePlayer != null
-                        && Minecraft.getMinecraft().thePlayer.dimension != msg.sessionDimension) {
-                        proxy.clientState.chainClientState.sessionId = null;
-                        proxy.clientState.chainClientState.sessionStartMs = 0L;
-                        proxy.clientState.chainClientState.sessionDimension = 0;
-                        return null;
-                    }
                     if (proxy.clientState.chainClientState.sessionId != null) {
                         if (msg.sessionStartMs < proxy.clientState.chainClientState.sessionStartMs) return null;
                         if (msg.sessionStartMs == proxy.clientState.chainClientState.sessionStartMs
