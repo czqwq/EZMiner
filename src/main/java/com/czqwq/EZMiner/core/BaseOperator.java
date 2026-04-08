@@ -18,8 +18,8 @@ import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.chain.execution.BlockHarvestActionExecutor;
 import com.czqwq.EZMiner.chain.execution.ChainActionExecutor;
-import com.czqwq.EZMiner.chain.execution.ChainExecutor;
 import com.czqwq.EZMiner.chain.execution.ChainExecutionErrorReporter;
+import com.czqwq.EZMiner.chain.execution.ChainExecutor;
 import com.czqwq.EZMiner.chain.execution.ChainHarvestExhaustionStrategy;
 import com.czqwq.EZMiner.chain.execution.VisualProspectingBridge;
 import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
@@ -91,13 +91,8 @@ public class BaseOperator {
         // Send server-authoritative runtime projection to client each tick.
         long elapsedMs = System.currentTimeMillis() - startTime;
         manager.updateRuntimeProjection(operatorCount, elapsedMs, canBreakPositions.size());
-        EZMiner.network.network.sendTo(
-            new PacketChainStateSync(
-                manager.activeSession,
-                operatorCount,
-                elapsedMs,
-                true),
-            playerMP);
+        EZMiner.network.network
+            .sendTo(new PacketChainStateSync(manager.activeSession, operatorCount, elapsedMs, true), playerMP);
 
         if (planningTask.isStopped() && canBreakPositions.isEmpty()) unRegistry();
     }
@@ -169,6 +164,7 @@ public class BaseOperator {
 
     private boolean shouldHarvest(Vector3i pos) {
         if (!manager.isBlastCropMode()) return true;
+        if (playerMP.worldObj == null) return false;
         return Manager.isMatureCrop(playerMP.worldObj, pos.x, pos.y, pos.z);
     }
 

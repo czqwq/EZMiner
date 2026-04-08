@@ -1,5 +1,7 @@
 package com.czqwq.EZMiner.chain.planning;
 
+import java.util.Objects;
+
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.core.founder.BasePositionFounder;
 
@@ -12,7 +14,7 @@ public class LegacyFounderPlanningTask implements ChainPlanningTask {
     private final BasePositionFounder founder;
 
     public LegacyFounderPlanningTask(BasePositionFounder founder) {
-        this.founder = founder;
+        this.founder = Objects.requireNonNull(founder, "founder");
     }
 
     @Override

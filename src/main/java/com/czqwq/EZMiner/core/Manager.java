@@ -42,6 +42,8 @@ import ic2.core.crop.TileEntityCrop;
  */
 public class Manager {
 
+    private static final int VANILLA_CROP_MATURE_META = 7;
+
     /**
      * True when the Bandit mod (vein-mining mod) is present on this installation.
      *
@@ -261,11 +263,14 @@ public class Manager {
     }
 
     private void startChain(Vector3i pos, EntityPlayerMP player) {
-        setInOperate(true);
+        if (operator != null) {
+            operator.stopImmediately();
+            operator = null;
+        }
         this.player = player;
         originPos = pos;
         activeSession = EZMiner.chainStateService.markSessionStart(playerUUID, pos, player.dimension);
-        if (operator != null) operator.stopImmediately();
+        setInOperate(true);
         operator = new BaseOperator(pos, this);
         operator.registry();
     }
@@ -324,7 +329,7 @@ public class Manager {
         Block block = world.getBlock(x, y, z);
         if (block instanceof BlockCrops) {
             int meta = world.getBlockMetadata(x, y, z);
-            return meta >= 7;
+            return meta >= VANILLA_CROP_MATURE_META;
         }
         TileEntity tile = world.getTileEntity(x, y, z);
         if (tile instanceof TileEntityCrop) {

@@ -28,8 +28,8 @@ public class PacketChainStateSync implements IMessage {
     public PacketChainStateSync() {}
 
     public PacketChainStateSync(ChainSession session, int chainedCount, long elapsedMs, boolean inOperate) {
-        this.hasSession = session != null;
         UUID sessionId = session != null ? session.sessionId : null;
+        this.hasSession = session != null && sessionId != null;
         this.sessionMost = hasSession ? sessionId.getMostSignificantBits() : 0L;
         this.sessionLeast = hasSession ? sessionId.getLeastSignificantBits() : 0L;
         this.sessionStartMs = hasSession ? session.startTimeMs : 0L;
