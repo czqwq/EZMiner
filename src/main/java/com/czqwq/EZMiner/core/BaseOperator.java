@@ -78,22 +78,24 @@ public class BaseOperator {
                 return;
             }
             try {
-                vpBridge.notifyOreDiscovery(playerMP, pos, vpNotifiedChunks);
-                exhaustionStrategy.harvestWithConfiguredExhaustion(
-                    playerMP,
-                    pos,
-                    (float) manager.pConfig.addExhaustion,
-                    harvestActionExecutor);
+                if (shouldHarvest(pos)) {
+                    vpBridge.notifyOreDiscovery(playerMP, pos, vpNotifiedChunks);
+                    exhaustionStrategy.harvestWithConfiguredExhaustion(
+                        playerMP,
+                        pos,
+                        (float) manager.pConfig.addExhaustion,
+                        harvestActionExecutor);
+                    operatorCount++;
+                }
             } catch (Exception e) {
                 ChainExecutionErrorReporter.reportHarvestError(manager, pos, e);
             }
-            operatorCount++;
             countThisTick++;
             if (countThisTick >= Config.breakPerTick) {
                 // Send server-authoritative runtime projection to client.
                 EZMiner.network.network.sendTo(
                     new PacketChainStateSync(
-                        manager.playerUUID,
+                        manager.activeSession,
                         operatorCount,
                         System.currentTimeMillis() - startTime,
                         true),
@@ -104,14 +106,20 @@ public class BaseOperator {
 
         // Send server-authoritative runtime projection to client each tick.
         EZMiner.network.network.sendTo(
-            new PacketChainStateSync(manager.playerUUID, operatorCount, System.currentTimeMillis() - startTime, true),
+            new PacketChainStateSync(
+                manager.activeSession,
+                operatorCount,
+                System.currentTimeMillis() - startTime,
+                true),
             playerMP);
 
         if (positionFounder.stopped.get()) unRegistry();
     }
 
     private boolean isPlayerOnline() {
-        return playerMP != null && !playerMP.isDead && playerMP.worldObj != null;
+        return playerMP != null && !playerMP.isDead
+            && playerMP.worldObj != null
+            && (manager.activeSession == null || playerMP.dimension == manager.activeSession.dimensionId);
     }
 
     private boolean canOperate() {
@@ -150,6 +158,7 @@ public class BaseOperator {
         positionFounder.interrupt();
         manager.inOperate = false;
         EZMiner.chainStateService.markSessionStop(manager.playerUUID);
+        manager.activeSession = null;
     }
 
     /**
@@ -168,5 +177,11 @@ public class BaseOperator {
         }
         manager.inOperate = false;
         EZMiner.chainStateService.markSessionStop(manager.playerUUID);
+        manager.activeSession = null;
+    }
+
+    private boolean shouldHarvest(Vector3i pos) {
+        if (!manager.isBlastCropMode()) return true;
+        return Manager.isMatureCrop(playerMP.worldObj, pos.x, pos.y, pos.z);
     }
 }

@@ -49,12 +49,14 @@ public class ChainStateService {
         if (state != null) state.clearRuntime();
     }
 
-    public void markSessionStart(UUID playerUUID, Vector3i origin, int dimId) {
+    public ChainSession markSessionStart(UUID playerUUID, Vector3i origin, int dimId) {
         ChainPlayerState state = getOrCreate(playerUUID);
-        state.session = new ChainSession(new Vector3i(origin), dimId, System.currentTimeMillis());
+        ChainSession session = new ChainSession(new Vector3i(origin), dimId, System.currentTimeMillis());
+        state.session = session;
         state.runtimeState.inOperate = true;
         state.runtimeState.chainedCount = 0;
         state.runtimeState.elapsedMs = 0L;
+        return session;
     }
 
     public void markSessionStop(UUID playerUUID) {
@@ -63,5 +65,11 @@ public class ChainStateService {
         state.runtimeState.inOperate = false;
         state.runtimeState.queuedCandidates = 0;
         state.session = null;
+    }
+
+    public ChainSession getSession(UUID playerUUID) {
+        ChainPlayerState state = stateMap.get(playerUUID);
+        if (state == null) return null;
+        return state.session;
     }
 }

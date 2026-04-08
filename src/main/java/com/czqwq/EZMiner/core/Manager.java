@@ -5,18 +5,24 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.UUID;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockCrops;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 
 import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.state.ChainSession;
 import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
 
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -24,6 +30,8 @@ import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
+import ic2.api.crops.CropCard;
+import ic2.core.crop.TileEntityCrop;
 
 /**
  * Per-player chain mining manager.
@@ -57,6 +65,7 @@ public class Manager {
     public volatile boolean inOperate = false;
 
     public BaseOperator operator = null;
+    public volatile ChainSession activeSession = null;
 
     /**
      * Position of the first block broken in this chain; used as the drop-spawn point when {@code dropToPlayer} is
@@ -96,13 +105,19 @@ public class Manager {
     public void onBlockBreak(BlockEvent.BreakEvent event) {
         if (!isSamePlayer(event.getPlayer())) return;
         if (inOperate || !inPressChainKey) return;
-        inOperate = true;
-        player = (EntityPlayerMP) event.getPlayer();
-        Vector3i pos = new Vector3i(event.x, event.y, event.z);
-        originPos = pos;
-        EZMiner.chainStateService.markSessionStart(playerUUID, pos, player.dimension);
-        operator = new BaseOperator(pos, this);
-        operator.registry();
+        if (isBlastCropMode()) return;
+        startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.getPlayer());
+    }
+
+    @SubscribeEvent
+    public void onCropRightClick(PlayerInteractEvent event) {
+        if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
+        if (!isSamePlayer(event.entityPlayer)) return;
+        if (inOperate || !inPressChainKey) return;
+        if (!isBlastCropMode()) return;
+        if (!isMatureCrop(event.entityPlayer.worldObj, event.x, event.y, event.z)) return;
+        startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.entityPlayer);
+        event.setCanceled(true);
     }
 
     // ===== Drop Collection =====
@@ -209,6 +224,7 @@ public class Manager {
         inPressChainKey = false;
         inOperate = false;
         EZMiner.chainStateService.markSessionStop(playerUUID);
+        activeSession = null;
     }
 
     // ===== Config sync =====
@@ -231,5 +247,34 @@ public class Manager {
             .equals(playerUUID) && p instanceof EntityPlayerMP
             && !p.worldObj.isRemote
             && !(p instanceof FakePlayer);
+    }
+
+    private void startChain(Vector3i pos, EntityPlayerMP player) {
+        inOperate = true;
+        this.player = player;
+        originPos = pos;
+        activeSession = EZMiner.chainStateService.markSessionStart(playerUUID, pos, player.dimension);
+        operator = new BaseOperator(pos, this);
+        operator.registry();
+    }
+
+    public boolean isBlastCropMode() {
+        return minerModeState.mainMode == 0 && minerModeState.blastMode == 5;
+    }
+
+    public static boolean isMatureCrop(World world, int x, int y, int z) {
+        if (world == null || !world.blockExists(x, y, z)) return false;
+        Block block = world.getBlock(x, y, z);
+        if (block instanceof BlockCrops) {
+            int meta = world.getBlockMetadata(x, y, z);
+            return meta >= 7;
+        }
+        TileEntity tile = world.getTileEntity(x, y, z);
+        if (tile instanceof TileEntityCrop) {
+            TileEntityCrop crop = (TileEntityCrop) tile;
+            CropCard card = crop.getCrop();
+            return card != null && card.canBeHarvested(crop);
+        }
+        return false;
     }
 }

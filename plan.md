@@ -90,14 +90,14 @@
 - [x] `PacketChainModeSwitch`：模式切换命令
 - [x] `PacketChainStateSync`：服务端权威运行态同步（count/elapsed/session/mode snapshot）
 - [x] 协议改造为“命令 + 权威回传”，避免双向盲写同一字段（运行态计数/耗时已统一以 PacketChainStateSync 为权威回传）
-- [ ] 补充非法状态保护（过期 sessionId、跨维度旧包、重复包去重）
+- [x] 补充非法状态保护（过期 sessionId、跨维度旧包、重复包去重）
 
 ## 9. 生命周期与清理（稳定性关键）
 
 - [x] 统一接入：登录、登出、切维度、重生、单人退出、世界卸载
 - [x] 所有路径都必须中止规划任务、清空执行队列、重置 session、释放渲染状态（服务端会话路径已统一）
 - [x] 防止离线玩家残留任务继续访问 world/player 引用
-- [ ] 防止跨维度旧 session 误执行
+- [x] 防止跨维度旧 session 误执行
 
 ## 10. 并行 Tick 分片策略（性能与安全）
 
@@ -128,10 +128,10 @@
 ### 12.1 已发现高风险点
 
 - [x] 状态漂移：客户端 chainActive 与服务端 inPressChainKey 不一致
-- [ ] 生命周期缺口：切维度/重生后旧任务未彻底清理
-- [ ] 线程边界：搜索线程潜在读取失效 world/player 引用
-- [ ] 网络乱序：模式切换包与按键包到达顺序导致错模态执行
-- [ ] 预览-执行耦合：预览冻结逻辑与执行启动时机竞态
+- [x] 生命周期缺口：切维度/重生后旧任务未彻底清理
+- [x] 线程边界：搜索线程潜在读取失效 world/player 引用
+- [x] 网络乱序：模式切换包与按键包到达顺序导致错模态执行
+- [x] 预览-执行耦合：预览冻结逻辑与执行启动时机竞态
 
 ### 12.2 已确认 Bug（待修复）
 
@@ -150,6 +150,8 @@
   - 根因：`Manager.onHarvestDrops` 对每一个掉落物执行 O(n) 线性扫描（遍历 `drops` ArrayList），调用 `DeterminingIdentical.isSame()` → `getItemDamage()` + `Objects.equals()`。每 tick 挖 64 个方块、每块 3–4 个掉落物，累计数千次 `isSame` 调用，占据服务端 tick ~50%。
   - Spark 火焰图证据：`Manager.onHarvestDrops 50.44%` → `DeterminingIdentical.isSame 48.43%` → `ItemStack.getItemDamage 26.38%` + `Objects.equals 22.05%`
   - 修复：用 `LinkedHashMap<ItemStackKey, ItemStack>` 替换 `ArrayList<ItemStack> drops`，将无 NBT 掉落物的合并操作从 O(n) 降至 O(1)；有 NBT 掉落物走原有线性路径（稀少）。
+
+- [x] **Feature-C: 一键收作物模式——按住连锁键右键成熟作物触发，范围检索作物，仅成熟作物自动收获**
 
 ### 12.3 必做验证项
 

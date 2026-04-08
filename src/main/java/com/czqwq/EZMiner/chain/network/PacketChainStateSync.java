@@ -2,8 +2,11 @@ package com.czqwq.EZMiner.chain.network;
 
 import java.util.UUID;
 
+import net.minecraft.client.Minecraft;
+
 import com.czqwq.EZMiner.ClientProxy;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.state.ChainSession;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -18,16 +21,21 @@ public class PacketChainStateSync implements IMessage {
     public long sessionMost;
     public long sessionLeast;
     public boolean hasSession;
+    public long sessionStartMs;
+    public int sessionDimension;
     public int chainedCount;
     public long elapsedMs;
     public boolean inOperate;
 
     public PacketChainStateSync() {}
 
-    public PacketChainStateSync(UUID sessionId, int chainedCount, long elapsedMs, boolean inOperate) {
-        this.hasSession = sessionId != null;
+    public PacketChainStateSync(ChainSession session, int chainedCount, long elapsedMs, boolean inOperate) {
+        this.hasSession = session != null;
+        UUID sessionId = session != null ? session.sessionId : null;
         this.sessionMost = hasSession ? sessionId.getMostSignificantBits() : 0L;
         this.sessionLeast = hasSession ? sessionId.getLeastSignificantBits() : 0L;
+        this.sessionStartMs = hasSession ? session.startTimeMs : 0L;
+        this.sessionDimension = hasSession ? session.dimensionId : 0;
         this.chainedCount = chainedCount;
         this.elapsedMs = elapsedMs;
         this.inOperate = inOperate;
@@ -39,9 +47,13 @@ public class PacketChainStateSync implements IMessage {
         if (hasSession) {
             sessionMost = buf.readLong();
             sessionLeast = buf.readLong();
+            sessionStartMs = buf.readLong();
+            sessionDimension = buf.readInt();
         } else {
             sessionMost = 0L;
             sessionLeast = 0L;
+            sessionStartMs = 0L;
+            sessionDimension = 0;
         }
         chainedCount = buf.readInt();
         elapsedMs = buf.readLong();
@@ -54,6 +66,8 @@ public class PacketChainStateSync implements IMessage {
         if (hasSession) {
             buf.writeLong(sessionMost);
             buf.writeLong(sessionLeast);
+            buf.writeLong(sessionStartMs);
+            buf.writeInt(sessionDimension);
         }
         buf.writeInt(chainedCount);
         buf.writeLong(elapsedMs);
@@ -66,6 +80,30 @@ public class PacketChainStateSync implements IMessage {
         public IMessage onMessage(PacketChainStateSync msg, MessageContext ctx) {
             if (EZMiner.proxy instanceof ClientProxy) {
                 ClientProxy proxy = (ClientProxy) EZMiner.proxy;
+                UUID msgSession = msg.hasSession ? new UUID(msg.sessionMost, msg.sessionLeast) : null;
+                if (msg.hasSession) {
+                    if (Minecraft.getMinecraft().thePlayer != null
+                        && Minecraft.getMinecraft().thePlayer.dimension != msg.sessionDimension) {
+                        proxy.clientState.chainClientState.sessionId = null;
+                        proxy.clientState.chainClientState.sessionStartMs = 0L;
+                        proxy.clientState.chainClientState.sessionDimension = 0;
+                        return null;
+                    }
+                    if (proxy.clientState.chainClientState.sessionId != null) {
+                        if (msg.sessionStartMs < proxy.clientState.chainClientState.sessionStartMs) return null;
+                        if (msg.sessionStartMs == proxy.clientState.chainClientState.sessionStartMs
+                            && !proxy.clientState.chainClientState.sessionId.equals(msgSession)) {
+                            return null;
+                        }
+                    }
+                    proxy.clientState.chainClientState.sessionId = msgSession;
+                    proxy.clientState.chainClientState.sessionStartMs = msg.sessionStartMs;
+                    proxy.clientState.chainClientState.sessionDimension = msg.sessionDimension;
+                } else {
+                    proxy.clientState.chainClientState.sessionId = null;
+                    proxy.clientState.chainClientState.sessionStartMs = 0L;
+                    proxy.clientState.chainClientState.sessionDimension = 0;
+                }
                 boolean wasOperate = proxy.clientState.chainClientState.inOperate;
                 proxy.clientState.chainClientState.inOperate = msg.inOperate;
                 proxy.clientState.chainClientState.chainedCount = msg.chainedCount;
