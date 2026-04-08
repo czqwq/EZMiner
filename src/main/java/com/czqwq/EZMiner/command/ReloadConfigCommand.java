@@ -75,7 +75,7 @@ public class ReloadConfigCommand extends CommandBase {
             Config.load();
             if (PlayerManager.instance != null) {
                 for (Manager mgr : PlayerManager.instance.managers.values()) {
-                    mgr.pConfig = new MinerConfig();
+                    mgr.pConfig.updateFrom(new MinerConfig());
                     EZMiner.network.network.sendTo(new PacketMinerConfig(mgr.pConfig), mgr.player);
                     EZMiner.network.network.sendTo(
                         new PacketServerConfig(

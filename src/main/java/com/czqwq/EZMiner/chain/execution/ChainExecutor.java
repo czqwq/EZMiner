@@ -1,6 +1,7 @@
 package com.czqwq.EZMiner.chain.execution;
 
 import java.util.Queue;
+import java.util.function.Function;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 
@@ -22,6 +23,16 @@ public class ChainExecutor {
         Vector3i pos;
         while (done < maxPerTick && (pos = queue.poll()) != null) {
             actionExecutor.execute(pos, player);
+            done++;
+        }
+        return done;
+    }
+
+    public int executeBatch(Queue<Vector3i> queue, int maxPerTick, Function<Vector3i, Boolean> perPosition) {
+        int done = 0;
+        Vector3i pos;
+        while (done < maxPerTick && (pos = queue.poll()) != null) {
+            if (!perPosition.apply(pos)) break;
             done++;
         }
         return done;

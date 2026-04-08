@@ -4,8 +4,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.chain.state.ChainPlayerState;
-import com.czqwq.EZMiner.core.Manager;
-import com.czqwq.EZMiner.core.PlayerManager;
 import com.czqwq.EZMiner.utils.IMath;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -56,13 +54,6 @@ public class PacketChainModeSwitch implements IMessage {
             state.minerModeState.mainMode = msg.mainMode;
             state.minerModeState.blastMode = msg.blastMode;
             state.minerModeState.chainMode = msg.chainMode;
-            // Legacy compatibility bridge
-            Manager mgr = PlayerManager.instance.managers.get(player.getUniqueID());
-            if (mgr != null) {
-                mgr.minerModeState.mainMode = msg.mainMode;
-                mgr.minerModeState.blastMode = msg.blastMode;
-                mgr.minerModeState.chainMode = msg.chainMode;
-            }
             return null;
         }
     }

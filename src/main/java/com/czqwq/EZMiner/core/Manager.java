@@ -22,6 +22,7 @@ import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.state.ChainPlayerState;
 import com.czqwq.EZMiner.chain.state.ChainSession;
 import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
 
@@ -57,13 +58,8 @@ public class Manager {
 
     public final UUID playerUUID;
     public EntityPlayerMP player;
-    public MinerConfig pConfig = new MinerConfig();
-    public MinerModeState minerModeState = new MinerModeState();
-
-    /** True while the player holds the chain key. */
-    public volatile boolean inPressChainKey = false;
-    /** True while a chain operation is executing. */
-    public volatile boolean inOperate = false;
+    public final MinerConfig pConfig;
+    public final MinerModeState minerModeState;
 
     public BaseOperator operator = null;
     public volatile ChainSession activeSession = null;
@@ -98,6 +94,9 @@ public class Manager {
     public Manager(EntityPlayerMP player) {
         this.player = player;
         this.playerUUID = player.getUniqueID();
+        ChainPlayerState state = state();
+        this.pConfig = state.minerConfig;
+        this.minerModeState = state.minerModeState;
     }
 
     // ===== Block Break Trigger =====
@@ -105,7 +104,7 @@ public class Manager {
     @SubscribeEvent
     public void onBlockBreak(BlockEvent.BreakEvent event) {
         if (!isSamePlayer(event.getPlayer())) return;
-        if (inOperate || !inPressChainKey) return;
+        if (isInOperate() || !isKeyPressed()) return;
         if (isBlastCropMode()) return;
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.getPlayer());
     }
@@ -116,7 +115,7 @@ public class Manager {
     public void onCropRightClick(PlayerInteractEvent event) {
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
         if (!isSamePlayer(event.entityPlayer)) return;
-        if (inOperate || !inPressChainKey) return;
+        if (isInOperate() || !isKeyPressed()) return;
         if (!isBlastCropMode()) return;
         if (!isMatureCrop(event.entityPlayer.worldObj, event.x, event.y, event.z)) return;
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.entityPlayer);
@@ -132,7 +131,7 @@ public class Manager {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onHarvestDrops(BlockEvent.HarvestDropsEvent event) {
         if (event.harvester == null || !isSamePlayer(event.harvester)) return;
-        if (!inOperate) return;
+        if (!isInOperate()) return;
         // When Bandit is loaded it collects drops via EntityJoinWorldEvent inside its own
         // HarvestCollector scope. Clearing event.drops here would prevent those EntityItems
         // from ever being spawned, leaving Bandit with zero drops. Yield to Bandit so that
@@ -172,7 +171,7 @@ public class Manager {
     @SubscribeEvent
     public void onWorldTick(TickEvent.WorldTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
-        if (!inOperate && !inPressChainKey) flushDrops();
+        if (!isInOperate() && !isKeyPressed()) flushDrops();
     }
 
     public void flushDrops() {
@@ -228,8 +227,13 @@ public class Manager {
     }
 
     public void cleanupState() {
-        inPressChainKey = false;
-        inOperate = false;
+        ChainPlayerState state = state();
+        state.keyPressed = false;
+        state.runtimeState.inOperate = false;
+        state.runtimeState.chainedCount = 0;
+        state.runtimeState.elapsedMs = 0L;
+        state.runtimeState.queuedCandidates = 0;
+        state.runtimeState.lastErrorCode = "";
         EZMiner.chainStateService.markSessionStop(playerUUID);
         activeSession = null;
     }
@@ -257,16 +261,53 @@ public class Manager {
     }
 
     private void startChain(Vector3i pos, EntityPlayerMP player) {
-        inOperate = true;
+        setInOperate(true);
         this.player = player;
         originPos = pos;
         activeSession = EZMiner.chainStateService.markSessionStart(playerUUID, pos, player.dimension);
+        if (operator != null) operator.stopImmediately();
         operator = new BaseOperator(pos, this);
         operator.registry();
     }
 
     public boolean isBlastCropMode() {
         return minerModeState.mainMode == 0 && minerModeState.blastMode == 5;
+    }
+
+    public boolean isKeyPressed() {
+        return state().keyPressed;
+    }
+
+    public boolean isInOperate() {
+        return state().runtimeState.inOperate;
+    }
+
+    public void setInOperate(boolean inOperate) {
+        state().runtimeState.inOperate = inOperate;
+    }
+
+    public void updateRuntimeProjection(int chainedCount, long elapsedMs, int queuedCandidates) {
+        ChainPlayerState state = state();
+        state.runtimeState.inOperate = true;
+        state.runtimeState.chainedCount = chainedCount;
+        state.runtimeState.elapsedMs = elapsedMs;
+        state.runtimeState.queuedCandidates = queuedCandidates;
+    }
+
+    public void clearRuntimeProjection() {
+        ChainPlayerState state = state();
+        state.runtimeState.inOperate = false;
+        state.runtimeState.chainedCount = 0;
+        state.runtimeState.elapsedMs = 0L;
+        state.runtimeState.queuedCandidates = 0;
+    }
+
+    public void reportRuntimeError(String errorCode) {
+        state().runtimeState.lastErrorCode = errorCode == null ? "" : errorCode;
+    }
+
+    private ChainPlayerState state() {
+        return EZMiner.chainStateService.getOrCreate(playerUUID);
     }
 
     /**

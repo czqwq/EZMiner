@@ -29,4 +29,10 @@ public class ChainPlanningRuntimeFactory {
         LinkedBlockingQueue<Vector3i> results, EntityPlayer player, MinerConfig config) {
         return legacyFounderPlanningFactory.createFounder(modeState, center, results, player, config);
     }
+
+    public ChainPlanningTask createTaskForMode(MinerModeState modeState, Vector3i center,
+        LinkedBlockingQueue<Vector3i> results, EntityPlayer player, MinerConfig config) {
+        BasePositionFounder founder = createFounderForMode(modeState, center, results, player, config);
+        return new LegacyFounderPlanningTask(founder);
+    }
 }

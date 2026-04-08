@@ -71,7 +71,7 @@
 - [x] `ChainBlockMatcher`：方块匹配器（同类/矿石/木头/作物）
 - [x] `ChainCandidateFilter`：过滤器（边界、脚下保护、可挖掘性、区块加载性）
 - [x] `ChainPlanningRuntimeFactory`：按模式组装 planner runtime
-- [ ] 规划输出统一为“只读候选动作描述”，不携带世界修改副作用
+- [x] 规划输出统一为“只读候选动作描述”，不携带世界修改副作用
 
 ## 6. 执行层（主线程执行）
 
@@ -80,7 +80,7 @@
 - [x] `BlockHarvestActionExecutor`：真实挖掘执行（仅主线程）
 - [x] `ChainDropCollector`：掉落聚合与投放策略（玩家脚下/起点）
 - [x] 将饥饿替换语义、VP 集成、异常上报从旧 `BaseOperator` 拆分为独立策略/拦截器
-- [ ] 保证：搜索线程只产生候选，世界写入/掉落实体生成全部在服务端主线程
+- [x] 保证：搜索线程只产生候选，世界写入/掉落实体生成全部在服务端主线程
 
 ## 7. 客户端预览层（与执行生命周期隔离）
 
@@ -127,7 +127,7 @@
 ## 11. 迁移路径（分阶段替换旧核心）
 
 - [x] Phase A：引入新状态层与模式注册层，旧逻辑继续跑（双轨）
-- [ ] Phase B：规划层替换 Founder（新 planner 输出仍交给旧执行桥接）
+- [x] Phase B：规划层替换 Founder（规划任务通过 chain/planning 抽象调度，旧 Founder 仅作为策略适配器）
 - [x] Phase C：执行层替换 Operator（移除旧 BaseOperator 主职责）
 - [x] Phase D：预览层替换 MinerRenderer 的 Founder 依赖
 - [x] Phase E：网络包迁移到 KeyState/ModeSwitch/StateSync
@@ -195,6 +195,8 @@
 - [x] 已将需求与实施清单写入 `plan.md`
 - [x] 进入 Phase A 实施
 - [x] 启动 Phase B：规划层替换入口（Founder 构建已迁移至 planning runtime factory 兼容桥）
+- [x] Phase B 深化：BaseOperator 改为消费 `ChainPlanningTask` + `ChainExecutor`，不再直接持有/调度 Founder 线程
+- [x] 状态权威收敛：Manager 执行态/输入态改为读取 `ChainStateService`，移除 Packet 层 legacy 字段镜像回写
 - [x] 生命周期治理：新增 chain/lifecycle 并统一玩家/世界事件运行态清理
 - [x] 客户端显示态收敛：HUD 执行态改为 ChainClientState + PacketChainStateSync 投影
 - [x] 协议收敛：运行态同步从双包并行改为 PacketChainStateSync 单一权威回传

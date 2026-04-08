@@ -4,8 +4,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.chain.state.ChainPlayerState;
-import com.czqwq.EZMiner.core.Manager;
-import com.czqwq.EZMiner.core.PlayerManager;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -40,9 +38,6 @@ public class PacketKeyState implements IMessage {
             EntityPlayerMP player = ctx.getServerHandler().playerEntity;
             ChainPlayerState state = EZMiner.chainStateService.getOrCreate(player.getUniqueID());
             state.keyPressed = msg.pressed;
-            // Legacy compatibility bridge
-            Manager mgr = PlayerManager.instance.managers.get(player.getUniqueID());
-            if (mgr != null) mgr.inPressChainKey = msg.pressed;
             return null;
         }
     }
