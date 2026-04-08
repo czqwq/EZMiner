@@ -10,6 +10,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentTranslation;
+import net.minecraftforge.common.util.ForgeDirection;
 
 import org.joml.Vector3i;
 
@@ -198,8 +199,16 @@ public class BaseOperator {
         if (!(preHarvestBlock instanceof BlockCrops)) return;
         if (preHarvestMeta < 7) return;
         Block current = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
-        if (current == Blocks.air) {
+        if (current == Blocks.air && canSustainReplantedCrop(pos, (BlockCrops) preHarvestBlock)) {
             playerMP.worldObj.setBlock(pos.x, pos.y, pos.z, preHarvestBlock, 0, 3);
         }
+    }
+
+    private boolean canSustainReplantedCrop(Vector3i cropPos, BlockCrops cropBlock) {
+        if (cropPos.y <= 0) return false;
+        Block soil = playerMP.worldObj.getBlock(cropPos.x, cropPos.y - 1, cropPos.z);
+        if (soil == null || soil == Blocks.air) return false;
+        return soil == Blocks.farmland || soil
+            .canSustainPlant(playerMP.worldObj, cropPos.x, cropPos.y - 1, cropPos.z, ForgeDirection.UP, cropBlock);
     }
 }

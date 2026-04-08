@@ -273,9 +273,10 @@ public class Manager {
      * Checks whether the target block is currently harvestable as a crop.
      *
      * <p>
-     * Vanilla crops are considered mature at metadata {@code >= 7}. IC2 crops are
-     * considered mature when their {@link CropCard#canBeHarvested(TileEntityCrop)}
-     * returns {@code true}.
+     * {@link BlockCrops} crops are considered mature at metadata {@code >= 7}
+     * (wheat/carrot/potato/beetroot in 1.7.10). IC2 crops are considered mature
+     * when their {@link CropCard#canBeHarvested(TileEntityCrop)} returns
+     * {@code true}.
      */
     public static boolean isMatureCrop(World world, int x, int y, int z) {
         if (world == null || !world.blockExists(x, y, z)) return false;
