@@ -96,6 +96,11 @@ public class MinerRenderer {
             stopViewer();
             return;
         }
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc == null || mc.theWorld == null || mc.thePlayer == null) {
+            stopViewer();
+            return;
+        }
         if (!clientState.chainClientState.keyPressed) {
             stopViewer();
             return;
@@ -108,7 +113,6 @@ public class MinerRenderer {
             return;
         }
 
-        Minecraft mc = Minecraft.getMinecraft();
         if (mc.objectMouseOver == null || mc.objectMouseOver.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
             stopViewer();
             return;
@@ -142,8 +146,8 @@ public class MinerRenderer {
             .createFounderForMode(clientState.minerModeState, target, foundQueue, player, previewConfig);
         if (founder != null) {
             founder.setSkipHarvestCheck(true);
+            EZMiner.parallelTick.addNormalTask(founder);
         }
-        EZMiner.parallelTick.addNormalTask(founder);
     }
 
     private void stopViewer() {
@@ -193,7 +197,9 @@ public class MinerRenderer {
 
     /** Returns true if {@code pos} is within {@code dist} blocks of the player on X and Z. */
     private static boolean withinRenderDist(Vector3i pos, EntityPlayer player, int dist) {
-        return Math.abs(pos.x - (int) player.posX) <= dist && Math.abs(pos.z - (int) player.posZ) <= dist;
+        int playerX = (int) Math.floor(player.posX);
+        int playerZ = (int) Math.floor(player.posZ);
+        return Math.abs(pos.x - playerX) <= dist && Math.abs(pos.z - playerZ) <= dist;
     }
 
     /**
