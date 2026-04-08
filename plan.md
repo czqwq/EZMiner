@@ -133,7 +133,25 @@
 - [ ] 网络乱序：模式切换包与按键包到达顺序导致错模态执行
 - [ ] 预览-执行耦合：预览冻结逻辑与执行启动时机竞态
 
-### 12.2 必做验证项
+### 12.2 已确认 Bug（待修复）
+
+- [x] **Bug-R: 渲染系统——按键后预览方块数为 0，边框不显示**
+  - 根因：`KeyListener.startChain()` 在按键瞬间直接调用 `minerRenderer.freeze()`，冻结（清空）了尚未启动搜索的预览，导致 `lastIndexCount=0`，什么都不渲染。
+  - 正确行为：
+    - 按下连锁键 → 启动预览搜索，实时显示连锁边框
+    - 玩家破坏方块、服务端开始执行（`PacketChainStateSync.inOperate=true`）→ 冻结预览（锁定当前轮廓，不再更新）
+    - 连锁完成（`inOperate=false`）且 **按键仍然按住** → 解冻，恢复实时预览
+    - 连锁完成（`inOperate=false`）且 **按键已释放** → `stopChain()` 已调用 `unfreeze()` 清空
+    - 按键释放 → `stopChain()` 清空预览
+    - 退出服务器 / 断开连接 → 必须解冻并重置，不允许冻结状态残留（生命周期单一性）
+  - 修复：①移除 `startChain()` 中的 `freeze()` 调用；②在 `PacketChainStateSync.Handler` 里按 `inOperate` 状态转换驱动 `freeze()`/`unfreeze()`；③在 `KeyListener` 里添加 `FMLNetworkEvent.ClientDisconnectionFromServerEvent` 监听器强制重置。
+
+- [x] **Bug-P: 服务端性能——连锁挖矿占用主线程 80%+ TPS**
+  - 根因：`Manager.onHarvestDrops` 对每一个掉落物执行 O(n) 线性扫描（遍历 `drops` ArrayList），调用 `DeterminingIdentical.isSame()` → `getItemDamage()` + `Objects.equals()`。每 tick 挖 64 个方块、每块 3–4 个掉落物，累计数千次 `isSame` 调用，占据服务端 tick ~50%。
+  - Spark 火焰图证据：`Manager.onHarvestDrops 50.44%` → `DeterminingIdentical.isSame 48.43%` → `ItemStack.getItemDamage 26.38%` + `Objects.equals 22.05%`
+  - 修复：用 `LinkedHashMap<ItemStackKey, ItemStack>` 替换 `ArrayList<ItemStack> drops`，将无 NBT 掉落物的合并操作从 O(n) 降至 O(1)；有 NBT 掉落物走原有线性路径（稀少）。
+
+### 12.3 必做验证项
 
 - [ ] 单人：按住/切换模式下连续连锁稳定
 - [ ] 多人：并发连锁互不干扰，状态不串线
@@ -163,3 +181,5 @@
 - [x] Phase D：预览层替换 MinerRenderer 的 Founder 依赖
 - [x] Phase E：网络包迁移到 KeyState/ModeSwitch/StateSync
 - [x] Phase F：删除旧 Manager.onPlayerLogout 重复处理、死代码 createPositionFounder、重复 inPressChainKey 字段
+- [x] **Bug-R 修复**：移除 startChain() 中的即时 freeze()，改由 PacketChainStateSync inOperate 状态转换驱动 freeze/unfreeze；添加 ClientDisconnectionFromServerEvent 断连守卫
+- [x] **Bug-P 修复**：用 LinkedHashMap<ItemStackKey,ItemStack> 替换 ArrayList drops，将 onHarvestDrops 合并操作从 O(n) 降至 O(1)，消除服务端 tick 50%+ 的 isSame 热点

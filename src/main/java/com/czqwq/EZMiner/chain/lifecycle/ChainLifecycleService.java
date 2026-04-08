@@ -55,6 +55,6 @@ public class ChainLifecycleService {
             mgr.operator = null;
         }
         mgr.cleanupState();
-        mgr.drops.clear();
+        mgr.clearDrops();
     }
 }

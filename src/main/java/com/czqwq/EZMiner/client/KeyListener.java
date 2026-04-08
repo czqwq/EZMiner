@@ -21,6 +21,7 @@ import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.InputEvent;
+import cpw.mods.fml.common.network.FMLNetworkEvent;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
@@ -105,9 +106,10 @@ public class KeyListener {
         syncModeToServer(state);
         EZMiner.network.network.sendToServer(new PacketKeyState(true));
         proxy.clientState.chainClientState.keyPressed = true;
-        // Freeze preview: lock the current wireframe in place while chain blocks are broken.
-        // No new searches will start until unfreeze() is called on key release.
-        proxy.minerRenderer.freeze();
+        // NOTE: do NOT freeze here. The preview should start searching immediately so the
+        // player sees the chain outline before breaking any blocks. The freeze() will be
+        // triggered by PacketChainStateSync when inOperate transitions false → true (i.e.
+        // when the first block is actually being mined on the server).
         // Sync config to server on activation
         EZMiner.network.network.sendToServer(new PacketMinerConfig(new MinerConfig()));
     }
@@ -143,6 +145,26 @@ public class KeyListener {
     private void syncModeToServer(MinerModeState state) {
         EZMiner.network.network
             .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
+    }
+
+    /**
+     * Resets all chain-key state and clears any frozen preview when the client disconnects
+     * from a server (or exits a single-player world).
+     *
+     * <p>
+     * Without this, a frozen preview (set by the server {@code inOperate=true} packet) would
+     * persist across sessions — the player would see a stale wireframe on the next login.
+     * This is the client-side "lifecycle single-responsibility" guard required by Bug-R.
+     */
+    @SubscribeEvent
+    public void onClientDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
+        ClientProxy proxy = (ClientProxy) EZMiner.proxy;
+        proxy.clientState.chainClientState.keyPressed = false;
+        proxy.clientState.chainClientState.inOperate = false;
+        wasHoldingChain = false;
+        chainToggled = false;
+        // Always unfreeze so no stale wireframe survives across sessions.
+        proxy.minerRenderer.unfreeze();
     }
 
     public void registry() {

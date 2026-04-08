@@ -66,11 +66,27 @@ public class PacketChainStateSync implements IMessage {
         public IMessage onMessage(PacketChainStateSync msg, MessageContext ctx) {
             if (EZMiner.proxy instanceof ClientProxy) {
                 ClientProxy proxy = (ClientProxy) EZMiner.proxy;
+                boolean wasOperate = proxy.clientState.chainClientState.inOperate;
                 proxy.clientState.chainClientState.inOperate = msg.inOperate;
                 proxy.clientState.chainClientState.chainedCount = msg.chainedCount;
                 proxy.clientState.chainClientState.elapsedMs = msg.elapsedMs;
                 proxy.clientState.chainedBlockCount = msg.chainedCount;
                 proxy.clientState.chainElapsedMs = msg.elapsedMs;
+
+                // Drive preview freeze/unfreeze from the authoritative inOperate transition.
+                // This keeps the preview lifecycle decoupled from key-press timing (Bug-R fix).
+                if (!wasOperate && msg.inOperate) {
+                    // Chain execution started → freeze the current wireframe in place.
+                    proxy.minerRenderer.freeze();
+                } else if (wasOperate && !msg.inOperate) {
+                    // Chain execution ended.
+                    if (proxy.clientState.chainClientState.keyPressed) {
+                        // Key still held: resume live preview so the player can immediately
+                        // see the next chain target without releasing and re-pressing the key.
+                        proxy.minerRenderer.unfreeze();
+                    }
+                    // Key already released: stopChain() already called unfreeze() → no-op here.
+                }
             }
             return null;
         }

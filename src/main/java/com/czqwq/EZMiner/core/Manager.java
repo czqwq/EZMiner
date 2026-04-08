@@ -1,6 +1,8 @@
 package com.czqwq.EZMiner.core;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.UUID;
 
 import net.minecraft.entity.item.EntityItem;
@@ -62,8 +64,26 @@ public class Manager {
      */
     public Vector3i originPos = null;
 
-    /** Collected drops during the current chain operation. */
-    public final ArrayList<ItemStack> drops = new ArrayList<>();
+    /**
+     * Collected drops during the current chain operation — fast O(1) merge path.
+     *
+     * <p>
+     * Key: item type + damage (no NBT). Replacing the old {@code ArrayList} linear scan
+     * reduces the per-drop merge from O(n) to O(1), eliminating the server-tick hotspot
+     * reported in the Spark profile ({@code DeterminingIdentical.isSame} at 48 %).
+     */
+    private final LinkedHashMap<ItemStackKey, ItemStack> dropsMap = new LinkedHashMap<>();
+
+    /**
+     * Fallback drop list for items that carry an {@code NBTTagCompound}.
+     *
+     * <p>
+     * {@code NBTTagCompound} does not override {@code hashCode()} in 1.7.10, so two
+     * content-equal compounds would get different hash codes and the map key would be
+     * wrong. Since NBT-bearing ore drops are rare (usually none in a GT ore vein), the
+     * O(n) linear-scan cost here is negligible.
+     */
+    private final List<ItemStack> dropsWithNbt = new ArrayList<>();
 
     public Manager(EntityPlayerMP player) {
         this.player = player;
@@ -99,16 +119,26 @@ public class Manager {
 
         for (ItemStack drop : event.drops) {
             if (drop == null || drop.stackSize <= 0) continue;
-            boolean merged = false;
-            for (ItemStack existing : drops) {
-                if (!DeterminingIdentical.isSame(existing, drop)) continue;
-                // Accumulate into one super-stack regardless of maxStackSize.
-                // Fewer EntityItems = less server lag when mining large veins.
-                existing.stackSize += drop.stackSize;
-                merged = true;
-                break;
+            if (drop.getTagCompound() == null) {
+                // Fast O(1) path: no NBT — item+damage uniquely identifies the stack type.
+                ItemStackKey key = ItemStackKey.of(drop);
+                ItemStack existing = dropsMap.get(key);
+                if (existing != null) {
+                    existing.stackSize += drop.stackSize;
+                } else {
+                    dropsMap.put(key, drop.copy());
+                }
+            } else {
+                // Slow O(n) path: items with NBT require full content comparison (rare).
+                boolean merged = false;
+                for (ItemStack existing : dropsWithNbt) {
+                    if (!DeterminingIdentical.isSame(existing, drop)) continue;
+                    existing.stackSize += drop.stackSize;
+                    merged = true;
+                    break;
+                }
+                if (!merged) dropsWithNbt.add(drop.copy());
             }
-            if (!merged) drops.add(drop.copy());
         }
         event.drops.clear();
     }
@@ -122,9 +152,9 @@ public class Manager {
     }
 
     public void flushDrops() {
-        if (drops.isEmpty()) return;
+        if (dropsMap.isEmpty() && dropsWithNbt.isEmpty()) return;
         if (player == null || player.worldObj == null) {
-            drops.clear();
+            clearDrops();
             return;
         }
         // dropToPlayer=true → spawn at the player's current feet position (default)
@@ -139,11 +169,21 @@ public class Manager {
             spawnY = originPos.y + 0.5;
             spawnZ = originPos.z + 0.5;
         }
-        for (ItemStack stack : drops) {
+        for (ItemStack stack : dropsMap.values()) {
             if (stack == null || stack.stackSize <= 0) continue;
             player.worldObj.spawnEntityInWorld(new EntityItem(player.worldObj, spawnX, spawnY, spawnZ, stack));
         }
-        drops.clear();
+        for (ItemStack stack : dropsWithNbt) {
+            if (stack == null || stack.stackSize <= 0) continue;
+            player.worldObj.spawnEntityInWorld(new EntityItem(player.worldObj, spawnX, spawnY, spawnZ, stack));
+        }
+        clearDrops();
+    }
+
+    /** Clears all accumulated drops from both the fast-path map and the NBT fallback list. */
+    public void clearDrops() {
+        dropsMap.clear();
+        dropsWithNbt.clear();
     }
 
     // ===== Lifecycle =====
