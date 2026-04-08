@@ -2,6 +2,8 @@ package com.czqwq.EZMiner.network;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 
+import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.state.ChainPlayerState;
 import com.czqwq.EZMiner.core.Manager;
 import com.czqwq.EZMiner.core.PlayerManager;
 
@@ -38,6 +40,8 @@ public class PacketChainSwitcher implements IMessage {
                 EntityPlayerMP player = ctx.getServerHandler().playerEntity;
                 Manager mgr = PlayerManager.instance.managers.get(player.getUniqueID());
                 if (mgr != null) mgr.inPressChainKey = msg.inChain;
+                ChainPlayerState state = EZMiner.chainStateService.getOrCreate(player.getUniqueID());
+                state.keyPressed = msg.inChain;
             }
             return null;
         }

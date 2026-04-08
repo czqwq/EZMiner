@@ -2,6 +2,8 @@ package com.czqwq.EZMiner.network;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 
+import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.state.ChainPlayerState;
 import com.czqwq.EZMiner.core.Manager;
 import com.czqwq.EZMiner.core.MinerModeState;
 import com.czqwq.EZMiner.core.PlayerManager;
@@ -44,6 +46,10 @@ public class PacketMinerModeState implements IMessage {
                 EntityPlayerMP player = ctx.getServerHandler().playerEntity;
                 Manager mgr = PlayerManager.instance.managers.get(player.getUniqueID());
                 if (mgr != null) mgr.minerModeState = msg.state;
+                ChainPlayerState state = EZMiner.chainStateService.getOrCreate(player.getUniqueID());
+                state.minerModeState.mainMode = msg.state.mainMode;
+                state.minerModeState.blastMode = msg.state.blastMode;
+                state.minerModeState.chainMode = msg.state.chainMode;
             }
             return null;
         }

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraftforge.event.world.WorldEvent;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +34,7 @@ public class PlayerManager {
     public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.player instanceof EntityPlayerMP)) return;
         EntityPlayerMP mp = (EntityPlayerMP) event.player;
+        EZMiner.chainStateService.onPlayerLogin(mp);
         Manager mgr = new Manager(mp);
         managers.put(mp.getUniqueID(), mgr);
         mgr.registry();
@@ -53,6 +55,7 @@ public class PlayerManager {
     public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (!(event.player instanceof EntityPlayerMP)) return;
         EntityPlayerMP mp = (EntityPlayerMP) event.player;
+        EZMiner.chainStateService.onPlayerLogout(mp.getUniqueID());
         Manager mgr = managers.remove(mp.getUniqueID());
         if (mgr == null) {
             LOG.warn("No manager found for logging-out player: {}", mp.getDisplayName());
@@ -60,6 +63,44 @@ public class PlayerManager {
         }
         mgr.unRegistry();
         LOG.info("Unregistered manager for player: {} ({})", mp.getDisplayName(), mp.getUniqueID());
+    }
+
+    @SubscribeEvent
+    public void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (!(event.player instanceof EntityPlayerMP)) return;
+        EntityPlayerMP mp = (EntityPlayerMP) event.player;
+        EZMiner.chainStateService.onPlayerDimensionChanged(mp.getUniqueID());
+        Manager mgr = managers.get(mp.getUniqueID());
+        if (mgr != null) {
+            if (mgr.operator != null) {
+                mgr.operator.stopImmediately();
+                mgr.operator = null;
+            }
+            mgr.cleanupState();
+            mgr.drops.clear();
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (!(event.player instanceof EntityPlayerMP)) return;
+        EntityPlayerMP mp = (EntityPlayerMP) event.player;
+        EZMiner.chainStateService.onPlayerRespawn(mp.getUniqueID());
+        Manager mgr = managers.get(mp.getUniqueID());
+        if (mgr != null) {
+            if (mgr.operator != null) {
+                mgr.operator.stopImmediately();
+                mgr.operator = null;
+            }
+            mgr.cleanupState();
+            mgr.drops.clear();
+        }
+    }
+
+    @SubscribeEvent
+    public void onWorldUnload(WorldEvent.Unload event) {
+        if (event.world == null || event.world.isRemote) return;
+        EZMiner.chainStateService.onWorldUnload();
     }
 
     public void registry() {

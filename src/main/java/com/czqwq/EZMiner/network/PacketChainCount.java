@@ -45,6 +45,8 @@ public class PacketChainCount implements IMessage {
                 ClientProxy proxy = (ClientProxy) EZMiner.proxy;
                 proxy.clientState.chainedBlockCount = msg.count;
                 proxy.clientState.chainElapsedMs = msg.elapsedMs;
+                proxy.clientState.chainClientState.chainedCount = msg.count;
+                proxy.clientState.chainClientState.elapsedMs = msg.elapsedMs;
             }
             return null;
         }

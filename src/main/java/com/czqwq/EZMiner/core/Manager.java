@@ -14,6 +14,7 @@ import net.minecraftforge.event.world.BlockEvent;
 import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
+import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
 
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -80,6 +81,7 @@ public class Manager {
         player = (EntityPlayerMP) event.getPlayer();
         Vector3i pos = new Vector3i(event.x, event.y, event.z);
         originPos = pos;
+        EZMiner.chainStateService.markSessionStart(playerUUID, pos, player.dimension);
         operator = new BaseOperator(pos, this);
         operator.registry();
     }
@@ -165,6 +167,7 @@ public class Manager {
     public void cleanupState() {
         inPressChainKey = false;
         inOperate = false;
+        EZMiner.chainStateService.markSessionStop(playerUUID);
     }
 
     @SubscribeEvent
@@ -182,6 +185,7 @@ public class Manager {
         drops.clear();
         inPressChainKey = false;
         inOperate = false;
+        EZMiner.chainStateService.markSessionStop(playerUUID);
     }
 
     // ===== Config sync =====

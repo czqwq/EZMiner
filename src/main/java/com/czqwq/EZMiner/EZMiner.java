@@ -4,6 +4,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.czqwq.EZMiner.network.NetworkMain;
+import com.czqwq.EZMiner.chain.mode.ChainModeRegistry;
+import com.czqwq.EZMiner.chain.mode.ChainSubModeRegistry;
+import com.czqwq.EZMiner.chain.state.ChainStateService;
 import com.czqwq.EZMiner.thread.ParallelTick;
 
 import cpw.mods.fml.common.Mod;
@@ -25,6 +28,9 @@ public class EZMiner {
 
     public static final NetworkMain network = new NetworkMain();
     public static final ParallelTick parallelTick = new ParallelTick();
+    public static final ChainStateService chainStateService = new ChainStateService();
+    public static final ChainModeRegistry chainModeRegistry = new ChainModeRegistry();
+    public static final ChainSubModeRegistry chainSubModeRegistry = new ChainSubModeRegistry();
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {

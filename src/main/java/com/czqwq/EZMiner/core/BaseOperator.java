@@ -17,6 +17,7 @@ import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
 import com.czqwq.EZMiner.core.founder.BasePositionFounder;
 import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
 import com.czqwq.EZMiner.network.PacketChainCount;
@@ -123,6 +124,13 @@ public class BaseOperator {
                 // Send real-time count + elapsed time update to client
                 EZMiner.network.network
                     .sendTo(new PacketChainCount(operatorCount, System.currentTimeMillis() - startTime), playerMP);
+                EZMiner.network.network.sendTo(
+                    new PacketChainStateSync(
+                        manager.playerUUID,
+                        operatorCount,
+                        System.currentTimeMillis() - startTime,
+                        true),
+                    playerMP);
                 return;
             }
         }
@@ -130,6 +138,9 @@ public class BaseOperator {
         // Send real-time count + elapsed time update to client each tick
         EZMiner.network.network
             .sendTo(new PacketChainCount(operatorCount, System.currentTimeMillis() - startTime), playerMP);
+        EZMiner.network.network.sendTo(
+            new PacketChainStateSync(manager.playerUUID, operatorCount, System.currentTimeMillis() - startTime, true),
+            playerMP);
 
         if (positionFounder.stopped.get()) unRegistry();
     }
@@ -167,12 +178,14 @@ public class BaseOperator {
         // Reset client-side chain count and elapsed time display
         if (playerMP != null && !playerMP.isDead) {
             EZMiner.network.network.sendTo(new PacketChainCount(0, 0L), playerMP);
+            EZMiner.network.network.sendTo(new PacketChainStateSync(null, 0, 0L, false), playerMP);
         }
         FMLCommonHandler.instance()
             .bus()
             .unregister(this);
         positionFounder.interrupt();
         manager.inOperate = false;
+        EZMiner.chainStateService.markSessionStop(manager.playerUUID);
     }
 
     /**
@@ -190,6 +203,7 @@ public class BaseOperator {
             // already unregistered – safe to ignore
         }
         manager.inOperate = false;
+        EZMiner.chainStateService.markSessionStop(manager.playerUUID);
     }
 
     // ===== Optional Visual Prospecting API compatibility =====

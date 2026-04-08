@@ -8,6 +8,7 @@
 - [x] 明确核心原则：状态统一 / 规划执行分离 / 预览执行分离 / 并行仅计算 / 模式只装配
 - [ ] 明确兼容策略：旧 API 保留窗口、迁移开关、回滚路径
 - [ ] 明确阶段验收标准：每阶段可编译、可运行、行为不回退
+- [x] 新增要求：允许启用 Mixin 与 `@LateMixin` 晚加载能力，并纳入重构执行清单
 
 ## 1. 当前架构问题清单（已识别）
 
@@ -21,79 +22,79 @@
 
 ## 2. 目标目录与模块边界
 
-- [ ] 新建 `chain/state/`：只定义状态与状态服务
-- [ ] 新建 `chain/mode/`：只定义模式与注册装配
-- [ ] 新建 `chain/planning/`：只定义搜索与筛选
-- [ ] 新建 `chain/execution/`：只定义主线程执行与掉落聚合
-- [ ] 新建 `chain/client/preview/`：只定义客户端预览控制与状态
-- [ ] 新建 `chain/network/`：只定义输入命令与状态同步协议
+- [x] 新建 `chain/state/`：只定义状态与状态服务
+- [x] 新建 `chain/mode/`：只定义模式与注册装配
+- [x] 新建 `chain/planning/`：只定义搜索与筛选
+- [x] 新建 `chain/execution/`：只定义主线程执行与掉落聚合
+- [x] 新建 `chain/client/preview/`：只定义客户端预览控制与状态
+- [x] 新建 `chain/network/`：只定义输入命令与状态同步协议
 - [ ] 新建 `chain/lifecycle/`：只定义玩家会话生命周期事件处理
 
 ## 3. 状态层（单一权威状态源）
 
 ### 3.1 服务端权威状态对象
 
-- [ ] `ChainPlayerState`：玩家长期状态（配置快照、模式选择、输入态）
-- [ ] `ChainRuntimeState`：运行态（是否执行中、队列深度、计数、耗时、错误码）
-- [ ] `ChainSession`：一次连锁会话上下文（origin、seed、dimension、启动 tick、sessionId）
-- [ ] `ChainRequest`：输入请求（按键变化、模式切换、触发方块）
-- [ ] `ChainStateService`：按 UUID 管理状态读写、原子转移、生命周期清理
+- [x] `ChainPlayerState`：玩家长期状态（配置快照、模式选择、输入态）
+- [x] `ChainRuntimeState`：运行态（是否执行中、队列深度、计数、耗时、错误码）
+- [x] `ChainSession`：一次连锁会话上下文（origin、seed、dimension、启动 tick、sessionId）
+- [x] `ChainRequest`：输入请求（按键变化、模式切换、触发方块）
+- [x] `ChainStateService`：按 UUID 管理状态读写、原子转移、生命周期清理
 
 ### 3.2 客户端状态对象
 
-- [ ] `ChainClientState`：仅维护输入态+显示态（禁止维护权威执行态）
+- [x] `ChainClientState`：仅维护输入态+显示态（禁止维护权威执行态）
 - [ ] 建立服务端→客户端状态镜像协议（只读投影，禁止客户端反写权威态）
 - [ ] 消除客户端直接推断“执行中”的逻辑，全部由 `PacketChainStateSync` 提供
 
 ## 4. 模式层（只做装配，不做业务）
 
-- [ ] `ChainMode`：主模式标识（枚举/键）
-- [ ] `ChainModeDefinition`：主模式定义（展示名、子模式集合、策略绑定）
-- [ ] `ChainModeRegistry`：主模式注册
-- [ ] `ChainModeBootstrap`：初始化装配入口
-- [ ] `ChainSubModeDefinition`：子模式定义（matcher/filter/traverser 组合）
-- [ ] `ChainSubModeRegistry`：子模式注册
-- [ ] `ChainSubModeBootstrap`：子模式启动装配
+- [x] `ChainMode`：主模式标识（枚举/键）
+- [x] `ChainModeDefinition`：主模式定义（展示名、子模式集合、策略绑定）
+- [x] `ChainModeRegistry`：主模式注册
+- [x] `ChainModeBootstrap`：初始化装配入口
+- [x] `ChainSubModeDefinition`：子模式定义（matcher/filter/traverser 组合）
+- [x] `ChainSubModeRegistry`：子模式注册
+- [x] `ChainSubModeBootstrap`：子模式启动装配
 - [ ] 从旧 `MinerModeState#createPositionFounder` 迁移为“策略对象组合”，移除直接 new Founder
 
 ## 5. 规划层（搜索与筛选，禁止写世界）
 
-- [ ] `ChainPlanner`：规划入口，接收 session + mode definition，输出候选流/分片计划
-- [ ] `ChainPlanningStrategy`：策略接口（链式、爆破、隧道、矿石、伐木、作物）
-- [ ] `ChainTraverser`：遍历器（BFS/PQBFS/方向隧道等）
-- [ ] `ChainBlockMatcher`：方块匹配器（同类/矿石/木头/作物）
-- [ ] `ChainCandidateFilter`：过滤器（边界、脚下保护、可挖掘性、区块加载性）
-- [ ] `ChainPlanningRuntimeFactory`：按模式组装 planner runtime
+- [x] `ChainPlanner`：规划入口，接收 session + mode definition，输出候选流/分片计划
+- [x] `ChainPlanningStrategy`：策略接口（链式、爆破、隧道、矿石、伐木、作物）
+- [x] `ChainTraverser`：遍历器（BFS/PQBFS/方向隧道等）
+- [x] `ChainBlockMatcher`：方块匹配器（同类/矿石/木头/作物）
+- [x] `ChainCandidateFilter`：过滤器（边界、脚下保护、可挖掘性、区块加载性）
+- [x] `ChainPlanningRuntimeFactory`：按模式组装 planner runtime
 - [ ] 规划输出统一为“只读候选动作描述”，不携带世界修改副作用
 
 ## 6. 执行层（主线程执行）
 
-- [ ] `ChainExecutor`：会话级执行调度（tick 预算、节流、结束条件）
-- [ ] `ChainActionExecutor`：动作执行接口
-- [ ] `BlockHarvestActionExecutor`：真实挖掘执行（仅主线程）
-- [ ] `ChainDropCollector`：掉落聚合与投放策略（玩家脚下/起点）
+- [x] `ChainExecutor`：会话级执行调度（tick 预算、节流、结束条件）
+- [x] `ChainActionExecutor`：动作执行接口
+- [x] `BlockHarvestActionExecutor`：真实挖掘执行（仅主线程）
+- [x] `ChainDropCollector`：掉落聚合与投放策略（玩家脚下/起点）
 - [ ] 将饥饿替换语义、VP 集成、异常上报从旧 `BaseOperator` 拆分为独立策略/拦截器
 - [ ] 保证：搜索线程只产生候选，世界写入/掉落实体生成全部在服务端主线程
 
 ## 7. 客户端预览层（与执行生命周期隔离）
 
-- [ ] `ChainPreviewState`（由 `ChainPreviewController` 内部维护）
-- [ ] `ChainPreviewController`：目标变化、冻结/解冻、队列消费、渲染缓存更新
+- [x] `ChainPreviewState`（由 `ChainPreviewController` 内部维护）
+- [x] `ChainPreviewController`：目标变化、冻结/解冻、队列消费、渲染缓存更新
 - [ ] 复用“模式规则定义”，但不复用执行会话与执行控制器
 - [ ] 预览搜索任务独立调度，不读写服务端权威执行态
 - [ ] HUD 数据来源统一：显示态来自 `ChainClientState` + `PacketChainStateSync`
 
 ## 8. 网络同步层（输入命令 + 权威状态同步）
 
-- [ ] `PacketKeyState`：客户端输入态变化（按下/松开/toggle）
-- [ ] `PacketChainModeSwitch`：模式切换命令
-- [ ] `PacketChainStateSync`：服务端权威运行态同步（count/elapsed/session/mode snapshot）
+- [x] `PacketKeyState`：客户端输入态变化（按下/松开/toggle）
+- [x] `PacketChainModeSwitch`：模式切换命令
+- [x] `PacketChainStateSync`：服务端权威运行态同步（count/elapsed/session/mode snapshot）
 - [ ] 协议改造为“命令 + 权威回传”，避免双向盲写同一字段
 - [ ] 补充非法状态保护（过期 sessionId、跨维度旧包、重复包去重）
 
 ## 9. 生命周期与清理（稳定性关键）
 
-- [ ] 统一接入：登录、登出、切维度、重生、单人退出、世界卸载
+- [x] 统一接入：登录、登出、切维度、重生、单人退出、世界卸载
 - [ ] 所有路径都必须中止规划任务、清空执行队列、重置 session、释放渲染状态
 - [ ] 防止离线玩家残留任务继续访问 world/player 引用
 - [ ] 防止跨维度旧 session 误执行
@@ -105,6 +106,13 @@
 - [ ] 明确线程可见性与中断协议（pause/resume/interrupt 一致）
 - [ ] 大半径场景下确保不触发异步区块生成（保持 blockExists 防线）
 - [ ] 建立性能基线：TPS 影响、平均每 tick 规划耗时、峰值队列长度
+
+## 10.1 Mixin / @LateMixin 边界策略（新增）
+
+- [ ] 将 `usesMixins` 调整为可启用方案并补齐基础配置（仅在必要场景开启）
+- [ ] 仅在边界事件缺口处使用 Mixin（例如生命周期/输入补钩子），不承载业务决策
+- [ ] 对可能冲突的注入点采用 `@LateMixin` 晚加载策略，降低与整合包模组冲突概率
+- [ ] 建立 Mixin 注入白名单与回退开关，确保线上故障可快速降级
 
 ## 11. 迁移路径（分阶段替换旧核心）
 
@@ -146,5 +154,4 @@
 - [x] 完成高耦合点识别
 - [x] 完成分层重构路线设计
 - [x] 已将需求与实施清单写入 `plan.md`
-- [ ] 进入 Phase A 实施
-
+- [x] 进入 Phase A 实施
