@@ -14,6 +14,8 @@ import org.lwjgl.opengl.GL11;
 
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.client.preview.ChainPreviewController;
+import com.czqwq.EZMiner.chain.client.preview.ChainPreviewState;
 import com.czqwq.EZMiner.client.ClientStateContainer;
 import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.core.founder.BasePositionFounder;
@@ -58,14 +60,8 @@ public class MinerRenderer {
     private boolean searchComplete = false;
     private int lastIndexCount = 0;
 
-    /**
-     * When {@code true} the renderer is in frozen mode: it renders the existing wireframe but
-     * does not start new searches or drain the queue for new positions. Set by
-     * {@link #freeze()} on chain-key press, cleared by {@link #unfreeze()} on release.
-     */
-    private boolean frozen = false;
-
     private final ClientStateContainer clientState;
+    private final ChainPreviewController previewController = new ChainPreviewController();
 
     public MinerRenderer(ClientStateContainer state) {
         this.clientState = state;
@@ -77,7 +73,7 @@ public class MinerRenderer {
      * blocks are being broken.
      */
     public void freeze() {
-        frozen = true;
+        previewController.freeze();
         // Stop the search thread – no new positions will arrive, the frozen frame is final.
         if (founder != null) {
             founder.interrupt();
@@ -92,7 +88,7 @@ public class MinerRenderer {
      * the next activation.
      */
     public void unfreeze() {
-        frozen = false;
+        previewController.unfreeze();
         stopViewer();
     }
 
@@ -108,7 +104,8 @@ public class MinerRenderer {
         }
 
         // ── Frozen mode: chain is active, just render the locked-in preview. ──
-        if (frozen) {
+        ChainPreviewState previewState = previewController.getState();
+        if (previewState.frozen) {
             doRender();
             return;
         }
@@ -122,9 +119,7 @@ public class MinerRenderer {
         Vector3i target = new Vector3i(mc.objectMouseOver.blockX, mc.objectMouseOver.blockY, mc.objectMouseOver.blockZ);
         if (!lastTarget.equals(target)) {
             restartViewer(mc, target);
-            // Set lastTarget AFTER restartViewer, because stopViewer() inside it resets
-            // lastTarget to (MIN,MIN,MIN). Setting it here prevents the per-frame restart
-            // loop that caused only 1 block (the center) to ever appear.
+            previewController.setTarget(target);
             lastTarget = new Vector3i(target);
         }
 
@@ -145,7 +140,8 @@ public class MinerRenderer {
         MinerConfig previewConfig = new MinerConfig();
         previewConfig.bigRadius = Config.previewBigRadius;
         previewConfig.blockLimit = Config.previewBlockLimit;
-        founder = clientState.minerModeState.createPositionFounder(target, foundQueue, player, previewConfig);
+        founder = EZMiner.chainPlanningRuntimeFactory
+            .createLegacyFounder(clientState.minerModeState, target, foundQueue, player, previewConfig);
         if (founder != null) {
             founder.setSkipHarvestCheck(true);
         }
@@ -163,6 +159,8 @@ public class MinerRenderer {
         spaceCalc.hasChange = false;
         lastIndexCount = 0;
         clientState.previewRenderedCount = 0;
+        previewController.getState().renderedCount = 0;
+        previewController.setTarget(null);
         // Reset so that pressing the key again while looking at the same block
         // correctly triggers restartViewer (lastTarget != any real block).
         lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -191,6 +189,7 @@ public class MinerRenderer {
             lastIndexCount = vi.indices.length;
             renderCache.updateData(vi.vertices, vi.indices);
             clientState.previewRenderedCount = spaceCalc.positions.size();
+            previewController.getState().renderedCount = clientState.previewRenderedCount;
         }
     }
 

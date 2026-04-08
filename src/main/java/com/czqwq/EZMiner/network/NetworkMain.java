@@ -15,12 +15,8 @@ public class NetworkMain {
     private int packetId = 0;
 
     public void registry() {
-        network.registerMessage(PacketChainSwitcher.Handler.class, PacketChainSwitcher.class, packetId++, Side.SERVER);
         network.registerMessage(PacketMinerConfig.Handler.class, PacketMinerConfig.class, packetId++, Side.SERVER);
         network.registerMessage(PacketMinerConfig.Handler.class, PacketMinerConfig.class, packetId++, Side.CLIENT);
-        network
-            .registerMessage(PacketMinerModeState.Handler.class, PacketMinerModeState.class, packetId++, Side.SERVER);
-        network.registerMessage(PacketChainCount.Handler.class, PacketChainCount.class, packetId++, Side.CLIENT);
         network.registerMessage(PacketHudPos.Handler.class, PacketHudPos.class, packetId++, Side.CLIENT);
         network.registerMessage(PacketServerConfig.Handler.class, PacketServerConfig.class, packetId++, Side.CLIENT);
         network.registerMessage(PacketKeyState.Handler.class, PacketKeyState.class, packetId++, Side.SERVER);

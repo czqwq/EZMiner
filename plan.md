@@ -73,15 +73,15 @@
 - [x] `ChainActionExecutor`：动作执行接口
 - [x] `BlockHarvestActionExecutor`：真实挖掘执行（仅主线程）
 - [x] `ChainDropCollector`：掉落聚合与投放策略（玩家脚下/起点）
-- [ ] 将饥饿替换语义、VP 集成、异常上报从旧 `BaseOperator` 拆分为独立策略/拦截器
+- [x] 将饥饿替换语义、VP 集成、异常上报从旧 `BaseOperator` 拆分为独立策略/拦截器
 - [ ] 保证：搜索线程只产生候选，世界写入/掉落实体生成全部在服务端主线程
 
 ## 7. 客户端预览层（与执行生命周期隔离）
 
 - [x] `ChainPreviewState`（由 `ChainPreviewController` 内部维护）
 - [x] `ChainPreviewController`：目标变化、冻结/解冻、队列消费、渲染缓存更新
-- [ ] 复用“模式规则定义”，但不复用执行会话与执行控制器
-- [ ] 预览搜索任务独立调度，不读写服务端权威执行态
+- [x] 复用“模式规则定义”，但不复用执行会话与执行控制器
+- [x] 预览搜索任务独立调度，不读写服务端权威执行态
 - [x] HUD 数据来源统一：显示态来自 `ChainClientState` + `PacketChainStateSync`
 
 ## 8. 网络同步层（输入命令 + 权威状态同步）
@@ -118,16 +118,16 @@
 
 - [x] Phase A：引入新状态层与模式注册层，旧逻辑继续跑（双轨）
 - [ ] Phase B：规划层替换 Founder（新 planner 输出仍交给旧执行桥接）
-- [ ] Phase C：执行层替换 Operator（移除旧 BaseOperator 主职责）
-- [ ] Phase D：预览层替换 MinerRenderer 的 Founder 依赖
-- [ ] Phase E：网络包迁移到 KeyState/ModeSwitch/StateSync
+- [x] Phase C：执行层替换 Operator（移除旧 BaseOperator 主职责）
+- [x] Phase D：预览层替换 MinerRenderer 的 Founder 依赖
+- [x] Phase E：网络包迁移到 KeyState/ModeSwitch/StateSync
 - [ ] Phase F：删除旧 Manager/Founder/Operator 业务路径，仅保留兼容适配壳（若需要）
 
 ## 12. Bug 排查与修复总清单（随阶段勾选）
 
 ### 12.1 已发现高风险点
 
-- [ ] 状态漂移：客户端 chainActive 与服务端 inPressChainKey 不一致
+- [x] 状态漂移：客户端 chainActive 与服务端 inPressChainKey 不一致
 - [ ] 生命周期缺口：切维度/重生后旧任务未彻底清理
 - [ ] 线程边界：搜索线程潜在读取失效 world/player 引用
 - [ ] 网络乱序：模式切换包与按键包到达顺序导致错模态执行
@@ -159,3 +159,6 @@
 - [x] 生命周期治理：新增 chain/lifecycle 并统一玩家/世界事件运行态清理
 - [x] 客户端显示态收敛：HUD 执行态改为 ChainClientState + PacketChainStateSync 投影
 - [x] 协议收敛：运行态同步从双包并行改为 PacketChainStateSync 单一权威回传
+- [x] Phase C：BaseOperator 已拆分为执行策略（耗饥饿/VP/错误上报独立类）
+- [x] Phase D：MinerRenderer 预览搜索切换到 planning runtime factory + preview controller
+- [x] Phase E：移除 ChainSwitcher/MinerModeState/ChainCount 旧网络路径，仅保留 KeyState/ModeSwitch/StateSync 主路径
