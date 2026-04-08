@@ -3,6 +3,8 @@ package com.czqwq.EZMiner.network;
 import net.minecraft.entity.player.EntityPlayerMP;
 
 import com.czqwq.EZMiner.Config;
+import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.state.ChainPlayerState;
 import com.czqwq.EZMiner.core.Manager;
 import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.core.PlayerManager;
@@ -51,6 +53,8 @@ public class PacketMinerConfig implements IMessage {
                 Manager mgr = PlayerManager.instance.managers.get(player.getUniqueID());
                 if (mgr != null) {
                     mgr.receiveClientConfig(msg.minerConfig);
+                    ChainPlayerState state = EZMiner.chainStateService.getOrCreate(player.getUniqueID());
+                    state.minerConfig.updateFrom(mgr.pConfig);
                     // Echo validated config back
                     return new PacketMinerConfig(mgr.pConfig);
                 }

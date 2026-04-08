@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraftforge.event.world.WorldEvent;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +34,7 @@ public class PlayerManager {
     public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.player instanceof EntityPlayerMP)) return;
         EntityPlayerMP mp = (EntityPlayerMP) event.player;
+        EZMiner.chainLifecycleService.onPlayerLogin(mp);
         Manager mgr = new Manager(mp);
         managers.put(mp.getUniqueID(), mgr);
         mgr.registry();
@@ -53,13 +55,32 @@ public class PlayerManager {
     public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (!(event.player instanceof EntityPlayerMP)) return;
         EntityPlayerMP mp = (EntityPlayerMP) event.player;
-        Manager mgr = managers.remove(mp.getUniqueID());
-        if (mgr == null) {
+        if (!managers.containsKey(mp.getUniqueID())) {
             LOG.warn("No manager found for logging-out player: {}", mp.getDisplayName());
             return;
         }
-        mgr.unRegistry();
+        EZMiner.chainLifecycleService.onPlayerLogout(mp.getUniqueID(), managers);
         LOG.info("Unregistered manager for player: {} ({})", mp.getDisplayName(), mp.getUniqueID());
+    }
+
+    @SubscribeEvent
+    public void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (!(event.player instanceof EntityPlayerMP)) return;
+        EntityPlayerMP mp = (EntityPlayerMP) event.player;
+        EZMiner.chainLifecycleService.onPlayerDimensionChanged(mp.getUniqueID(), managers);
+    }
+
+    @SubscribeEvent
+    public void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (!(event.player instanceof EntityPlayerMP)) return;
+        EntityPlayerMP mp = (EntityPlayerMP) event.player;
+        EZMiner.chainLifecycleService.onPlayerRespawn(mp.getUniqueID(), managers);
+    }
+
+    @SubscribeEvent
+    public void onWorldUnload(WorldEvent.Unload event) {
+        if (event.world == null || event.world.isRemote) return;
+        EZMiner.chainLifecycleService.onWorldUnload(managers);
     }
 
     public void registry() {

@@ -132,3 +132,72 @@ Hot-reload command: `/EZMiner reloadConfig`
 - Minecraft **1.7.10**
 - Forge **10.13.4.1614**
 - GregTech: New Horizons (GTNH) modpack
+- **Mixins are disabled by default** (`usesMixins = false`); functionality is implemented through Forge/FML events and layered modules
+
+---
+
+## Architecture (Post-Refactor)
+
+```
+Client command input:
+  KeyListener -> PacketKeyState / PacketChainModeSwitch
+
+Server authoritative state:
+  ChainStateService
+    ├─ ChainPlayerState (persistent player state)
+    ├─ ChainRuntimeState (runtime state)
+    └─ ChainSession (single chain session context)
+
+Planning layer (read-only world access):
+  chain/planning/* + ParallelTick compute-only tasks
+
+Execution layer (main-thread world mutation):
+  BaseOperator -> ChainExecutor / BlockHarvestActionExecutor
+              -> ChainDropCollector / exhaustion strategy / VP bridge
+
+Sync layer:
+  PacketChainStateSync (server-authoritative projection)
+
+Client presentation:
+  ChainClientState + ChainPreviewController + HudRenderer/MinerRenderer
+```
+
+### Runtime State Flow (Simplified)
+
+1. Client sends key/mode command packets  
+2. Server updates authoritative state and starts a session when eligible  
+3. Planning threads produce candidate positions (no world mutation)  
+4. Main thread executes harvesting and sends `PacketChainStateSync`  
+5. End-of-session drop flush and lifecycle cleanup
+
+### Network Sequence (Simplified)
+
+1. C -> S: `PacketKeyState` (press/release)  
+2. C -> S: `PacketChainModeSwitch` (mode switch)  
+3. S -> C: `PacketChainStateSync` (session/count/elapsed/inOperate)
+
+---
+
+## Debugging
+
+- Recommended baseline check: `./gradlew spotlessApply build`
+- Key log/entry points:
+  - Execution errors: `ChainExecutionErrorReporter`
+  - Lifecycle cleanup: `chain/lifecycle/ChainLifecycleService`
+  - Runtime sync: `chain/network/PacketChainStateSync`
+- Quick triage:
+  - Preview not updating: inspect freeze/unfreeze transitions in `ChainPreviewController`
+  - Multiplayer state leakage: verify UUID/sessionId/dimension guards
+  - Drop anomalies: inspect `Manager.onHarvestDrops` and Bandit compatibility branch
+
+---
+
+## Migration Map (Legacy -> New)
+
+| Legacy responsibility/class | New responsibility/class |
+|---|---|
+| `Manager` runtime orchestration | `ChainStateService` + `ChainPlayerState`/`ChainRuntimeState` |
+| `MinerModeState#createPositionFounder` | `chain/mode/*` + `ChainPlanningRuntimeFactory` |
+| Monolithic `BaseOperator` logic | `ChainExecutor` + `ChainActionExecutor` + isolated strategies |
+| Preview/execution coupling | `ChainPreviewController` + `ChainClientState` |
+| Field-style bidirectional sync | Command packets (`PacketKeyState`/`PacketChainModeSwitch`) + authoritative projection (`PacketChainStateSync`) |

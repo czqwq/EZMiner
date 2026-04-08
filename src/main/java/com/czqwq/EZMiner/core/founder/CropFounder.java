@@ -35,9 +35,6 @@ public class CropFounder extends BasePositionFounder {
         Vector3i playerPos = playerFloorPos();
         if (pos.x == playerPos.x && pos.y == (playerPos.y - 1) && pos.z == playerPos.z) return false;
         if (!(block instanceof BlockCrops) && !(tile instanceof TileEntityCrop)) return false;
-        int blockMeta = player.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
-        if (skipHarvestCheck) return true;
-        if (player.capabilities.isCreativeMode) return true;
-        return block.canHarvestBlock(player, blockMeta);
+        return true;
     }
 }

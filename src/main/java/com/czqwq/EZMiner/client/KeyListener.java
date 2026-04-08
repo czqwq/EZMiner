@@ -10,17 +10,18 @@ import org.lwjgl.input.Mouse;
 import com.czqwq.EZMiner.ClientProxy;
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.network.PacketChainModeSwitch;
+import com.czqwq.EZMiner.chain.network.PacketKeyState;
 import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.core.MinerModeState;
-import com.czqwq.EZMiner.network.PacketChainSwitcher;
 import com.czqwq.EZMiner.network.PacketMinerConfig;
-import com.czqwq.EZMiner.network.PacketMinerModeState;
 import com.czqwq.EZMiner.utils.MessageUtils;
 
 import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.InputEvent;
+import cpw.mods.fml.common.network.FMLNetworkEvent;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
@@ -49,13 +50,15 @@ public class KeyListener {
 
     @SubscribeEvent
     public void onInput(InputEvent event) {
-        MinerModeState state = ((ClientProxy) EZMiner.proxy).clientState.minerModeState;
+        ClientProxy proxy = (ClientProxy) EZMiner.proxy;
+        MinerModeState state = proxy.clientState.minerModeState;
 
         // ===== Main-mode toggle =====
         if (KEY_MODE_SWITCH.isPressed()) {
             String mode = state.nextMainMode();
             MessageUtils.printSelfMessage(I18n.format("ezminer.message.mainMode") + ": " + I18n.format(mode));
-            EZMiner.network.network.sendToServer(new PacketMinerModeState(state));
+            syncModeToServer(state);
+            proxy.clientState.chainClientState.mainMode = state.mainMode;
         }
 
         boolean holding = KEY_CHAIN.getIsKeyPressed();
@@ -95,29 +98,30 @@ public class KeyListener {
     }
 
     private void startChain(MinerModeState state) {
+        ClientProxy proxy = (ClientProxy) EZMiner.proxy;
         // Sync mode to server BEFORE the chain-switcher packet so that when the server
         // receives the BreakEvent it already has the correct mode. Without this, the
         // server's Manager.minerModeState stays at its default (chain/basic) and ignores
         // whatever mode the client HUD is showing.
-        EZMiner.network.network.sendToServer(new PacketMinerModeState(state));
-        EZMiner.network.network.sendToServer(new PacketChainSwitcher(true));
-        ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = true;
-        ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = true;
-        // Freeze preview: lock the current wireframe in place while chain blocks are broken.
-        // No new searches will start until unfreeze() is called on key release.
-        ((ClientProxy) EZMiner.proxy).minerRenderer.freeze();
+        syncModeToServer(state);
+        EZMiner.network.network.sendToServer(new PacketKeyState(true));
+        proxy.clientState.chainClientState.keyPressed = true;
+        // NOTE: do NOT freeze here. The preview should start searching immediately so the
+        // player sees the chain outline before breaking any blocks. The freeze() will be
+        // triggered by PacketChainStateSync when inOperate transitions false → true (i.e.
+        // when the first block is actually being mined on the server).
         // Sync config to server on activation
         EZMiner.network.network.sendToServer(new PacketMinerConfig(new MinerConfig()));
     }
 
     private void stopChain() {
-        EZMiner.network.network.sendToServer(new PacketChainSwitcher(false));
-        ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = false;
-        ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = false;
-        ((ClientProxy) EZMiner.proxy).clientState.chainedBlockCount = 0;
+        ClientProxy proxy = (ClientProxy) EZMiner.proxy;
+        EZMiner.network.network.sendToServer(new PacketKeyState(false));
+        proxy.clientState.chainClientState.keyPressed = false;
+        proxy.clientState.chainedBlockCount = 0;
         // Unfreeze preview: clear the frozen wireframe and allow the renderer to start a
         // fresh search when the player next aims at a block.
-        ((ClientProxy) EZMiner.proxy).minerRenderer.unfreeze();
+        proxy.minerRenderer.unfreeze();
         // Reset toggle so the next key press starts a new chain.
         // stopChain() is only ever called on explicit user key input, so resetting
         // chainToggled here is correct. When a chain ends naturally (ore exhausted)
@@ -127,12 +131,40 @@ public class KeyListener {
     }
 
     private void handleSubModeScroll(MinerModeState state) {
+        ClientProxy proxy = (ClientProxy) EZMiner.proxy;
         int dWheel = Mouse.getEventDWheel();
         if (dWheel != 0) {
             String subMode = (dWheel < 0) ? state.nextSubMode() : state.previousSubMode();
-            EZMiner.network.network.sendToServer(new PacketMinerModeState(state));
+            syncModeToServer(state);
+            proxy.clientState.chainClientState.mainMode = state.mainMode;
+            proxy.clientState.chainClientState.subMode = state.currentSubModeIndex();
             MessageUtils.printSelfMessage(I18n.format("ezminer.message.subMode") + ": " + I18n.format(subMode));
         }
+    }
+
+    private void syncModeToServer(MinerModeState state) {
+        EZMiner.network.network
+            .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
+    }
+
+    /**
+     * Resets all chain-key state and clears any frozen preview when the client disconnects
+     * from a server (or exits a single-player world).
+     *
+     * <p>
+     * Without this, a frozen preview (set by the server {@code inOperate=true} packet) would
+     * persist across sessions — the player would see a stale wireframe on the next login.
+     * This is the client-side "lifecycle single-responsibility" guard required by Bug-R.
+     */
+    @SubscribeEvent
+    public void onClientDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
+        ClientProxy proxy = (ClientProxy) EZMiner.proxy;
+        proxy.clientState.chainClientState.keyPressed = false;
+        proxy.clientState.chainClientState.inOperate = false;
+        wasHoldingChain = false;
+        chainToggled = false;
+        // Always unfreeze so no stale wireframe survives across sessions.
+        proxy.minerRenderer.unfreeze();
     }
 
     public void registry() {

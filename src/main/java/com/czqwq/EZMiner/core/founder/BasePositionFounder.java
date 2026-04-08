@@ -60,6 +60,7 @@ public class BasePositionFounder extends Pauseable {
     public void run1() {
         int curRadius = 1;
         while (curCount < minerConfig.blockLimit && curRadius <= minerConfig.bigRadius) {
+            if (player == null || player.isDead || player.worldObj == null) return;
             int xMin = center.x - curRadius, xMax = center.x + curRadius;
             int yMin = center.y - curRadius, yMax = center.y + curRadius;
             int zMin = center.z - curRadius, zMax = center.z + curRadius;
