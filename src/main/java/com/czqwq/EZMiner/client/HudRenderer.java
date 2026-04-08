@@ -33,7 +33,7 @@ public class HudRenderer {
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL) return;
-        if (!Config.usePreview) return;
+        if (!Config.isPreviewEnabled()) return;
 
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.currentScreen != null) return; // hide when a GUI is open

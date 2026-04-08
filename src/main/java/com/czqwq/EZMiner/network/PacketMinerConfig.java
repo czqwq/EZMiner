@@ -31,7 +31,7 @@ public class PacketMinerConfig implements IMessage {
         minerConfig.smallRadius = buf.readInt();
         minerConfig.tunnelWidth = buf.readInt();
         minerConfig.useChainDoneMessage = buf.readBoolean();
-        minerConfig.addExhaustion = buf.readDouble();
+        minerConfig.addExhaustion = Config.addExhaustion;
     }
 
     @Override
@@ -41,7 +41,6 @@ public class PacketMinerConfig implements IMessage {
         buf.writeInt(minerConfig.smallRadius);
         buf.writeInt(minerConfig.tunnelWidth);
         buf.writeBoolean(minerConfig.useChainDoneMessage);
-        buf.writeDouble(minerConfig.addExhaustion);
     }
 
     public static class Handler implements IMessageHandler<PacketMinerConfig, IMessage> {
@@ -59,11 +58,6 @@ public class PacketMinerConfig implements IMessage {
                     return new PacketMinerConfig(mgr.pConfig);
                 }
             } else if (ctx.side.isClient()) {
-                // Update local config with server-validated values
-                Config.bigRadius = msg.minerConfig.bigRadius;
-                Config.blockLimit = msg.minerConfig.blockLimit;
-                Config.smallRadius = msg.minerConfig.smallRadius;
-                Config.tunnelWidth = msg.minerConfig.tunnelWidth;
                 Config.useChainDoneMessage = msg.minerConfig.useChainDoneMessage;
             }
             return null;

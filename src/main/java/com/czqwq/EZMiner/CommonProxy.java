@@ -22,7 +22,7 @@ public class CommonProxy {
                 .getParentFile(),
             "EZMiner");
         configDir.mkdirs();
-        Config.init(new File(configDir, "EZMiner.cfg"));
+        Config.init(new File(configDir, "EZMiner.cfg"), new File(configDir, "EZMiner_Server.cfg"));
         Config.register();
         EZMiner.network.registry();
         ChainModeBootstrap.bootstrap(EZMiner.chainModeRegistry);

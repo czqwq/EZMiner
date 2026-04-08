@@ -208,3 +208,24 @@
 - [x] **Bug-P 修复**：用 LinkedHashMap<ItemStackKey,ItemStack> 替换 ArrayList drops，将 onHarvestDrops 合并操作从 O(n) 降至 O(1)，消除服务端 tick 50%+ 的 isSame 热点
 - [x] **Feature-C2 修复落地**：作物 Founder 移除 canHarvestBlock 过滤，右键触发后可正确检索并进入连锁收获流程（成熟度在执行阶段判定）
 - [x] **Feature-RC 落地**：新增 `/EZMiner reloadClientConfig`（权限0）与客户端配置热重载包；服务端渲染上限同步后自动钳制客户端预览参数
+
+## 15. 双配置拆分与服务端权威限制（2026-04-08 新增章节）
+
+- [ ] 在 `EZMiner.cfg` 同目录新增 `EZMiner_Server.cfg`，并在启动阶段同时初始化两份配置对象
+- [ ] `EZMiner_Server.cfg` 作为服务端权威配置，收纳：
+  - `addExhaustion`（全服统一，客户端不可自定义）
+  - `serverMaxPreviewBigRadius` / `serverMaxPreviewBlockLimit`
+  - `bigRadius` / `blockLimit` / `smallRadius` / `tunnelWidth` / `breakPerTick`
+  - `serverUsePreview`（服务端总开关）
+- [ ] `EZMiner.cfg` 仅保留客户端偏好配置，包含：
+  - HUD 坐标、激活模式、完成提示等本地显示/交互项
+  - 客户端期望连锁参数（半径/方块数/邻接/隧道宽度）
+  - 客户端期望预览参数（开关/预览半径/预览方块数）
+- [ ] 建立“客户端期望值 + 服务端上限”模型：客户端可自由设置 0~上限，超限按服务端上限生效
+- [ ] 预览启用判定改为：`客户端 usePreview && 服务端 serverUsePreview`
+- [ ] `reloadClientConfig` 仅重载 `EZMiner.cfg`，并重新应用当前服务端下发限制
+- [ ] `reloadConfig` 作为全服热重载：服务端重载 `EZMiner.cfg + EZMiner_Server.cfg`，并向所有在线玩家同步两者结果
+- [ ] 玩家进服时同步一次服务端限制；退服时客户端恢复本地状态，清除会话期服务端覆盖
+- [ ] 更新 `PacketServerConfig` 字段语义，显式同步服务端上限与服务端预览开关
+- [ ] 收口每玩家配置校验：`addExhaustion` 只由服务端配置驱动，不再由客户端上传控制
+- [ ] 完成后执行 `./gradlew spotlessApply build` 进行格式与构建验证

@@ -83,6 +83,9 @@ public class ReloadConfigCommand extends CommandBase {
                             Config.blockLimit,
                             Config.smallRadius,
                             Config.tunnelWidth,
+                            Config.serverMaxPreviewBigRadius,
+                            Config.serverMaxPreviewBlockLimit,
+                            Config.serverUsePreview,
                             Config.breakPerTick),
                         mgr.player);
                     EZMiner.network.network.sendTo(new PacketReloadClientConfig(), mgr.player);
@@ -106,6 +109,9 @@ public class ReloadConfigCommand extends CommandBase {
                     Config.blockLimit,
                     Config.smallRadius,
                     Config.tunnelWidth,
+                    Config.serverMaxPreviewBigRadius,
+                    Config.serverMaxPreviewBlockLimit,
+                    Config.serverUsePreview,
                     Config.breakPerTick),
                 player);
             EZMiner.network.network.sendTo(new PacketReloadClientConfig(), player);

@@ -12,7 +12,6 @@ import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.chain.network.PacketChainModeSwitch;
 import com.czqwq.EZMiner.chain.network.PacketKeyState;
-import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.core.MinerModeState;
 import com.czqwq.EZMiner.network.PacketMinerConfig;
 import com.czqwq.EZMiner.utils.MessageUtils;
@@ -111,7 +110,7 @@ public class KeyListener {
         // triggered by PacketChainStateSync when inOperate transitions false → true (i.e.
         // when the first block is actually being mined on the server).
         // Sync config to server on activation
-        EZMiner.network.network.sendToServer(new PacketMinerConfig(new MinerConfig()));
+        EZMiner.network.network.sendToServer(new PacketMinerConfig(Config.buildClientMinerConfigForSync()));
     }
 
     private void stopChain() {
@@ -165,6 +164,7 @@ public class KeyListener {
         chainToggled = false;
         // Always unfreeze so no stale wireframe survives across sessions.
         proxy.minerRenderer.unfreeze();
+        Config.clearServerRuntimeOverridesAndReloadClient();
     }
 
     public void registry() {
