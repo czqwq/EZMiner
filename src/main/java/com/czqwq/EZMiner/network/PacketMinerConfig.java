@@ -31,7 +31,6 @@ public class PacketMinerConfig implements IMessage {
         minerConfig.smallRadius = buf.readInt();
         minerConfig.tunnelWidth = buf.readInt();
         minerConfig.useChainDoneMessage = buf.readBoolean();
-        minerConfig.addExhaustion = Config.addExhaustion;
     }
 
     @Override

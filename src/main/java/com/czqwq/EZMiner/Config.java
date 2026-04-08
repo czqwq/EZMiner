@@ -2,10 +2,10 @@ package com.czqwq.EZMiner;
 
 import java.io.File;
 
-import com.czqwq.EZMiner.core.MinerConfig;
-
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
+
+import com.czqwq.EZMiner.core.MinerConfig;
 
 import cpw.mods.fml.client.event.ConfigChangedEvent;
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -192,7 +192,8 @@ public class Config {
     }
 
     public static void applyServerRuntimeLimits(int maxBigRadius, int maxBlockLimit, int maxSmallRadius,
-        int maxTunnelWidth, int maxPreviewBigRadius, int maxPreviewBlockLimit, boolean allowPreview, int syncedBreakPerTick) {
+        int maxTunnelWidth, int maxPreviewBigRadius, int maxPreviewBlockLimit, boolean allowPreview,
+        int syncedBreakPerTick) {
         runtimeServerMaxBigRadius = Math.max(0, maxBigRadius);
         runtimeServerMaxBlockLimit = Math.max(0, maxBlockLimit);
         runtimeServerMaxSmallRadius = Math.max(0, maxSmallRadius);
@@ -264,7 +265,6 @@ public class Config {
         cfg.smallRadius = Math.max(0, Math.min(clientSmallRadius, runtimeServerMaxSmallRadius));
         cfg.tunnelWidth = Math.max(0, Math.min(clientTunnelWidth, runtimeServerMaxTunnelWidth));
         cfg.useChainDoneMessage = useChainDoneMessage;
-        cfg.addExhaustion = addExhaustion;
         return cfg;
     }
 
