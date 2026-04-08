@@ -14,7 +14,8 @@ public class MinerConfig {
     public boolean useChainDoneMessage = Config.useChainDoneMessage;
     /**
      * Exhaustion applied per chain block, replacing vanilla mining exhaustion.
-     * This is a client-side preference sent to the server via {@code PacketMinerConfig}.
+     * This value is server-authoritative in multiplayer and clients cannot override it.
+     * In single-player, the local integrated server config is authoritative.
      * 0.0 = no food cost; negative = restore food; default mirrors vanilla (0.025).
      */
     public double addExhaustion = Config.addExhaustion;

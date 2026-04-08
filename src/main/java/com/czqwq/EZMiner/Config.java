@@ -92,13 +92,17 @@ public class Config {
     public static void load() {
         if (serverConfiguration != null) {
             loadServerOnlyInternal();
-            runtimeServerMaxBigRadius = bigRadius;
-            runtimeServerMaxBlockLimit = blockLimit;
-            runtimeServerMaxSmallRadius = smallRadius;
-            runtimeServerMaxTunnelWidth = tunnelWidth;
-            runtimeServerMaxPreviewBigRadius = serverMaxPreviewBigRadius;
-            runtimeServerMaxPreviewBlockLimit = serverMaxPreviewBlockLimit;
-            runtimeServerUsePreview = serverUsePreview;
+            if (FMLCommonHandler.instance()
+                .getSide()
+                .isServer()) {
+                runtimeServerMaxBigRadius = bigRadius;
+                runtimeServerMaxBlockLimit = blockLimit;
+                runtimeServerMaxSmallRadius = smallRadius;
+                runtimeServerMaxTunnelWidth = tunnelWidth;
+                runtimeServerMaxPreviewBigRadius = serverMaxPreviewBigRadius;
+                runtimeServerMaxPreviewBlockLimit = serverMaxPreviewBlockLimit;
+                runtimeServerUsePreview = serverUsePreview;
+            }
             if (serverConfiguration.hasChanged()) {
                 serverConfiguration.save();
             }
