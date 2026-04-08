@@ -21,7 +21,11 @@ public class ChainPlanningRuntimeFactory {
         return new ChainPlanner(strategy);
     }
 
-    public BasePositionFounder createLegacyFounder(MinerModeState modeState, Vector3i center,
+    /**
+     * Assembles a position founder for the given mode state, using the legacy founder
+     * implementations from {@code core/founder/}.
+     */
+    public BasePositionFounder createFounderForMode(MinerModeState modeState, Vector3i center,
         LinkedBlockingQueue<Vector3i> results, EntityPlayer player, MinerConfig config) {
         return legacyFounderPlanningFactory.createFounder(modeState, center, results, player, config);
     }

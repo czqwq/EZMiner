@@ -139,7 +139,7 @@ public class MinerRenderer {
         previewConfig.bigRadius = Config.previewBigRadius;
         previewConfig.blockLimit = Config.previewBlockLimit;
         founder = EZMiner.chainPlanningRuntimeFactory
-            .createLegacyFounder(clientState.minerModeState, target, foundQueue, player, previewConfig);
+            .createFounderForMode(clientState.minerModeState, target, foundQueue, player, previewConfig);
         if (founder != null) {
             founder.setSkipHarvestCheck(true);
         }

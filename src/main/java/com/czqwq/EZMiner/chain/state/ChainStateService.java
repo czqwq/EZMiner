@@ -31,19 +31,22 @@ public class ChainStateService {
     }
 
     public void onPlayerRespawn(UUID playerUUID) {
-        ChainPlayerState state = stateMap.get(playerUUID);
-        if (state != null) state.clearRuntime();
+        clearPlayerRuntime(playerUUID);
     }
 
     public void onPlayerDimensionChanged(UUID playerUUID) {
-        ChainPlayerState state = stateMap.get(playerUUID);
-        if (state != null) state.clearRuntime();
+        clearPlayerRuntime(playerUUID);
     }
 
     public void onWorldUnload() {
         for (ChainPlayerState state : stateMap.values()) {
             state.clearRuntime();
         }
+    }
+
+    private void clearPlayerRuntime(UUID playerUUID) {
+        ChainPlayerState state = stateMap.get(playerUUID);
+        if (state != null) state.clearRuntime();
     }
 
     public void markSessionStart(UUID playerUUID, Vector3i origin, int dimId) {

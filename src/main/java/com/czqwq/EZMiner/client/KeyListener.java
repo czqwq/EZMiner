@@ -56,8 +56,7 @@ public class KeyListener {
         if (KEY_MODE_SWITCH.isPressed()) {
             String mode = state.nextMainMode();
             MessageUtils.printSelfMessage(I18n.format("ezminer.message.mainMode") + ": " + I18n.format(mode));
-            EZMiner.network.network
-                .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
+            syncModeToServer(state);
             proxy.clientState.chainClientState.mainMode = state.mainMode;
         }
 
@@ -103,8 +102,7 @@ public class KeyListener {
         // receives the BreakEvent it already has the correct mode. Without this, the
         // server's Manager.minerModeState stays at its default (chain/basic) and ignores
         // whatever mode the client HUD is showing.
-        EZMiner.network.network
-            .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
+        syncModeToServer(state);
         EZMiner.network.network.sendToServer(new PacketKeyState(true));
         proxy.clientState.chainClientState.keyPressed = true;
         // Freeze preview: lock the current wireframe in place while chain blocks are broken.
@@ -135,12 +133,16 @@ public class KeyListener {
         int dWheel = Mouse.getEventDWheel();
         if (dWheel != 0) {
             String subMode = (dWheel < 0) ? state.nextSubMode() : state.previousSubMode();
-            EZMiner.network.network
-                .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
+            syncModeToServer(state);
             proxy.clientState.chainClientState.mainMode = state.mainMode;
             proxy.clientState.chainClientState.subMode = state.currentSubModeIndex();
             MessageUtils.printSelfMessage(I18n.format("ezminer.message.subMode") + ": " + I18n.format(subMode));
         }
+    }
+
+    private void syncModeToServer(MinerModeState state) {
+        EZMiner.network.network
+            .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
     }
 
     public void registry() {
