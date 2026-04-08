@@ -17,6 +17,7 @@ public class PacketChainStateSync implements IMessage {
 
     public long sessionMost;
     public long sessionLeast;
+    public boolean hasSession;
     public int chainedCount;
     public long elapsedMs;
     public boolean inOperate;
@@ -24,8 +25,9 @@ public class PacketChainStateSync implements IMessage {
     public PacketChainStateSync() {}
 
     public PacketChainStateSync(UUID sessionId, int chainedCount, long elapsedMs, boolean inOperate) {
-        this.sessionMost = sessionId == null ? 0L : sessionId.getMostSignificantBits();
-        this.sessionLeast = sessionId == null ? 0L : sessionId.getLeastSignificantBits();
+        this.hasSession = sessionId != null;
+        this.sessionMost = hasSession ? sessionId.getMostSignificantBits() : 0L;
+        this.sessionLeast = hasSession ? sessionId.getLeastSignificantBits() : 0L;
         this.chainedCount = chainedCount;
         this.elapsedMs = elapsedMs;
         this.inOperate = inOperate;
@@ -33,6 +35,7 @@ public class PacketChainStateSync implements IMessage {
 
     @Override
     public void fromBytes(ByteBuf buf) {
+        hasSession = buf.readBoolean();
         sessionMost = buf.readLong();
         sessionLeast = buf.readLong();
         chainedCount = buf.readInt();
@@ -42,6 +45,7 @@ public class PacketChainStateSync implements IMessage {
 
     @Override
     public void toBytes(ByteBuf buf) {
+        buf.writeBoolean(hasSession);
         buf.writeLong(sessionMost);
         buf.writeLong(sessionLeast);
         buf.writeInt(chainedCount);

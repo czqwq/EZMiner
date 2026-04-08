@@ -28,4 +28,15 @@ public class MinerConfig {
         this.useChainDoneMessage = useChainDoneMessage;
         this.addExhaustion = addExhaustion;
     }
+
+    public MinerConfig copyFrom(MinerConfig other) {
+        if (other == null) return this;
+        this.bigRadius = other.bigRadius;
+        this.blockLimit = other.blockLimit;
+        this.smallRadius = other.smallRadius;
+        this.tunnelWidth = other.tunnelWidth;
+        this.useChainDoneMessage = other.useChainDoneMessage;
+        this.addExhaustion = other.addExhaustion;
+        return this;
+    }
 }

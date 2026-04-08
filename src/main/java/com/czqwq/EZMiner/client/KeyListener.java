@@ -145,8 +145,7 @@ public class KeyListener {
             EZMiner.network.network
                 .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
             ((ClientProxy) EZMiner.proxy).clientState.chainClientState.mainMode = state.mainMode;
-            ((ClientProxy) EZMiner.proxy).clientState.chainClientState.subMode = state.mainMode == 0 ? state.blastMode
-                : state.chainMode;
+            ((ClientProxy) EZMiner.proxy).clientState.chainClientState.subMode = state.currentSubModeIndex();
             MessageUtils.printSelfMessage(I18n.format("ezminer.message.subMode") + ": " + I18n.format(subMode));
         }
     }

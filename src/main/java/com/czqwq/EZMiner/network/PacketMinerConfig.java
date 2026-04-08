@@ -54,12 +54,7 @@ public class PacketMinerConfig implements IMessage {
                 if (mgr != null) {
                     mgr.receiveClientConfig(msg.minerConfig);
                     ChainPlayerState state = EZMiner.chainStateService.getOrCreate(player.getUniqueID());
-                    state.minerConfig.bigRadius = mgr.pConfig.bigRadius;
-                    state.minerConfig.blockLimit = mgr.pConfig.blockLimit;
-                    state.minerConfig.smallRadius = mgr.pConfig.smallRadius;
-                    state.minerConfig.tunnelWidth = mgr.pConfig.tunnelWidth;
-                    state.minerConfig.useChainDoneMessage = mgr.pConfig.useChainDoneMessage;
-                    state.minerConfig.addExhaustion = mgr.pConfig.addExhaustion;
+                    state.minerConfig.copyFrom(mgr.pConfig);
                     // Echo validated config back
                     return new PacketMinerConfig(mgr.pConfig);
                 }

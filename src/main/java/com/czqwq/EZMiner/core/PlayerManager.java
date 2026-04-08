@@ -70,15 +70,7 @@ public class PlayerManager {
         if (!(event.player instanceof EntityPlayerMP)) return;
         EntityPlayerMP mp = (EntityPlayerMP) event.player;
         EZMiner.chainStateService.onPlayerDimensionChanged(mp.getUniqueID());
-        Manager mgr = managers.get(mp.getUniqueID());
-        if (mgr != null) {
-            if (mgr.operator != null) {
-                mgr.operator.stopImmediately();
-                mgr.operator = null;
-            }
-            mgr.cleanupState();
-            mgr.drops.clear();
-        }
+        cleanupManagerRuntime(mp.getUniqueID());
     }
 
     @SubscribeEvent
@@ -86,21 +78,24 @@ public class PlayerManager {
         if (!(event.player instanceof EntityPlayerMP)) return;
         EntityPlayerMP mp = (EntityPlayerMP) event.player;
         EZMiner.chainStateService.onPlayerRespawn(mp.getUniqueID());
-        Manager mgr = managers.get(mp.getUniqueID());
-        if (mgr != null) {
-            if (mgr.operator != null) {
-                mgr.operator.stopImmediately();
-                mgr.operator = null;
-            }
-            mgr.cleanupState();
-            mgr.drops.clear();
-        }
+        cleanupManagerRuntime(mp.getUniqueID());
     }
 
     @SubscribeEvent
     public void onWorldUnload(WorldEvent.Unload event) {
         if (event.world == null || event.world.isRemote) return;
         EZMiner.chainStateService.onWorldUnload();
+    }
+
+    private void cleanupManagerRuntime(UUID playerUUID) {
+        Manager mgr = managers.get(playerUUID);
+        if (mgr == null) return;
+        if (mgr.operator != null) {
+            mgr.operator.stopImmediately();
+            mgr.operator = null;
+        }
+        mgr.cleanupState();
+        mgr.drops.clear();
     }
 
     public void registry() {

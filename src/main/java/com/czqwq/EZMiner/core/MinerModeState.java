@@ -6,8 +6,8 @@ import net.minecraft.entity.player.EntityPlayer;
 
 import org.joml.Vector3i;
 
-import com.czqwq.EZMiner.core.founder.BasePositionFounder;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.core.founder.BasePositionFounder;
 
 /**
  * Tracks the current mining mode for a player (both client and server side).
@@ -76,6 +76,10 @@ public class MinerModeState {
     public String currentSubMode() {
         if (mainMode == 0) return currentBlastMode();
         return currentChainMode();
+    }
+
+    public int currentSubModeIndex() {
+        return mainMode == 0 ? blastMode : chainMode;
     }
 
     // ===== Blast sub-mode =====
