@@ -3,23 +3,22 @@ package com.czqwq.EZMiner.client.render;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.MovingObjectPosition;
-import net.minecraftforge.client.event.DrawBlockHighlightEvent;
+import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.joml.Vector3i;
+import org.lwjgl.opengl.GL11;
 
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.client.preview.ChainPreviewController;
+import com.czqwq.EZMiner.chain.client.preview.ChainPreviewState;
 import com.czqwq.EZMiner.client.ClientStateContainer;
 import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.core.founder.BasePositionFounder;
-import com.czqwq.EZMiner.shader.ShaderManager;
-import com.czqwq.EZMiner.utils.FileReadUtils;
-import com.czqwq.EZMiner.utils.MatrixUtils;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -28,16 +27,27 @@ import cpw.mods.fml.relauncher.SideOnly;
 
 /**
  * Client-side renderer that draws block outlines for the current chain preview.
- * Rendering penetrates blocks (depth test disabled) to match QzMiner behaviour.
+ *
+ * <p>
+ * Uses {@link RenderWorldLastEvent} (fired once per frame after all world geometry) and
+ * fixed-function OpenGL — no custom shaders are required. The coordinate system is shifted by
+ * {@code -RenderManager.renderPos} so block positions stored in world space map directly onto
+ * the rendered scene, matching Qz-Miner's approach which works on all supported OpenGL versions.
+ *
+ * <p>
+ * Preview lifecycle:
+ * <ol>
+ * <li>While the chain key is <em>not</em> held the renderer continuously updates the preview
+ * as the player looks around (normal mode).</li>
+ * <li>When the chain key is pressed ({@link #freeze()}): the current preview is frozen in
+ * place – no new searches are started, the existing wireframe keeps rendering during the
+ * chain operation.</li>
+ * <li>When the chain key is released ({@link #unfreeze()}): the frozen frame is cleared and
+ * the renderer returns to normal mode, ready for the next chain.</li>
+ * </ol>
  */
 @SideOnly(Side.CLIENT)
 public class MinerRenderer {
-
-    public boolean inPressChainKey = false;
-
-    private final ShaderManager shader = new ShaderManager();
-    private static boolean shaderLoaded = false;
-    private static boolean shaderLoadFailed = false;
 
     public static final RenderCache renderCache = new RenderCache();
     private final SpaceCalculator spaceCalc = new SpaceCalculator();
@@ -48,50 +58,96 @@ public class MinerRenderer {
     private boolean searchComplete = false;
     private int lastIndexCount = 0;
 
-    private ClientStateContainer clientState;
+    private final ClientStateContainer clientState;
+    private final ChainPreviewController previewController = new ChainPreviewController();
 
     public MinerRenderer(ClientStateContainer state) {
         this.clientState = state;
     }
 
-    @SubscribeEvent
-    public void onBlockHighlight(DrawBlockHighlightEvent event) {
-        if (!Config.usePreview) return;
-        if (!inPressChainKey) {
-            stopViewer();
-            return;
+    /**
+     * Freezes the preview: stops any in-progress search and holds the current wireframe.
+     * Called when the chain operation begins so that the preview does not update while
+     * blocks are being broken.
+     */
+    public void freeze() {
+        previewController.freeze();
+        // Stop the search thread – no new positions will arrive, the frozen frame is final.
+        if (founder != null) {
+            founder.interrupt();
+            founder = null;
         }
-        if (event.target == null) return;
-        // Only render when actually looking at a block (not air/entity/miss).
-        if (event.target.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
-            stopViewer();
-            return;
-        }
-
-        // Capture GL matrices here while we are in a render context
-        MatrixUtils.captureMatrices();
-
-        Vector3i target = new Vector3i(event.target.blockX, event.target.blockY, event.target.blockZ);
-        if (!lastTarget.equals(target)) {
-            lastTarget = new Vector3i(target);
-            restartViewer(target);
-        }
-
-        drainQueue();
-        doRender(event.partialTicks);
+        foundQueue.clear();
     }
 
-    private void restartViewer(Vector3i target) {
+    /**
+     * Unfreezes the preview and clears the display.
+     * Called when the chain key is released so that the renderer returns to normal mode for
+     * the next activation.
+     */
+    public void unfreeze() {
+        previewController.unfreeze();
+        stopViewer();
+    }
+
+    @SubscribeEvent
+    public void onRenderWorldLast(RenderWorldLastEvent event) {
+        if (!Config.usePreview) {
+            stopViewer();
+            return;
+        }
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc == null || mc.theWorld == null || mc.thePlayer == null) {
+            stopViewer();
+            return;
+        }
+        if (!clientState.chainClientState.keyPressed) {
+            stopViewer();
+            return;
+        }
+
+        // ── Frozen mode: chain is active, just render the locked-in preview. ──
+        ChainPreviewState previewState = previewController.getState();
+        if (previewState.frozen) {
+            doRender();
+            return;
+        }
+
+        if (mc.objectMouseOver == null || mc.objectMouseOver.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
+            stopViewer();
+            return;
+        }
+
+        Vector3i target = new Vector3i(mc.objectMouseOver.blockX, mc.objectMouseOver.blockY, mc.objectMouseOver.blockZ);
+        if (!lastTarget.equals(target)) {
+            restartViewer(mc, target);
+            previewController.setTarget(target);
+            lastTarget = new Vector3i(target);
+        }
+
+        drainQueue(mc);
+        doRender();
+    }
+
+    private void restartViewer(Minecraft mc, Vector3i target) {
         stopViewer();
         searchComplete = false;
         spaceCalc.hasChange = false;
-        // reset space calculator
         spaceCalc.posSet.clear();
         spaceCalc.positions.clear();
 
-        EntityPlayer player = Minecraft.getMinecraft().thePlayer;
-        founder = clientState.minerModeState.createPositionFounder(target, foundQueue, player, new MinerConfig());
-        EZMiner.parallelTick.addNormalTask(founder);
+        EntityPlayer player = mc.thePlayer;
+        // Use preview-specific limits so the search stays responsive and GPU vertex data
+        // stays small, independently of the (potentially larger) server mining limits.
+        MinerConfig previewConfig = new MinerConfig();
+        previewConfig.bigRadius = Config.previewBigRadius;
+        previewConfig.blockLimit = Config.previewBlockLimit;
+        founder = EZMiner.chainPlanningRuntimeFactory
+            .createFounderForMode(clientState.minerModeState, target, foundQueue, player, previewConfig);
+        if (founder != null) {
+            founder.setSkipHarvestCheck(true);
+            EZMiner.parallelTick.addNormalTask(founder);
+        }
     }
 
     private void stopViewer() {
@@ -104,22 +160,22 @@ public class MinerRenderer {
         spaceCalc.positions.clear();
         spaceCalc.hasChange = false;
         lastIndexCount = 0;
+        clientState.previewRenderedCount = 0;
+        previewController.getState().renderedCount = 0;
+        previewController.setTarget(null);
         // Reset so that pressing the key again while looking at the same block
         // correctly triggers restartViewer (lastTarget != any real block).
         lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
     }
 
-    private void drainQueue() {
+    private void drainQueue(Minecraft mc) {
         if (searchComplete) return;
         int n = 0;
         Vector3i p;
-        Minecraft mc = Minecraft.getMinecraft();
         EntityPlayer player = mc.thePlayer;
         // Render distance in blocks (chunks × 16). Blocks beyond this have no loaded chunk
         // data on the client and would produce null-pointer crashes in the GL pipeline.
         int renderDistBlocks = mc.gameSettings.renderDistanceChunks * 16;
-        // Drain everything available this frame – the block limit caps the queue size so
-        // this is always O(blockLimit) and won't stall the render thread.
         while ((p = foundQueue.poll()) != null) {
             if (player != null && withinRenderDist(p, player, renderDistBlocks)) {
                 spaceCalc.add(p);
@@ -134,55 +190,45 @@ public class MinerRenderer {
             SpaceCalculator.VertexAndIndex vi = spaceCalc.getVertexAndIndex();
             lastIndexCount = vi.indices.length;
             renderCache.updateData(vi.vertices, vi.indices);
+            clientState.previewRenderedCount = spaceCalc.positions.size();
+            previewController.getState().renderedCount = clientState.previewRenderedCount;
         }
     }
 
     /** Returns true if {@code pos} is within {@code dist} blocks of the player on X and Z. */
     private static boolean withinRenderDist(Vector3i pos, EntityPlayer player, int dist) {
-        return Math.abs(pos.x - (int) player.posX) <= dist && Math.abs(pos.z - (int) player.posZ) <= dist;
+        int playerX = (int) Math.floor(player.posX);
+        int playerZ = (int) Math.floor(player.posZ);
+        return Math.abs(pos.x - playerX) <= dist && Math.abs(pos.z - playerZ) <= dist;
     }
 
-    private void doRender(float partialTicks) {
+    /**
+     * Renders the preview wireframe using fixed-function OpenGL.
+     *
+     * <p>
+     * Block positions in world space are offset by {@code -RenderManager.renderPos} which is
+     * Minecraft's camera origin in world coordinates, giving correct eye-relative rendering
+     * without any matrix math.
+     */
+    private void doRender() {
         if (lastIndexCount <= 0) return;
-        ensureShader();
-        if (!shaderLoaded) return; // shader not ready or failed to load
 
-        try {
-            shader.bind();
-            Vector3f cam = MatrixUtils.getCameraPos(partialTicks);
-            Matrix4f model = MatrixUtils.getModelMatrix(-cam.x, -cam.y, -cam.z);
-            Matrix4f view = MatrixUtils.getModelViewByOriginal();
-            Matrix4f proj = MatrixUtils.getProjectionByOriginal();
-            shader.setUniformM4f("model", model);
-            shader.setUniformM4f("view", view);
-            shader.setUniformM4f("projection", proj);
-            shader.setUniform3F("cameraPos", cam);
-            // Fragment shader defaults (uniform initializers are not valid GLSL 330)
-            shader.setUniform3F("fogColor", 0.2f, 0.2f, 0.2f);
-            shader.setUniform1F("fogNear", 0f);
-            shader.setUniform1F("fogFar", 32f);
-            shader.setUniform4F("lineColor", 0.2f, 0.8f, 1.0f, 1.0f);
-            // Geometry shader defaults
-            shader.setUniform1F("minWidth", 0.01f);
-            shader.setUniform1F("maxWidth", 5.0f);
-            renderCache.render(lastIndexCount);
-        } finally {
-            shader.unbind();
-        }
-    }
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushMatrix();
+        GL11.glTranslated(-RenderManager.renderPosX, -RenderManager.renderPosY, -RenderManager.renderPosZ);
 
-    private void ensureShader() {
-        if (shaderLoaded || shaderLoadFailed) return;
-        try {
-            String vert = FileReadUtils.readText("assets/EZMiner/shader/MinerPreviewVertex.glsl");
-            String frag = FileReadUtils.readText("assets/EZMiner/shader/MinerPreviewFragment.glsl");
-            String geom = FileReadUtils.readText("assets/EZMiner/shader/MinerPreviewGeometry.glsl");
-            shader.loadShader(vert, frag, geom.isEmpty() ? null : geom);
-            shaderLoaded = true;
-        } catch (Exception e) {
-            shaderLoadFailed = true;
-            EZMiner.LOG.error("Failed to load preview shaders (preview disabled)", e);
-        }
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_CULL_FACE);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glLineWidth(2.0F);
+        GL11.glColor4f(0.25F, 0.9F, 1.0F, 0.8F);
+
+        renderCache.render(lastIndexCount);
+
+        GL11.glPopMatrix();
+        GL11.glPopAttrib();
     }
 
     public void registry() {

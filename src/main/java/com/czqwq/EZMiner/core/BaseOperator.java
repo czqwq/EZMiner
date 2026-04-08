@@ -1,23 +1,29 @@
 package com.czqwq.EZMiner.core;
 
-import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockCrops;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentTranslation;
+import net.minecraftforge.common.util.ForgeDirection;
 
 import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
-import com.czqwq.EZMiner.core.founder.BasePositionFounder;
-import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
-import com.czqwq.EZMiner.network.PacketChainCount;
+import com.czqwq.EZMiner.chain.execution.BlockHarvestActionExecutor;
+import com.czqwq.EZMiner.chain.execution.ChainActionExecutor;
+import com.czqwq.EZMiner.chain.execution.ChainExecutionErrorReporter;
+import com.czqwq.EZMiner.chain.execution.ChainExecutor;
+import com.czqwq.EZMiner.chain.execution.ChainHarvestExhaustionStrategy;
+import com.czqwq.EZMiner.chain.execution.VisualProspectingBridge;
+import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
+import com.czqwq.EZMiner.chain.planning.ChainPlanningTask;
 import com.czqwq.EZMiner.utils.MessageUtils;
 
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -32,11 +38,12 @@ public class BaseOperator {
 
     public final EntityPlayerMP playerMP;
     public final Manager manager;
-    public final BasePositionFounder positionFounder;
+    public final ChainPlanningTask planningTask;
     public final LinkedBlockingQueue<Vector3i> canBreakPositions = new LinkedBlockingQueue<>();
 
     private long startTime;
     private int operatorCount = 0;
+    private boolean stopRequested = false;
     /**
      * Tracks chunk coords (encoded as a single long) for which VP ore-vein
      * discovery has already been triggered this operation. Multiple ore blocks
@@ -44,71 +51,60 @@ public class BaseOperator {
      * chunk is sufficient and avoids redundant network packets in multiplayer.
      */
     private final Set<Long> vpNotifiedChunks = new HashSet<>();
+    private final ChainActionExecutor harvestActionExecutor = new BlockHarvestActionExecutor();
+    private final ChainExecutor chainExecutor = new ChainExecutor(harvestActionExecutor);
+    private final ChainHarvestExhaustionStrategy exhaustionStrategy = new ChainHarvestExhaustionStrategy();
+    private final VisualProspectingBridge vpBridge = new VisualProspectingBridge();
 
     public BaseOperator(Vector3i pos, Manager manager) {
-        checkCompatibility();
         this.playerMP = manager.player;
         this.manager = manager;
-        this.positionFounder = manager.minerModeState
-            .createPositionFounder(pos, canBreakPositions, playerMP, manager.pConfig);
-        EZMiner.parallelTick.addPreServerTickTask(positionFounder);
+        this.planningTask = EZMiner.chainPlanningRuntimeFactory
+            .createTaskForMode(manager.minerModeState, pos, canBreakPositions, playerMP, manager.pConfig);
     }
 
     @SubscribeEvent
     public void operatorTask(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
         // Guard: stop if chain key released OR player is no longer online/alive
-        if (!manager.inPressChainKey || !isPlayerOnline()) {
+        if (!manager.isKeyPressed() || !isPlayerOnline()) {
             unRegistry();
             return;
         }
         if (canBreakPositions.isEmpty()) {
-            if (positionFounder.stopped.get()) unRegistry();
+            if (planningTask.isStopped()) unRegistry();
             return;
         }
 
-        int countThisTick = 0;
-        Vector3i pos;
-        while ((pos = canBreakPositions.poll()) != null) {
-            if (!canOperate() || !isPlayerOnline()) {
-                unRegistry();
-                return;
-            }
-            try {
-                // Trigger Visual Prospecting ore vein discovery BEFORE the block is mined.
-                // GT's onBlockActivated fires OreInteractEvent which VP's ServerCache intercepts
-                // to send vein data to the player's map overlay.
-                triggerVPOreDiscovery(pos);
-                playerMP.theItemInWorldManager.tryHarvestBlock(pos.x, pos.y, pos.z);
-                // Add configured exhaustion per block
-                playerMP.addExhaustion((float) Config.addExhaustion);
-            } catch (Exception e) {
-                EZMiner.LOG.error("EZMiner: Error while harvesting block at {}: {}", pos, e.getMessage(), e);
-                MessageUtils.serverSendPlayerMessage(
-                    new ChatComponentTranslation("ezminer.message.chain.error", pos, e.toString()),
-                    manager.playerUUID);
-            }
-            operatorCount++;
-            countThisTick++;
-            if (countThisTick >= 64) {
-                // Send real-time count update to client
-                EZMiner.network.network.sendTo(new PacketChainCount(operatorCount), playerMP);
-                return;
-            }
+        if (!canOperate() || !isPlayerOnline()) {
+            unRegistry();
+            return;
         }
 
-        // Send real-time count update to client each tick
-        EZMiner.network.network.sendTo(new PacketChainCount(operatorCount), playerMP);
+        stopRequested = false;
+        chainExecutor.executeBatch(canBreakPositions, Config.breakPerTick, this::processCandidate);
+        if (stopRequested) {
+            unRegistry();
+            return;
+        }
 
-        if (positionFounder.stopped.get()) unRegistry();
+        // Send server-authoritative runtime projection to client each tick.
+        long elapsedMs = System.currentTimeMillis() - startTime;
+        manager.updateRuntimeProjection(operatorCount, elapsedMs, canBreakPositions.size());
+        EZMiner.network.network
+            .sendTo(new PacketChainStateSync(manager.activeSession, operatorCount, elapsedMs, true), playerMP);
+
+        if (planningTask.isStopped() && canBreakPositions.isEmpty()) unRegistry();
     }
 
     private boolean isPlayerOnline() {
-        return playerMP != null && !playerMP.isDead && playerMP.worldObj != null;
+        return playerMP != null && !playerMP.isDead
+            && playerMP.worldObj != null
+            && (manager.activeSession == null || playerMP.dimension == manager.activeSession.dimensionId);
     }
 
     private boolean canOperate() {
-        if (!manager.inPressChainKey) return false;
+        if (!manager.isKeyPressed()) return false;
         ItemStack item = playerMP.getCurrentEquippedItem();
         if (item != null && item.isItemStackDamageable()) {
             return (item.getMaxDamage() - item.getItemDamage()) > 1;
@@ -118,6 +114,7 @@ public class BaseOperator {
 
     public void registry() {
         startTime = System.currentTimeMillis();
+        planningTask.schedule();
         FMLCommonHandler.instance()
             .bus()
             .register(this);
@@ -133,11 +130,17 @@ public class BaseOperator {
                     Math.round(ms / 10.0) / 100.0f),
                 manager.playerUUID);
         }
+        // Reset client-side chain count and elapsed time display
+        if (playerMP != null && !playerMP.isDead) {
+            EZMiner.network.network.sendTo(new PacketChainStateSync(null, 0, 0L, false), playerMP);
+        }
         FMLCommonHandler.instance()
             .bus()
             .unregister(this);
-        positionFounder.interrupt();
-        manager.inOperate = false;
+        planningTask.interrupt();
+        manager.clearRuntimeProjection();
+        EZMiner.chainStateService.markSessionStop(manager.playerUUID);
+        manager.activeSession = null;
     }
 
     /**
@@ -145,7 +148,7 @@ public class BaseOperator {
      * Does not attempt to send chat messages or deliver drops.
      */
     public void stopImmediately() {
-        positionFounder.interrupt();
+        planningTask.interrupt();
         canBreakPositions.clear();
         try {
             FMLCommonHandler.instance()
@@ -154,100 +157,57 @@ public class BaseOperator {
         } catch (Exception ignored) {
             // already unregistered – safe to ignore
         }
-        manager.inOperate = false;
+        manager.clearRuntimeProjection();
+        EZMiner.chainStateService.markSessionStop(manager.playerUUID);
+        manager.activeSession = null;
     }
 
-    // ===== Optional Visual Prospecting API compatibility =====
-    private static volatile boolean compatibilityChecked = false;
-    /** True when the Visual Prospecting mod is available on this installation. */
-    public static volatile boolean hasVP_API = false;
-    /**
-     * Cached reference to {@code VisualProspecting_API.LogicalServer
-     * .prospectOreVeinsWithinRadius(int, int, int, int)}.
-     */
-    private static volatile Method vpProspectMethod = null;
-    /**
-     * Cached reference to {@code VisualProspecting_API.LogicalServer
-     * .sendProspectionResultsToClient(EntityPlayerMP, List, List)}.
-     */
-    private static volatile Method vpSendToClientMethod = null;
+    private boolean shouldHarvest(Vector3i pos) {
+        if (!manager.isBlastCropMode()) return true;
+        if (playerMP.worldObj == null) return false;
+        return Manager.isMatureCrop(playerMP.worldObj, pos.x, pos.y, pos.z);
+    }
 
-    /**
-     * Detects the optional Visual Prospecting API once per JVM lifetime and
-     * caches the two reflection method references needed for ore-vein discovery.
-     * Synchronized so the once-only guarantee holds even under concurrent access.
-     *
-     * <p>
-     * {@code compatibilityChecked} is written <em>last</em>, after all other
-     * fields, so any thread that reads {@code compatibilityChecked == true} via
-     * its {@code volatile} read is guaranteed (by the JMM happens-before rule
-     * for volatile stores/loads) to see the fully-initialized values of
-     * {@code hasVP_API}, {@code vpProspectMethod}, and {@code vpSendToClientMethod}.
-     */
-    public static synchronized void checkCompatibility() {
-        if (compatibilityChecked) return;
-        try {
-            // Load LogicalServer directly by name to avoid triggering Class.getDeclaredClasses(),
-            // which would also load the @SideOnly(CLIENT) LogicalClient inner class and crash on
-            // a dedicated server with NoClassDefFoundError / SideTransformer rejection.
-            Class<?> logicalServerClass = Class
-                .forName("com.sinthoras.visualprospecting.VisualProspecting_API$LogicalServer");
-            vpProspectMethod = logicalServerClass
-                .getMethod("prospectOreVeinsWithinRadius", int.class, int.class, int.class, int.class);
-            vpSendToClientMethod = logicalServerClass
-                .getMethod("sendProspectionResultsToClient", EntityPlayerMP.class, List.class, List.class);
-            hasVP_API = true;
-            EZMiner.LOG.info("EZMiner: VisualProspecting_API detected – ore vein discovery enabled.");
-        } catch (ClassNotFoundException e) {
-            EZMiner.LOG.debug("EZMiner: VisualProspecting_API not found – ore vein discovery disabled.");
-        } catch (NoSuchMethodException | SecurityException e) {
-            EZMiner.LOG.warn(
-                "EZMiner: VisualProspecting_API found but required methods could not be resolved: {}",
-                e.getMessage());
+    private boolean processCandidate(Vector3i pos) {
+        if (!canOperate() || !isPlayerOnline()) {
+            stopRequested = true;
+            return false;
         }
-        // Written last so that any volatile read of `compatibilityChecked == true`
-        // establishes happens-before over all the field writes above.
-        compatibilityChecked = true;
-    }
-
-    /**
-     * Notifies Visual Prospecting of the ore vein at the given block position so
-     * that it appears on the player's map overlay.
-     *
-     * <p>
-     * Uses {@code VisualProspecting_API.LogicalServer.prospectOreVeinsWithinRadius}
-     * to look up the vein in VP's server-side cache (a pure HashMap lookup — no
-     * world access), then calls
-     * {@code VisualProspecting_API.LogicalServer.sendProspectionResultsToClient}
-     * which handles single-player (direct {@code ClientCache} update + chat
-     * notification) and multiplayer (network packet) transparently.
-     *
-     * <p>
-     * Each 16×16 chunk is only queried once per chain operation to avoid redundant
-     * network traffic in multiplayer.
-     *
-     * <p>
-     * This method is a no-op when VP is not installed or the block is not a GT ore.
-     */
-    private void triggerVPOreDiscovery(Vector3i pos) {
-        // Thread-safety: checkCompatibility() writes vpProspectMethod and vpSendToClientMethod
-        // BEFORE writing hasVP_API=true (all volatile). A volatile read of hasVP_API==true
-        // establishes happens-before over those prior writes, so the null checks below are safe.
-        if (!hasVP_API || vpProspectMethod == null || vpSendToClientMethod == null) return;
-        if (!DeterminingIdentical.isGTOreBlock(pos, playerMP)) return;
-
-        // One VP lookup per 16×16 chunk is enough – all blocks in the same chunk
-        // belong to the same ore vein, and VP deduplicates on the client anyway.
-        long chunkKey = ((long) (pos.x >> 4) << 32) | ((pos.z >> 4) & 0xFFFFFFFFL);
-        if (!vpNotifiedChunks.add(chunkKey)) return;
-
         try {
-            List<?> veins = (List<?>) vpProspectMethod.invoke(null, playerMP.dimension, pos.x, pos.z, 0);
-            if (!veins.isEmpty()) {
-                vpSendToClientMethod.invoke(null, playerMP, veins, Collections.emptyList());
-            }
+            if (!shouldHarvest(pos)) return true;
+            Block preHarvestBlock = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
+            int preHarvestMeta = playerMP.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
+            vpBridge.notifyOreDiscovery(playerMP, pos, vpNotifiedChunks);
+            boolean harvested = exhaustionStrategy.harvestWithConfiguredExhaustion(
+                playerMP,
+                pos,
+                (float) manager.pConfig.addExhaustion,
+                harvestActionExecutor);
+            if (!harvested) return true;
+            replantVanillaCropIfNeeded(pos, preHarvestBlock, preHarvestMeta);
+            operatorCount++;
         } catch (Exception e) {
-            EZMiner.LOG.debug("EZMiner: VP ore vein discovery call failed at {}: {}", pos, e.getMessage());
+            manager.reportRuntimeError("harvest_error");
+            ChainExecutionErrorReporter.reportHarvestError(manager, pos, e);
         }
+        return true;
+    }
+
+    private void replantVanillaCropIfNeeded(Vector3i pos, Block preHarvestBlock, int preHarvestMeta) {
+        if (!manager.isBlastCropMode()) return;
+        if (!(preHarvestBlock instanceof BlockCrops)) return;
+        if (preHarvestMeta < 7) return;
+        Block current = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
+        if (current == Blocks.air && canSustainReplantedCrop(pos, (BlockCrops) preHarvestBlock)) {
+            playerMP.worldObj.setBlock(pos.x, pos.y, pos.z, preHarvestBlock, 0, 3);
+        }
+    }
+
+    private boolean canSustainReplantedCrop(Vector3i cropPos, BlockCrops cropBlock) {
+        if (cropPos.y <= 0) return false;
+        Block soil = playerMP.worldObj.getBlock(cropPos.x, cropPos.y - 1, cropPos.z);
+        if (soil == null || soil == Blocks.air) return false;
+        return soil == Blocks.farmland || soil
+            .canSustainPlant(playerMP.worldObj, cropPos.x, cropPos.y - 1, cropPos.z, ForgeDirection.UP, cropBlock);
     }
 }

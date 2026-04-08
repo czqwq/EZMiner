@@ -22,6 +22,8 @@ public class OreFounder extends BasePositionFounder {
     @Override
     public boolean checkCanAdd(Vector3i pos) {
         if (foundedPositions.contains(pos)) return false;
+        if (player.worldObj == null) return false;
+        if (!player.worldObj.blockExists(pos.x, pos.y, pos.z)) return false;
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
         if (block.equals(Blocks.air) || block.getMaterial()
             .isLiquid() || block.equals(Blocks.bedrock)) return false;
@@ -29,6 +31,7 @@ public class OreFounder extends BasePositionFounder {
         Vector3i playerPos = playerFloorPos();
         if (pos.x == playerPos.x && pos.y == (playerPos.y - 1) && pos.z == playerPos.z) return false;
         if (!DeterminingIdentical.isOreBlock(pos, player)) return false;
+        if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
         return block.canHarvestBlock(player, blockMeta);
     }

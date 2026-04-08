@@ -6,6 +6,7 @@ import com.czqwq.EZMiner.client.KeyListener;
 import com.czqwq.EZMiner.client.render.MinerRenderer;
 
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.event.FMLServerStartedEvent;
 
 public class ClientProxy extends CommonProxy {
 
@@ -21,4 +22,7 @@ public class ClientProxy extends CommonProxy {
         keyListener.registry();
         minerRenderer.registry();
     }
+
+    @Override
+    public void serverStarted(FMLServerStartedEvent event) {}
 }

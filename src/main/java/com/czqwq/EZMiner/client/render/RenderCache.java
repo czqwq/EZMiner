@@ -88,23 +88,19 @@ public class RenderCache {
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
+    /**
+     * Draw the current index data. Caller is responsible for setting all GL state
+     * (blend, depth-test, line-width, color, etc.) before calling this method.
+     */
     public void render(int indexCount) {
         if (indexCount <= 0) return;
         ensureGLInit();
         if (vao == 0) return; // GL init failed – do nothing rather than crash
-        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
         GL30.glBindVertexArray(vao);
         GL20.glEnableVertexAttribArray(0);
         GL11.glDrawElements(GL11.GL_LINES, indexCount, GL11.GL_UNSIGNED_INT, 0);
         GL20.glDisableVertexAttribArray(0);
         GL30.glBindVertexArray(0);
-
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
-        GL11.glPopAttrib();
     }
 }

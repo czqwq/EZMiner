@@ -11,7 +11,10 @@ import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.core.Manager;
 import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.core.PlayerManager;
+import com.czqwq.EZMiner.network.PacketHudPos;
 import com.czqwq.EZMiner.network.PacketMinerConfig;
+import com.czqwq.EZMiner.network.PacketReloadClientConfig;
+import com.czqwq.EZMiner.network.PacketServerConfig;
 
 /**
  * Root {@code /EZMiner} command with two sub-commands:
@@ -30,7 +33,7 @@ public class ReloadConfigCommand extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/EZMiner <reloadConfig | active_mode <0|1>>";
+        return "/EZMiner <reloadConfig | reloadClientConfig | active_mode <0|1> | hud pos <x> <y>>";
     }
 
     /** Allow all players to run /EZMiner (active_mode is a personal setting). */
@@ -43,10 +46,13 @@ public class ReloadConfigCommand extends CommandBase {
     @SuppressWarnings("unchecked")
     public List addTabCompletionOptions(ICommandSender sender, String[] args) {
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, "reloadConfig", "active_mode");
+            return getListOfStringsMatchingLastWord(args, "reloadConfig", "reloadClientConfig", "active_mode", "hud");
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("active_mode")) {
             return getListOfStringsMatchingLastWord(args, "0", "1");
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("hud")) {
+            return getListOfStringsMatchingLastWord(args, "pos");
         }
         return java.util.Collections.emptyList();
     }
@@ -69,12 +75,41 @@ public class ReloadConfigCommand extends CommandBase {
             Config.load();
             if (PlayerManager.instance != null) {
                 for (Manager mgr : PlayerManager.instance.managers.values()) {
-                    mgr.pConfig = new MinerConfig();
+                    mgr.pConfig.updateFrom(new MinerConfig());
                     EZMiner.network.network.sendTo(new PacketMinerConfig(mgr.pConfig), mgr.player);
+                    EZMiner.network.network.sendTo(
+                        new PacketServerConfig(
+                            Config.bigRadius,
+                            Config.blockLimit,
+                            Config.smallRadius,
+                            Config.tunnelWidth,
+                            Config.breakPerTick),
+                        mgr.player);
+                    EZMiner.network.network.sendTo(new PacketReloadClientConfig(), mgr.player);
                 }
             }
             EZMiner.LOG.info("EZMiner config reloaded.");
             sender.addChatMessage(new ChatComponentTranslation("ezminer.command.reloadconfig.success"));
+            return;
+        }
+
+        // ── reloadClientConfig (any player) ───────────────────────────────────
+        if (sub.equalsIgnoreCase("reloadClientConfig")) {
+            if (!(sender instanceof net.minecraft.entity.player.EntityPlayerMP)) {
+                sender.addChatMessage(new ChatComponentTranslation("ezminer.command.reloadclientconfig.player_only"));
+                return;
+            }
+            net.minecraft.entity.player.EntityPlayerMP player = (net.minecraft.entity.player.EntityPlayerMP) sender;
+            EZMiner.network.network.sendTo(
+                new PacketServerConfig(
+                    Config.bigRadius,
+                    Config.blockLimit,
+                    Config.smallRadius,
+                    Config.tunnelWidth,
+                    Config.breakPerTick),
+                player);
+            EZMiner.network.network.sendTo(new PacketReloadClientConfig(), player);
+            sender.addChatMessage(new ChatComponentTranslation("ezminer.command.reloadclientconfig.success"));
             return;
         }
 
@@ -104,17 +139,46 @@ public class ReloadConfigCommand extends CommandBase {
             return;
         }
 
+        // ── hud pos <x> <y> ────────────────────────────────────────────────────
+        if (sub.equalsIgnoreCase("hud")) {
+            if (args.length != 4 || !args[1].equalsIgnoreCase("pos")) {
+                sendHudPosUsage(sender);
+                return;
+            }
+            int x, y;
+            try {
+                x = Integer.parseInt(args[2]);
+                y = Integer.parseInt(args[3]);
+            } catch (NumberFormatException e) {
+                sendHudPosUsage(sender);
+                return;
+            }
+            Config.saveHudPos(x, y);
+            sender.addChatMessage(new ChatComponentTranslation("ezminer.command.hud.pos.set", x, y));
+            if (sender instanceof net.minecraft.entity.player.EntityPlayerMP) {
+                net.minecraft.entity.player.EntityPlayerMP player = (net.minecraft.entity.player.EntityPlayerMP) sender;
+                EZMiner.network.network.sendTo(new PacketHudPos(x, y), player);
+            }
+            return;
+        }
+
         // ── unknown sub-command ───────────────────────────────────────────────
         sendUsage(sender);
     }
 
     private static void sendUsage(ICommandSender sender) {
         sender.addChatMessage(new ChatComponentTranslation("ezminer.command.usage.reloadconfig"));
+        sender.addChatMessage(new ChatComponentTranslation("ezminer.command.usage.reloadclientconfig"));
         sender.addChatMessage(new ChatComponentTranslation("ezminer.command.usage.active_mode"));
+        sender.addChatMessage(new ChatComponentTranslation("ezminer.command.usage.hud_pos"));
     }
 
     private static void sendActiveModeUsage(ICommandSender sender) {
         sender.addChatMessage(new ChatComponentTranslation("ezminer.command.active_mode.usage.0"));
         sender.addChatMessage(new ChatComponentTranslation("ezminer.command.active_mode.usage.1"));
+    }
+
+    private static void sendHudPosUsage(ICommandSender sender) {
+        sender.addChatMessage(new ChatComponentTranslation("ezminer.command.hud.pos.usage"));
     }
 }

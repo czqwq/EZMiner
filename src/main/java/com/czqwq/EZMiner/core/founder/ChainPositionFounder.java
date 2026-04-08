@@ -41,6 +41,13 @@ public class ChainPositionFounder extends BasePositionFounder {
         // Center is already in foundedPositions (added by BasePositionFounder constructor).
         frontier.add(center);
 
+        // Candidate checks performed in the current tick window. We yield to the
+        // tick-pause mechanism every SCAN_SLICE_SIZE checks so that with a large
+        // smallRadius (e.g. 2 → (2*2+1)³ = 125 neighbours per node) the search
+        // thread does not monopolise the CPU for an entire server tick.
+        int checksThisSlice = 0;
+        final int SCAN_SLICE_SIZE = 64;
+
         while (!frontier.isEmpty() && curCount < minerConfig.blockLimit) {
             Vector3i current = frontier.poll();
 
@@ -57,11 +64,17 @@ public class ChainPositionFounder extends BasePositionFounder {
                         if (curCount >= minerConfig.blockLimit) return;
                         if (Thread.currentThread()
                             .isInterrupted()) return;
+                        checksThisSlice++;
+                        if (checksThisSlice >= SCAN_SLICE_SIZE) {
+                            checksThisSlice = 0;
+                            waitUntil();
+                            if (Thread.currentThread()
+                                .isInterrupted()) return;
+                        }
                     }
                 }
             }
-            // Yield to the tick-pause mechanism once per frontier node rather than per
-            // neighbour to avoid spinning on the AtomicBoolean check (2*r+1)³ times.
+            // Always yield at the end of a frontier node too.
             waitUntil();
             if (Thread.currentThread()
                 .isInterrupted()) return;
@@ -91,6 +104,7 @@ public class ChainPositionFounder extends BasePositionFounder {
     public boolean checkCanAdd(Vector3i pos) {
         if (foundedPositions.contains(pos)) return false;
         if (player.worldObj == null) return false; // player logged out
+        if (!player.worldObj.blockExists(pos.x, pos.y, pos.z)) return false;
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
         if (block.equals(Blocks.air) || block.getMaterial()
             .isLiquid() || block.equals(Blocks.bedrock)) return false;
@@ -99,6 +113,7 @@ public class ChainPositionFounder extends BasePositionFounder {
         if (pos.x == playerPos.x && pos.y == (playerPos.y - 1) && pos.z == playerPos.z) return false;
         if (!DeterminingIdentical
             .identical(sampleBlock, sampleBlockMeta, sampleTileEntity, block, blockMeta, pos, player)) return false;
+        if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
         return block.canHarvestBlock(player, blockMeta);
     }

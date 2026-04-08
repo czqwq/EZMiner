@@ -3,6 +3,8 @@ package com.czqwq.EZMiner.network;
 import net.minecraft.entity.player.EntityPlayerMP;
 
 import com.czqwq.EZMiner.Config;
+import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.state.ChainPlayerState;
 import com.czqwq.EZMiner.core.Manager;
 import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.core.PlayerManager;
@@ -29,6 +31,7 @@ public class PacketMinerConfig implements IMessage {
         minerConfig.smallRadius = buf.readInt();
         minerConfig.tunnelWidth = buf.readInt();
         minerConfig.useChainDoneMessage = buf.readBoolean();
+        minerConfig.addExhaustion = buf.readDouble();
     }
 
     @Override
@@ -38,6 +41,7 @@ public class PacketMinerConfig implements IMessage {
         buf.writeInt(minerConfig.smallRadius);
         buf.writeInt(minerConfig.tunnelWidth);
         buf.writeBoolean(minerConfig.useChainDoneMessage);
+        buf.writeDouble(minerConfig.addExhaustion);
     }
 
     public static class Handler implements IMessageHandler<PacketMinerConfig, IMessage> {
@@ -49,6 +53,8 @@ public class PacketMinerConfig implements IMessage {
                 Manager mgr = PlayerManager.instance.managers.get(player.getUniqueID());
                 if (mgr != null) {
                     mgr.receiveClientConfig(msg.minerConfig);
+                    ChainPlayerState state = EZMiner.chainStateService.getOrCreate(player.getUniqueID());
+                    state.minerConfig.updateFrom(mgr.pConfig);
                     // Echo validated config back
                     return new PacketMinerConfig(mgr.pConfig);
                 }

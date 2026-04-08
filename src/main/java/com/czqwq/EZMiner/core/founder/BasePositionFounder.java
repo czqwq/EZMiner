@@ -32,6 +32,7 @@ public class BasePositionFounder extends Pauseable {
     public HashSet<Vector3i> foundedPositions = new HashSet<>();
 
     public int curCount = 0;
+    protected boolean skipHarvestCheck = false;
 
     // Sample block at center
     public final Block sampleBlock;
@@ -59,6 +60,7 @@ public class BasePositionFounder extends Pauseable {
     public void run1() {
         int curRadius = 1;
         while (curCount < minerConfig.blockLimit && curRadius <= minerConfig.bigRadius) {
+            if (player == null || player.isDead || player.worldObj == null) return;
             int xMin = center.x - curRadius, xMax = center.x + curRadius;
             int yMin = center.y - curRadius, yMax = center.y + curRadius;
             int zMin = center.z - curRadius, zMax = center.z + curRadius;
@@ -98,8 +100,13 @@ public class BasePositionFounder extends Pauseable {
         Vector3i playerPos = playerFloorPos();
         // Protect the block directly under the player's feet
         if (pos.x == playerPos.x && pos.y == (playerPos.y - 1) && pos.z == playerPos.z) return false;
+        if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
         return block.canHarvestBlock(player, blockMeta);
+    }
+
+    public void setSkipHarvestCheck(boolean skipHarvestCheck) {
+        this.skipHarvestCheck = skipHarvestCheck;
     }
 
     public void addResult(Vector3i pos) {
