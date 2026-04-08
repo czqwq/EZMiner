@@ -26,8 +26,8 @@ import com.czqwq.EZMiner.chain.state.ChainSession;
 import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
 
 import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.eventhandler.Event.Result;
 import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.eventhandler.Event.Result;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
@@ -110,6 +110,8 @@ public class Manager {
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.getPlayer());
     }
 
+    // Must receive canceled events because some crop/interaction mods cancel
+    // RIGHT_CLICK_BLOCK before EZMiner runs; we still need to start chain harvest.
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public void onCropRightClick(PlayerInteractEvent event) {
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
@@ -118,6 +120,8 @@ public class Manager {
         if (!isBlastCropMode()) return;
         if (!isMatureCrop(event.entityPlayer.worldObj, event.x, event.y, event.z)) return;
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.entityPlayer);
+        // Explicitly consume the interaction so vanilla/sibling handlers do not
+        // perform a second single-crop right-click harvest.
         event.useBlock = Result.DENY;
         event.useItem = Result.DENY;
         event.setCanceled(true);
@@ -265,6 +269,14 @@ public class Manager {
         return minerModeState.mainMode == 0 && minerModeState.blastMode == 5;
     }
 
+    /**
+     * Checks whether the target block is currently harvestable as a crop.
+     *
+     * <p>
+     * Vanilla crops are considered mature at metadata {@code >= 7}. IC2 crops are
+     * considered mature when their {@link CropCard#canBeHarvested(TileEntityCrop)}
+     * returns {@code true}.
+     */
     public static boolean isMatureCrop(World world, int x, int y, int z) {
         if (world == null || !world.blockExists(x, y, z)) return false;
         Block block = world.getBlock(x, y, z);
