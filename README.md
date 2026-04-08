@@ -142,4 +142,72 @@
 - Minecraft **1.7.10**
 - Forge **10.13.4.1614**
 - GregTech: New Horizons（GTNH）整合包
+- 默认 **不启用 Mixin**（`usesMixins = false`），优先使用 Forge/FML 事件与分层模块实现功能
 
+---
+
+## 架构（重构后）
+
+```
+输入命令层（客户端）:
+  KeyListener -> PacketKeyState / PacketChainModeSwitch
+
+权威状态层（服务端）:
+  ChainStateService
+    ├─ ChainPlayerState（长期状态）
+    ├─ ChainRuntimeState（运行态）
+    └─ ChainSession（会话）
+
+规划层（只读世界）:
+  chain/planning/*  +  ParallelTick 纯计算任务
+
+执行层（主线程写世界）:
+  BaseOperator -> ChainExecutor / BlockHarvestActionExecutor
+              -> ChainDropCollector / 饥饿策略 / VP 桥接
+
+同步层:
+  PacketChainStateSync（服务端权威回传）
+
+客户端显示层:
+  ChainClientState + ChainPreviewController + HudRenderer/MinerRenderer
+```
+
+### 运行态状态机（简化）
+
+1. 客户端按键变化发送命令包  
+2. 服务端更新权威状态，满足条件后启动会话  
+3. 规划线程产出候选方块（不写世界）  
+4. 主线程执行收获并同步 `PacketChainStateSync`  
+5. 结束时统一掉落投放并清理会话/运行态
+
+### 网络时序（简化）
+
+1. C -> S: `PacketKeyState`（按下/松开）  
+2. C -> S: `PacketChainModeSwitch`（模式切换）  
+3. S -> C: `PacketChainStateSync`（session/count/elapsed/inOperate）
+
+---
+
+## 调试与排障
+
+- 推荐先执行：`./gradlew spotlessApply build`
+- 重点日志入口：
+  - 执行错误：`ChainExecutionErrorReporter`
+  - 生命周期清理：`chain/lifecycle/ChainLifecycleService`
+  - 状态同步：`chain/network/PacketChainStateSync`
+- 常见排查：
+  - 预览不更新：检查客户端 `ChainPreviewController` 冻结/解冻状态
+  - 多人串线：检查 `sessionId` 与 UUID 维度匹配
+  - 掉落异常：检查 `Manager.onHarvestDrops` 与 Bandit 共存分支
+
+---
+
+## 迁移对照（旧 -> 新）
+
+| 旧职责/类 | 新职责/类 |
+|---|---|
+| `Manager` 运行态拼装 | `ChainStateService` + `ChainPlayerState`/`ChainRuntimeState` |
+| `MinerModeState#createPositionFounder` | `chain/mode/*` + `ChainPlanningRuntimeFactory` |
+| `BaseOperator` 内聚执行逻辑 | `ChainExecutor` + `ChainActionExecutor` + 独立策略组件 |
+| 旧预览与执行耦合 | `ChainPreviewController` + `ChainClientState` |
+| 字段式状态同步 | 命令包（`PacketKeyState`/`PacketChainModeSwitch`）+ 权威回传（`PacketChainStateSync`） |
