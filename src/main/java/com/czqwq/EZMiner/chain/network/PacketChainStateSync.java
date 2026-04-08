@@ -36,8 +36,13 @@ public class PacketChainStateSync implements IMessage {
     @Override
     public void fromBytes(ByteBuf buf) {
         hasSession = buf.readBoolean();
-        sessionMost = buf.readLong();
-        sessionLeast = buf.readLong();
+        if (hasSession) {
+            sessionMost = buf.readLong();
+            sessionLeast = buf.readLong();
+        } else {
+            sessionMost = 0L;
+            sessionLeast = 0L;
+        }
         chainedCount = buf.readInt();
         elapsedMs = buf.readLong();
         inOperate = buf.readBoolean();
@@ -46,8 +51,10 @@ public class PacketChainStateSync implements IMessage {
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeBoolean(hasSession);
-        buf.writeLong(sessionMost);
-        buf.writeLong(sessionLeast);
+        if (hasSession) {
+            buf.writeLong(sessionMost);
+            buf.writeLong(sessionLeast);
+        }
         buf.writeInt(chainedCount);
         buf.writeLong(elapsedMs);
         buf.writeBoolean(inOperate);

@@ -17,8 +17,7 @@ public class ChainLifecycleService {
         EZMiner.chainStateService.onPlayerLogin(player);
     }
 
-    public void onPlayerLogout(EntityPlayerMP player, Map<UUID, Manager> managers) {
-        UUID playerUUID = player.getUniqueID();
+    public void onPlayerLogout(UUID playerUUID, Map<UUID, Manager> managers) {
         EZMiner.chainStateService.onPlayerLogout(playerUUID);
         Manager mgr = managers.remove(playerUUID);
         if (mgr != null) {

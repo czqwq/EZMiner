@@ -23,8 +23,8 @@ import com.czqwq.EZMiner.core.founder.TunnelFounder;
  */
 public class LegacyFounderPlanningFactory {
 
-    public BasePositionFounder create(MinerModeState modeState, Vector3i center, LinkedBlockingQueue<Vector3i> results,
-        EntityPlayer player, MinerConfig config) {
+    public BasePositionFounder createFounder(MinerModeState modeState, Vector3i center,
+        LinkedBlockingQueue<Vector3i> results, EntityPlayer player, MinerConfig config) {
         if (modeState.mainMode == 1) {
             return new ChainPositionFounder(center, results, player, config);
         }

@@ -15,6 +15,11 @@ import io.netty.buffer.ByteBuf;
 
 public class PacketChainModeSwitch implements IMessage {
 
+    private static final int MAX_MAIN_MODE = 1;
+    private static final int MAX_BLAST_MODE = 5;
+    // Current chain mode count is 1 (basic mode only), so max index is 0.
+    private static final int MAX_CHAIN_MODE = 0;
+
     public int mainMode;
     public int blastMode;
     public int chainMode;
@@ -29,9 +34,9 @@ public class PacketChainModeSwitch implements IMessage {
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        mainMode = IMath.clamp(buf.readInt(), 0, 1);
-        blastMode = IMath.clamp(buf.readInt(), 0, 5);
-        chainMode = IMath.clamp(buf.readInt(), 0, 0);
+        mainMode = IMath.clamp(buf.readInt(), 0, MAX_MAIN_MODE);
+        blastMode = IMath.clamp(buf.readInt(), 0, MAX_BLAST_MODE);
+        chainMode = IMath.clamp(buf.readInt(), 0, MAX_CHAIN_MODE);
     }
 
     @Override

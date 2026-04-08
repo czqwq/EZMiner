@@ -56,7 +56,7 @@ public class PlayerManager {
         if (!(event.player instanceof EntityPlayerMP)) return;
         EntityPlayerMP mp = (EntityPlayerMP) event.player;
         boolean existed = managers.containsKey(mp.getUniqueID());
-        EZMiner.chainLifecycleService.onPlayerLogout(mp, managers);
+        EZMiner.chainLifecycleService.onPlayerLogout(mp.getUniqueID(), managers);
         if (!existed) {
             LOG.warn("No manager found for logging-out player: {}", mp.getDisplayName());
             return;

@@ -23,6 +23,6 @@ public class ChainPlanningRuntimeFactory {
 
     public BasePositionFounder createLegacyFounder(MinerModeState modeState, Vector3i center,
         LinkedBlockingQueue<Vector3i> results, EntityPlayer player, MinerConfig config) {
-        return legacyFounderPlanningFactory.create(modeState, center, results, player, config);
+        return legacyFounderPlanningFactory.createFounder(modeState, center, results, player, config);
     }
 }

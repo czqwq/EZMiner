@@ -15,8 +15,8 @@ public class ChainStateService {
 
     private final Map<UUID, ChainPlayerState> stateMap = new ConcurrentHashMap<>();
 
-    public ChainPlayerState getOrCreate(UUID uuid) {
-        return stateMap.computeIfAbsent(uuid, ChainPlayerState::new);
+    public ChainPlayerState getOrCreate(UUID playerUUID) {
+        return stateMap.computeIfAbsent(playerUUID, ChainPlayerState::new);
     }
 
     public ChainPlayerState onPlayerLogin(EntityPlayerMP player) {
@@ -25,18 +25,18 @@ public class ChainStateService {
         return state;
     }
 
-    public void onPlayerLogout(UUID uuid) {
-        ChainPlayerState state = stateMap.remove(uuid);
+    public void onPlayerLogout(UUID playerUUID) {
+        ChainPlayerState state = stateMap.remove(playerUUID);
         if (state != null) state.clearRuntime();
     }
 
-    public void onPlayerRespawn(UUID uuid) {
-        ChainPlayerState state = stateMap.get(uuid);
+    public void onPlayerRespawn(UUID playerUUID) {
+        ChainPlayerState state = stateMap.get(playerUUID);
         if (state != null) state.clearRuntime();
     }
 
-    public void onPlayerDimensionChanged(UUID uuid) {
-        ChainPlayerState state = stateMap.get(uuid);
+    public void onPlayerDimensionChanged(UUID playerUUID) {
+        ChainPlayerState state = stateMap.get(playerUUID);
         if (state != null) state.clearRuntime();
     }
 
@@ -46,16 +46,16 @@ public class ChainStateService {
         }
     }
 
-    public void markSessionStart(UUID uuid, Vector3i origin, int dimId) {
-        ChainPlayerState state = getOrCreate(uuid);
+    public void markSessionStart(UUID playerUUID, Vector3i origin, int dimId) {
+        ChainPlayerState state = getOrCreate(playerUUID);
         state.session = new ChainSession(new Vector3i(origin), dimId, System.currentTimeMillis());
         state.runtimeState.inOperate = true;
         state.runtimeState.chainedCount = 0;
         state.runtimeState.elapsedMs = 0L;
     }
 
-    public void markSessionStop(UUID uuid) {
-        ChainPlayerState state = stateMap.get(uuid);
+    public void markSessionStop(UUID playerUUID) {
+        ChainPlayerState state = stateMap.get(playerUUID);
         if (state == null) return;
         state.runtimeState.inOperate = false;
         state.runtimeState.queuedCandidates = 0;

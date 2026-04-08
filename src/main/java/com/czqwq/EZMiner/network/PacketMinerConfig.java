@@ -54,7 +54,7 @@ public class PacketMinerConfig implements IMessage {
                 if (mgr != null) {
                     mgr.receiveClientConfig(msg.minerConfig);
                     ChainPlayerState state = EZMiner.chainStateService.getOrCreate(player.getUniqueID());
-                    state.minerConfig.copyFrom(mgr.pConfig);
+                    state.minerConfig.updateFrom(mgr.pConfig);
                     // Echo validated config back
                     return new PacketMinerConfig(mgr.pConfig);
                 }

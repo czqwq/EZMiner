@@ -51,7 +51,8 @@ public class KeyListener {
 
     @SubscribeEvent
     public void onInput(InputEvent event) {
-        MinerModeState state = ((ClientProxy) EZMiner.proxy).clientState.minerModeState;
+        ClientProxy proxy = (ClientProxy) EZMiner.proxy;
+        MinerModeState state = proxy.clientState.minerModeState;
 
         // ===== Main-mode toggle =====
         if (KEY_MODE_SWITCH.isPressed()) {
@@ -60,7 +61,7 @@ public class KeyListener {
             EZMiner.network.network.sendToServer(new PacketMinerModeState(state));
             EZMiner.network.network
                 .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
-            ((ClientProxy) EZMiner.proxy).clientState.chainClientState.mainMode = state.mainMode;
+            proxy.clientState.chainClientState.mainMode = state.mainMode;
         }
 
         boolean holding = KEY_CHAIN.getIsKeyPressed();
@@ -100,6 +101,7 @@ public class KeyListener {
     }
 
     private void startChain(MinerModeState state) {
+        ClientProxy proxy = (ClientProxy) EZMiner.proxy;
         // Sync mode to server BEFORE the chain-switcher packet so that when the server
         // receives the BreakEvent it already has the correct mode. Without this, the
         // server's Manager.minerModeState stays at its default (chain/basic) and ignores
@@ -109,26 +111,27 @@ public class KeyListener {
             .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
         EZMiner.network.network.sendToServer(new PacketChainSwitcher(true));
         EZMiner.network.network.sendToServer(new PacketKeyState(true));
-        ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = true;
-        ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = true;
-        ((ClientProxy) EZMiner.proxy).clientState.chainClientState.keyPressed = true;
+        proxy.minerRenderer.inPressChainKey = true;
+        proxy.hudRenderer.chainActive = true;
+        proxy.clientState.chainClientState.keyPressed = true;
         // Freeze preview: lock the current wireframe in place while chain blocks are broken.
         // No new searches will start until unfreeze() is called on key release.
-        ((ClientProxy) EZMiner.proxy).minerRenderer.freeze();
+        proxy.minerRenderer.freeze();
         // Sync config to server on activation
         EZMiner.network.network.sendToServer(new PacketMinerConfig(new MinerConfig()));
     }
 
     private void stopChain() {
+        ClientProxy proxy = (ClientProxy) EZMiner.proxy;
         EZMiner.network.network.sendToServer(new PacketChainSwitcher(false));
         EZMiner.network.network.sendToServer(new PacketKeyState(false));
-        ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = false;
-        ((ClientProxy) EZMiner.proxy).hudRenderer.chainActive = false;
-        ((ClientProxy) EZMiner.proxy).clientState.chainClientState.keyPressed = false;
-        ((ClientProxy) EZMiner.proxy).clientState.chainedBlockCount = 0;
+        proxy.minerRenderer.inPressChainKey = false;
+        proxy.hudRenderer.chainActive = false;
+        proxy.clientState.chainClientState.keyPressed = false;
+        proxy.clientState.chainedBlockCount = 0;
         // Unfreeze preview: clear the frozen wireframe and allow the renderer to start a
         // fresh search when the player next aims at a block.
-        ((ClientProxy) EZMiner.proxy).minerRenderer.unfreeze();
+        proxy.minerRenderer.unfreeze();
         // Reset toggle so the next key press starts a new chain.
         // stopChain() is only ever called on explicit user key input, so resetting
         // chainToggled here is correct. When a chain ends naturally (ore exhausted)
@@ -138,14 +141,15 @@ public class KeyListener {
     }
 
     private void handleSubModeScroll(MinerModeState state) {
+        ClientProxy proxy = (ClientProxy) EZMiner.proxy;
         int dWheel = Mouse.getEventDWheel();
         if (dWheel != 0) {
             String subMode = (dWheel < 0) ? state.nextSubMode() : state.previousSubMode();
             EZMiner.network.network.sendToServer(new PacketMinerModeState(state));
             EZMiner.network.network
                 .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
-            ((ClientProxy) EZMiner.proxy).clientState.chainClientState.mainMode = state.mainMode;
-            ((ClientProxy) EZMiner.proxy).clientState.chainClientState.subMode = state.currentSubModeIndex();
+            proxy.clientState.chainClientState.mainMode = state.mainMode;
+            proxy.clientState.chainClientState.subMode = state.currentSubModeIndex();
             MessageUtils.printSelfMessage(I18n.format("ezminer.message.subMode") + ": " + I18n.format(subMode));
         }
     }

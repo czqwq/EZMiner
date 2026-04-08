@@ -29,7 +29,7 @@ public class MinerConfig {
         this.addExhaustion = addExhaustion;
     }
 
-    public MinerConfig copyFrom(MinerConfig other) {
+    public MinerConfig updateFrom(MinerConfig other) {
         if (other == null) return this;
         this.bigRadius = other.bigRadius;
         this.blockLimit = other.blockLimit;
