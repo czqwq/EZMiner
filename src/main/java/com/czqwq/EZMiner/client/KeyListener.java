@@ -106,7 +106,6 @@ public class KeyListener {
         EZMiner.network.network
             .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
         EZMiner.network.network.sendToServer(new PacketKeyState(true));
-        proxy.minerRenderer.inPressChainKey = true;
         proxy.clientState.chainClientState.keyPressed = true;
         // Freeze preview: lock the current wireframe in place while chain blocks are broken.
         // No new searches will start until unfreeze() is called on key release.
@@ -118,7 +117,6 @@ public class KeyListener {
     private void stopChain() {
         ClientProxy proxy = (ClientProxy) EZMiner.proxy;
         EZMiner.network.network.sendToServer(new PacketKeyState(false));
-        proxy.minerRenderer.inPressChainKey = false;
         proxy.clientState.chainClientState.keyPressed = false;
         proxy.clientState.chainedBlockCount = 0;
         // Unfreeze preview: clear the frozen wireframe and allow the renderer to start a

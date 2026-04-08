@@ -121,7 +121,7 @@
 - [x] Phase C：执行层替换 Operator（移除旧 BaseOperator 主职责）
 - [x] Phase D：预览层替换 MinerRenderer 的 Founder 依赖
 - [x] Phase E：网络包迁移到 KeyState/ModeSwitch/StateSync
-- [ ] Phase F：删除旧 Manager/Founder/Operator 业务路径，仅保留兼容适配壳（若需要）
+- [x] Phase F：删除旧 Manager/Founder/Operator 业务路径，仅保留兼容适配壳（若需要）
 
 ## 12. Bug 排查与修复总清单（随阶段勾选）
 
@@ -160,5 +160,6 @@
 - [x] 客户端显示态收敛：HUD 执行态改为 ChainClientState + PacketChainStateSync 投影
 - [x] 协议收敛：运行态同步从双包并行改为 PacketChainStateSync 单一权威回传
 - [x] Phase C：BaseOperator 已拆分为执行策略（耗饥饿/VP/错误上报独立类）
-- [x] Phase D：MinerRenderer 预览搜索切换到 planning runtime factory + preview controller
-- [x] Phase E：移除 ChainSwitcher/MinerModeState/ChainCount 旧网络路径，仅保留 KeyState/ModeSwitch/StateSync 主路径
+- [x] Phase D：预览层替换 MinerRenderer 的 Founder 依赖
+- [x] Phase E：网络包迁移到 KeyState/ModeSwitch/StateSync
+- [x] Phase F：删除旧 Manager.onPlayerLogout 重复处理、死代码 createPositionFounder、重复 inPressChainKey 字段

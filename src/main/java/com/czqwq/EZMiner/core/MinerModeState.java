@@ -1,14 +1,5 @@
 package com.czqwq.EZMiner.core;
 
-import java.util.concurrent.LinkedBlockingQueue;
-
-import net.minecraft.entity.player.EntityPlayer;
-
-import org.joml.Vector3i;
-
-import com.czqwq.EZMiner.EZMiner;
-import com.czqwq.EZMiner.core.founder.BasePositionFounder;
-
 /**
  * Tracks the current mining mode for a player (both client and server side).
  *
@@ -110,11 +101,5 @@ public class MinerModeState {
 
     public String currentChainMode() {
         return CHAIN_MODES[chainMode];
-    }
-
-    // ===== Factory =====
-    public BasePositionFounder createPositionFounder(Vector3i center, LinkedBlockingQueue<Vector3i> results,
-        EntityPlayer player, MinerConfig config) {
-        return EZMiner.chainPlanningRuntimeFactory.createLegacyFounder(this, center, results, player, config);
     }
 }

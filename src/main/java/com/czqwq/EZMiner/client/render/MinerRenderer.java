@@ -49,8 +49,6 @@ import cpw.mods.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class MinerRenderer {
 
-    public boolean inPressChainKey = false;
-
     public static final RenderCache renderCache = new RenderCache();
     private final SpaceCalculator spaceCalc = new SpaceCalculator();
 
@@ -98,7 +96,7 @@ public class MinerRenderer {
             stopViewer();
             return;
         }
-        if (!inPressChainKey) {
+        if (!clientState.chainClientState.keyPressed) {
             stopViewer();
             return;
         }

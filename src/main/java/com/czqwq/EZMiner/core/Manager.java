@@ -21,7 +21,6 @@ import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.PlayerEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 
 /**
@@ -165,24 +164,6 @@ public class Manager {
     }
 
     public void cleanupState() {
-        inPressChainKey = false;
-        inOperate = false;
-        EZMiner.chainStateService.markSessionStop(playerUUID);
-    }
-
-    @SubscribeEvent
-    public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        // Each Manager is bound to a specific player – ignore events for other players.
-        if (!event.player.getUniqueID()
-            .equals(playerUUID)) return;
-        // Stop the operator immediately so no further server-tick callbacks fire
-        // against the now-invalid player entity.
-        if (operator != null) {
-            operator.stopImmediately();
-            operator = null;
-        }
-        // Discard pending drops – the player is gone and items cannot be delivered.
-        drops.clear();
         inPressChainKey = false;
         inOperate = false;
         EZMiner.chainStateService.markSessionStop(playerUUID);
