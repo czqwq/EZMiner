@@ -30,26 +30,23 @@ import cpw.mods.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class HudRenderer {
 
-    /** Set to true by {@link KeyListener} when chain key is held. */
-    public boolean chainActive = false;
-
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL) return;
-        if (!chainActive) return;
         if (!Config.usePreview) return;
 
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.currentScreen != null) return; // hide when a GUI is open
 
         ClientStateContainer state = ((ClientProxy) EZMiner.proxy).clientState;
+        if (!state.chainClientState.keyPressed) return;
         MinerModeState modeState = state.minerModeState;
         FontRenderer fr = mc.fontRenderer;
 
         String mainModeName = I18n.format(modeState.currentMainMode());
         String subModeName = I18n.format(modeState.currentSubMode());
-        int chainCount = state.chainedBlockCount;
-        long chainElapsedMs = state.chainElapsedMs;
+        int chainCount = state.chainClientState.chainedCount;
+        long chainElapsedMs = state.chainClientState.elapsedMs;
         int previewCount = state.previewRenderedCount;
 
         int x = Config.hudPosX;
@@ -76,7 +73,7 @@ public class HudRenderer {
         fr.drawStringWithShadow("\u00a77  \u2514\u2500 \u00a7f" + subModeName, x, y, 0xFFFFFF);
 
         // Lines 5-6: chain count and elapsed time (only while a chain operation is running)
-        if (chainCount > 0) {
+        if (state.chainClientState.inOperate) {
             y += lineH;
             fr.drawStringWithShadow(
                 "\u00a77  \u2514\u2500 " + I18n.format("ezminer.hud.chainCount") + ": \u00a7e" + chainCount,

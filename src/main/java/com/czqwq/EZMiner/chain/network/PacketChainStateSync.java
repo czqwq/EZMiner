@@ -66,6 +66,7 @@ public class PacketChainStateSync implements IMessage {
         public IMessage onMessage(PacketChainStateSync msg, MessageContext ctx) {
             if (EZMiner.proxy instanceof ClientProxy) {
                 ClientProxy proxy = (ClientProxy) EZMiner.proxy;
+                proxy.clientState.chainClientState.inOperate = msg.inOperate;
                 proxy.clientState.chainClientState.chainedCount = msg.chainedCount;
                 proxy.clientState.chainClientState.elapsedMs = msg.elapsedMs;
                 proxy.clientState.chainedBlockCount = msg.chainedCount;

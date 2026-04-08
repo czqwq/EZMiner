@@ -9,6 +9,7 @@ public class ChainClientState {
     public int mainMode = 1;
     public int subMode = 0;
     public int previewRenderedCount = 0;
+    public boolean inOperate = false;
     public int chainedCount = 0;
     public long elapsedMs = 0L;
 }

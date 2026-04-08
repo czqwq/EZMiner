@@ -43,8 +43,8 @@
 ### 3.2 客户端状态对象
 
 - [x] `ChainClientState`：仅维护输入态+显示态（禁止维护权威执行态）
-- [ ] 建立服务端→客户端状态镜像协议（只读投影，禁止客户端反写权威态）
-- [ ] 消除客户端直接推断“执行中”的逻辑，全部由 `PacketChainStateSync` 提供
+- [x] 建立服务端→客户端状态镜像协议（只读投影，禁止客户端反写权威态）
+- [x] 消除客户端直接推断“执行中”的逻辑，全部由 `PacketChainStateSync` 提供
 
 ## 4. 模式层（只做装配，不做业务）
 
@@ -82,7 +82,7 @@
 - [x] `ChainPreviewController`：目标变化、冻结/解冻、队列消费、渲染缓存更新
 - [ ] 复用“模式规则定义”，但不复用执行会话与执行控制器
 - [ ] 预览搜索任务独立调度，不读写服务端权威执行态
-- [ ] HUD 数据来源统一：显示态来自 `ChainClientState` + `PacketChainStateSync`
+- [x] HUD 数据来源统一：显示态来自 `ChainClientState` + `PacketChainStateSync`
 
 ## 8. 网络同步层（输入命令 + 权威状态同步）
 
@@ -157,3 +157,4 @@
 - [x] 进入 Phase A 实施
 - [x] 启动 Phase B：规划层替换入口（Founder 构建已迁移至 planning runtime factory 兼容桥）
 - [x] 生命周期治理：新增 chain/lifecycle 并统一玩家/世界事件运行态清理
+- [x] 客户端显示态收敛：HUD 执行态改为 ChainClientState + PacketChainStateSync 投影
