@@ -3,10 +3,10 @@ package com.czqwq.EZMiner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.czqwq.EZMiner.network.NetworkMain;
 import com.czqwq.EZMiner.chain.mode.ChainModeRegistry;
 import com.czqwq.EZMiner.chain.mode.ChainSubModeRegistry;
 import com.czqwq.EZMiner.chain.state.ChainStateService;
+import com.czqwq.EZMiner.network.NetworkMain;
 import com.czqwq.EZMiner.thread.ParallelTick;
 
 import cpw.mods.fml.common.Mod;

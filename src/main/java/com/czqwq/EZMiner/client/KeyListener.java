@@ -105,7 +105,8 @@ public class KeyListener {
         // server's Manager.minerModeState stays at its default (chain/basic) and ignores
         // whatever mode the client HUD is showing.
         EZMiner.network.network.sendToServer(new PacketMinerModeState(state));
-        EZMiner.network.network.sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
+        EZMiner.network.network
+            .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
         EZMiner.network.network.sendToServer(new PacketChainSwitcher(true));
         EZMiner.network.network.sendToServer(new PacketKeyState(true));
         ((ClientProxy) EZMiner.proxy).minerRenderer.inPressChainKey = true;

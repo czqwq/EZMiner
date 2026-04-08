@@ -2,9 +2,9 @@ package com.czqwq.EZMiner;
 
 import java.io.File;
 
-import com.czqwq.EZMiner.command.ReloadConfigCommand;
 import com.czqwq.EZMiner.chain.mode.ChainModeBootstrap;
 import com.czqwq.EZMiner.chain.mode.ChainSubModeBootstrap;
+import com.czqwq.EZMiner.command.ReloadConfigCommand;
 import com.czqwq.EZMiner.core.PlayerManager;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;

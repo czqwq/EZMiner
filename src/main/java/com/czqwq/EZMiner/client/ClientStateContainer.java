@@ -1,7 +1,7 @@
 package com.czqwq.EZMiner.client;
 
-import com.czqwq.EZMiner.core.MinerModeState;
 import com.czqwq.EZMiner.chain.state.ChainClientState;
+import com.czqwq.EZMiner.core.MinerModeState;
 
 /** Holds client-side view of the player's current mining mode and chain state. */
 public class ClientStateContainer {
