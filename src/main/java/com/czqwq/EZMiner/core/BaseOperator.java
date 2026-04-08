@@ -63,8 +63,8 @@ public class BaseOperator {
         checkCompatibility();
         this.playerMP = manager.player;
         this.manager = manager;
-        this.positionFounder = manager.minerModeState
-            .createPositionFounder(pos, canBreakPositions, playerMP, manager.pConfig);
+        this.positionFounder = EZMiner.chainPlanningRuntimeFactory
+            .createLegacyFounder(manager.minerModeState, pos, canBreakPositions, playerMP, manager.pConfig);
         EZMiner.parallelTick.addPreServerTickTask(positionFounder);
     }
 

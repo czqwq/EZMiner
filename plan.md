@@ -55,7 +55,7 @@
 - [x] `ChainSubModeDefinition`：子模式定义（matcher/filter/traverser 组合）
 - [x] `ChainSubModeRegistry`：子模式注册
 - [x] `ChainSubModeBootstrap`：子模式启动装配
-- [ ] 从旧 `MinerModeState#createPositionFounder` 迁移为“策略对象组合”，移除直接 new Founder
+- [x] 从旧 `MinerModeState#createPositionFounder` 迁移为“策略对象组合”，移除直接 new Founder（已改为委托 planning runtime factory）
 
 ## 5. 规划层（搜索与筛选，禁止写世界）
 
@@ -116,7 +116,7 @@
 
 ## 11. 迁移路径（分阶段替换旧核心）
 
-- [ ] Phase A：引入新状态层与模式注册层，旧逻辑继续跑（双轨）
+- [x] Phase A：引入新状态层与模式注册层，旧逻辑继续跑（双轨）
 - [ ] Phase B：规划层替换 Founder（新 planner 输出仍交给旧执行桥接）
 - [ ] Phase C：执行层替换 Operator（移除旧 BaseOperator 主职责）
 - [ ] Phase D：预览层替换 MinerRenderer 的 Founder 依赖
@@ -155,3 +155,4 @@
 - [x] 完成分层重构路线设计
 - [x] 已将需求与实施清单写入 `plan.md`
 - [x] 进入 Phase A 实施
+- [x] 启动 Phase B：规划层替换入口（Founder 构建已迁移至 planning runtime factory 兼容桥）

@@ -7,13 +7,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.core.founder.BasePositionFounder;
-import com.czqwq.EZMiner.core.founder.BlastPositionFounder;
-import com.czqwq.EZMiner.core.founder.ChainPositionFounder;
-import com.czqwq.EZMiner.core.founder.CropFounder;
-import com.czqwq.EZMiner.core.founder.LogFounder;
-import com.czqwq.EZMiner.core.founder.OreFounder;
-import com.czqwq.EZMiner.core.founder.ScreenBlastFounder;
-import com.czqwq.EZMiner.core.founder.TunnelFounder;
+import com.czqwq.EZMiner.EZMiner;
 
 /**
  * Tracks the current mining mode for a player (both client and server side).
@@ -117,27 +111,6 @@ public class MinerModeState {
     // ===== Factory =====
     public BasePositionFounder createPositionFounder(Vector3i center, LinkedBlockingQueue<Vector3i> results,
         EntityPlayer player, MinerConfig config) {
-        switch (mainMode) {
-            case 1: // chain mode
-                switch (chainMode) {
-                    default: // 0 basic chain
-                        return new ChainPositionFounder(center, results, player, config);
-                }
-            default: // 0 blast mode
-                switch (blastMode) {
-                    case 1:
-                        return new ScreenBlastFounder(center, results, player, config);
-                    case 2:
-                        return new TunnelFounder(center, results, player, config);
-                    case 3:
-                        return new OreFounder(center, results, player, config);
-                    case 4:
-                        return new LogFounder(center, results, player, config);
-                    case 5:
-                        return new CropFounder(center, results, player, config);
-                    default: // 0 all-blocks
-                        return new BlastPositionFounder(center, results, player, config);
-                }
-        }
+        return EZMiner.chainPlanningRuntimeFactory.createLegacyFounder(this, center, results, player, config);
     }
 }
