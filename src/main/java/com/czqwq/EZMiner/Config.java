@@ -46,6 +46,10 @@ public class Config {
      * A lower limit makes the preview search finish faster and keeps GPU vertex data small.
      */
     public static int previewBlockLimit = 256;
+    /** Server-authoritative cap for preview radius, synced via PacketServerConfig. */
+    public static int serverMaxPreviewBigRadius = 8;
+    /** Server-authoritative cap for preview block count, synced via PacketServerConfig. */
+    public static int serverMaxPreviewBlockLimit = 1024;
     /**
      * Chain key activation mode.
      * <ul>
@@ -107,6 +111,57 @@ public class Config {
             "Maximum blocks broken per server tick during a chain operation. "
                 + "Lower values reduce light-update lag on large veins (recommended: 16). "
                 + "Hard cap: 64.");
+        loadClientOnlyInternal();
+        // On dedicated server this also defines the caps sent to clients.
+        serverMaxPreviewBigRadius = bigRadius;
+        serverMaxPreviewBlockLimit = blockLimit;
+        clampClientPreviewToServerCaps();
+        saveIfChanged();
+    }
+
+    /**
+     * Updates {@link #chainActivationMode} in memory and writes only that value
+     * back to the config file immediately, without touching any other entries.
+     *
+     * @param mode 0 = hold to activate; 1 = click to toggle
+     */
+    public static void saveChainActivationMode(int mode) {
+        chainActivationMode = mode;
+        configuration.get(CLIENT_CATEGORY, "chainActivationMode", 0, CHAIN_ACTIVATION_MODE_COMMENT, 0, 1)
+            .set(mode);
+        configuration.save();
+    }
+
+    public static void saveHudPos(int x, int y) {
+        hudPosX = x;
+        hudPosY = y;
+        configuration.get(CLIENT_CATEGORY, "hudPosX", 5)
+            .set(x);
+        configuration.get(CLIENT_CATEGORY, "hudPosY", 5)
+            .set(y);
+        configuration.save();
+    }
+
+    /** Reload only client-side options from disk. */
+    public static void reloadClientOnly() {
+        configuration.load();
+        loadClientOnlyInternal();
+        clampClientPreviewToServerCaps();
+        saveIfChanged();
+    }
+
+    public static void setServerPreviewCaps(int maxBigRadius, int maxBlockLimit) {
+        serverMaxPreviewBigRadius = Math.max(0, maxBigRadius);
+        serverMaxPreviewBlockLimit = Math.max(0, maxBlockLimit);
+        clampClientPreviewToServerCaps();
+    }
+
+    public static void clampClientPreviewToServerCaps() {
+        previewBigRadius = Math.max(0, Math.min(previewBigRadius, serverMaxPreviewBigRadius));
+        previewBlockLimit = Math.max(0, Math.min(previewBlockLimit, serverMaxPreviewBlockLimit));
+    }
+
+    private static void loadClientOnlyInternal() {
         addExhaustion = configuration
             .get(
                 CLIENT_CATEGORY,
@@ -168,7 +223,9 @@ public class Config {
             "HUD Y position in screen pixels (origin at top-left).");
         chainActivationMode = configuration
             .getInt("chainActivationMode", CLIENT_CATEGORY, 0, 0, 1, CHAIN_ACTIVATION_MODE_COMMENT);
+    }
 
+    private static void saveIfChanged() {
         if (configuration.hasChanged()) {
             configuration.save();
         }
@@ -179,29 +236,6 @@ public class Config {
         if (!event.modID.equalsIgnoreCase(EZMiner.MODID)) return;
         EZMiner.LOG.info("Config change event triggered, reloading...");
         load();
-    }
-
-    /**
-     * Updates {@link #chainActivationMode} in memory and writes only that value
-     * back to the config file immediately, without touching any other entries.
-     *
-     * @param mode 0 = hold to activate; 1 = click to toggle
-     */
-    public static void saveChainActivationMode(int mode) {
-        chainActivationMode = mode;
-        configuration.get(CLIENT_CATEGORY, "chainActivationMode", 0, CHAIN_ACTIVATION_MODE_COMMENT, 0, 1)
-            .set(mode);
-        configuration.save();
-    }
-
-    public static void saveHudPos(int x, int y) {
-        hudPosX = x;
-        hudPosY = y;
-        configuration.get(CLIENT_CATEGORY, "hudPosX", 5)
-            .set(x);
-        configuration.get(CLIENT_CATEGORY, "hudPosY", 5)
-            .set(y);
-        configuration.save();
     }
 
     public static void register() {

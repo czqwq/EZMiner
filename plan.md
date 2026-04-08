@@ -153,6 +153,15 @@
 
 - [x] **Feature-C: 一键收作物模式——按住连锁键右键成熟作物触发，范围检索作物，仅成熟作物自动收获**
 
+- [x] **Feature-C2: 修复一键收作物只收一个的问题——确保右键触发后真正进入连锁流程**
+  - 根因：`CropFounder#checkCanAdd` 复用了 `canHarvestBlock` 过滤，导致大量作物点在规划阶段被过滤，仅保留中心点（看起来像“没触发连锁”）。
+  - 修复：作物模式改为“作物类型命中即入队”，成熟度检查下沉到执行阶段（仅成熟作物真正收获）。
+
+- [x] **Feature-RC: 客户端渲染配置同步治理——新增 `reloadClientConfig` 与服务端上限钳制**
+  - 新增：`/EZMiner reloadClientConfig`（权限 0，任意玩家可执行），仅重载客户端配置（预览半径/预览方块上限/HUD 等）。
+  - 约束：客户端渲染参数统一按服务端上限钳制，客户端可配范围为 `0 ~ 服务端最大值`，超出部分自动按服务端最大值生效。
+  - 联动：`reloadConfig` 额外触发渲染上限热同步，确保服务端改动后客户端立刻生效。
+
 ### 12.3 必做验证项
 
 - [ ] 单人：按住/切换模式下连续连锁稳定
@@ -185,3 +194,5 @@
 - [x] Phase F：删除旧 Manager.onPlayerLogout 重复处理、死代码 createPositionFounder、重复 inPressChainKey 字段
 - [x] **Bug-R 修复**：移除 startChain() 中的即时 freeze()，改由 PacketChainStateSync inOperate 状态转换驱动 freeze/unfreeze；添加 ClientDisconnectionFromServerEvent 断连守卫
 - [x] **Bug-P 修复**：用 LinkedHashMap<ItemStackKey,ItemStack> 替换 ArrayList drops，将 onHarvestDrops 合并操作从 O(n) 降至 O(1)，消除服务端 tick 50%+ 的 isSame 热点
+- [x] **Feature-C2 修复落地**：作物 Founder 移除 canHarvestBlock 过滤，右键触发后可正确检索并进入连锁收获流程（成熟度在执行阶段判定）
+- [x] **Feature-RC 落地**：新增 `/EZMiner reloadClientConfig`（权限0）与客户端配置热重载包；服务端渲染上限同步后自动钳制客户端预览参数

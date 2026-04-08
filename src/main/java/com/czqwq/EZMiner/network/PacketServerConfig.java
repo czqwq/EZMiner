@@ -64,6 +64,7 @@ public class PacketServerConfig implements IMessage {
                 Config.smallRadius = msg.smallRadius;
                 Config.tunnelWidth = msg.tunnelWidth;
                 Config.breakPerTick = msg.breakPerTick;
+                Config.setServerPreviewCaps(msg.bigRadius, msg.blockLimit);
             }
             return null;
         }
