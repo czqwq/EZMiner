@@ -119,7 +119,9 @@ public class Manager {
 
         for (ItemStack drop : event.drops) {
             if (drop == null || drop.stackSize <= 0) continue;
-            if (drop.getTagCompound() == null) {
+            // Cache the tag to avoid a second getTagCompound() call inside the else branch.
+            net.minecraft.nbt.NBTTagCompound tag = drop.getTagCompound();
+            if (tag == null) {
                 // Fast O(1) path: no NBT — item+damage uniquely identifies the stack type.
                 ItemStackKey key = ItemStackKey.of(drop);
                 ItemStack existing = dropsMap.get(key);
