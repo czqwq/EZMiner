@@ -17,37 +17,50 @@ import io.netty.buffer.ByteBuf;
  */
 public class PacketServerConfig implements IMessage {
 
-    public int bigRadius;
-    public int blockLimit;
-    public int smallRadius;
-    public int tunnelWidth;
+    public int maxBigRadius;
+    public int maxBlockLimit;
+    public int maxSmallRadius;
+    public int maxTunnelWidth;
+    public int maxPreviewBigRadius;
+    public int maxPreviewBlockLimit;
+    public boolean allowPreview;
     public int breakPerTick;
 
     public PacketServerConfig() {}
 
-    public PacketServerConfig(int bigRadius, int blockLimit, int smallRadius, int tunnelWidth, int breakPerTick) {
-        this.bigRadius = bigRadius;
-        this.blockLimit = blockLimit;
-        this.smallRadius = smallRadius;
-        this.tunnelWidth = tunnelWidth;
+    public PacketServerConfig(int maxBigRadius, int maxBlockLimit, int maxSmallRadius, int maxTunnelWidth,
+        int maxPreviewBigRadius, int maxPreviewBlockLimit, boolean allowPreview, int breakPerTick) {
+        this.maxBigRadius = maxBigRadius;
+        this.maxBlockLimit = maxBlockLimit;
+        this.maxSmallRadius = maxSmallRadius;
+        this.maxTunnelWidth = maxTunnelWidth;
+        this.maxPreviewBigRadius = maxPreviewBigRadius;
+        this.maxPreviewBlockLimit = maxPreviewBlockLimit;
+        this.allowPreview = allowPreview;
         this.breakPerTick = breakPerTick;
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        bigRadius = buf.readInt();
-        blockLimit = buf.readInt();
-        smallRadius = buf.readInt();
-        tunnelWidth = buf.readInt();
+        maxBigRadius = buf.readInt();
+        maxBlockLimit = buf.readInt();
+        maxSmallRadius = buf.readInt();
+        maxTunnelWidth = buf.readInt();
+        maxPreviewBigRadius = buf.readInt();
+        maxPreviewBlockLimit = buf.readInt();
+        allowPreview = buf.readBoolean();
         breakPerTick = buf.readInt();
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
-        buf.writeInt(bigRadius);
-        buf.writeInt(blockLimit);
-        buf.writeInt(smallRadius);
-        buf.writeInt(tunnelWidth);
+        buf.writeInt(maxBigRadius);
+        buf.writeInt(maxBlockLimit);
+        buf.writeInt(maxSmallRadius);
+        buf.writeInt(maxTunnelWidth);
+        buf.writeInt(maxPreviewBigRadius);
+        buf.writeInt(maxPreviewBlockLimit);
+        buf.writeBoolean(allowPreview);
         buf.writeInt(breakPerTick);
     }
 
@@ -56,15 +69,15 @@ public class PacketServerConfig implements IMessage {
         @Override
         public IMessage onMessage(PacketServerConfig msg, MessageContext ctx) {
             if (ctx.side.isClient()) {
-                // Update in-memory server limits so that preview and HUD use correct values.
-                // The client's own file-based config is not overwritten; these are runtime
-                // overrides that disappear when the client disconnects.
-                Config.bigRadius = msg.bigRadius;
-                Config.blockLimit = msg.blockLimit;
-                Config.smallRadius = msg.smallRadius;
-                Config.tunnelWidth = msg.tunnelWidth;
-                Config.breakPerTick = msg.breakPerTick;
-                Config.setServerPreviewCaps(msg.bigRadius, msg.blockLimit);
+                Config.applyServerRuntimeLimits(
+                    msg.maxBigRadius,
+                    msg.maxBlockLimit,
+                    msg.maxSmallRadius,
+                    msg.maxTunnelWidth,
+                    msg.maxPreviewBigRadius,
+                    msg.maxPreviewBlockLimit,
+                    msg.allowPreview,
+                    msg.breakPerTick);
             }
             return null;
         }

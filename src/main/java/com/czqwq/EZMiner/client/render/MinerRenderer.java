@@ -92,7 +92,7 @@ public class MinerRenderer {
 
     @SubscribeEvent
     public void onRenderWorldLast(RenderWorldLastEvent event) {
-        if (!Config.usePreview) {
+        if (!Config.isPreviewEnabled()) {
             stopViewer();
             return;
         }

@@ -46,6 +46,9 @@ public class PlayerManager {
                 Config.blockLimit,
                 Config.smallRadius,
                 Config.tunnelWidth,
+                Config.serverMaxPreviewBigRadius,
+                Config.serverMaxPreviewBlockLimit,
+                Config.serverUsePreview,
                 Config.breakPerTick),
             mp);
         LOG.info("Registered manager for player: {} ({})", mp.getDisplayName(), mp.getUniqueID());
