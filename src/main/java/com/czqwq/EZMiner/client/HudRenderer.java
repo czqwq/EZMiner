@@ -49,7 +49,7 @@ public class HudRenderer {
     /** Text whose characters are individually animated. */
     private static final String BRAND = "EZMiner";
     /** Milliseconds each character holds the spotlight before advancing to the next. */
-    private static final int CHAR_PERIOD_MS = 100;
+    private static final int CHAR_PERIOD_MS = 300;
     /** Peak upward displacement (in screen pixels) of the bouncing character. */
     private static final int BOUNCE_HEIGHT_PX = 3;
 
