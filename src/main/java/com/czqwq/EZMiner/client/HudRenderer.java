@@ -89,6 +89,27 @@ public class HudRenderer {
                 y,
                 0xFFFFFF);
         }
+
+        // Minesweeper mode: show probe cooldown countdown
+        if (modeState.mainMode == 2 && modeState.specialMode == 0) {
+            y += lineH;
+            long remainingMs = state.minesweeperNextProbeClientMs - System.currentTimeMillis();
+            if (remainingMs > 0) {
+                fr.drawStringWithShadow(
+                    "\u00a77  \u2514\u2500 " + I18n.format("ezminer.hud.minesweeper.cooldown")
+                        + ": \u00a7e"
+                        + formatElapsed(remainingMs),
+                    x,
+                    y,
+                    0xFFFFFF);
+            } else {
+                fr.drawStringWithShadow(
+                    "\u00a77  \u2514\u2500 \u00a7a" + I18n.format("ezminer.hud.minesweeper.ready"),
+                    x,
+                    y,
+                    0xFFFFFF);
+            }
+        }
     }
 
     /**

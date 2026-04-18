@@ -33,6 +33,13 @@ public class ClientStateContainer {
      */
     public volatile int minesweeperFlaggedVersion = 0;
 
+    /**
+     * Client-side timestamp (epoch ms) when the minesweeper probe cooldown expires.
+     * Updated each time a {@link com.czqwq.EZMiner.chain.network.PacketMinesweeperMark} is received.
+     * The HUD computes {@code remaining = max(0, minesweeperNextProbeClientMs - now)}.
+     */
+    public volatile long minesweeperNextProbeClientMs = 0L;
+
     /** Adds a newly-flagged mine position and bumps the version counter. */
     public void addMinesweeperMark(Vector3i pos) {
         minesweeperFlaggedPositions.add(pos);

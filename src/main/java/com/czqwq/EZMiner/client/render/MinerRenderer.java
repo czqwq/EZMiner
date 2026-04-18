@@ -239,6 +239,8 @@ public class MinerRenderer {
             } else {
                 lastIndexCount = 0;
             }
+            // Update the HUD "client rendered blocks" counter with the flagged-mine count.
+            clientState.previewRenderedCount = spaceCalc.positions.size();
             lastMinesweeperVersion = version;
         }
         doRenderMinesweeper();

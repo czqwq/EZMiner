@@ -2,6 +2,8 @@ ezminer.hud.active=Chain Active
 ezminer.hud.chainCount=Chained Blocks
 ezminer.hud.chainElapsed=Chain Elapsed
 ezminer.hud.previewCount=Client Rendered Blocks
+ezminer.hud.minesweeper.cooldown=Next Probe In
+ezminer.hud.minesweeper.ready=Probe Ready
 
 key.ezminer.chainKey=Chain Key
 key.ezminer.modeSwitch=Mode Switch

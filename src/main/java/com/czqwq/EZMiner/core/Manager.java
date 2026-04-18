@@ -98,6 +98,8 @@ public class Manager {
     private final List<ItemStack> dropsWithNbt = new ArrayList<>();
     private final LootGamesMinesweeperBridge minesweeperBridge = new LootGamesMinesweeperBridge();
     private final Set<String> detectedMinesweeperBombs = new HashSet<>();
+    /** World positions of all mines flagged in this session; used to re-send on key re-press. */
+    private final List<Vector3i> detectedMinesweeperPositions = new ArrayList<>();
     private long nextMinesweeperDetectAtMs = 0L;
 
     public Manager(EntityPlayerMP player) {
@@ -305,18 +307,41 @@ public class Manager {
         long now = System.currentTimeMillis();
         if (now < nextMinesweeperDetectAtMs) return;
         Vector3i flaggedPos = minesweeperBridge.detectNearestBomb(player, detectedMinesweeperBombs);
-        if (flaggedPos != null) {
-            EZMiner.network.network.sendTo(
-                new com.czqwq.EZMiner.chain.network.PacketMinesweeperMark(flaggedPos.x, flaggedPos.y, flaggedPos.z),
-                player);
-        }
         long cooldownMs = Math.max(1L, (long) Config.minesweeperProbeCooldownSeconds) * 1000L;
         nextMinesweeperDetectAtMs = now + cooldownMs;
+        if (flaggedPos != null) {
+            detectedMinesweeperPositions.add(flaggedPos);
+            EZMiner.network.network.sendTo(
+                new com.czqwq.EZMiner.chain.network.PacketMinesweeperMark(
+                    flaggedPos.x,
+                    flaggedPos.y,
+                    flaggedPos.z,
+                    cooldownMs),
+                player);
+        }
     }
 
     private void resetMinesweeperDetectState() {
         nextMinesweeperDetectAtMs = 0L;
         detectedMinesweeperBombs.clear();
+        detectedMinesweeperPositions.clear();
+    }
+
+    /**
+     * Re-sends all previously-flagged mine positions to {@code target}.
+     *
+     * <p>
+     * Called when the player re-presses the chain key in minesweeper mode so that the client's
+     * flagged-mine list is repopulated without requiring the server to re-flag the same mines.
+     */
+    public void resendMinesweeperMarks(EntityPlayerMP target) {
+        if (detectedMinesweeperPositions.isEmpty()) return;
+        long remainingMs = Math.max(0L, nextMinesweeperDetectAtMs - System.currentTimeMillis());
+        for (Vector3i pos : detectedMinesweeperPositions) {
+            EZMiner.network.network.sendTo(
+                new com.czqwq.EZMiner.chain.network.PacketMinesweeperMark(pos.x, pos.y, pos.z, remainingMs),
+                target);
+        }
     }
 
     public boolean isKeyPressed() {
