@@ -142,8 +142,8 @@ public class KeyListener {
     }
 
     private void syncModeToServer(MinerModeState state) {
-        EZMiner.network.network
-            .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode, state.specialMode));
+        EZMiner.network.network.sendToServer(
+            new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode, state.specialMode));
     }
 
     /**

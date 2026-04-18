@@ -18,26 +18,28 @@ import com.czqwq.EZMiner.utils.MessageUtils;
  */
 public class LootGamesMinesweeperBridge {
 
+    private static final double DISTANCE_ROUNDING_PRECISION = 10.0;
     private volatile boolean compatibilityChecked = false;
-    private volatile boolean hasLootGamesApi = false;
+    private boolean hasLootGamesApi = false;
 
-    private volatile Class<?> msMasterTileClass = null;
-    private volatile Method getGameMethod = null;
-    private volatile Method isBoardGeneratedMethod = null;
-    private volatile Method getBoardMethod = null;
-    private volatile Method boardSizeMethod = null;
-    private volatile Method boardGetTypeMethod = null;
-    private volatile Method getBoardOriginMethod = null;
-    private volatile Method blockPosGetXMethod = null;
-    private volatile Method blockPosGetYMethod = null;
-    private volatile Method blockPosGetZMethod = null;
-    private volatile Object bombTypeConstant = null;
+    private Class<?> msMasterTileClass = null;
+    private Method getGameMethod = null;
+    private Method isBoardGeneratedMethod = null;
+    private Method getBoardMethod = null;
+    private Method boardSizeMethod = null;
+    private Method boardGetTypeMethod = null;
+    private Method getBoardOriginMethod = null;
+    private Method blockPosGetXMethod = null;
+    private Method blockPosGetYMethod = null;
+    private Method blockPosGetZMethod = null;
+    private Object bombTypeConstant = null;
 
     public synchronized void checkCompatibility() {
         if (compatibilityChecked) return;
         try {
             msMasterTileClass = Class.forName("ru.timeconqueror.lootgames.common.block.tile.MSMasterTile");
-            Class<?> gameMineSweeperClass = Class.forName("ru.timeconqueror.lootgames.minigame.minesweeper.GameMineSweeper");
+            Class<?> gameMineSweeperClass = Class
+                .forName("ru.timeconqueror.lootgames.minigame.minesweeper.GameMineSweeper");
             Class<?> msBoardClass = Class.forName("ru.timeconqueror.lootgames.minigame.minesweeper.MSBoard");
             Class<?> typeClass = Class.forName("ru.timeconqueror.lootgames.minigame.minesweeper.Type");
             Class<?> blockPosClass = Class.forName("ru.timeconqueror.lootgames.utils.future.BlockPos");
@@ -114,7 +116,8 @@ public class LootGamesMinesweeperBridge {
 
         if (best == null) return false;
         detectedBombs.add(best.key);
-        float distance = (float) (Math.round(Math.sqrt(best.distanceSq) * 10.0) / 10.0);
+        float distance = (float) (Math.round(Math.sqrt(best.distanceSq) * DISTANCE_ROUNDING_PRECISION)
+            / DISTANCE_ROUNDING_PRECISION);
         MessageUtils.serverSendPlayerMessage(
             new ChatComponentTranslation(
                 "ezminer.message.special.minesweeper.detected",
