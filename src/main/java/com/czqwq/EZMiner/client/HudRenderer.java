@@ -26,9 +26,32 @@ import cpw.mods.fml.relauncher.SideOnly;
  * §7  └─ §f{子模式}
  * §7  └─ 已连锁方块: §e{count}  §7已连锁时间: §e{time}   (仅连锁进行中时显示)
  * </pre>
+ *
+ * <p>
+ * The "[EZMiner]" brand in the header line renders with a left-to-right rainbow sweep:
+ * one character at a time is coloured with the next rainbow hue and simultaneously bounces
+ * upward by {@value #BOUNCE_HEIGHT_PX} pixels before returning to the baseline.
  */
 @SideOnly(Side.CLIENT)
 public class HudRenderer {
+
+    // ── Rainbow animation constants ──────────────────────────────────────────────────────────
+    /** Minecraft § colour-codes that form the rainbow sequence (red → pink). */
+    private static final String[] RAINBOW_CODES = { "\u00a7c", // red
+        "\u00a76", // orange
+        "\u00a7e", // yellow
+        "\u00a7a", // green
+        "\u00a7b", // cyan
+        "\u00a79", // blue
+        "\u00a75", // purple
+        "\u00a7d", // pink
+    };
+    /** Text whose characters are individually animated. */
+    private static final String BRAND = "EZMiner";
+    /** Milliseconds each character holds the spotlight before advancing to the next. */
+    private static final int CHAR_PERIOD_MS = 300;
+    /** Peak upward displacement (in screen pixels) of the bouncing character. */
+    private static final int BOUNCE_HEIGHT_PX = 3;
 
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
@@ -53,8 +76,8 @@ public class HudRenderer {
         int y = Config.hudPosY;
         int lineH = fr.FONT_HEIGHT + 2;
 
-        // Line 1: header
-        fr.drawStringWithShadow("\u00a7b[EZMiner] \u00a7a\u25a0 " + I18n.format("ezminer.hud.active"), x, y, 0xFFFFFF);
+        // Line 1: animated header – "[EZMiner] ■ 连锁已启用"
+        drawAnimatedHeader(fr, x, y, "\u00a7a\u25a0 " + I18n.format("ezminer.hud.active"));
         y += lineH;
 
         // Line 2: preview rendered count
@@ -110,6 +133,51 @@ public class HudRenderer {
                     0xFFFFFF);
             }
         }
+    }
+
+    /**
+     * Renders the brand header with a sweeping rainbow+bounce animation on the
+     * {@value #BRAND} text.
+     *
+     * <p>
+     * Each character in {@value #BRAND} is coloured with its own rainbow hue for one
+     * {@value #CHAR_PERIOD_MS} ms slot. During that slot the character oscillates upward
+     * (sine-wave) by up to {@value #BOUNCE_HEIGHT_PX} px before returning to baseline.
+     * All other characters are rendered in the default cyan ({@code §b}) without offset.
+     *
+     * @param fr     the {@link FontRenderer} to use
+     * @param x      left pixel coordinate of the header line
+     * @param y      top pixel coordinate of the header line
+     * @param suffix the text rendered after {@code ]} (e.g. {@code §a■ 连锁已启用})
+     */
+    private static void drawAnimatedHeader(FontRenderer fr, int x, int y, String suffix) {
+        long now = System.currentTimeMillis();
+        int numChars = BRAND.length();
+
+        int activeIdx = (int) ((now / CHAR_PERIOD_MS) % numChars);
+        double phase = (now % CHAR_PERIOD_MS) / (double) CHAR_PERIOD_MS; // 0.0 → 1.0
+        // Sine arch: peaks at phase=0.5, returns to 0 at phase=0 and phase=1.
+        int bounceOffset = (int) (BOUNCE_HEIGHT_PX * Math.sin(phase * Math.PI));
+
+        // Render "§b[" prefix
+        String openBracket = "\u00a7b[";
+        fr.drawStringWithShadow(openBracket, x, y, 0xFFFFFF);
+        int curX = x + fr.getStringWidth(openBracket);
+
+        // Render each character of BRAND individually
+        for (int i = 0; i < numChars; i++) {
+            String ch = String.valueOf(BRAND.charAt(i));
+            if (i == activeIdx) {
+                String color = RAINBOW_CODES[i % RAINBOW_CODES.length];
+                fr.drawStringWithShadow(color + ch, curX, y - bounceOffset, 0xFFFFFF);
+            } else {
+                fr.drawStringWithShadow("\u00a7b" + ch, curX, y, 0xFFFFFF);
+            }
+            curX += fr.getStringWidth(ch);
+        }
+
+        // Render "§b] " + suffix
+        fr.drawStringWithShadow("\u00a7b] " + suffix, curX, y, 0xFFFFFF);
     }
 
     /**
