@@ -292,8 +292,10 @@ public class Manager {
 
     public void tickSpecialMode() {
         if (!isSpecialMinesweeperMode()) {
-            // Mode switched away — full reset so the next minesweeper activation is clean.
-            resetMinesweeperDetectState();
+            // Not in minesweeper mode — do nothing.
+            // The cooldown timer and detected-bomb set are intentionally preserved so that
+            // quickly switching to another mode and back cannot bypass the probe interval.
+            // They are only cleared in cleanupState() (player disconnect / logout).
             return;
         }
         // Key not held: keep the cooldown timer intact so quickly releasing and

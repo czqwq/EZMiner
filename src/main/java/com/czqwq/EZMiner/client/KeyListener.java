@@ -118,7 +118,9 @@ public class KeyListener {
         EZMiner.network.network.sendToServer(new PacketKeyState(false));
         proxy.clientState.chainClientState.keyPressed = false;
         proxy.clientState.chainedBlockCount = 0;
-        proxy.clientState.clearMinesweeperMarks();
+        // Do NOT clear minesweeperFlaggedPositions here: those positions persist until the player
+        // disconnects so that re-pressing the key immediately renders already-flagged mines without
+        // requiring the server to re-send them.
         // Unfreeze preview: clear the frozen wireframe and allow the renderer to start a
         // fresh search when the player next aims at a block.
         proxy.minerRenderer.unfreeze();
