@@ -1,8 +1,10 @@
 package com.czqwq.EZMiner.core;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import net.minecraft.block.Block;
@@ -22,6 +24,7 @@ import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.execution.LootGamesMinesweeperBridge;
 import com.czqwq.EZMiner.chain.state.ChainPlayerState;
 import com.czqwq.EZMiner.chain.state.ChainSession;
 import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
@@ -43,6 +46,7 @@ import ic2.core.crop.TileEntityCrop;
 public class Manager {
 
     private static final int VANILLA_CROP_MATURE_META = 7;
+    private static final long MINESWEEPER_DETECT_COOLDOWN_MS = 5000L;
 
     /**
      * True when the Bandit mod (vein-mining mod) is present on this installation.
@@ -92,6 +96,9 @@ public class Manager {
      * O(n) linear-scan cost here is negligible.
      */
     private final List<ItemStack> dropsWithNbt = new ArrayList<>();
+    private final LootGamesMinesweeperBridge minesweeperBridge = new LootGamesMinesweeperBridge();
+    private final Set<String> detectedMinesweeperBombs = new HashSet<>();
+    private long nextMinesweeperDetectAtMs = 0L;
 
     public Manager(EntityPlayerMP player) {
         this.player = player;
@@ -107,6 +114,7 @@ public class Manager {
     public void onBlockBreak(BlockEvent.BreakEvent event) {
         if (!isSamePlayer(event.getPlayer())) return;
         if (isInOperate() || !isKeyPressed()) return;
+        if (isSpecialMinesweeperMode()) return;
         if (isBlastCropMode()) return;
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.getPlayer());
     }
@@ -236,6 +244,7 @@ public class Manager {
         state.runtimeState.elapsedMs = 0L;
         state.runtimeState.queuedCandidates = 0;
         state.runtimeState.lastErrorCode = "";
+        resetMinesweeperDetectState();
         EZMiner.chainStateService.markSessionStop(playerUUID);
         activeSession = null;
     }
@@ -275,6 +284,27 @@ public class Manager {
 
     public boolean isBlastCropMode() {
         return minerModeState.mainMode == 0 && minerModeState.blastMode == 5;
+    }
+
+    public boolean isSpecialMinesweeperMode() {
+        return minerModeState.mainMode == 2 && minerModeState.specialMode == 0;
+    }
+
+    public void tickSpecialMode() {
+        if (!isSpecialMinesweeperMode() || !isKeyPressed()) {
+            resetMinesweeperDetectState();
+            return;
+        }
+        if (isInOperate() || player == null || player.worldObj == null || player.isDead) return;
+        long now = System.currentTimeMillis();
+        if (now < nextMinesweeperDetectAtMs) return;
+        minesweeperBridge.detectNearestBomb(player, detectedMinesweeperBombs);
+        nextMinesweeperDetectAtMs = now + MINESWEEPER_DETECT_COOLDOWN_MS;
+    }
+
+    private void resetMinesweeperDetectState() {
+        nextMinesweeperDetectAtMs = 0L;
+        detectedMinesweeperBombs.clear();
     }
 
     public boolean isKeyPressed() {

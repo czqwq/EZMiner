@@ -13,6 +13,7 @@ import com.czqwq.EZMiner.core.founder.BlastPositionFounder;
 import com.czqwq.EZMiner.core.founder.ChainPositionFounder;
 import com.czqwq.EZMiner.core.founder.CropFounder;
 import com.czqwq.EZMiner.core.founder.LogFounder;
+import com.czqwq.EZMiner.core.founder.NoOpPositionFounder;
 import com.czqwq.EZMiner.core.founder.OreFounder;
 import com.czqwq.EZMiner.core.founder.ScreenBlastFounder;
 import com.czqwq.EZMiner.core.founder.TunnelFounder;
@@ -27,6 +28,9 @@ public class LegacyFounderPlanningFactory {
         LinkedBlockingQueue<Vector3i> results, EntityPlayer player, MinerConfig config) {
         if (modeState.mainMode == 1) {
             return new ChainPositionFounder(center, results, player, config);
+        }
+        if (modeState.mainMode == 2) {
+            return new NoOpPositionFounder(center, results, player, config);
         }
         switch (modeState.blastMode) {
             case 1:

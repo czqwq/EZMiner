@@ -21,6 +21,7 @@ public class MinerModeState {
 
     public static final String[] MAIN_MODES = { "ezminer.mode.blast", // 0 爆破模式
         "ezminer.mode.chain", // 1 连锁模式
+        "ezminer.mode.special", // 2 特殊模式
     };
 
     public static final String[] BLAST_MODES = { "ezminer.mode.blast.allBlocks", // 0
@@ -33,10 +34,13 @@ public class MinerModeState {
 
     public static final String[] CHAIN_MODES = { "ezminer.mode.chain.basic", // 0
     };
+    public static final String[] SPECIAL_MODES = { "ezminer.mode.special.minesweeper", // 0
+    };
 
     public int mainMode = 1; // default: chain mode
     public int blastMode = 0;
     public int chainMode = 0;
+    public int specialMode = 0;
 
     // ===== Main mode =====
     public String nextMainMode() {
@@ -56,21 +60,26 @@ public class MinerModeState {
     // ===== Sub-mode (dispatched by main mode) =====
     public String nextSubMode() {
         if (mainMode == 0) return nextBlastMode();
-        return nextChainMode();
+        if (mainMode == 1) return nextChainMode();
+        return nextSpecialMode();
     }
 
     public String previousSubMode() {
         if (mainMode == 0) return previousBlastMode();
-        return previousChainMode();
+        if (mainMode == 1) return previousChainMode();
+        return previousSpecialMode();
     }
 
     public String currentSubMode() {
         if (mainMode == 0) return currentBlastMode();
-        return currentChainMode();
+        if (mainMode == 1) return currentChainMode();
+        return currentSpecialMode();
     }
 
     public int currentSubModeIndex() {
-        return mainMode == 0 ? blastMode : chainMode;
+        if (mainMode == 0) return blastMode;
+        if (mainMode == 1) return chainMode;
+        return specialMode;
     }
 
     // ===== Blast sub-mode =====
@@ -101,5 +110,20 @@ public class MinerModeState {
 
     public String currentChainMode() {
         return CHAIN_MODES[chainMode];
+    }
+
+    // ===== Special sub-mode =====
+    public String nextSpecialMode() {
+        specialMode = (specialMode + 1) % SPECIAL_MODES.length;
+        return currentSpecialMode();
+    }
+
+    public String previousSpecialMode() {
+        specialMode = (specialMode - 1 + SPECIAL_MODES.length) % SPECIAL_MODES.length;
+        return currentSpecialMode();
+    }
+
+    public String currentSpecialMode() {
+        return SPECIAL_MODES[specialMode];
     }
 }

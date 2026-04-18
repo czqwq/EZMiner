@@ -1,8 +1,10 @@
 package com.czqwq.EZMiner.core;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.ArrayList;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.event.world.WorldEvent;
@@ -16,6 +18,7 @@ import com.czqwq.EZMiner.network.PacketServerConfig;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
 
 /**
@@ -84,6 +87,15 @@ public class PlayerManager {
     public void onWorldUnload(WorldEvent.Unload event) {
         if (event.world == null || event.world.isRemote) return;
         EZMiner.chainLifecycleService.onWorldUnload(managers);
+    }
+
+    @SubscribeEvent
+    public void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.START) return;
+        List<Manager> managerSnapshot = new ArrayList<>(managers.values());
+        for (Manager manager : managerSnapshot) {
+            manager.tickSpecialMode();
+        }
     }
 
     public void registry() {
