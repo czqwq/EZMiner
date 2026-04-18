@@ -118,6 +118,10 @@ public class KeyListener {
         EZMiner.network.network.sendToServer(new PacketKeyState(false));
         proxy.clientState.chainClientState.keyPressed = false;
         proxy.clientState.chainedBlockCount = 0;
+        // Clear mine marks so they don't persist after the key is released.
+        // On the next key press the server will re-send all known positions.
+        proxy.clientState.clearMinesweeperMarks();
+        proxy.clientState.minesweeperNextProbeClientMs = 0L;
         // Unfreeze preview: clear the frozen wireframe and allow the renderer to start a
         // fresh search when the player next aims at a block.
         proxy.minerRenderer.unfreeze();
@@ -142,8 +146,8 @@ public class KeyListener {
     }
 
     private void syncModeToServer(MinerModeState state) {
-        EZMiner.network.network
-            .sendToServer(new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode));
+        EZMiner.network.network.sendToServer(
+            new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode, state.specialMode));
     }
 
     /**
@@ -162,6 +166,8 @@ public class KeyListener {
         proxy.clientState.chainClientState.inOperate = false;
         wasHoldingChain = false;
         chainToggled = false;
+        proxy.clientState.clearMinesweeperMarks();
+        proxy.clientState.minesweeperNextProbeClientMs = 0L;
         // Always unfreeze so no stale wireframe survives across sessions.
         proxy.minerRenderer.unfreeze();
         Config.clearServerRuntimeOverridesAndReloadClient();

@@ -57,6 +57,8 @@ public class MinerRenderer {
     private final LinkedBlockingQueue<Vector3i> foundQueue = new LinkedBlockingQueue<>();
     private boolean searchComplete = false;
     private int lastIndexCount = 0;
+    /** Last minesweeperFlaggedVersion seen; used to detect when the flagged-mine list changed. */
+    private int lastMinesweeperVersion = -1;
 
     private final ClientStateContainer clientState;
     private final ChainPreviewController previewController = new ChainPreviewController();
@@ -103,6 +105,20 @@ public class MinerRenderer {
         }
         if (!clientState.chainClientState.keyPressed) {
             stopViewer();
+            return;
+        }
+
+        // ── Minesweeper mode: render flagged mine positions, skip ore-search preview. ──
+        if (clientState.minerModeState.mainMode == 2 && clientState.minerModeState.specialMode == 0) {
+            // If a normal ore-search was running, stop it and force a full rebuild.
+            if (founder != null) {
+                founder.interrupt();
+                founder = null;
+                foundQueue.clear();
+                lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+                lastMinesweeperVersion = -1;
+            }
+            renderMinesweeperMarks();
             return;
         }
 
@@ -160,6 +176,7 @@ public class MinerRenderer {
         spaceCalc.positions.clear();
         spaceCalc.hasChange = false;
         lastIndexCount = 0;
+        lastMinesweeperVersion = -1;
         clientState.previewRenderedCount = 0;
         previewController.getState().renderedCount = 0;
         previewController.setTarget(null);
@@ -200,6 +217,55 @@ public class MinerRenderer {
         int playerX = (int) Math.floor(player.posX);
         int playerZ = (int) Math.floor(player.posZ);
         return Math.abs(pos.x - playerX) <= dist && Math.abs(pos.z - playerZ) <= dist;
+    }
+
+    /**
+     * Rebuilds the wireframe mesh from flagged minesweeper positions when the list has changed,
+     * then renders the outlines in a distinct orange-red colour.
+     */
+    private void renderMinesweeperMarks() {
+        int version = clientState.minesweeperFlaggedVersion;
+        if (version != lastMinesweeperVersion) {
+            spaceCalc.posSet.clear();
+            spaceCalc.positions.clear();
+            spaceCalc.hasChange = false;
+            for (Vector3i pos : clientState.minesweeperFlaggedPositions) {
+                spaceCalc.add(pos);
+            }
+            if (!spaceCalc.positions.isEmpty()) {
+                SpaceCalculator.VertexAndIndex vi = spaceCalc.getVertexAndIndex();
+                lastIndexCount = vi.indices.length;
+                renderCache.updateData(vi.vertices, vi.indices);
+            } else {
+                lastIndexCount = 0;
+            }
+            // Update the HUD "client rendered blocks" counter with the flagged-mine count.
+            clientState.previewRenderedCount = spaceCalc.positions.size();
+            lastMinesweeperVersion = version;
+        }
+        doRenderMinesweeper();
+    }
+
+    /** Renders the minesweeper-flag wireframe using an orange-red colour to distinguish it from ore previews. */
+    private void doRenderMinesweeper() {
+        if (lastIndexCount <= 0) return;
+
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushMatrix();
+        GL11.glTranslated(-RenderManager.renderPosX, -RenderManager.renderPosY, -RenderManager.renderPosZ);
+
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_CULL_FACE);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glLineWidth(2.0F);
+        GL11.glColor4f(1.0F, 0.3F, 0.1F, 0.9F);
+
+        renderCache.render(lastIndexCount);
+
+        GL11.glPopMatrix();
+        GL11.glPopAttrib();
     }
 
     /**

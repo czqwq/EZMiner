@@ -14,5 +14,8 @@ public class ChainModeBootstrap {
         modeRegistry.register(
             new ChainModeDefinition(ChainMode.CHAIN, "ezminer.mode.chain")
                 .addSubMode(new ChainSubModeDefinition("chain_basic", "ezminer.mode.chain.basic")));
+        modeRegistry.register(
+            new ChainModeDefinition(ChainMode.SPECIAL, "ezminer.mode.special")
+                .addSubMode(new ChainSubModeDefinition("special_minesweeper", "ezminer.mode.special.minesweeper")));
     }
 }

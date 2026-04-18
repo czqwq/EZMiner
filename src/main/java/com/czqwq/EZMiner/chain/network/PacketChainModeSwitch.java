@@ -13,21 +13,25 @@ import io.netty.buffer.ByteBuf;
 
 public class PacketChainModeSwitch implements IMessage {
 
-    private static final int MAX_MAIN_MODE = 1;
+    private static final int MAX_MAIN_MODE = 2;
     private static final int MAX_BLAST_MODE = 5;
     // Current chain mode count is 1 (basic mode only), so max index is 0.
     private static final int MAX_CHAIN_MODE = 0;
+    // Current special mode count is 1 (minesweeper mode only), so max index is 0.
+    private static final int MAX_SPECIAL_MODE = 0;
 
     public int mainMode;
     public int blastMode;
     public int chainMode;
+    public int specialMode;
 
     public PacketChainModeSwitch() {}
 
-    public PacketChainModeSwitch(int mainMode, int blastMode, int chainMode) {
+    public PacketChainModeSwitch(int mainMode, int blastMode, int chainMode, int specialMode) {
         this.mainMode = mainMode;
         this.blastMode = blastMode;
         this.chainMode = chainMode;
+        this.specialMode = specialMode;
     }
 
     @Override
@@ -35,6 +39,7 @@ public class PacketChainModeSwitch implements IMessage {
         mainMode = IMath.clamp(buf.readInt(), 0, MAX_MAIN_MODE);
         blastMode = IMath.clamp(buf.readInt(), 0, MAX_BLAST_MODE);
         chainMode = IMath.clamp(buf.readInt(), 0, MAX_CHAIN_MODE);
+        specialMode = IMath.clamp(buf.readInt(), 0, MAX_SPECIAL_MODE);
     }
 
     @Override
@@ -42,6 +47,7 @@ public class PacketChainModeSwitch implements IMessage {
         buf.writeInt(mainMode);
         buf.writeInt(blastMode);
         buf.writeInt(chainMode);
+        buf.writeInt(specialMode);
     }
 
     public static class Handler implements IMessageHandler<PacketChainModeSwitch, IMessage> {
@@ -54,6 +60,7 @@ public class PacketChainModeSwitch implements IMessage {
             state.minerModeState.mainMode = msg.mainMode;
             state.minerModeState.blastMode = msg.blastMode;
             state.minerModeState.chainMode = msg.chainMode;
+            state.minerModeState.specialMode = msg.specialMode;
             return null;
         }
     }

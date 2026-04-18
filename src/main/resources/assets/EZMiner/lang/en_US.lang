@@ -2,6 +2,8 @@ ezminer.hud.active=Chain Active
 ezminer.hud.chainCount=Chained Blocks
 ezminer.hud.chainElapsed=Chain Elapsed
 ezminer.hud.previewCount=Client Rendered Blocks
+ezminer.hud.minesweeper.cooldown=Next Probe In
+ezminer.hud.minesweeper.ready=Probe Ready
 
 key.ezminer.chainKey=Chain Key
 key.ezminer.modeSwitch=Mode Switch
@@ -9,6 +11,7 @@ key.categories.ezminer=EZMiner
 
 ezminer.mode.blast=Blast Mode
 ezminer.mode.chain=Chain Mode
+ezminer.mode.special=Special Chain Mode
 
 ezminer.mode.blast.allBlocks=Blast: All Blocks
 ezminer.mode.blast.sameType=Blast: Same Type
@@ -18,6 +21,7 @@ ezminer.mode.blast.logging=Blast: Logging
 ezminer.mode.blast.crop=Blast: Crop Harvest
 
 ezminer.mode.chain.basic=Chain: Basic
+ezminer.mode.special.minesweeper=Special Chain: Minesweeper Mode
 
 ezminer.message.mainMode=Main Mode
 ezminer.message.subMode=Sub Mode
@@ -49,3 +53,4 @@ ezminer.command.hud.pos.usage=§e/EZMiner hud pos <x> <y>§r - set HUD position 
 ezminer.command.hud.pos.set=EZMiner: HUD position set to x=%s, y=%s.
 ezminer.message.chain.done=EZMiner: chain done; blocks=%s; time=%ss
 ezminer.message.chain.error=EZMiner: Error while harvesting block at %s: %s
+ezminer.message.special.minesweeper.marked=EZMiner: Mine flagged at (%s, %s, %s), distance=%s blocks

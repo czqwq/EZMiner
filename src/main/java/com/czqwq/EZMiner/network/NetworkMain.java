@@ -29,5 +29,10 @@ public class NetworkMain {
             .registerMessage(PacketChainModeSwitch.Handler.class, PacketChainModeSwitch.class, packetId++, Side.SERVER);
         network
             .registerMessage(PacketChainStateSync.Handler.class, PacketChainStateSync.class, packetId++, Side.CLIENT);
+        network.registerMessage(
+            com.czqwq.EZMiner.chain.network.PacketMinesweeperMark.Handler.class,
+            com.czqwq.EZMiner.chain.network.PacketMinesweeperMark.class,
+            packetId++,
+            Side.CLIENT);
     }
 }

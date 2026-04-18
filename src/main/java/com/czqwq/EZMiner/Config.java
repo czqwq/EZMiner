@@ -32,6 +32,11 @@ public class Config {
      * higher values complete the chain faster. Hard cap: 64.
      */
     public static int breakPerTick = 16;
+    /**
+     * Cooldown in seconds between successive minesweeper auto-flag operations
+     * when the chain key is held in Special / Minesweeper mode.
+     */
+    public static int minesweeperProbeCooldownSeconds = 5;
 
     // ===== Client-side settings =====
     public static final String CLIENT_CATEGORY = "Client";
@@ -193,6 +198,14 @@ public class Config {
             0,
             Integer.MAX_VALUE,
             "Server-side maximum allowed preview block count.");
+        minesweeperProbeCooldownSeconds = serverConfiguration.getInt(
+            "minesweeperProbeCooldownSeconds",
+            Configuration.CATEGORY_GENERAL,
+            5,
+            1,
+            3600,
+            "Cooldown in seconds between successive auto-flag operations in Special / Minesweeper mode "
+                + "(while the chain key is held). Default: 5.");
     }
 
     public static void applyServerRuntimeLimits(int maxBigRadius, int maxBlockLimit, int maxSmallRadius,

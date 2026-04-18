@@ -1,8 +1,10 @@
 package com.czqwq.EZMiner.core;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import net.minecraft.block.Block;
@@ -22,6 +24,7 @@ import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.execution.LootGamesMinesweeperBridge;
 import com.czqwq.EZMiner.chain.state.ChainPlayerState;
 import com.czqwq.EZMiner.chain.state.ChainSession;
 import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
@@ -43,6 +46,7 @@ import ic2.core.crop.TileEntityCrop;
 public class Manager {
 
     private static final int VANILLA_CROP_MATURE_META = 7;
+    private static final long MINESWEEPER_DETECT_COOLDOWN_MS = 5000L; // fallback; actual value from Config
 
     /**
      * True when the Bandit mod (vein-mining mod) is present on this installation.
@@ -92,6 +96,11 @@ public class Manager {
      * O(n) linear-scan cost here is negligible.
      */
     private final List<ItemStack> dropsWithNbt = new ArrayList<>();
+    private final LootGamesMinesweeperBridge minesweeperBridge = new LootGamesMinesweeperBridge();
+    private final Set<String> detectedMinesweeperBombs = new HashSet<>();
+    /** World positions of all mines flagged in this session; used to re-send on key re-press. */
+    private final List<Vector3i> detectedMinesweeperPositions = new ArrayList<>();
+    private long nextMinesweeperDetectAtMs = 0L;
 
     public Manager(EntityPlayerMP player) {
         this.player = player;
@@ -107,6 +116,7 @@ public class Manager {
     public void onBlockBreak(BlockEvent.BreakEvent event) {
         if (!isSamePlayer(event.getPlayer())) return;
         if (isInOperate() || !isKeyPressed()) return;
+        if (isSpecialMinesweeperMode()) return;
         if (isBlastCropMode()) return;
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.getPlayer());
     }
@@ -236,6 +246,7 @@ public class Manager {
         state.runtimeState.elapsedMs = 0L;
         state.runtimeState.queuedCandidates = 0;
         state.runtimeState.lastErrorCode = "";
+        resetMinesweeperDetectState();
         EZMiner.chainStateService.markSessionStop(playerUUID);
         activeSession = null;
     }
@@ -275,6 +286,62 @@ public class Manager {
 
     public boolean isBlastCropMode() {
         return minerModeState.mainMode == 0 && minerModeState.blastMode == 5;
+    }
+
+    public boolean isSpecialMinesweeperMode() {
+        return minerModeState.mainMode == 2 && minerModeState.specialMode == 0;
+    }
+
+    public void tickSpecialMode() {
+        if (!isSpecialMinesweeperMode()) {
+            // Not in minesweeper mode — do nothing.
+            // The cooldown timer and detected-bomb set are intentionally preserved so that
+            // quickly switching to another mode and back cannot bypass the probe interval.
+            // They are only cleared in cleanupState() (player disconnect / logout).
+            return;
+        }
+        // Key not held: keep the cooldown timer intact so quickly releasing and
+        // re-pressing the key cannot bypass the configured probe interval.
+        if (!isKeyPressed()) return;
+        if (isInOperate() || player == null || player.worldObj == null || player.isDead) return;
+        long now = System.currentTimeMillis();
+        if (now < nextMinesweeperDetectAtMs) return;
+        Vector3i flaggedPos = minesweeperBridge.detectNearestBomb(player, detectedMinesweeperBombs);
+        long cooldownMs = Math.max(1L, (long) Config.minesweeperProbeCooldownSeconds) * 1000L;
+        nextMinesweeperDetectAtMs = now + cooldownMs;
+        if (flaggedPos != null) {
+            detectedMinesweeperPositions.add(flaggedPos);
+            EZMiner.network.network.sendTo(
+                new com.czqwq.EZMiner.chain.network.PacketMinesweeperMark(
+                    flaggedPos.x,
+                    flaggedPos.y,
+                    flaggedPos.z,
+                    cooldownMs),
+                player);
+        }
+    }
+
+    private void resetMinesweeperDetectState() {
+        nextMinesweeperDetectAtMs = 0L;
+        detectedMinesweeperBombs.clear();
+        detectedMinesweeperPositions.clear();
+    }
+
+    /**
+     * Re-sends all previously-flagged mine positions to {@code target}.
+     *
+     * <p>
+     * Called when the player re-presses the chain key in minesweeper mode so that the client's
+     * flagged-mine list is repopulated without requiring the server to re-flag the same mines.
+     */
+    public void resendMinesweeperMarks(EntityPlayerMP target) {
+        if (detectedMinesweeperPositions.isEmpty()) return;
+        long remainingMs = Math.max(0L, nextMinesweeperDetectAtMs - System.currentTimeMillis());
+        for (Vector3i pos : detectedMinesweeperPositions) {
+            EZMiner.network.network.sendTo(
+                new com.czqwq.EZMiner.chain.network.PacketMinesweeperMark(pos.x, pos.y, pos.z, remainingMs),
+                target);
+        }
     }
 
     public boolean isKeyPressed() {
