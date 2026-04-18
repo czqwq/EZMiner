@@ -291,14 +291,23 @@ public class Manager {
     }
 
     public void tickSpecialMode() {
-        if (!isSpecialMinesweeperMode() || !isKeyPressed()) {
+        if (!isSpecialMinesweeperMode()) {
+            // Mode switched away — full reset so the next minesweeper activation is clean.
             resetMinesweeperDetectState();
             return;
         }
+        // Key not held: keep the cooldown timer intact so quickly releasing and
+        // re-pressing the key cannot bypass the configured probe interval.
+        if (!isKeyPressed()) return;
         if (isInOperate() || player == null || player.worldObj == null || player.isDead) return;
         long now = System.currentTimeMillis();
         if (now < nextMinesweeperDetectAtMs) return;
-        minesweeperBridge.detectNearestBomb(player, detectedMinesweeperBombs);
+        Vector3i flaggedPos = minesweeperBridge.detectNearestBomb(player, detectedMinesweeperBombs);
+        if (flaggedPos != null) {
+            EZMiner.network.network.sendTo(
+                new com.czqwq.EZMiner.chain.network.PacketMinesweeperMark(flaggedPos.x, flaggedPos.y, flaggedPos.z),
+                player);
+        }
         long cooldownMs = Math.max(1L, (long) Config.minesweeperProbeCooldownSeconds) * 1000L;
         nextMinesweeperDetectAtMs = now + cooldownMs;
     }

@@ -11,6 +11,8 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.world.World;
 
+import org.joml.Vector3i;
+
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.utils.MessageUtils;
 
@@ -85,10 +87,10 @@ public class LootGamesMinesweeperBridge {
         compatibilityChecked = true;
     }
 
-    public boolean detectNearestBomb(EntityPlayerMP player, Set<String> detectedBombs) {
-        if (player == null || player.worldObj == null || detectedBombs == null) return false;
+    public Vector3i detectNearestBomb(EntityPlayerMP player, Set<String> detectedBombs) {
+        if (player == null || player.worldObj == null || detectedBombs == null) return null;
         if (!compatibilityChecked) checkCompatibility();
-        if (!hasLootGamesApi || msMasterTileClass == null) return false;
+        if (!hasLootGamesApi || msMasterTileClass == null) return null;
 
         World world = player.worldObj;
         DetectedBomb best = null;
@@ -135,16 +137,16 @@ public class LootGamesMinesweeperBridge {
             }
         } catch (Exception e) {
             EZMiner.LOG.debug("EZMiner: LootGames minesweeper probe failed: {}", e.getMessage());
-            return false;
+            return null;
         }
 
-        if (best == null) return false;
+        if (best == null) return null;
         try {
             Object pos2i = pos2iConstructor.newInstance(best.boardX, best.boardZ);
             stageSwapFieldMarkMethod.invoke(best.stage, pos2i);
         } catch (Exception e) {
             EZMiner.LOG.debug("EZMiner: LootGames minesweeper mark failed: {}", e.getMessage());
-            return false;
+            return null;
         }
         detectedBombs.add(best.key);
         float distance = (float) (Math.round(Math.sqrt(best.distanceSq) * DISTANCE_ROUNDING_PRECISION)
@@ -157,7 +159,7 @@ public class LootGamesMinesweeperBridge {
                 best.z,
                 distance),
             player.getUniqueID());
-        return true;
+        return new Vector3i(best.x, best.y, best.z);
     }
 
     private static class DetectedBomb {

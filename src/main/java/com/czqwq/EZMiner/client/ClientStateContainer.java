@@ -1,5 +1,10 @@
 package com.czqwq.EZMiner.client;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.joml.Vector3i;
+
 import com.czqwq.EZMiner.chain.state.ChainClientState;
 import com.czqwq.EZMiner.core.MinerModeState;
 
@@ -14,4 +19,29 @@ public class ClientStateContainer {
     public volatile long chainElapsedMs = 0L;
     /** Number of blocks currently rendered in preview on the client. */
     public volatile int previewRenderedCount = 0;
+
+    /**
+     * World positions of minesweeper bombs that have been flagged in the current session.
+     * Written by the Netty IO thread (packet handler), read by the render thread; thread-safe via
+     * {@link CopyOnWriteArrayList}.
+     */
+    public final List<Vector3i> minesweeperFlaggedPositions = new CopyOnWriteArrayList<>();
+
+    /**
+     * Monotonically increasing counter bumped whenever {@link #minesweeperFlaggedPositions} changes.
+     * {@code volatile} so the render thread always sees the latest value.
+     */
+    public volatile int minesweeperFlaggedVersion = 0;
+
+    /** Adds a newly-flagged mine position and bumps the version counter. */
+    public void addMinesweeperMark(Vector3i pos) {
+        minesweeperFlaggedPositions.add(pos);
+        minesweeperFlaggedVersion++;
+    }
+
+    /** Clears all flagged mine positions and bumps the version counter. */
+    public void clearMinesweeperMarks() {
+        minesweeperFlaggedPositions.clear();
+        minesweeperFlaggedVersion++;
+    }
 }
