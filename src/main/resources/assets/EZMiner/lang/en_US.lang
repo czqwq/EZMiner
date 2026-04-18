@@ -51,4 +51,4 @@ ezminer.command.hud.pos.usage=§e/EZMiner hud pos <x> <y>§r - set HUD position 
 ezminer.command.hud.pos.set=EZMiner: HUD position set to x=%s, y=%s.
 ezminer.message.chain.done=EZMiner: chain done; blocks=%s; time=%ss
 ezminer.message.chain.error=EZMiner: Error while harvesting block at %s: %s
-ezminer.message.special.minesweeper.detected=EZMiner: Mine detected at (%s, %s, %s), distance=%s blocks
+ezminer.message.special.minesweeper.marked=EZMiner: Mine flagged at (%s, %s, %s), distance=%s blocks
