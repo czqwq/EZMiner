@@ -9,7 +9,7 @@ key.categories.ezminer=EZMiner
 
 ezminer.mode.blast=Blast Mode
 ezminer.mode.chain=Chain Mode
-ezminer.mode.special=Special Mode
+ezminer.mode.special=Special Chain Mode
 
 ezminer.mode.blast.allBlocks=Blast: All Blocks
 ezminer.mode.blast.sameType=Blast: Same Type
@@ -19,7 +19,7 @@ ezminer.mode.blast.logging=Blast: Logging
 ezminer.mode.blast.crop=Blast: Crop Harvest
 
 ezminer.mode.chain.basic=Chain: Basic
-ezminer.mode.special.minesweeper=Special: Minesweeper Probe
+ezminer.mode.special.minesweeper=Special Chain: Minesweeper Mode
 
 ezminer.message.mainMode=Main Mode
 ezminer.message.subMode=Sub Mode

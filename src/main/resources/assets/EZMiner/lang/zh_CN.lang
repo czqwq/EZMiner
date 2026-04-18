@@ -9,7 +9,7 @@ key.categories.ezminer=EZMiner连锁模组
 
 ezminer.mode.blast=爆破模式
 ezminer.mode.chain=连锁模式
-ezminer.mode.special=特殊模式
+ezminer.mode.special=特殊连锁模式
 
 ezminer.mode.blast.allBlocks=爆破: 无差别爆破
 ezminer.mode.blast.sameType=爆破: 同类筛选
@@ -19,7 +19,7 @@ ezminer.mode.blast.logging=爆破: 爆破伐木
 ezminer.mode.blast.crop=爆破: 一键收作物
 
 ezminer.mode.chain.basic=连锁: 基础连锁
-ezminer.mode.special.minesweeper=特殊: 扫雷探测
+ezminer.mode.special.minesweeper=特殊连锁: 扫雷模式
 
 ezminer.message.mainMode=当前主模式
 ezminer.message.subMode=当前子模式

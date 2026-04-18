@@ -46,7 +46,7 @@ import ic2.core.crop.TileEntityCrop;
 public class Manager {
 
     private static final int VANILLA_CROP_MATURE_META = 7;
-    private static final long MINESWEEPER_DETECT_COOLDOWN_MS = 5000L;
+    private static final long MINESWEEPER_DETECT_COOLDOWN_MS = 5000L; // fallback; actual value from Config
 
     /**
      * True when the Bandit mod (vein-mining mod) is present on this installation.
@@ -299,7 +299,8 @@ public class Manager {
         long now = System.currentTimeMillis();
         if (now < nextMinesweeperDetectAtMs) return;
         minesweeperBridge.detectNearestBomb(player, detectedMinesweeperBombs);
-        nextMinesweeperDetectAtMs = now + MINESWEEPER_DETECT_COOLDOWN_MS;
+        long cooldownMs = Math.max(1L, (long) Config.minesweeperProbeCooldownSeconds) * 1000L;
+        nextMinesweeperDetectAtMs = now + cooldownMs;
     }
 
     private void resetMinesweeperDetectState() {
