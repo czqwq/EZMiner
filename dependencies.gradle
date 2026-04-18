@@ -13,6 +13,7 @@ dependencies {
     implementation(gtnhDev("GT5-Unofficial"))
     implementation(gtnhDev("NewHorizonsCoreMod"))
     implementation(gtnhDev("Mobs-Info"))
+    implementation('com.github.GTNewHorizons:LootGames:2.2.12:dev')
     implementation(gtnhDev("Infernal-Mobs"))
     implementation(gtnhDev("Galaxy-Space-GTNH"))
     implementation(gtnhDev("SGCraft"))
