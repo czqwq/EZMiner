@@ -33,6 +33,8 @@ public final class IngameInfoBridge {
 
     /** Value of {@code showHUD} before we set it to {@code false}. */
     private static boolean savedShowHud = true;
+    /** Whether we have currently suppressed InGame Info XML (i.e. hideHud was called without a matching restoreHud). */
+    private static boolean suppressed = false;
 
     private IngameInfoBridge() {}
 
@@ -45,7 +47,7 @@ public final class IngameInfoBridge {
             showHudField = clazz.getField(FIELD_NAME);
             available = true;
         } catch (Exception e) {
-            EZMiner.LOG.warn("[EZMiner] Could not access InGameInfoXML ConfigurationHandler.showHUD: {}", e.toString());
+            EZMiner.LOG.warn("[EZMiner] Could not access InGameInfoXML ConfigurationHandler.showHUD", e);
         }
     }
 
@@ -54,16 +56,22 @@ public final class IngameInfoBridge {
      * {@code false}, suppressing InGame Info XML rendering while EZMiner's HUD is shown.
      *
      * <p>
+     * Idempotent — repeated calls while already suppressed are no-ops so that the original
+     * user setting is always correctly preserved.
+     *
+     * <p>
      * Does nothing if InGame Info XML is not installed.
      */
     public static void hideHud() {
         ensureInit();
         if (!available) return;
+        if (suppressed) return;
         try {
             savedShowHud = showHudField.getBoolean(null);
             showHudField.setBoolean(null, false);
+            suppressed = true;
         } catch (Exception e) {
-            EZMiner.LOG.warn("[EZMiner] Failed to suppress InGameInfoXML HUD: {}", e.toString());
+            EZMiner.LOG.warn("[EZMiner] Failed to suppress InGameInfoXML HUD", e);
         }
     }
 
@@ -72,15 +80,20 @@ public final class IngameInfoBridge {
      * {@link #hideHud()}.
      *
      * <p>
+     * Idempotent — has no effect if the HUD was not suppressed.
+     *
+     * <p>
      * Does nothing if InGame Info XML is not installed.
      */
     public static void restoreHud() {
         ensureInit();
         if (!available) return;
+        if (!suppressed) return;
         try {
             showHudField.setBoolean(null, savedShowHud);
+            suppressed = false;
         } catch (Exception e) {
-            EZMiner.LOG.warn("[EZMiner] Failed to restore InGameInfoXML HUD: {}", e.toString());
+            EZMiner.LOG.warn("[EZMiner] Failed to restore InGameInfoXML HUD", e);
         }
     }
 }
