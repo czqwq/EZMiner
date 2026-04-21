@@ -35,6 +35,7 @@ ezminer.config.dropToPlayer=Drop batched items at player's feet (true) or at the
 ezminer.config.usePreview=Show block outline preview while chain key is held
 ezminer.config.useChainDoneMessage=Show completion message after each chain operation
 ezminer.config.chainActivationMode=Chain key activation mode: 0 = hold key to activate, 1 = click to toggle on/off
+ezminer.config.suppressIngameInfoHud=Temporarily hide InGame Info XML while EZMiner HUD is visible (requires InGame Info XML)
 
 ezminer.command.nopermission=§cYou need OP permission to reload the config.
 ezminer.command.reloadconfig.success=EZMiner config reloaded successfully.
