@@ -38,6 +38,51 @@ public class Config {
      */
     public static int minesweeperProbeCooldownSeconds = 5;
 
+    /**
+     * When {@code true}, removes the Fortune III cap for GT / BartWorks ore drops, allowing higher
+     * Fortune levels to yield additional drops.
+     *
+     * <p>
+     * <strong>This option is implemented via Mixin and is applied at JVM startup. It CANNOT be
+     * changed via the {@code /EZMiner reloadConfig} hot-reload command — a full game restart is
+     * required for any change to take effect.</strong>
+     *
+     * <p>
+     * Default: {@code false}.
+     */
+    public static boolean enableUnlimitedOreFortune = false;
+
+    /**
+     * Maximum Fortune enchantment level that GT / BartWorks ores will respond to when
+     * {@link #enableUnlimitedOreFortune} is {@code true}. Values above 255 are clamped to 255.
+     *
+     * <p>
+     * Setting this to {@code 3} (the default) has no practical effect when
+     * {@link #enableUnlimitedOreFortune} is enabled — the vanilla Fortune III cap is preserved.
+     *
+     * <p>
+     * <strong>Like {@link #enableUnlimitedOreFortune}, this value is read once at startup via
+     * Mixin and cannot be changed without restarting the game.</strong>
+     *
+     * <p>
+     * Default: {@code 3}.
+     */
+    public static int maxFortuneLevel = 3;
+
+    /**
+     * When {@code true}, ores that were placed by a player (i.e. not naturally generated) are
+     * treated as naturally generated and therefore also benefit from the Fortune fortune bonus when
+     * {@link #enableUnlimitedOreFortune} is {@code true}.
+     *
+     * <p>
+     * <strong>Like {@link #enableUnlimitedOreFortune}, this value is read once at startup via
+     * Mixin and cannot be changed without restarting the game.</strong>
+     *
+     * <p>
+     * Default: {@code false}.
+     */
+    public static boolean enableFortuneForPlacedOre = false;
+
     // ===== Client-side settings =====
     public static final String CLIENT_CATEGORY = "Client";
     public static boolean usePreview = true;
@@ -216,6 +261,35 @@ public class Config {
             3600,
             "Cooldown in seconds between successive auto-flag operations in Special / Minesweeper mode "
                 + "(while the chain key is held). Default: 5.");
+        enableUnlimitedOreFortune = serverConfiguration.getBoolean(
+            "enableUnlimitedOreFortune",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "When true, removes the Fortune III cap for GT / BartWorks ore drops so that Fortune levels "
+                + "above III yield additional drops. "
+                + "IMPORTANT: This option is implemented via Mixin and is applied once at JVM startup. "
+                + "It CANNOT be changed via /EZMiner reloadConfig — a full game restart is required. "
+                + "Default: false.");
+        maxFortuneLevel = serverConfiguration.getInt(
+            "maxFortuneLevel",
+            Configuration.CATEGORY_GENERAL,
+            3,
+            3,
+            255,
+            "Maximum Fortune enchantment level that GT / BartWorks ores will respond to when "
+                + "enableUnlimitedOreFortune is true. "
+                + "IMPORTANT: This option is implemented via Mixin and is applied once at JVM startup. "
+                + "It CANNOT be changed via /EZMiner reloadConfig — a full game restart is required. "
+                + "Default: 3 (no cap extension).");
+        enableFortuneForPlacedOre = serverConfiguration.getBoolean(
+            "enableFortuneForPlacedOre",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "When true, ores placed by players (not naturally generated) are treated as natural ores "
+                + "and also benefit from the Fortune bonus when enableUnlimitedOreFortune is true. "
+                + "IMPORTANT: This option is implemented via Mixin and is applied once at JVM startup. "
+                + "It CANNOT be changed via /EZMiner reloadConfig — a full game restart is required. "
+                + "Default: false.");
     }
 
     public static void applyServerRuntimeLimits(int maxBigRadius, int maxBlockLimit, int maxSmallRadius,
