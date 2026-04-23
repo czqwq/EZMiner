@@ -111,6 +111,13 @@ public class KeyListener {
         // when the first block is actually being mined on the server).
         // Sync config to server on activation
         EZMiner.network.network.sendToServer(new PacketMinerConfig(Config.buildClientMinerConfigForSync()));
+        // Suppress InGame Info XML while EZMiner HUD is visible (if configured).
+        // Only suppress when the HUD will actually be shown: isPreviewEnabled() gates
+        // HudRenderer, so if the server has disabled preview the EZMiner HUD never
+        // renders and InGame Info XML must not be hidden.
+        if (Config.suppressIngameInfoHud && Config.isPreviewEnabled()) {
+            IngameInfoBridge.hideHud();
+        }
     }
 
     private void stopChain() {
@@ -131,6 +138,10 @@ public class KeyListener {
         // the toggle intentionally stays on, allowing the player to immediately chain
         // another ore block without pressing the key again.
         chainToggled = false;
+        // Restore InGame Info XML visibility when EZMiner HUD is dismissed.
+        if (Config.suppressIngameInfoHud) {
+            IngameInfoBridge.restoreHud();
+        }
     }
 
     private void handleSubModeScroll(MinerModeState state) {
@@ -171,6 +182,9 @@ public class KeyListener {
         // Always unfreeze so no stale wireframe survives across sessions.
         proxy.minerRenderer.unfreeze();
         Config.clearServerRuntimeOverridesAndReloadClient();
+        // Always restore InGame Info XML visibility on disconnect, in case the chain key
+        // was held or toggled when the player left the world.
+        IngameInfoBridge.restoreHud();
     }
 
     public void registry() {

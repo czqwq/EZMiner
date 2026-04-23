@@ -79,10 +79,20 @@ public class Config {
      * </ul>
      */
     public static int chainActivationMode = 0;
+    /**
+     * When {@code true} and InGame Info XML is installed, EZMiner will temporarily set
+     * {@code ConfigurationHandler.showHUD = false} while its own HUD is visible (i.e. while
+     * the chain key is held), and restore the original value when the key is released.
+     * This prevents the two HUDs from overlapping on screen.
+     */
+    public static boolean suppressIngameInfoHud = false;
 
     private static final String CHAIN_ACTIVATION_MODE_COMMENT = "Controls how the chain key activates mining. "
         + "0 = Hold (keep the key held to keep mining, release to stop). "
         + "1 = Toggle (press once to start, press again to stop).";
+    private static final String SUPPRESS_INGAMEINFO_HUD_COMMENT = "When true and InGame Info XML is installed, EZMiner will temporarily hide the InGame Info XML HUD "
+        + "while its own HUD is visible (chain key held), then restore it when the key is released. "
+        + "Prevents the two HUDs from overlapping. Default: false.";
 
     public static void init(File clientConfigFile, File serverConfigFile) {
         if (clientConfiguration == null) {
@@ -375,6 +385,8 @@ public class Config {
             "HUD Y position in screen pixels (origin at top-left).");
         chainActivationMode = clientConfiguration
             .getInt("chainActivationMode", CLIENT_CATEGORY, 0, 0, 1, CHAIN_ACTIVATION_MODE_COMMENT);
+        suppressIngameInfoHud = clientConfiguration
+            .getBoolean("suppressIngameInfoHud", CLIENT_CATEGORY, false, SUPPRESS_INGAMEINFO_HUD_COMMENT);
     }
 
     public static void setLegacyServerPreviewCaps(int maxBigRadius, int maxBlockLimit) {
