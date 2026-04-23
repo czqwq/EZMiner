@@ -37,6 +37,7 @@ dependencies {
 
     // runtime
     runtimeOnlyNonPublishable(gtnhDev("BetterP2P"))
+    runtimeOnlyNonPublishable(gtnhDev("InGame-Info-XML"))
     runtimeOnlyNonPublishable(gtnhDev("Chisel"))
     runtimeOnlyNonPublishable(gtnhDev("VisualProspecting"))
     runtimeOnlyNonPublishable rfg.deobf(files("libs/journeymap-1.7.10-5.2.10-fairplay.jar"))
