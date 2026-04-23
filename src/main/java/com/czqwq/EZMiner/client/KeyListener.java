@@ -112,7 +112,10 @@ public class KeyListener {
         // Sync config to server on activation
         EZMiner.network.network.sendToServer(new PacketMinerConfig(Config.buildClientMinerConfigForSync()));
         // Suppress InGame Info XML while EZMiner HUD is visible (if configured).
-        if (Config.suppressIngameInfoHud) {
+        // Only suppress when the HUD will actually be shown: isPreviewEnabled() gates
+        // HudRenderer, so if the server has disabled preview the EZMiner HUD never
+        // renders and InGame Info XML must not be hidden.
+        if (Config.suppressIngameInfoHud && Config.isPreviewEnabled()) {
             IngameInfoBridge.hideHud();
         }
     }
