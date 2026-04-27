@@ -25,15 +25,15 @@ public class CropFounder extends BasePositionFounder {
 
     @Override
     public boolean checkCanAdd(Vector3i pos) {
-        if (foundedPositions.contains(pos)) return false;
+        if (isVisited(pos.x, pos.y, pos.z)) return false;
         if (player.worldObj == null) return false;
         if (!player.worldObj.blockExists(pos.x, pos.y, pos.z)) return false;
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
         TileEntity tile = player.worldObj.getTileEntity(pos.x, pos.y, pos.z);
         if (block.equals(Blocks.air) || block.getMaterial()
             .isLiquid() || block.equals(Blocks.bedrock)) return false;
-        Vector3i playerPos = playerFloorPos();
-        if (pos.x == playerPos.x && pos.y == (playerPos.y - 1) && pos.z == playerPos.z) return false;
+        if (pos.x == cachedPlayerFloorX && pos.y == (cachedPlayerFloorY - 1) && pos.z == cachedPlayerFloorZ)
+            return false;
         if (!(block instanceof BlockCrops) && !(tile instanceof TileEntityCrop)) return false;
         return true;
     }

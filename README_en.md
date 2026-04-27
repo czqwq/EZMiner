@@ -37,7 +37,7 @@ Starting from the block you break, EZMiner performs a **priority-queue BFS flood
 
 ### Blast Mode
 
-Mines all blocks in a configurable radius around the target. Five sub-modes are available:
+Mines all blocks in a configurable radius around the target. Six sub-modes are available:
 
 | Sub-mode | Description |
 |----------|-------------|
@@ -46,6 +46,7 @@ Mines all blocks in a configurable radius around the target. Five sub-modes are 
 | Tunnel | Digs a straight tunnel in the direction you are looking |
 | Ore Only | Mines only ore blocks |
 | Logging | Mines only wood blocks (great for clearing trees) |
+| Crop Harvest | Right-click to trigger; automatically harvests all mature crops (vanilla & IC2) in range |
 
 ---
 
@@ -103,6 +104,7 @@ Hot-reload command: `/EZMiner reloadConfig`
 | `blockLimit` | `1024` | Maximum blocks per chain operation |
 | `smallRadius` | `2` | Adjacency detection radius in chain mode — blocks within this range count as "connected" |
 | `tunnelWidth` | `1` | Half-width of the tunnel in Tunnel sub-mode (blocks) |
+| `breakPerTick` | `16` | Maximum blocks broken per server tick (hard cap 64) — lower values reduce TPS impact on large veins |
 
 ### Client / Player Settings
 
@@ -113,6 +115,16 @@ Hot-reload command: `/EZMiner reloadConfig`
 | `usePreview` | `true` | Show block outline preview while chain is active |
 | `useChainDoneMessage` | `true` | Show a chat summary when a chain operation finishes |
 | `chainActivationMode` | `0` | Chain key behaviour: `0` = **hold** to activate (default), `1` = **click to toggle** on/off |
+
+### Fortune Cap Override (Mixin feature, disabled by default)
+
+> ⚠️ **The three options below are applied via Mixin at JVM startup. They cannot be changed via `/EZMiner reloadConfig` — a full game restart is required after editing them.**
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `enableUnlimitedOreFortune` | `false` | When enabled, GregTech and BartWorks ores respond to Fortune levels above III, yielding more drops |
+| `maxFortuneLevel` | `3` | Maximum Fortune level ores will respond to when `enableUnlimitedOreFortune` is `true` (max 255) |
+| `enableFortuneForPlacedOre` | `false` | When enabled, player-placed ores are treated as naturally generated and also benefit from the Fortune bonus |
 
 ---
 
@@ -127,12 +139,36 @@ Hot-reload command: `/EZMiner reloadConfig`
 
 ---
 
+## Hot-reload Commands
+
+```
+/EZMiner reloadConfig          # Reload config from disk (OP only; syncs all online players)
+/EZMiner reloadClientConfig    # Reload local client config (no OP required)
+```
+
+**Note:** The Fortune cap override options (`enableUnlimitedOreFortune` / `maxFortuneLevel` / `enableFortuneForPlacedOre`) are applied via Mixin at JVM startup and are **not** affected by hot-reload — a full game restart is required after changing them.
+
+---
+
 ## Compatibility
 
 - Minecraft **1.7.10**
 - Forge **10.13.4.1614**
 - GregTech: New Horizons (GTNH) modpack
-- **Mixins are disabled by default** (`usesMixins = false`); functionality is implemented through Forge/FML events and layered modules
+- Mixins are **enabled** (`usesMixins = true`) for the Fortune cap override feature; chain-mining logic is implemented through Forge/FML events and layered modules
+
+---
+
+## Performance Optimisations
+
+EZMiner includes several targeted optimisations to keep server TPS impact minimal on large veins:
+
+- **O(1) drop merging**: replaces the previous linear scan with a `LinkedHashMap<ItemStackKey, ItemStack>`, eliminating thousands of `isSame` calls per tick that previously caused 50%+ main-thread CPU usage
+- **Compressed visited-set**: uses `HashSet<Long>` instead of `HashSet<Vector3i>` to track visited positions, dramatically reducing GC pressure
+- **Priority-queue BFS**: chain mode uses a min-heap ordered by Euclidean distance, producing the smooth sphere-expansion effect while allowing short chains to finish early
+- **Tick-slice budget**: the search thread yields every 64 candidate checks; combined with the `breakPerTick` cap, this distributes world-write work evenly across ticks and avoids light-update spikes
+- **Chunk safety guard**: every background position check calls `blockExists()` first to prevent async chunk generation, which would corrupt `TickNextTick` lists
+- **Cached player floor position**: computed once at session start and reused for every candidate check, avoiding repeated `Math.floor` allocations
 
 ---
 
