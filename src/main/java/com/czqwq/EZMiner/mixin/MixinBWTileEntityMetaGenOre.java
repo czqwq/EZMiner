@@ -1,7 +1,6 @@
 package com.czqwq.EZMiner.mixin;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
@@ -83,7 +82,7 @@ public abstract class MixinBWTileEntityMetaGenOre {
                     if (shouldFortune && this.mNatural && aFortune > 0) {
                         int aMinAmount = 1;
                         int cappedFortune = Math.min(aFortune, Config.maxFortuneLevel);
-                        long amount = (long) new Random().nextInt(cappedFortune) + aMinAmount;
+                        long amount = (long) self.getWorldObj().rand.nextInt(cappedFortune) + aMinAmount;
                         for (int i = 0; i < amount; i++) {
                             rList.add(GTOreDictUnificator.get(OrePrefixes.rawOre, aOreMaterial, 1));
                         }

@@ -17,7 +17,7 @@ public class NoOpPositionFounder extends BasePositionFounder {
         MinerConfig minerConfig) {
         super(center, results, player, minerConfig);
         positions.clear();
-        foundedPositions.clear();
+        visitedPositions.clear();
         curCount = 0;
     }
 

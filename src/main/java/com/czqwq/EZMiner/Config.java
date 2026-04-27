@@ -71,7 +71,7 @@ public class Config {
 
     /**
      * When {@code true}, ores that were placed by a player (i.e. not naturally generated) are
-     * treated as naturally generated and therefore also benefit from the Fortune fortune bonus when
+     * treated as naturally generated and therefore also benefit from the Fortune enchantment bonus when
      * {@link #enableUnlimitedOreFortune} is {@code true}.
      *
      * <p>
