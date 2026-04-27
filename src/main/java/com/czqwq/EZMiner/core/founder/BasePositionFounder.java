@@ -22,13 +22,13 @@ import com.czqwq.EZMiner.thread.Pauseable;
  * <p>
  * <strong>Performance notes:</strong>
  * <ul>
- *   <li>Visited positions are tracked via a {@code HashSet<Long>} using a compact
- *       coordinate encoding ({@link #encodePos}) rather than {@code HashSet<Vector3i>},
- *       reducing GC pressure significantly for large mining operations.</li>
- *   <li>The player's floor position is cached once at construction time to avoid
- *       creating a new {@link Vector3i} on every {@link #checkCanAdd} call.</li>
- *   <li>The inner shell-scan loop checks the visited set before allocating a
- *       {@link Vector3i}, so rejected positions create no garbage.</li>
+ * <li>Visited positions are tracked via a {@code HashSet<Long>} using a compact
+ * coordinate encoding ({@link #encodePos}) rather than {@code HashSet<Vector3i>},
+ * reducing GC pressure significantly for large mining operations.</li>
+ * <li>The player's floor position is cached once at construction time to avoid
+ * creating a new {@link Vector3i} on every {@link #checkCanAdd} call.</li>
+ * <li>The inner shell-scan loop checks the visited set before allocating a
+ * {@link Vector3i}, so rejected positions create no garbage.</li>
  * </ul>
  */
 public class BasePositionFounder extends Pauseable {
@@ -185,8 +185,8 @@ public class BasePositionFounder extends Pauseable {
      * <p>
      * Coordinate ranges supported:
      * <ul>
-     *   <li>x, z: {@code [-30,000,000 .. +30,000,000]} (Minecraft world border)</li>
-     *   <li>y: {@code [0 .. 4095]}</li>
+     * <li>x, z: {@code [-30,000,000 .. +30,000,000]} (Minecraft world border)</li>
+     * <li>y: {@code [0 .. 4095]}</li>
      * </ul>
      *
      * <p>
