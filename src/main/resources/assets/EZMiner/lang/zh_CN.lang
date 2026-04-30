@@ -18,10 +18,10 @@ ezminer.mode.blast.sameType=爆破: 同类筛选
 ezminer.mode.blast.tunnel=爆破: 隧道爆破
 ezminer.mode.blast.oreOnly=爆破: 矿石爆破
 ezminer.mode.blast.logging=爆破: 爆破伐木
-ezminer.mode.blast.crop=爆破: 一键收作物
 
 ezminer.mode.chain.basic=连锁: 基础连锁
 ezminer.mode.special.minesweeper=特殊连锁: 扫雷模式
+ezminer.mode.special.crop=特殊连锁: 一键收作物
 
 ezminer.message.mainMode=当前主模式
 ezminer.message.subMode=当前子模式

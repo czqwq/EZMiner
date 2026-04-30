@@ -163,7 +163,7 @@ public class BaseOperator {
     }
 
     private boolean shouldHarvest(Vector3i pos) {
-        if (!manager.isBlastCropMode()) return true;
+        if (!manager.isSpecialCropMode()) return true;
         if (playerMP.worldObj == null) return false;
         return Manager.isMatureCrop(playerMP.worldObj, pos.x, pos.y, pos.z);
     }
@@ -194,7 +194,7 @@ public class BaseOperator {
     }
 
     private void replantVanillaCropIfNeeded(Vector3i pos, Block preHarvestBlock, int preHarvestMeta) {
-        if (!manager.isBlastCropMode()) return;
+        if (!manager.isSpecialCropMode()) return;
         if (!(preHarvestBlock instanceof BlockCrops)) return;
         if (preHarvestMeta < 7) return;
         Block current = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);

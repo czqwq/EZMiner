@@ -1,18 +1,11 @@
 package com.czqwq.EZMiner.core;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockCrops;
-import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
@@ -24,10 +17,10 @@ import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
-import com.czqwq.EZMiner.chain.execution.LootGamesMinesweeperBridge;
+import com.czqwq.EZMiner.chain.execution.ChainDropCollector;
+import com.czqwq.EZMiner.chain.execution.MinesweeperModeHandler;
 import com.czqwq.EZMiner.chain.state.ChainPlayerState;
 import com.czqwq.EZMiner.chain.state.ChainSession;
-import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Loader;
@@ -46,7 +39,6 @@ import ic2.core.crop.TileEntityCrop;
 public class Manager {
 
     private static final int VANILLA_CROP_MATURE_META = 7;
-    private static final long MINESWEEPER_DETECT_COOLDOWN_MS = 5000L; // fallback; actual value from Config
 
     /**
      * True when the Bandit mod (vein-mining mod) is present on this installation.
@@ -77,30 +69,15 @@ public class Manager {
     public Vector3i originPos = null;
 
     /**
-     * Collected drops during the current chain operation — fast O(1) merge path.
+     * Collected drops during the current chain operation.
      *
      * <p>
-     * Key: item type + damage (no NBT). Replacing the old {@code ArrayList} linear scan
-     * reduces the per-drop merge from O(n) to O(1), eliminating the server-tick hotspot
-     * reported in the Spark profile ({@code DeterminingIdentical.isSame} at 48 %).
+     * Uses a fast O(1) map for items without NBT and a short fallback list for
+     * NBT-bearing items. See {@link com.czqwq.EZMiner.chain.execution.ChainDropCollector}
+     * for details.
      */
-    private final LinkedHashMap<ItemStackKey, ItemStack> dropsMap = new LinkedHashMap<>();
-
-    /**
-     * Fallback drop list for items that carry an {@code NBTTagCompound}.
-     *
-     * <p>
-     * {@code NBTTagCompound} does not override {@code hashCode()} in 1.7.10, so two
-     * content-equal compounds would get different hash codes and the map key would be
-     * wrong. Since NBT-bearing ore drops are rare (usually none in a GT ore vein), the
-     * O(n) linear-scan cost here is negligible.
-     */
-    private final List<ItemStack> dropsWithNbt = new ArrayList<>();
-    private final LootGamesMinesweeperBridge minesweeperBridge = new LootGamesMinesweeperBridge();
-    private final Set<String> detectedMinesweeperBombs = new HashSet<>();
-    /** World positions of all mines flagged in this session; used to re-send on key re-press. */
-    private final List<Vector3i> detectedMinesweeperPositions = new ArrayList<>();
-    private long nextMinesweeperDetectAtMs = 0L;
+    private final ChainDropCollector dropCollector = new ChainDropCollector();
+    private final MinesweeperModeHandler minesweeperHandler = new MinesweeperModeHandler();
 
     public Manager(EntityPlayerMP player) {
         this.player = player;
@@ -117,7 +94,7 @@ public class Manager {
         if (!isSamePlayer(event.getPlayer())) return;
         if (isInOperate() || !isKeyPressed()) return;
         if (isSpecialMinesweeperMode()) return;
-        if (isBlastCropMode()) return;
+        if (isSpecialCropMode()) return;
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.getPlayer());
     }
 
@@ -128,7 +105,7 @@ public class Manager {
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
         if (!isSamePlayer(event.entityPlayer)) return;
         if (isInOperate() || !isKeyPressed()) return;
-        if (!isBlastCropMode()) return;
+        if (!isSpecialCropMode()) return;
         if (!isMatureCrop(event.entityPlayer.worldObj, event.x, event.y, event.z)) return;
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.entityPlayer);
         // Explicitly consume the interaction so vanilla/sibling handlers do not
@@ -149,33 +126,7 @@ public class Manager {
         // from ever being spawned, leaving Bandit with zero drops. Yield to Bandit so that
         // items drop normally and Bandit can intercept them as designed.
         if (BANDIT_LOADED) return;
-
-        for (ItemStack drop : event.drops) {
-            if (drop == null || drop.stackSize <= 0) continue;
-            // Cache the tag to avoid a second getTagCompound() call inside the else branch.
-            net.minecraft.nbt.NBTTagCompound tag = drop.getTagCompound();
-            if (tag == null) {
-                // Fast O(1) path: no NBT — item+damage uniquely identifies the stack type.
-                ItemStackKey key = ItemStackKey.of(drop);
-                ItemStack existing = dropsMap.get(key);
-                if (existing != null) {
-                    existing.stackSize += drop.stackSize;
-                } else {
-                    dropsMap.put(key, drop.copy());
-                }
-            } else {
-                // Slow O(n) path: items with NBT require full content comparison (rare).
-                boolean merged = false;
-                for (ItemStack existing : dropsWithNbt) {
-                    if (!DeterminingIdentical.isSame(existing, drop)) continue;
-                    existing.stackSize += drop.stackSize;
-                    merged = true;
-                    break;
-                }
-                if (!merged) dropsWithNbt.add(drop.copy());
-            }
-        }
-        event.drops.clear();
+        dropCollector.collect(event.drops);
     }
 
     // ===== Tick: flush drops after chain ends =====
@@ -187,9 +138,9 @@ public class Manager {
     }
 
     public void flushDrops() {
-        if (dropsMap.isEmpty() && dropsWithNbt.isEmpty()) return;
+        if (dropCollector.isEmpty()) return;
         if (player == null || player.worldObj == null) {
-            clearDrops();
+            dropCollector.clear();
             return;
         }
         // dropToPlayer=true → spawn at the player's current feet position (default)
@@ -204,21 +155,12 @@ public class Manager {
             spawnY = originPos.y + 0.5;
             spawnZ = originPos.z + 0.5;
         }
-        for (ItemStack stack : dropsMap.values()) {
-            if (stack == null || stack.stackSize <= 0) continue;
-            player.worldObj.spawnEntityInWorld(new EntityItem(player.worldObj, spawnX, spawnY, spawnZ, stack));
-        }
-        for (ItemStack stack : dropsWithNbt) {
-            if (stack == null || stack.stackSize <= 0) continue;
-            player.worldObj.spawnEntityInWorld(new EntityItem(player.worldObj, spawnX, spawnY, spawnZ, stack));
-        }
-        clearDrops();
+        dropCollector.flush(player.worldObj, spawnX, spawnY, spawnZ);
     }
 
-    /** Clears all accumulated drops from both the fast-path map and the NBT fallback list. */
+    /** Clears all accumulated drops from the drop collector. */
     public void clearDrops() {
-        dropsMap.clear();
-        dropsWithNbt.clear();
+        dropCollector.clear();
     }
 
     // ===== Lifecycle =====
@@ -246,7 +188,7 @@ public class Manager {
         state.runtimeState.elapsedMs = 0L;
         state.runtimeState.queuedCandidates = 0;
         state.runtimeState.lastErrorCode = "";
-        resetMinesweeperDetectState();
+        minesweeperHandler.reset();
         EZMiner.chainStateService.markSessionStop(playerUUID);
         activeSession = null;
     }
@@ -284,8 +226,8 @@ public class Manager {
         operator.registry();
     }
 
-    public boolean isBlastCropMode() {
-        return minerModeState.mainMode == 0 && minerModeState.blastMode == 5;
+    public boolean isSpecialCropMode() {
+        return minerModeState.mainMode == 2 && minerModeState.specialMode == 1;
     }
 
     public boolean isSpecialMinesweeperMode() {
@@ -304,27 +246,7 @@ public class Manager {
         // re-pressing the key cannot bypass the configured probe interval.
         if (!isKeyPressed()) return;
         if (isInOperate() || player == null || player.worldObj == null || player.isDead) return;
-        long now = System.currentTimeMillis();
-        if (now < nextMinesweeperDetectAtMs) return;
-        Vector3i flaggedPos = minesweeperBridge.detectNearestBomb(player, detectedMinesweeperBombs);
-        long cooldownMs = Math.max(1L, (long) Config.minesweeperProbeCooldownSeconds) * 1000L;
-        nextMinesweeperDetectAtMs = now + cooldownMs;
-        if (flaggedPos != null) {
-            detectedMinesweeperPositions.add(flaggedPos);
-            EZMiner.network.network.sendTo(
-                new com.czqwq.EZMiner.chain.network.PacketMinesweeperMark(
-                    flaggedPos.x,
-                    flaggedPos.y,
-                    flaggedPos.z,
-                    cooldownMs),
-                player);
-        }
-    }
-
-    private void resetMinesweeperDetectState() {
-        nextMinesweeperDetectAtMs = 0L;
-        detectedMinesweeperBombs.clear();
-        detectedMinesweeperPositions.clear();
+        minesweeperHandler.tick(player, playerUUID);
     }
 
     /**
@@ -335,13 +257,7 @@ public class Manager {
      * flagged-mine list is repopulated without requiring the server to re-flag the same mines.
      */
     public void resendMinesweeperMarks(EntityPlayerMP target) {
-        if (detectedMinesweeperPositions.isEmpty()) return;
-        long remainingMs = Math.max(0L, nextMinesweeperDetectAtMs - System.currentTimeMillis());
-        for (Vector3i pos : detectedMinesweeperPositions) {
-            EZMiner.network.network.sendTo(
-                new com.czqwq.EZMiner.chain.network.PacketMinesweeperMark(pos.x, pos.y, pos.z, remainingMs),
-                target);
-        }
+        minesweeperHandler.resendMarks(target);
     }
 
     public boolean isKeyPressed() {
