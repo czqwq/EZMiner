@@ -43,17 +43,7 @@ public class PlayerManager {
         mgr.registry();
         // Push server config limits to the client so preview/HUD reflects actual constraints
         // immediately on join, before any chain operation is started.
-        EZMiner.network.network.sendTo(
-            new PacketServerConfig(
-                Config.bigRadius,
-                Config.blockLimit,
-                Config.smallRadius,
-                Config.tunnelWidth,
-                Config.serverMaxPreviewBigRadius,
-                Config.serverMaxPreviewBlockLimit,
-                Config.serverUsePreview,
-                Config.breakPerTick),
-            mp);
+        EZMiner.network.network.sendTo(PacketServerConfig.buildForPlayer(mp), mp);
         LOG.info("Registered manager for player: {} ({})", mp.getDisplayName(), mp.getUniqueID());
     }
 

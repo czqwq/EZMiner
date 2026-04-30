@@ -25,11 +25,13 @@ public class PacketServerConfig implements IMessage {
     public int maxPreviewBlockLimit;
     public boolean allowPreview;
     public int breakPerTick;
+    /** Whether the receiving client has OP permission on this server. Used to show/hide server config tab in GUI. */
+    public boolean isOp;
 
     public PacketServerConfig() {}
 
     public PacketServerConfig(int maxBigRadius, int maxBlockLimit, int maxSmallRadius, int maxTunnelWidth,
-        int maxPreviewBigRadius, int maxPreviewBlockLimit, boolean allowPreview, int breakPerTick) {
+        int maxPreviewBigRadius, int maxPreviewBlockLimit, boolean allowPreview, int breakPerTick, boolean isOp) {
         this.maxBigRadius = maxBigRadius;
         this.maxBlockLimit = maxBlockLimit;
         this.maxSmallRadius = maxSmallRadius;
@@ -38,6 +40,7 @@ public class PacketServerConfig implements IMessage {
         this.maxPreviewBlockLimit = maxPreviewBlockLimit;
         this.allowPreview = allowPreview;
         this.breakPerTick = breakPerTick;
+        this.isOp = isOp;
     }
 
     @Override
@@ -50,6 +53,7 @@ public class PacketServerConfig implements IMessage {
         maxPreviewBlockLimit = buf.readInt();
         allowPreview = buf.readBoolean();
         breakPerTick = buf.readInt();
+        isOp = buf.readBoolean();
     }
 
     @Override
@@ -62,6 +66,24 @@ public class PacketServerConfig implements IMessage {
         buf.writeInt(maxPreviewBlockLimit);
         buf.writeBoolean(allowPreview);
         buf.writeInt(breakPerTick);
+        buf.writeBoolean(isOp);
+    }
+
+    /**
+     * Builds a packet with all current server config values and the OP status of {@code player}.
+     * Use this factory instead of the full constructor to avoid duplicating the OP check at each call site.
+     */
+    public static PacketServerConfig buildForPlayer(net.minecraft.entity.player.EntityPlayerMP player) {
+        return new PacketServerConfig(
+            Config.bigRadius,
+            Config.blockLimit,
+            Config.smallRadius,
+            Config.tunnelWidth,
+            Config.serverMaxPreviewBigRadius,
+            Config.serverMaxPreviewBlockLimit,
+            Config.serverUsePreview,
+            Config.breakPerTick,
+            player.canCommandSenderUseCommand(2, "EZMiner"));
     }
 
     public static class Handler implements IMessageHandler<PacketServerConfig, IMessage> {
@@ -78,6 +100,7 @@ public class PacketServerConfig implements IMessage {
                     msg.maxPreviewBlockLimit,
                     msg.allowPreview,
                     msg.breakPerTick);
+                com.czqwq.EZMiner.EZMiner.clientIsOp = msg.isOp;
             }
             return null;
         }

@@ -77,17 +77,7 @@ public class ReloadConfigCommand extends CommandBase {
                 for (Manager mgr : PlayerManager.instance.managers.values()) {
                     mgr.pConfig.updateFrom(new MinerConfig());
                     EZMiner.network.network.sendTo(new PacketMinerConfig(mgr.pConfig), mgr.player);
-                    EZMiner.network.network.sendTo(
-                        new PacketServerConfig(
-                            Config.bigRadius,
-                            Config.blockLimit,
-                            Config.smallRadius,
-                            Config.tunnelWidth,
-                            Config.serverMaxPreviewBigRadius,
-                            Config.serverMaxPreviewBlockLimit,
-                            Config.serverUsePreview,
-                            Config.breakPerTick),
-                        mgr.player);
+                    EZMiner.network.network.sendTo(PacketServerConfig.buildForPlayer(mgr.player), mgr.player);
                     EZMiner.network.network.sendTo(new PacketReloadClientConfig(), mgr.player);
                 }
             }
@@ -103,17 +93,7 @@ public class ReloadConfigCommand extends CommandBase {
                 return;
             }
             net.minecraft.entity.player.EntityPlayerMP player = (net.minecraft.entity.player.EntityPlayerMP) sender;
-            EZMiner.network.network.sendTo(
-                new PacketServerConfig(
-                    Config.bigRadius,
-                    Config.blockLimit,
-                    Config.smallRadius,
-                    Config.tunnelWidth,
-                    Config.serverMaxPreviewBigRadius,
-                    Config.serverMaxPreviewBlockLimit,
-                    Config.serverUsePreview,
-                    Config.breakPerTick),
-                player);
+            EZMiner.network.network.sendTo(PacketServerConfig.buildForPlayer(player), player);
             EZMiner.network.network.sendTo(new PacketReloadClientConfig(), player);
             sender.addChatMessage(new ChatComponentTranslation("ezminer.command.reloadclientconfig.success"));
             return;
