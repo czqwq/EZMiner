@@ -18,10 +18,10 @@ ezminer.mode.blast.sameType=Blast: Same Type
 ezminer.mode.blast.tunnel=Blast: Tunnel
 ezminer.mode.blast.oreOnly=Blast: Ore Only
 ezminer.mode.blast.logging=Blast: Logging
+ezminer.mode.blast.crop=Blast: Crop Harvest
 
 ezminer.mode.chain.basic=Chain: Basic
 ezminer.mode.special.minesweeper=Special Chain: Minesweeper Mode
-ezminer.mode.special.crop=Special Chain: Crop Harvest
 
 ezminer.message.mainMode=Main Mode
 ezminer.message.subMode=Sub Mode
@@ -31,11 +31,25 @@ ezminer.config.blockLimit=Maximum blocks per chain
 ezminer.config.smallRadius=Adjacency radius for chain mode
 ezminer.config.tunnelWidth=Tunnel half-width
 ezminer.config.addExhaustion=Exhaustion added per block mined (negative restores food)
-ezminer.config.dropToPlayer=Drop batched items at player's feet (true) or at the origin block (false)
+ezminer.config.dropToPlayer=Drop at player feet (true) or origin block (false)
 ezminer.config.usePreview=Show block outline preview while chain key is held
 ezminer.config.useChainDoneMessage=Show completion message after each chain operation
-ezminer.config.chainActivationMode=Chain key activation mode: 0 = hold key to activate, 1 = click to toggle on/off
-ezminer.config.suppressIngameInfoHud=Temporarily hide InGame Info XML while EZMiner HUD is visible (requires InGame Info XML)
+ezminer.config.chainActivationMode=Chain key activation mode
+ezminer.config.suppressIngameInfoHud=Temporarily hide InGame Info XML while EZMiner HUD is visible
+ezminer.config.breakPerTick=Max blocks broken per server tick
+ezminer.config.minesweeperCooldown=Minesweeper probe cooldown (seconds)
+ezminer.config.serverPreviewRadius=Server max preview radius
+ezminer.config.serverPreviewLimit=Server max preview block count
+ezminer.config.serverUsePreview=Server global preview enabled
+ezminer.config.previewBigRadius=Client preview max radius
+ezminer.config.previewBlockLimit=Client preview max blocks
+
+ezminer.gui.title=Config
+ezminer.gui.tab.client=Client Settings
+ezminer.gui.tab.server=Server Settings (OP)
+ezminer.gui.reload.client=Reload Client Config
+ezminer.gui.reload.server=Reload Server Config
+ezminer.gui.save=Save & Apply
 
 ezminer.command.nopermission=§cYou need OP permission to reload the config.
 ezminer.command.reloadconfig.success=EZMiner config reloaded successfully.

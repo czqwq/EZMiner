@@ -29,12 +29,12 @@ public class MinerModeState {
         "ezminer.mode.blast.tunnel", // 2
         "ezminer.mode.blast.oreOnly", // 3
         "ezminer.mode.blast.logging", // 4
+        "ezminer.mode.blast.crop", // 5
     };
 
     public static final String[] CHAIN_MODES = { "ezminer.mode.chain.basic", // 0
     };
     public static final String[] SPECIAL_MODES = { "ezminer.mode.special.minesweeper", // 0
-        "ezminer.mode.special.crop", // 1
     };
 
     public int mainMode = 1; // default: chain mode

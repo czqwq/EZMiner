@@ -30,9 +30,6 @@ public class LegacyFounderPlanningFactory {
             return new ChainPositionFounder(center, results, player, config);
         }
         if (modeState.mainMode == 2) {
-            if (modeState.specialMode == 1) {
-                return new CropFounder(center, results, player, config);
-            }
             return new NoOpPositionFounder(center, results, player, config);
         }
         switch (modeState.blastMode) {
@@ -44,6 +41,8 @@ public class LegacyFounderPlanningFactory {
                 return new OreFounder(center, results, player, config);
             case 4:
                 return new LogFounder(center, results, player, config);
+            case 5:
+                return new CropFounder(center, results, player, config);
             default:
                 return new BlastPositionFounder(center, results, player, config);
         }

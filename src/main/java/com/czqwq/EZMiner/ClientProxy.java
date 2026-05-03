@@ -3,6 +3,7 @@ package com.czqwq.EZMiner;
 import com.czqwq.EZMiner.client.ClientStateContainer;
 import com.czqwq.EZMiner.client.HudRenderer;
 import com.czqwq.EZMiner.client.KeyListener;
+import com.czqwq.EZMiner.client.gui.InventoryButtonOverlay;
 import com.czqwq.EZMiner.client.render.MinerRenderer;
 
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
@@ -14,6 +15,7 @@ public class ClientProxy extends CommonProxy {
     public final HudRenderer hudRenderer = new HudRenderer();
     public final KeyListener keyListener = new KeyListener();
     public final MinerRenderer minerRenderer = new MinerRenderer(clientState);
+    public final InventoryButtonOverlay inventoryButtonOverlay = new InventoryButtonOverlay();
 
     @Override
     public void preInit(FMLPreInitializationEvent event) {
@@ -21,6 +23,7 @@ public class ClientProxy extends CommonProxy {
         hudRenderer.registry();
         keyListener.registry();
         minerRenderer.registry();
+        inventoryButtonOverlay.registry();
     }
 
     @Override

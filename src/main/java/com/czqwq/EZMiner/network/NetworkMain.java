@@ -34,5 +34,22 @@ public class NetworkMain {
             com.czqwq.EZMiner.chain.network.PacketMinesweeperMark.class,
             packetId++,
             Side.CLIENT);
+        // Server config management (OP only): client → server
+        network.registerMessage(
+            PacketSaveServerConfig.Handler.class,
+            PacketSaveServerConfig.class,
+            packetId++,
+            Side.SERVER);
+        network.registerMessage(
+            PacketReloadServerConfig.Handler.class,
+            PacketReloadServerConfig.class,
+            packetId++,
+            Side.SERVER);
+        // Client config reload request: client → server, server echoes config back
+        network.registerMessage(
+            PacketRequestClientReload.Handler.class,
+            PacketRequestClientReload.class,
+            packetId++,
+            Side.SERVER);
     }
 }

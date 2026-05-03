@@ -2,12 +2,8 @@ package com.czqwq.EZMiner.core;
 
 import java.util.UUID;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockCrops;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -21,6 +17,7 @@ import com.czqwq.EZMiner.chain.execution.ChainDropCollector;
 import com.czqwq.EZMiner.chain.execution.MinesweeperModeHandler;
 import com.czqwq.EZMiner.chain.state.ChainPlayerState;
 import com.czqwq.EZMiner.chain.state.ChainSession;
+import com.czqwq.EZMiner.core.founder.CropFounder;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Loader;
@@ -28,8 +25,6 @@ import cpw.mods.fml.common.eventhandler.Event.Result;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
-import ic2.api.crops.CropCard;
-import ic2.core.crop.TileEntityCrop;
 
 /**
  * Per-player chain mining manager.
@@ -37,8 +32,6 @@ import ic2.core.crop.TileEntityCrop;
  * All mutation happens on the server thread.
  */
 public class Manager {
-
-    private static final int VANILLA_CROP_MATURE_META = 7;
 
     /**
      * True when the Bandit mod (vein-mining mod) is present on this installation.
@@ -94,7 +87,7 @@ public class Manager {
         if (!isSamePlayer(event.getPlayer())) return;
         if (isInOperate() || !isKeyPressed()) return;
         if (isSpecialMinesweeperMode()) return;
-        if (isSpecialCropMode()) return;
+        if (isBlastCropMode()) return;
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.getPlayer());
     }
 
@@ -105,8 +98,8 @@ public class Manager {
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
         if (!isSamePlayer(event.entityPlayer)) return;
         if (isInOperate() || !isKeyPressed()) return;
-        if (!isSpecialCropMode()) return;
-        if (!isMatureCrop(event.entityPlayer.worldObj, event.x, event.y, event.z)) return;
+        if (!isBlastCropMode()) return;
+        if (!CropFounder.isMatureCrop(event.entityPlayer.worldObj, event.x, event.y, event.z)) return;
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.entityPlayer);
         // Explicitly consume the interaction so vanilla/sibling handlers do not
         // perform a second single-crop right-click harvest.
@@ -226,8 +219,8 @@ public class Manager {
         operator.registry();
     }
 
-    public boolean isSpecialCropMode() {
-        return minerModeState.mainMode == 2 && minerModeState.specialMode == 1;
+    public boolean isBlastCropMode() {
+        return minerModeState.mainMode == 0 && minerModeState.blastMode == 5;
     }
 
     public boolean isSpecialMinesweeperMode() {
@@ -294,30 +287,5 @@ public class Manager {
 
     private ChainPlayerState state() {
         return EZMiner.chainStateService.getOrCreate(playerUUID);
-    }
-
-    /**
-     * Checks whether the target block is currently harvestable as a crop.
-     *
-     * <p>
-     * {@link BlockCrops} crops are considered mature at metadata {@code >= 7}
-     * (wheat/carrot/potato/beetroot in 1.7.10). IC2 crops are considered mature
-     * when their {@link CropCard#canBeHarvested(TileEntityCrop)} returns
-     * {@code true}.
-     */
-    public static boolean isMatureCrop(World world, int x, int y, int z) {
-        if (world == null || !world.blockExists(x, y, z)) return false;
-        Block block = world.getBlock(x, y, z);
-        if (block instanceof BlockCrops) {
-            int meta = world.getBlockMetadata(x, y, z);
-            return meta >= VANILLA_CROP_MATURE_META;
-        }
-        TileEntity tile = world.getTileEntity(x, y, z);
-        if (tile instanceof TileEntityCrop) {
-            TileEntityCrop crop = (TileEntityCrop) tile;
-            CropCard card = crop.getCrop();
-            return card != null && card.canBeHarvested(crop);
-        }
-        return false;
     }
 }
