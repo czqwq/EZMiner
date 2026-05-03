@@ -34,8 +34,8 @@ public class MinesweeperModeHandler {
      * Runs one probe cycle. Sends a {@link PacketMinesweeperMark} packet if a new mine
      * is found. Must be called from the server thread.
      *
-     * @param player        the owning player
-     * @param playerUUID    the player's UUID (used for packet targeting)
+     * @param player     the owning player
+     * @param playerUUID the player's UUID (used for packet targeting)
      */
     public void tick(EntityPlayerMP player, UUID playerUUID) {
         long now = System.currentTimeMillis();
@@ -45,9 +45,8 @@ public class MinesweeperModeHandler {
         Vector3i flaggedPos = bridge.detectNearestBomb(player, detectedBombs);
         if (flaggedPos != null) {
             detectedPositions.add(flaggedPos);
-            EZMiner.network.network.sendTo(
-                new PacketMinesweeperMark(flaggedPos.x, flaggedPos.y, flaggedPos.z, cooldownMs),
-                player);
+            EZMiner.network.network
+                .sendTo(new PacketMinesweeperMark(flaggedPos.x, flaggedPos.y, flaggedPos.z, cooldownMs), player);
         }
     }
 
@@ -69,9 +68,7 @@ public class MinesweeperModeHandler {
         if (detectedPositions.isEmpty()) return;
         long remainingMs = Math.max(0L, nextDetectAtMs - System.currentTimeMillis());
         for (Vector3i pos : detectedPositions) {
-            EZMiner.network.network.sendTo(
-                new PacketMinesweeperMark(pos.x, pos.y, pos.z, remainingMs),
-                target);
+            EZMiner.network.network.sendTo(new PacketMinesweeperMark(pos.x, pos.y, pos.z, remainingMs), target);
         }
     }
 

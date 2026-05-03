@@ -12,7 +12,6 @@ import net.minecraftforge.event.world.WorldEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.network.PacketServerConfig;
 

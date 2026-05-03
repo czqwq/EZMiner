@@ -18,12 +18,12 @@ import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
  * <p>
  * Uses a two-tier storage strategy:
  * <ul>
- *   <li><b>Fast path</b>: Items without NBT are keyed by {@link ItemStackKey} (item type +
- *       damage) in a {@link LinkedHashMap}. Merging a newly-received drop is O(1).</li>
- *   <li><b>Slow path</b>: Items carrying an {@link NBTTagCompound} fall back to a short
- *       {@link ArrayList} with O(n) content comparison, since {@code NBTTagCompound} does
- *       not override {@code hashCode()} in Minecraft 1.7.10. NBT-bearing drops are rare
- *       (usually none in a GregTech ore vein), so the linear cost is negligible.</li>
+ * <li><b>Fast path</b>: Items without NBT are keyed by {@link ItemStackKey} (item type +
+ * damage) in a {@link LinkedHashMap}. Merging a newly-received drop is O(1).</li>
+ * <li><b>Slow path</b>: Items carrying an {@link NBTTagCompound} fall back to a short
+ * {@link ArrayList} with O(n) content comparison, since {@code NBTTagCompound} does
+ * not override {@code hashCode()} in Minecraft 1.7.10. NBT-bearing drops are rare
+ * (usually none in a GregTech ore vein), so the linear cost is negligible.</li>
  * </ul>
  *
  * <p>
