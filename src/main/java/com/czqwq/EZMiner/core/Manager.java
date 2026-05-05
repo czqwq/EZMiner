@@ -87,7 +87,7 @@ public class Manager {
         if (!isSamePlayer(event.getPlayer())) return;
         if (isInOperate() || !isKeyPressed()) return;
         if (isSpecialMinesweeperMode()) return;
-        if (isBlastCropMode()) return;
+        if (isSpecialCropMode()) return;
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.getPlayer());
     }
 
@@ -98,7 +98,7 @@ public class Manager {
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
         if (!isSamePlayer(event.entityPlayer)) return;
         if (isInOperate() || !isKeyPressed()) return;
-        if (!isBlastCropMode()) return;
+        if (!isSpecialCropMode()) return;
         if (!CropFounder.isMatureCrop(event.entityPlayer.worldObj, event.x, event.y, event.z)) return;
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.entityPlayer);
         // Explicitly consume the interaction so vanilla/sibling handlers do not
@@ -219,8 +219,8 @@ public class Manager {
         operator.registry();
     }
 
-    public boolean isBlastCropMode() {
-        return minerModeState.mainMode == 0 && minerModeState.blastMode == 5;
+    public boolean isSpecialCropMode() {
+        return minerModeState.mainMode == 2 && minerModeState.specialMode == 1;
     }
 
     public boolean isSpecialMinesweeperMode() {

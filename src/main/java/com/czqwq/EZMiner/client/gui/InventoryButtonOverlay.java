@@ -1,8 +1,8 @@
 package com.czqwq.EZMiner.client.gui;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.inventory.GuiInventory;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
 
@@ -15,9 +15,9 @@ import cpw.mods.fml.relauncher.SideOnly;
  * Injects a small EZMiner config button into the vanilla inventory screen.
  *
  * <p>
- * The button is added to the left side of the inventory container, styled as a
- * placeholder (text "[E]") until a proper icon texture is provided. Clicking it
- * opens {@link EZMinerConfigGui}.
+ * The button is added to the left side of the inventory container and renders
+ * the {@code textures/icons/settings.png} icon. Clicking it opens
+ * {@link EZMinerConfigGui}.
  *
  * <p>
  * Uses Forge's {@link GuiScreenEvent} so no Mixin or reflection is required.
@@ -40,9 +40,21 @@ public class InventoryButtonOverlay {
      */
     private static final int BTN_OFFSET_LEFT = 24;
 
+    /**
+     * Vertical offset from the top of the inventory panel.
+     * Set to 26 px so our button does not overlap the button that
+     * ServerUtilities (and similar mods) injects at y+4.
+     */
+    private static final int BTN_Y_OFFSET = 26;
+
     /** Vanilla inventory panel dimensions (constant for GuiInventory in 1.7.10). */
     private static final int INV_X_SIZE = 176;
     private static final int INV_Y_SIZE = 166;
+
+    /** Settings icon texture (16 × 16 placeholder). */
+    private static final ResourceLocation SETTINGS_TEXTURE = new ResourceLocation(
+        "ezminer",
+        "textures/icons/settings.png");
 
     // ── Event handlers ────────────────────────────────────────────────────────
 
@@ -57,9 +69,8 @@ public class InventoryButtonOverlay {
         int guiLeft = (event.gui.width - INV_X_SIZE) / 2;
         int guiTop = (event.gui.height - INV_Y_SIZE) / 2;
         int btnX = guiLeft - BTN_OFFSET_LEFT - BTN_SIZE / 2;
-        int btnY = guiTop + 4;
-        // Placeholder label – the user intends to replace this with a real texture later.
-        event.buttonList.add(new GuiButton(BTN_ID, btnX, btnY, BTN_SIZE, BTN_SIZE, "[E]"));
+        int btnY = guiTop + BTN_Y_OFFSET;
+        event.buttonList.add(new TexturedButton(BTN_ID, btnX, btnY, BTN_SIZE, BTN_SIZE, SETTINGS_TEXTURE));
     }
 
     /**

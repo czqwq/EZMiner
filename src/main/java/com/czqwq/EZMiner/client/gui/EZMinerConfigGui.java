@@ -52,21 +52,38 @@ public class EZMinerConfigGui extends GuiScreen {
 
     // ── Layout constants ──────────────────────────────────────────────────────
     private static final int GUI_W = 256;
-    private static final int GUI_H = 280;
+    /** Maximum GUI height; actual height is capped to the available screen height. */
+    private static final int MAX_GUI_H = 280;
     /** X offset of the label column relative to guiLeft. */
     private static final int LABEL_X = 8;
     /** X offset of the value text-field column relative to guiLeft. */
     private static final int FIELD_X = 148;
     /** Width of each text field. */
     private static final int FIELD_W = 76;
-    /** Height of each text field. */
-    private static final int FIELD_H = 14;
+    /**
+     * Height of each text field / toggle button.
+     * Kept at 12 px so it always fits within the minimum adaptive row height.
+     */
+    private static final int FIELD_H = 12;
     /** Y position of the first content row relative to guiTop. */
     private static final int CONTENT_START_Y = 38;
-    /** Pixels between rows. */
-    private static final int ROW_H = 18;
-    /** Y position (relative to guiTop) of the bottom action-button row. */
-    private static final int ACTION_BTN_Y = GUI_H - 26;
+    /**
+     * Number of content rows that must fit between {@link #CONTENT_START_Y} and the
+     * action-button strip. The server tab has the most rows (9 fields + 2 toggles = 11).
+     */
+    private static final int MAX_CONTENT_ROWS = 11;
+    /** Minimum row height in pixels (must be >= FIELD_H + 1). */
+    private static final int MIN_ROW_H = 13;
+    /** Height of the action-button strip at the bottom of the panel (px). */
+    private static final int ACTION_STRIP_H = 44;
+
+    // ── Adaptive layout (computed per initGui call) ───────────────────────────
+    /** Actual panel height for the current screen. */
+    private int guiH;
+    /** Pixels between content rows for the current screen. */
+    private int rowH;
+    /** Y offset (relative to guiTop) of the bottom action-button row. */
+    private int actionBtnY;
 
     // ── State ────────────────────────────────────────────────────────────────
     private int activeTab = TAB_CLIENT;
@@ -105,8 +122,12 @@ public class EZMinerConfigGui extends GuiScreen {
     @Override
     @SuppressWarnings("unchecked")
     public void initGui() {
+        // ── Adaptive layout ───────────────────────────────────────────────────
+        guiH = Math.min(MAX_GUI_H, height - 10);
+        rowH = Math.max(MIN_ROW_H, (guiH - CONTENT_START_Y - ACTION_STRIP_H) / MAX_CONTENT_ROWS);
+        actionBtnY = guiH - 26;
         guiLeft = (width - GUI_W) / 2;
-        guiTop = (height - GUI_H) / 2;
+        guiTop = (height - guiH) / 2;
         buttonList.clear();
 
         // Tab selector buttons
@@ -171,18 +192,18 @@ public class EZMinerConfigGui extends GuiScreen {
             new GuiButton(
                 BTN_CLIENT_RELOAD,
                 guiLeft + 4,
-                guiTop + ACTION_BTN_Y,
+                guiTop + actionBtnY,
                 120,
                 18,
-                I18n.format("ezminer.gui.reload.client")));
+                I18n.format("ezminer.gui.apply")));
         buttonList.add(
             new GuiButton(
                 BTN_CLIENT_SAVE,
                 guiLeft + 128,
-                guiTop + ACTION_BTN_Y,
+                guiTop + actionBtnY,
                 120,
                 18,
-                I18n.format("ezminer.gui.save")));
+                I18n.format("ezminer.gui.saveAndExit")));
 
         // ── Server tab toggles ────────────────────────────────────────────────
         if (EZMiner.clientIsOp) {
@@ -208,7 +229,7 @@ public class EZMinerConfigGui extends GuiScreen {
                 new GuiButton(
                     BTN_SERVER_RELOAD,
                     guiLeft + 4,
-                    guiTop + ACTION_BTN_Y,
+                    guiTop + actionBtnY,
                     120,
                     18,
                     I18n.format("ezminer.gui.reload.server")));
@@ -216,7 +237,7 @@ public class EZMinerConfigGui extends GuiScreen {
                 new GuiButton(
                     BTN_SERVER_SAVE,
                     guiLeft + 128,
-                    guiTop + ACTION_BTN_Y,
+                    guiTop + actionBtnY,
                     120,
                     18,
                     I18n.format("ezminer.gui.save")));
@@ -235,8 +256,8 @@ public class EZMinerConfigGui extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
         // Panel background
-        drawRect(guiLeft, guiTop, guiLeft + GUI_W, guiTop + GUI_H, 0xCC000000);
-        drawRect(guiLeft + 1, guiTop + 1, guiLeft + GUI_W - 1, guiTop + GUI_H - 1, 0xFF1A1A2E);
+        drawRect(guiLeft, guiTop, guiLeft + GUI_W, guiTop + guiH, 0xCC000000);
+        drawRect(guiLeft + 1, guiTop + 1, guiLeft + GUI_W - 1, guiTop + guiH - 1, 0xFF1A1A2E);
         // Title
         drawCenteredString(
             mc.fontRenderer,
@@ -246,7 +267,7 @@ public class EZMinerConfigGui extends GuiScreen {
             0xFFFFFF);
         // Horizontal dividers
         drawRect(guiLeft + 2, guiTop + 36, guiLeft + GUI_W - 2, guiTop + 37, 0xFF4444AA);
-        drawRect(guiLeft + 2, guiTop + ACTION_BTN_Y - 4, guiLeft + GUI_W - 2, guiTop + ACTION_BTN_Y - 3, 0xFF444466);
+        drawRect(guiLeft + 2, guiTop + actionBtnY - 4, guiLeft + GUI_W - 2, guiTop + actionBtnY - 3, 0xFF444466);
 
         if (activeTab == TAB_CLIENT) {
             drawClientTab();
@@ -296,10 +317,13 @@ public class EZMinerConfigGui extends GuiScreen {
 
             // ── Client actions ────────────────────────────────────────────────
             case BTN_CLIENT_RELOAD:
-                EZMiner.network.network.sendToServer(new PacketRequestClientReload());
+                // "Apply" – saves current field values to disk and syncs to server, stays open.
+                applyAndSaveClientConfig();
                 break;
             case BTN_CLIENT_SAVE:
+                // "Save & Exit" – saves then closes the GUI.
                 applyAndSaveClientConfig();
+                mc.displayGuiScreen(null);
                 break;
 
             // ── Server toggles ────────────────────────────────────────────────
@@ -385,12 +409,12 @@ public class EZMinerConfigGui extends GuiScreen {
 
     /** Y coordinate (absolute screen) for client-tab row {@code index} (0-based). */
     private int clientRowY(int index) {
-        return guiTop + CONTENT_START_Y + index * ROW_H;
+        return guiTop + CONTENT_START_Y + index * rowH;
     }
 
     /** Y coordinate (absolute screen) for server-tab row {@code index} (0-based). */
     private int serverRowY(int index) {
-        return guiTop + CONTENT_START_Y + index * ROW_H;
+        return guiTop + CONTENT_START_Y + index * rowH;
     }
 
     /** Initialises all client-tab text fields at their correct positions. */
