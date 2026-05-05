@@ -8,8 +8,8 @@ public class ChainSubModeBootstrap {
         registry.register(new ChainSubModeDefinition("blast_tunnel", "ezminer.mode.blast.tunnel"));
         registry.register(new ChainSubModeDefinition("blast_ore", "ezminer.mode.blast.oreOnly"));
         registry.register(new ChainSubModeDefinition("blast_log", "ezminer.mode.blast.logging"));
+        registry.register(new ChainSubModeDefinition("blast_crop", "ezminer.mode.blast.crop"));
         registry.register(new ChainSubModeDefinition("chain_basic", "ezminer.mode.chain.basic"));
         registry.register(new ChainSubModeDefinition("special_minesweeper", "ezminer.mode.special.minesweeper"));
-        registry.register(new ChainSubModeDefinition("special_crop", "ezminer.mode.special.crop"));
     }
 }
