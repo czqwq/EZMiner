@@ -11,7 +11,6 @@ import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.network.PacketMinerConfig;
 import com.czqwq.EZMiner.network.PacketReloadServerConfig;
-import com.czqwq.EZMiner.network.PacketRequestClientReload;
 import com.czqwq.EZMiner.network.PacketSaveServerConfig;
 
 import cpw.mods.fml.relauncher.Side;
