@@ -36,6 +36,14 @@ public class EZMiner {
     public static final ChainSubModeRegistry chainSubModeRegistry = new ChainSubModeRegistry();
     public static final ChainPlanningRuntimeFactory chainPlanningRuntimeFactory = new ChainPlanningRuntimeFactory();
 
+    /**
+     * Client-side OP flag. Set to {@code true} when the server sends a
+     * {@link com.czqwq.EZMiner.network.PacketServerConfig} with {@code isOp=true}.
+     * Used to show/hide the server config tab in the GUI.
+     * Always {@code false} on the server side (the flag is only meaningful on the client).
+     */
+    public static volatile boolean clientIsOp = false;
+
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         proxy.preInit(event);

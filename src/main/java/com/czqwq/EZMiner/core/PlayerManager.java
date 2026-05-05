@@ -12,7 +12,6 @@ import net.minecraftforge.event.world.WorldEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.network.PacketServerConfig;
 
@@ -43,17 +42,7 @@ public class PlayerManager {
         mgr.registry();
         // Push server config limits to the client so preview/HUD reflects actual constraints
         // immediately on join, before any chain operation is started.
-        EZMiner.network.network.sendTo(
-            new PacketServerConfig(
-                Config.bigRadius,
-                Config.blockLimit,
-                Config.smallRadius,
-                Config.tunnelWidth,
-                Config.serverMaxPreviewBigRadius,
-                Config.serverMaxPreviewBlockLimit,
-                Config.serverUsePreview,
-                Config.breakPerTick),
-            mp);
+        EZMiner.network.network.sendTo(PacketServerConfig.buildForPlayer(mp), mp);
         LOG.info("Registered manager for player: {} ({})", mp.getDisplayName(), mp.getUniqueID());
     }
 

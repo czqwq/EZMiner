@@ -483,4 +483,58 @@ public class Config {
             .bus()
             .register(instance);
     }
+
+    /** Writes all current server-side config values to the server config file. */
+    public static void saveServerConfig() {
+        if (serverConfiguration == null) return;
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "bigRadius", 8)
+            .set(bigRadius);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "blockLimit", 1024)
+            .set(blockLimit);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "smallRadius", 2)
+            .set(smallRadius);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "tunnelWidth", 1)
+            .set(tunnelWidth);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "breakPerTick", 16)
+            .set(breakPerTick);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "addExhaustion", 0.025)
+            .set(addExhaustion);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "dropToPlayer", true)
+            .set(dropToPlayer);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "serverUsePreview", true)
+            .set(serverUsePreview);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "serverMaxPreviewBigRadius", 8)
+            .set(serverMaxPreviewBigRadius);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "serverMaxPreviewBlockLimit", 1024)
+            .set(serverMaxPreviewBlockLimit);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "minesweeperProbeCooldownSeconds", 5)
+            .set(minesweeperProbeCooldownSeconds);
+        serverConfiguration.save();
+    }
+
+    /** Writes all current client-side config values to the client config file. */
+    public static void saveClientConfig() {
+        if (clientConfiguration == null) return;
+        clientConfiguration.get(CLIENT_CATEGORY, "usePreview", true)
+            .set(usePreview);
+        clientConfiguration.get(CLIENT_CATEGORY, "useChainDoneMessage", true)
+            .set(useChainDoneMessage);
+        clientConfiguration.get(CLIENT_CATEGORY, "clientBigRadius", 8)
+            .set(clientBigRadius);
+        clientConfiguration.get(CLIENT_CATEGORY, "clientBlockLimit", 1024)
+            .set(clientBlockLimit);
+        clientConfiguration.get(CLIENT_CATEGORY, "clientSmallRadius", 2)
+            .set(clientSmallRadius);
+        clientConfiguration.get(CLIENT_CATEGORY, "clientTunnelWidth", 1)
+            .set(clientTunnelWidth);
+        clientConfiguration.get(CLIENT_CATEGORY, "previewBigRadius", 8)
+            .set(previewBigRadius);
+        clientConfiguration.get(CLIENT_CATEGORY, "previewBlockLimit", 256)
+            .set(previewBlockLimit);
+        clientConfiguration.get(CLIENT_CATEGORY, "chainActivationMode", 0)
+            .set(chainActivationMode);
+        clientConfiguration.get(CLIENT_CATEGORY, "suppressIngameInfoHud", false)
+            .set(suppressIngameInfoHud);
+        clientConfiguration.save();
+    }
 }

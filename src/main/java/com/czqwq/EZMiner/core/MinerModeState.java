@@ -6,6 +6,7 @@ package com.czqwq.EZMiner.core;
  * Main modes:
  * 0 = Blast mode (爆破模式)
  * 1 = Chain mode (连锁模式)
+ * 2 = Special mode (特殊连锁模式)
  *
  * Blast sub-modes (blastMode):
  * 0 = All-blocks blast (无差别爆破)
@@ -16,6 +17,10 @@ package com.czqwq.EZMiner.core;
  *
  * Chain sub-modes (chainMode):
  * 0 = Basic chain (基础连锁)
+ *
+ * Special sub-modes (specialMode):
+ * 0 = Minesweeper (扫雷模式)
+ * 1 = Crop harvest (一键收作物)
  */
 public class MinerModeState {
 
@@ -29,12 +34,12 @@ public class MinerModeState {
         "ezminer.mode.blast.tunnel", // 2
         "ezminer.mode.blast.oreOnly", // 3
         "ezminer.mode.blast.logging", // 4
-        "ezminer.mode.blast.crop", // 5
     };
 
     public static final String[] CHAIN_MODES = { "ezminer.mode.chain.basic", // 0
     };
     public static final String[] SPECIAL_MODES = { "ezminer.mode.special.minesweeper", // 0
+        "ezminer.mode.special.crop", // 1
     };
 
     public int mainMode = 1; // default: chain mode
