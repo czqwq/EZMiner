@@ -14,9 +14,9 @@ import cpw.mods.fml.relauncher.SideOnly;
  * A {@link GuiButton} that renders a texture icon instead of a text label.
  *
  * <p>
- * The icon is drawn at full size inside the button bounds (minus 2 px padding).
- * When the mouse hovers over the button the icon is tinted slightly darker to
- * give visual feedback.
+ * Matches the visual style of ServerUtilities sidebar buttons: the icon is
+ * drawn at full button size with a semi-transparent white hover overlay.
+ * No background box is drawn so it blends with the inventory panel.
  */
 @SideOnly(Side.CLIENT)
 public class TexturedButton extends GuiButton {
@@ -44,30 +44,34 @@ public class TexturedButton extends GuiButton {
             && mouseX < xPosition + width
             && mouseY < yPosition + height;
 
-        // Draw a simple dark box so the icon has a visible background.
-        int bg = hovered ? 0xFF555555 : 0xFF333333;
-        drawRect(xPosition, yPosition, xPosition + width, yPosition + height, bg);
-
+        // Draw the settings icon (full button area, no padding) -----------------
         mc.getTextureManager()
             .bindTexture(texture);
-        GL11.glColor4f(1.0f, 1.0f, 1.0f, hovered ? 0.75f : 1.0f);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
-        int pad = 2;
-        int ix = xPosition + pad;
-        int iy = yPosition + pad;
-        int iw = width - 2 * pad;
-        int ih = height - 2 * pad;
-
-        // Use Tessellator with normalised UV so any texture size works.
         Tessellator tess = Tessellator.instance;
         tess.startDrawingQuads();
-        tess.addVertexWithUV(ix, iy + ih, 0, 0.0, 1.0);
-        tess.addVertexWithUV(ix + iw, iy + ih, 0, 1.0, 1.0);
-        tess.addVertexWithUV(ix + iw, iy, 0, 1.0, 0.0);
-        tess.addVertexWithUV(ix, iy, 0, 0.0, 0.0);
+        tess.addVertexWithUV(xPosition, yPosition + height, 0, 0.0, 1.0);
+        tess.addVertexWithUV(xPosition + width, yPosition + height, 0, 1.0, 1.0);
+        tess.addVertexWithUV(xPosition + width, yPosition, 0, 1.0, 0.0);
+        tess.addVertexWithUV(xPosition, yPosition, 0, 0.0, 0.0);
         tess.draw();
+
+        // Hover highlight: semi-transparent white overlay (matches SU) ----------
+        if (hovered) {
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GL11.glColor4f(1.0f, 1.0f, 1.0f, 0.13f);
+            tess.startDrawingQuads();
+            tess.addVertex(xPosition, yPosition + height, 0);
+            tess.addVertex(xPosition + width, yPosition + height, 0);
+            tess.addVertex(xPosition + width, yPosition, 0);
+            tess.addVertex(xPosition, yPosition, 0);
+            tess.draw();
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+        }
 
         GL11.glDisable(GL11.GL_BLEND);
         GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);

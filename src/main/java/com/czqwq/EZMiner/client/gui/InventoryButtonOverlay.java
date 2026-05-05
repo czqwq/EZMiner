@@ -1,10 +1,13 @@
 package com.czqwq.EZMiner.client.gui;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.inventory.GuiContainerCreative;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
+
+import com.czqwq.EZMiner.EZMiner;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -12,12 +15,13 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
 /**
- * Injects a small EZMiner config button into the vanilla inventory screen.
+ * Injects a small EZMiner config button into both the vanilla survival inventory
+ * screen and the creative inventory screen.
  *
  * <p>
- * The button is added to the left side of the inventory container and renders
- * the {@code textures/icons/settings.png} icon. Clicking it opens
- * {@link EZMinerConfigGui}.
+ * The button is placed in the same x-column as ServerUtilities' sidebar buttons
+ * ({@code guiLeft - 18}) and positioned one slot (17 px) below SU's first button
+ * so the two never overlap.
  *
  * <p>
  * Uses Forge's {@link GuiScreenEvent} so no Mixin or reflection is required.
@@ -29,47 +33,65 @@ public class InventoryButtonOverlay {
     private static final int BTN_ID = 1000;
 
     /**
-     * Width and height of the injected button in screen pixels.
-     * Keep it small so it fits beside the inventory panel without overlapping.
+     * Button size in screen pixels.
+     * Matches the 16 × 16 px size used by ServerUtilities sidebar buttons.
      */
-    private static final int BTN_SIZE = 20;
+    private static final int BTN_SIZE = 16;
 
     /**
-     * Horizontal distance from the left edge of the inventory panel to place the button.
-     * Positive values shift the button further left (away from the panel).
+     * Horizontal offset from guiLeft at which ServerUtilities places its sidebar buttons.
+     * From {@code GuiSidebar.setButtonLocations}: {@code button.x = gui.guiLeft - offsetX}.
      */
-    private static final int BTN_OFFSET_LEFT = 24;
+    private static final int SU_OFFSET_X = 18;
 
     /**
-     * Vertical offset from the top of the inventory panel.
-     * Set to 26 px so our button does not overlap the button that
-     * ServerUtilities (and similar mods) injects at y+4.
+     * Y offset used by ServerUtilities for the first sidebar button in the survival inventory.
+     * From {@code GuiSidebar.setButtonLocations}: {@code offsetY = 8}.
      */
-    private static final int BTN_Y_OFFSET = 26;
+    private static final int SU_OFFSET_Y_SURVIVAL = 8;
 
-    /** Vanilla inventory panel dimensions (constant for GuiInventory in 1.7.10). */
+    /**
+     * Y offset used by ServerUtilities for the first sidebar button in the creative inventory.
+     * From {@code GuiSidebar.setButtonLocations}: {@code offsetY = 6} when {@code instanceof GuiContainerCreative}.
+     */
+    private static final int SU_OFFSET_Y_CREATIVE = 6;
+
+    /**
+     * Height of one button "slot" in SU's sidebar (button height 16 + 1 px gap = 17).
+     * Our button is placed one slot below SU's first button.
+     */
+    private static final int SU_BTN_SLOT = 17;
+
+    /** Vanilla survival inventory panel size (GuiInventory). */
     private static final int INV_X_SIZE = 176;
     private static final int INV_Y_SIZE = 166;
 
-    /** Settings icon texture (16 × 16 placeholder). */
+    /** Vanilla creative inventory panel size (GuiContainerCreative). */
+    private static final int CREATIVE_X_SIZE = 195;
+    private static final int CREATIVE_Y_SIZE = 136;
+
+    /**
+     * Settings icon texture.
+     * Domain MUST match the assets directory name ({@code assets/EZMiner/}) exactly.
+     */
     private static final ResourceLocation SETTINGS_TEXTURE = new ResourceLocation(
-        "ezminer",
+        EZMiner.MODID,
         "textures/icons/settings.png");
 
     // ── Event handlers ────────────────────────────────────────────────────────
 
     /**
      * After the inventory GUI is initialised, inject the EZMiner config button
-     * to the left of the inventory panel.
+     * to the left of the inventory panel, one slot below SU's first button.
      */
     @SubscribeEvent
     @SuppressWarnings("unchecked")
     public void onInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
-        if (!(event.gui instanceof GuiInventory)) return;
-        int guiLeft = (event.gui.width - INV_X_SIZE) / 2;
-        int guiTop = (event.gui.height - INV_Y_SIZE) / 2;
-        int btnX = guiLeft - BTN_OFFSET_LEFT - BTN_SIZE / 2;
-        int btnY = guiTop + BTN_Y_OFFSET;
+        int[] offsets = guiOffsets(event.gui);
+        if (offsets == null) return;
+        // offsets: [guiLeft, guiTop, suOffsetY]
+        int btnX = offsets[0] - SU_OFFSET_X;
+        int btnY = offsets[1] + offsets[2] + SU_BTN_SLOT; // one slot below SU's first button
         event.buttonList.add(new TexturedButton(BTN_ID, btnX, btnY, BTN_SIZE, BTN_SIZE, SETTINGS_TEXTURE));
     }
 
@@ -78,7 +100,7 @@ public class InventoryButtonOverlay {
      */
     @SubscribeEvent
     public void onActionPerformed(GuiScreenEvent.ActionPerformedEvent.Post event) {
-        if (!(event.gui instanceof GuiInventory)) return;
+        if (guiOffsets(event.gui) == null) return;
         if (event.button.id != BTN_ID) return;
         Minecraft.getMinecraft()
             .displayGuiScreen(new EZMinerConfigGui());
@@ -92,5 +114,25 @@ public class InventoryButtonOverlay {
         FMLCommonHandler.instance()
             .bus()
             .register(this);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Returns {@code [guiLeft, guiTop, suOffsetY]} for a supported inventory GUI,
+     * or {@code null} if the GUI is not a recognised inventory screen.
+     */
+    private static int[] guiOffsets(net.minecraft.client.gui.GuiScreen gui) {
+        if (gui instanceof GuiInventory) {
+            int guiLeft = (gui.width - INV_X_SIZE) / 2;
+            int guiTop = (gui.height - INV_Y_SIZE) / 2;
+            return new int[] { guiLeft, guiTop, SU_OFFSET_Y_SURVIVAL };
+        }
+        if (gui instanceof GuiContainerCreative) {
+            int guiLeft = (gui.width - CREATIVE_X_SIZE) / 2;
+            int guiTop = (gui.height - CREATIVE_Y_SIZE) / 2;
+            return new int[] { guiLeft, guiTop, SU_OFFSET_Y_CREATIVE };
+        }
+        return null;
     }
 }
