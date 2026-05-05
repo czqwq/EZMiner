@@ -127,7 +127,7 @@ public class Manager {
     @SubscribeEvent
     public void onWorldTick(TickEvent.WorldTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
-        if (isInOperate()) return;
+        if (player == null || player.worldObj == null || event.world != player.worldObj || isInOperate()) return;
         if (isKeyPressed()) {
             tickSpecialMode();
             return;
