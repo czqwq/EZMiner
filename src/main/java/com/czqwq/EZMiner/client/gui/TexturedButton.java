@@ -48,7 +48,8 @@ public class TexturedButton extends GuiButton {
         int bg = hovered ? 0xFF555555 : 0xFF333333;
         drawRect(xPosition, yPosition, xPosition + width, yPosition + height, bg);
 
-        mc.getTextureManager().bindTexture(texture);
+        mc.getTextureManager()
+            .bindTexture(texture);
         GL11.glColor4f(1.0f, 1.0f, 1.0f, hovered ? 0.75f : 1.0f);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
