@@ -127,7 +127,12 @@ public class Manager {
     @SubscribeEvent
     public void onWorldTick(TickEvent.WorldTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
-        if (!isInOperate() && !isKeyPressed()) flushDrops();
+        if (isInOperate()) return;
+        if (isKeyPressed()) {
+            tickSpecialMode();
+            return;
+        }
+        flushDrops();
     }
 
     public void flushDrops() {
