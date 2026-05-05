@@ -45,12 +45,13 @@ ezminer.config.previewBigRadius=客户端预览最大半径
 ezminer.config.previewBlockLimit=客户端预览最大方块数
 
 ezminer.gui.title=配置
-ezminer.gui.tab.client=客户端设置
-ezminer.gui.tab.server=服务端设置（OP）
-ezminer.gui.apply=应用
-ezminer.gui.saveAndExit=保存并退出
-ezminer.gui.reload.server=重载服务端配置
-ezminer.gui.save=保存并应用
+ezminer.gui.tab.client=§a客户端设置§r
+ezminer.gui.tab.server=§c服务端设置 §7（OP）§r
+ezminer.gui.apply=§e应用§r
+ezminer.gui.saveAndExit=§a保存并退出§r
+ezminer.gui.reload.server=§6重载服务端配置§r
+ezminer.gui.save=§a保存并应用§r
+ezminer.gui.inventory_button=§b[EZMiner]§r §f设置
 
 ezminer.command.nopermission=§c你没有OP权限，无法重新加载配置。
 ezminer.command.reloadconfig.success=EZMiner 配置已重新加载。

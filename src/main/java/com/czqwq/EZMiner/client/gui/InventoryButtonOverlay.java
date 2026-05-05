@@ -4,11 +4,16 @@ import java.awt.Rectangle;
 import java.lang.reflect.Field;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.inventory.GuiContainerCreative;
 import net.minecraft.client.gui.inventory.GuiInventory;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
+
+import org.lwjgl.opengl.GL11;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -149,6 +154,28 @@ public class InventoryButtonOverlay {
     }
 
     /**
+     * After each frame is drawn, render a tooltip over our button when the mouse is hovering
+     * on it. Drawing is deferred to Post so the tooltip always renders on top of everything else.
+     * The tooltip is drawn manually with GL11 to avoid accessing the protected
+     * {@code GuiScreen.drawHoveringText} method.
+     */
+    @SubscribeEvent
+    public void onDrawScreenPost(GuiScreenEvent.DrawScreenEvent.Post event) {
+        if (ourButton == null || !ourButton.visible) return;
+        if (guiOffsets(event.gui) == null) return;
+        if (event.mouseX >= ourButton.xPosition && event.mouseY >= ourButton.yPosition
+            && event.mouseX < ourButton.xPosition + BTN_SIZE
+            && event.mouseY < ourButton.yPosition + BTN_SIZE) {
+            drawTooltip(
+                Minecraft.getMinecraft().fontRenderer,
+                I18n.format("ezminer.gui.inventory_button"),
+                event.mouseX,
+                event.mouseY,
+                event.gui.width);
+        }
+    }
+
+    /**
      * When the injected button is clicked, open the EZMiner config GUI.
      */
     @SubscribeEvent
@@ -187,6 +214,59 @@ public class InventoryButtonOverlay {
             return new int[] { guiLeft, guiTop, SU_FALLBACK_Y_CREATIVE };
         }
         return null;
+    }
+
+    /**
+     * Draws a MC-style tooltip box at the given screen position.
+     * Rendered manually with GL11/Tessellator to avoid accessing the protected
+     * {@code GuiScreen.drawHoveringText}. Supports Minecraft {@code §} colour codes in
+     * {@code text} via {@link FontRenderer#drawStringWithShadow}.
+     */
+    private static void drawTooltip(FontRenderer font, String text, int mx, int my, int screenW) {
+        // Strip colour codes for width measurement so the box fits the visible text.
+        int w = font.getStringWidth(net.minecraft.util.EnumChatFormatting.getTextWithoutFormattingCodes(text));
+        int h = font.FONT_HEIGHT;
+        int pad = 3;
+
+        int tx = mx + 10;
+        int ty = my - h - pad * 2 - 2;
+        if (tx + w + pad * 2 > screenW) tx = screenW - w - pad * 2;
+        if (ty < 2) ty = my + 10;
+
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+
+        // Dark background: 0xF0100010
+        GL11.glColor4f(16 / 255f, 0f, 16 / 255f, 240 / 255f);
+        fillRect(tx - pad, ty - pad, tx + w + pad, ty + h + pad);
+
+        // Purple border: 0xFF500050
+        GL11.glColor4f(80 / 255f, 0f, 80 / 255f, 1f);
+        fillRect(tx - pad, ty - pad, tx + w + pad, ty - pad + 1);
+        fillRect(tx - pad, ty + h + pad - 1, tx + w + pad, ty + h + pad);
+        fillRect(tx - pad, ty - pad + 1, tx - pad + 1, ty + h + pad - 1);
+        fillRect(tx + w + pad - 1, ty - pad + 1, tx + w + pad, ty + h + pad - 1);
+
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glColor4f(1f, 1f, 1f, 1f);
+        font.drawStringWithShadow(text, tx, ty, 0xFFFFFF);
+
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glDisable(GL11.GL_BLEND);
+        GL11.glColor4f(1f, 1f, 1f, 1f);
+    }
+
+    /** Draws a filled axis-aligned rectangle using the current GL colour. */
+    private static void fillRect(int x1, int y1, int x2, int y2) {
+        Tessellator t = Tessellator.instance;
+        t.startDrawingQuads();
+        t.addVertex(x1, y2, 0);
+        t.addVertex(x2, y2, 0);
+        t.addVertex(x2, y1, 0);
+        t.addVertex(x1, y1, 0);
+        t.draw();
     }
 
     /**

@@ -45,12 +45,13 @@ ezminer.config.previewBigRadius=Client preview max radius
 ezminer.config.previewBlockLimit=Client preview max blocks
 
 ezminer.gui.title=Config
-ezminer.gui.tab.client=Client Settings
-ezminer.gui.tab.server=Server Settings (OP)
-ezminer.gui.apply=Apply
-ezminer.gui.saveAndExit=Save & Exit
-ezminer.gui.reload.server=Reload Server Config
-ezminer.gui.save=Save & Apply
+ezminer.gui.tab.client=§aClient Settings§r
+ezminer.gui.tab.server=§cServer Settings §7(OP)§r
+ezminer.gui.apply=§eApply§r
+ezminer.gui.saveAndExit=§aSave & Exit§r
+ezminer.gui.reload.server=§6Reload Server Config§r
+ezminer.gui.save=§aSave & Apply§r
+ezminer.gui.inventory_button=§b[EZMiner]§r §fSettings
 
 ezminer.command.nopermission=§cYou need OP permission to reload the config.
 ezminer.command.reloadconfig.success=EZMiner config reloaded successfully.
