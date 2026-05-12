@@ -18,6 +18,7 @@ ezminer.mode.blast.sameType=Blast: Same Type
 ezminer.mode.blast.tunnel=Blast: Tunnel
 ezminer.mode.blast.oreOnly=Blast: Ore Only
 ezminer.mode.blast.logging=Blast: Logging
+ezminer.mode.blast.inverse=Blast: Inverse Chain
 
 ezminer.mode.chain.basic=Chain: Basic
 ezminer.mode.chain.fuzzy=Chain: Fuzzy Mode

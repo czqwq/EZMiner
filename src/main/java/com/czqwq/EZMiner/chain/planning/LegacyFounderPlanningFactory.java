@@ -13,6 +13,7 @@ import com.czqwq.EZMiner.core.founder.BlastPositionFounder;
 import com.czqwq.EZMiner.core.founder.ChainPositionFounder;
 import com.czqwq.EZMiner.core.founder.CropFounder;
 import com.czqwq.EZMiner.core.founder.FuzzyChainPositionFounder;
+import com.czqwq.EZMiner.core.founder.InverseBlastFounder;
 import com.czqwq.EZMiner.core.founder.LogFounder;
 import com.czqwq.EZMiner.core.founder.NoOpPositionFounder;
 import com.czqwq.EZMiner.core.founder.OreFounder;
@@ -49,6 +50,8 @@ public class LegacyFounderPlanningFactory {
                 return new OreFounder(center, results, player, config);
             case 4:
                 return new LogFounder(center, results, player, config);
+            case 5:
+                return new InverseBlastFounder(center, results, player, config);
             default:
                 return new BlastPositionFounder(center, results, player, config);
         }

@@ -18,6 +18,7 @@ ezminer.mode.blast.sameType=爆破: 同类筛选
 ezminer.mode.blast.tunnel=爆破: 隧道爆破
 ezminer.mode.blast.oreOnly=爆破: 矿石爆破
 ezminer.mode.blast.logging=爆破: 爆破伐木
+ezminer.mode.blast.inverse=爆破: 反向连锁
 
 ezminer.mode.chain.basic=连锁: 基础连锁
 ezminer.mode.chain.fuzzy=连锁: 模糊模式
