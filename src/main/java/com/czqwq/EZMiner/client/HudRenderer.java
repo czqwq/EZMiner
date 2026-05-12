@@ -53,6 +53,14 @@ public class HudRenderer {
     /** Peak upward displacement (in screen pixels) of the bouncing character. */
     private static final int BOUNCE_HEIGHT_PX = 3;
 
+    // ── Wave animation constants ─────────────────────────────────────────────────────────────
+    /** Milliseconds each character holds the spotlight in the wave phase. */
+    private static final long WAVE_LETTER_MS = 250;
+    /** Milliseconds between each character turning white in the fill phase. */
+    private static final long FILL_LETTER_MS = 180;
+    /** Milliseconds all characters remain white before the cycle resets. */
+    private static final long HOLD_MS = 600;
+
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL) return;
@@ -136,8 +144,20 @@ public class HudRenderer {
     }
 
     /**
-     * Renders the brand header with a sweeping rainbow+bounce animation on the
-     * {@value #BRAND} text.
+     * Dispatches to the configured brand animation: either the original
+     * {@link #drawRainbowBounceHeader} or the new {@link #drawWaveHighlightHeader},
+     * depending on {@link Config#hudAnimationStyle}.
+     */
+    private static void drawAnimatedHeader(FontRenderer fr, int x, int y, String suffix) {
+        if (Config.hudAnimationStyle == 1) {
+            drawWaveHighlightHeader(fr, x, y, suffix);
+        } else {
+            drawRainbowBounceHeader(fr, x, y, suffix);
+        }
+    }
+
+    /**
+     * Original rainbow-bounce animation.
      *
      * <p>
      * Each character in {@value #BRAND} is coloured with its own rainbow hue for one
@@ -150,7 +170,7 @@ public class HudRenderer {
      * @param y      top pixel coordinate of the header line
      * @param suffix the text rendered after {@code ]} (e.g. {@code §a■ 连锁已启用})
      */
-    private static void drawAnimatedHeader(FontRenderer fr, int x, int y, String suffix) {
+    private static void drawRainbowBounceHeader(FontRenderer fr, int x, int y, String suffix) {
         long now = System.currentTimeMillis();
         int numChars = BRAND.length();
 
@@ -173,6 +193,61 @@ public class HudRenderer {
             } else {
                 fr.drawStringWithShadow("\u00a7b" + ch, curX, y, 0xFFFFFF);
             }
+            curX += fr.getStringWidth(ch);
+        }
+
+        // Render "§b] " + suffix
+        fr.drawStringWithShadow("\u00a7b] " + suffix, curX, y, 0xFFFFFF);
+    }
+
+    /**
+     * Wave-highlight animation — three phases per cycle:
+     *
+     * <ol>
+     * <li><b>Wave phase</b> ({@value #WAVE_LETTER_MS} ms × n letters): each letter
+     * lights up as white italic ({@code §f§o}) for its slot, then returns to cyan
+     * ({@code §b}) before the next letter takes its turn — a rolling spotlight.</li>
+     * <li><b>Fill phase</b> ({@value #FILL_LETTER_MS} ms × n letters): letters
+     * turn white ({@code §f}) left-to-right, each <em>staying</em> white as the
+     * next one turns — an accumulating fill until all are white.</li>
+     * <li><b>Hold phase</b> ({@value #HOLD_MS} ms): all letters remain white,
+     * then the cycle resets to phase 1.</li>
+     * </ol>
+     *
+     * @param fr     the {@link FontRenderer} to use
+     * @param x      left pixel coordinate of the header line
+     * @param y      top pixel coordinate of the header line
+     * @param suffix the text rendered after {@code ]}
+     */
+    private static void drawWaveHighlightHeader(FontRenderer fr, int x, int y, String suffix) {
+        long now = System.currentTimeMillis();
+        int n = BRAND.length();
+        long wavePhaseDuration = WAVE_LETTER_MS * n;
+        long fillPhaseDuration = FILL_LETTER_MS * n;
+        long cycleDuration = wavePhaseDuration + fillPhaseDuration + HOLD_MS;
+        long t = now % cycleDuration;
+
+        // Render "§b[" prefix
+        String openBracket = "\u00a7b[";
+        fr.drawStringWithShadow(openBracket, x, y, 0xFFFFFF);
+        int curX = x + fr.getStringWidth(openBracket);
+
+        for (int i = 0; i < n; i++) {
+            String ch = String.valueOf(BRAND.charAt(i));
+            final String code;
+            if (t < wavePhaseDuration) {
+                // Wave phase: only the current spotlight letter is white italic.
+                int spotlight = (int) (t / WAVE_LETTER_MS);
+                code = (i == spotlight) ? "\u00a7f\u00a7o" : "\u00a7b";
+            } else if (t < wavePhaseDuration + fillPhaseDuration) {
+                // Fill phase: letters 0..fillFront turn white and stay white.
+                int fillFront = (int) ((t - wavePhaseDuration) / FILL_LETTER_MS);
+                code = (i <= fillFront) ? "\u00a7f" : "\u00a7b";
+            } else {
+                // Hold phase: all letters are white.
+                code = "\u00a7f";
+            }
+            fr.drawStringWithShadow(code + ch, curX, y, 0xFFFFFF);
             curX += fr.getStringWidth(ch);
         }
 

@@ -47,6 +47,8 @@ public class DeterminingIdentical {
     static boolean hasBlockBaseOre = false;
     static boolean hasAEQuartz = false;
     static boolean hasAEQuartzCharged = false;
+    /** True when the new-style {@code GTBlockOre} class is present (GT5 ≥ 5.09.xx). */
+    static boolean hasGTBlockOre = false;
 
     // ===== Cached reflection objects (set once in checkCompatibility) =====
     private static volatile Class<?> gtTileEntityOresClass;
@@ -59,6 +61,16 @@ public class DeterminingIdentical {
     private static volatile Class<?> gtPlusPlusBlockBaseOreClass;
     private static volatile Class<?> aeQuartzClass;
     private static volatile Class<?> aeQuartzChargedClass;
+    /**
+     * Cached {@code GTBlockOre} class reference; set once in {@link #checkCompatibility()}.
+     * Null when the new ore system is not present.
+     */
+    private static volatile Class<?> gtBlockOreClass;
+    /**
+     * Cached {@code GTBlockOre.isSmallOre(int)} method; set once in {@link #checkCompatibility()}.
+     * Used to distinguish large-vein GT ores from surface small ores (贫瘠矿).
+     */
+    private static volatile Method gtBlockOreIsSmallMethod;
 
     // ===== Per-block-type ore cache =====
     /** Maps Block instance → isOreBlock result; populated lazily and shared across threads. */
@@ -76,6 +88,7 @@ public class DeterminingIdentical {
         hasBlockBaseOre = classExists("gtPlusPlus.core.block.base.BlockBaseOre");
         hasAEQuartz = classExists("appeng.block.solids.OreQuartz");
         hasAEQuartzCharged = classExists("appeng.block.solids.OreQuartzCharged");
+        hasGTBlockOre = classExists("gregtech.common.blocks.GTBlockOre");
 
         // Cache reflection references so identical() / isOreBlock() never call Class.forName()
         if (hasTileEntityOres) {
@@ -136,6 +149,15 @@ public class DeterminingIdentical {
                 aeQuartzChargedClass = Class.forName("appeng.block.solids.OreQuartzCharged");
             } catch (Exception ignored) {
                 hasAEQuartzCharged = false;
+            }
+        }
+        if (hasGTBlockOre) {
+            try {
+                gtBlockOreClass = Class.forName("gregtech.common.blocks.GTBlockOre");
+                gtBlockOreIsSmallMethod = gtBlockOreClass.getMethod("isSmallOre", int.class);
+            } catch (Exception e) {
+                EZMiner.LOG.debug("Failed to cache GTBlockOre reflection: {}", e.getMessage());
+                hasGTBlockOre = false;
             }
         }
     }
@@ -247,6 +269,35 @@ public class DeterminingIdentical {
         if (!hasBlockOresAbstract || gtBlockOresAbstractClass == null) return false;
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
         return gtBlockOresAbstractClass.isInstance(block);
+    }
+
+    /**
+     * Returns {@code true} if {@code block} at the given metadata is a GT large-vein ore —
+     * i.e. it is either the new-style {@code GTBlockOre} with {@code isSmallOre(meta) == false},
+     * or the legacy {@code BlockOresAbstract} (which only models large-vein ores).
+     *
+     * <p>
+     * Small / surface ores (贫瘠矿) registered in {@code GTBlockOre} have
+     * {@code isSmallOre(meta) == true} and are therefore excluded.
+     *
+     * @param block the block instance to test
+     * @param meta  the block metadata at the candidate position
+     * @return {@code true} only for GT large-vein ore blocks
+     */
+    public static boolean isGTLargeVeinOre(Block block, int meta) {
+        // New ore system: GTBlockOre, which encodes both large-vein and small ores via metadata.
+        if (hasGTBlockOre && gtBlockOreClass != null && gtBlockOreClass.isInstance(block)) {
+            try {
+                boolean isSmall = (boolean) gtBlockOreIsSmallMethod.invoke(block, meta);
+                return !isSmall;
+            } catch (Exception ignored) {}
+            return false;
+        }
+        // Legacy ore system: BlockOresAbstract only models large-vein ores.
+        if (hasBlockOresAbstract && gtBlockOresAbstractClass != null && gtBlockOresAbstractClass.isInstance(block)) {
+            return true;
+        }
+        return false;
     }
 
     /** Returns true if two ItemStacks are identical (type, damage, NBT). */

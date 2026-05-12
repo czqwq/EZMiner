@@ -15,6 +15,7 @@ package com.czqwq.EZMiner.core;
  * 3 = Ore-only blast (矿石爆破)
  * 4 = Logging blast (爆破伐木)
  * 5 = Inverse chain (反向连锁)
+ * 6 = GT vein ore precise (矿脉连锁精准)
  *
  * Chain sub-modes (chainMode):
  * 0 = Basic chain (基础连锁)
@@ -37,6 +38,7 @@ public class MinerModeState {
         "ezminer.mode.blast.oreOnly", // 3
         "ezminer.mode.blast.logging", // 4
         "ezminer.mode.blast.inverse", // 5
+        "ezminer.mode.blast.gtVeinOre", // 6
     };
 
     public static final String[] CHAIN_MODES = { "ezminer.mode.chain.basic", // 0
