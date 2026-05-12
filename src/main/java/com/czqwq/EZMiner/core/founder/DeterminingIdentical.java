@@ -49,6 +49,17 @@ public class DeterminingIdentical {
     static boolean hasAEQuartzCharged = false;
     /** True when the new-style {@code GTBlockOre} class is present (GT5 ≥ 5.09.xx). */
     static boolean hasGTBlockOre = false;
+    /** True when the legacy {@code BlockOresAbstractLegacy} class is present. */
+    static boolean hasBlockOresAbstractLegacy = false;
+
+    /**
+     * Metadata offset above which a {@code GTBlockOre} block is classified as a
+     * small / surface ore (贫瘠矿). Mirrors {@code GTBlockOre.SMALL_ORE_META_OFFSET}
+     * to avoid a reflection call on every block check. With NEID installed,
+     * {@code World.getBlockMetadata()} returns the full extended integer value, so
+     * small-ore blocks at coordinates yield values &ge; this constant.
+     */
+    private static final int GT_SMALL_ORE_META_OFFSET = 16000;
 
     // ===== Cached reflection objects (set once in checkCompatibility) =====
     private static volatile Class<?> gtTileEntityOresClass;
@@ -67,10 +78,12 @@ public class DeterminingIdentical {
      */
     private static volatile Class<?> gtBlockOreClass;
     /**
-     * Cached {@code GTBlockOre.isSmallOre(int)} method; set once in {@link #checkCompatibility()}.
-     * Used to distinguish large-vein GT ores from surface small ores (贫瘠矿).
+     * Cached {@code BlockOresAbstractLegacy} class reference; set once in
+     * {@link #checkCompatibility()}. Represents legacy GT large-vein ore blocks.
+     * Small ores are a separate class in the legacy system, so any instance of
+     * {@code BlockOresAbstractLegacy} is by definition a large-vein ore.
      */
-    private static volatile Method gtBlockOreIsSmallMethod;
+    private static volatile Class<?> gtBlockOresAbstractLegacyClass;
 
     // ===== Per-block-type ore cache =====
     /** Maps Block instance → isOreBlock result; populated lazily and shared across threads. */
@@ -89,6 +102,7 @@ public class DeterminingIdentical {
         hasAEQuartz = classExists("appeng.block.solids.OreQuartz");
         hasAEQuartzCharged = classExists("appeng.block.solids.OreQuartzCharged");
         hasGTBlockOre = classExists("gregtech.common.blocks.GTBlockOre");
+        hasBlockOresAbstractLegacy = classExists("gregtech.common.blocks.BlockOresAbstractLegacy");
 
         // Cache reflection references so identical() / isOreBlock() never call Class.forName()
         if (hasTileEntityOres) {
@@ -154,10 +168,17 @@ public class DeterminingIdentical {
         if (hasGTBlockOre) {
             try {
                 gtBlockOreClass = Class.forName("gregtech.common.blocks.GTBlockOre");
-                gtBlockOreIsSmallMethod = gtBlockOreClass.getMethod("isSmallOre", int.class);
             } catch (Exception e) {
                 EZMiner.LOG.debug("Failed to cache GTBlockOre reflection: {}", e.getMessage());
                 hasGTBlockOre = false;
+            }
+        }
+        if (hasBlockOresAbstractLegacy) {
+            try {
+                gtBlockOresAbstractLegacyClass = Class.forName("gregtech.common.blocks.BlockOresAbstractLegacy");
+            } catch (Exception e) {
+                EZMiner.LOG.debug("Failed to cache BlockOresAbstractLegacy reflection: {}", e.getMessage());
+                hasBlockOresAbstractLegacy = false;
             }
         }
     }
@@ -272,28 +293,47 @@ public class DeterminingIdentical {
     }
 
     /**
-     * Returns {@code true} if {@code block} at the given metadata is a GT large-vein ore —
-     * i.e. it is either the new-style {@code GTBlockOre} with {@code isSmallOre(meta) == false},
-     * or the legacy {@code BlockOresAbstract} (which only models large-vein ores).
+     * Returns {@code true} if {@code block} at the given metadata is a GT large-vein ore,
+     * explicitly excluding GT surface small ores (贫瘠矿).
      *
-     * <p>
-     * Small / surface ores (贫瘠矿) registered in {@code GTBlockOre} have
-     * {@code isSmallOre(meta) == true} and are therefore excluded.
+     * <h3>New ore system ({@code GTBlockOre})</h3>
+     * GT5 ≥ 5.09 stores both large-vein and small ores in the same {@code GTBlockOre}
+     * block class, distinguished purely by extended block metadata (requires NEID):
+     * <ul>
+     * <li>Large-vein ore: {@code meta < 16000} ({@code GT_SMALL_ORE_META_OFFSET})</li>
+     * <li>Small / surface ore: {@code meta >= 16000}</li>
+     * </ul>
+     * With NEID installed, {@code World.getBlockMetadata()} returns the full integer
+     * value, so this constant comparison works correctly without any method-call
+     * reflection.
+     *
+     * <h3>Legacy ore system ({@code BlockOresAbstractLegacy})</h3>
+     * The legacy system uses a separate block class for small ores, so every
+     * {@code BlockOresAbstractLegacy} instance is by definition a large-vein ore.
+     *
+     * <h3>Really-old legacy system ({@code BlockOresAbstract})</h3>
+     * Same reasoning as above — accepted unconditionally.
      *
      * @param block the block instance to test
-     * @param meta  the block metadata at the candidate position
+     * @param meta  the block metadata at the candidate position (NEID-extended for new system)
      * @return {@code true} only for GT large-vein ore blocks
      */
     public static boolean isGTLargeVeinOre(Block block, int meta) {
-        // New ore system: GTBlockOre, which encodes both large-vein and small ores via metadata.
+        // ── New ore system: GTBlockOre ─────────────────────────────────────────────────────
+        // Small ores have NEID-extended metadata >= GT_SMALL_ORE_META_OFFSET (16000).
+        // We use the constant directly to avoid a reflective method call and to ensure
+        // no silent exception causes the check to be skipped.
         if (hasGTBlockOre && gtBlockOreClass != null && gtBlockOreClass.isInstance(block)) {
-            try {
-                boolean isSmall = (boolean) gtBlockOreIsSmallMethod.invoke(block, meta);
-                return !isSmall;
-            } catch (Exception ignored) {}
-            return false;
+            return meta < GT_SMALL_ORE_META_OFFSET;
         }
-        // Legacy ore system: BlockOresAbstract only models large-vein ores.
+        // ── Legacy ore system: BlockOresAbstractLegacy ─────────────────────────────────────
+        // The legacy system uses entirely separate block classes for small ores, so every
+        // BlockOresAbstractLegacy instance is a large-vein ore.
+        if (hasBlockOresAbstractLegacy && gtBlockOresAbstractLegacyClass != null
+            && gtBlockOresAbstractLegacyClass.isInstance(block)) {
+            return true;
+        }
+        // ── Really-old legacy system: BlockOresAbstract ────────────────────────────────────
         if (hasBlockOresAbstract && gtBlockOresAbstractClass != null && gtBlockOresAbstractClass.isInstance(block)) {
             return true;
         }

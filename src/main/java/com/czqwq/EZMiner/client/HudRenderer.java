@@ -56,10 +56,13 @@ public class HudRenderer {
     // ── Wave animation constants ─────────────────────────────────────────────────────────────
     /** Milliseconds each character holds the spotlight in the wave phase. */
     private static final long WAVE_LETTER_MS = 250;
-    /** Milliseconds between each character turning white in the fill phase. */
-    private static final long FILL_LETTER_MS = 180;
-    /** Milliseconds all characters remain white before the cycle resets. */
-    private static final long HOLD_MS = 600;
+    /**
+     * Milliseconds between each character turning white in the fill phase.
+     * 7 letters × 114 ms ≈ 800 ms total fill duration.
+     */
+    private static final long FILL_LETTER_MS = 114;
+    /** Milliseconds all characters remain fully white before the cycle resets (1 s). */
+    private static final long HOLD_MS = 1000;
 
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
