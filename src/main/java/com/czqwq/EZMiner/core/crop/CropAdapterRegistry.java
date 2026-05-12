@@ -34,6 +34,9 @@ public class CropAdapterRegistry {
         if (Loader.isModLoaded("IC2")) {
             list.add(new Ic2CropAdapter());
         }
+        if (Loader.isModLoaded("Natura")) {
+            list.add(new NaturaCropAdapter());
+        }
         if (Loader.isModLoaded("cropsnh")) {
             list.add(new CropsNHCropAdapter());
         }
