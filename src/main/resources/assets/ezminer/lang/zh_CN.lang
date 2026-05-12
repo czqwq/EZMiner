@@ -20,6 +20,7 @@ ezminer.mode.blast.oreOnly=爆破: 矿石爆破
 ezminer.mode.blast.logging=爆破: 爆破伐木
 
 ezminer.mode.chain.basic=连锁: 基础连锁
+ezminer.mode.chain.fuzzy=连锁: 模糊模式
 ezminer.mode.special.minesweeper=特殊连锁: 扫雷模式
 ezminer.mode.special.crop=特殊连锁: 一键收作物
 

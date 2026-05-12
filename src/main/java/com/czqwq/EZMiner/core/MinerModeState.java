@@ -17,6 +17,7 @@ package com.czqwq.EZMiner.core;
  *
  * Chain sub-modes (chainMode):
  * 0 = Basic chain (基础连锁)
+ * 1 = Fuzzy chain (模糊模式 – same block type, any metadata)
  *
  * Special sub-modes (specialMode):
  * 0 = Minesweeper (扫雷模式)
@@ -37,6 +38,7 @@ public class MinerModeState {
     };
 
     public static final String[] CHAIN_MODES = { "ezminer.mode.chain.basic", // 0
+        "ezminer.mode.chain.fuzzy", // 1
     };
     public static final String[] SPECIAL_MODES = { "ezminer.mode.special.minesweeper", // 0
         "ezminer.mode.special.crop", // 1
