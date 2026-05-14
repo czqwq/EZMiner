@@ -19,9 +19,11 @@ import com.czqwq.EZMiner.core.MinerConfig;
  * {@link DeterminingIdentical#isOreBlock}), this founder is deliberately narrow:
  * <ul>
  * <li>For the new GT ore system ({@code GTBlockOre}): only blocks where
- * {@code GTBlockOre.isSmallOre(meta) == false} are accepted.</li>
- * <li>For the legacy GT ore system ({@code BlockOresAbstract}): all blocks are
- * accepted, as the legacy system uses a separate class for small ores.</li>
+ * {@code GTBlockOre.isSmallOre(meta) == false} are accepted (requires NEID for extended
+ * block metadata).</li>
+ * <li>For the legacy GT ore system ({@code BlockOresAbstractLegacy}): only blocks whose
+ * {@code TileEntityOres.mMetaData < 16000} are accepted, which correctly excludes small
+ * ore tile entities that share the same block class as large-vein ores.</li>
  * <li>Non-GT ores (vanilla, BartWorks, GTPlusPlus, AE2, …) are always rejected.</li>
  * </ul>
  *
@@ -49,7 +51,8 @@ public class GtVeinOreFounder extends BasePositionFounder {
         int blockMeta = player.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
         if (pos.x == cachedPlayerFloorX && pos.y == (cachedPlayerFloorY - 1) && pos.z == cachedPlayerFloorZ)
             return false;
-        if (!DeterminingIdentical.isGTLargeVeinOre(block, blockMeta)) return false;
+        if (!DeterminingIdentical.isGTLargeVeinOre(block, blockMeta, player.worldObj, pos.x, pos.y, pos.z))
+            return false;
         if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
         return block.canHarvestBlock(player, blockMeta);

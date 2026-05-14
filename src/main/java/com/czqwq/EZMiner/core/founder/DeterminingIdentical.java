@@ -1,7 +1,6 @@
 package com.czqwq.EZMiner.core.founder;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -14,6 +13,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 
 import org.joml.Vector3i;
 
@@ -63,7 +63,12 @@ public class DeterminingIdentical {
 
     // ===== Cached reflection objects (set once in checkCompatibility) =====
     private static volatile Class<?> gtTileEntityOresClass;
-    private static volatile Method gtGetMetaMethod;
+    /**
+     * {@code TileEntityOres.mMetaData} field. Used to read the ore-type metadata
+     * stored in legacy GT tile-entities. The {@code getMeta()} method was removed
+     * in GT5-Unofficial; the raw field is the only reliable accessor.
+     */
+    private static volatile Field tileEntityMMetaDataField;
     private static volatile Class<?> bwTileEntityClass;
     private static volatile Field bwMetaDataField;
     private static volatile Class<?> gtBlockOresAbstractClass;
@@ -79,9 +84,9 @@ public class DeterminingIdentical {
     private static volatile Class<?> gtBlockOreClass;
     /**
      * Cached {@code BlockOresAbstractLegacy} class reference; set once in
-     * {@link #checkCompatibility()}. Represents legacy GT large-vein ore blocks.
-     * Small ores are a separate class in the legacy system, so any instance of
-     * {@code BlockOresAbstractLegacy} is by definition a large-vein ore.
+     * {@link #checkCompatibility()}. In GT5-Unofficial, both large-vein and small ores use
+     * the same {@code BlockOresLegacy extends BlockOresAbstractLegacy} class; the ore size
+     * must be determined from {@code TileEntityOres.mMetaData}.
      */
     private static volatile Class<?> gtBlockOresAbstractLegacyClass;
 
@@ -108,7 +113,9 @@ public class DeterminingIdentical {
         if (hasTileEntityOres) {
             try {
                 gtTileEntityOresClass = Class.forName("gregtech.common.blocks.TileEntityOres");
-                gtGetMetaMethod = gtTileEntityOresClass.getMethod("getMeta");
+                // getMeta() was removed in GT5-Unofficial; the ore type is stored in the
+                // public field mMetaData (short). Cache the field for direct access.
+                tileEntityMMetaDataField = gtTileEntityOresClass.getField("mMetaData");
             } catch (Exception e) {
                 EZMiner.LOG.debug("Failed to cache GT TileEntityOres reflection: {}", e.getMessage());
                 hasTileEntityOres = false;
@@ -214,14 +221,14 @@ public class DeterminingIdentical {
         TileEntity tTile = player.worldObj.getTileEntity(pos.x, pos.y, pos.z);
         if (tTile == null) return true;
 
-        // GregTech ore tiles – use cached Class/Method references
+        // GregTech ore tiles – compare via mMetaData field (getMeta() was removed in GT5-Unofficial)
         if (hasTileEntityOres && gtTileEntityOresClass != null
             && gtTileEntityOresClass.isInstance(sTile)
-            && gtTileEntityOresClass.isInstance(tTile)) {
+            && gtTileEntityOresClass.isInstance(tTile)
+            && tileEntityMMetaDataField != null) {
             try {
-                int sm = (int) gtGetMetaMethod.invoke(sTile);
-                int tm = (int) gtGetMetaMethod.invoke(tTile);
-                return sm == tm;
+                return readUnsignedMeta(tileEntityMMetaDataField, sTile)
+                    == readUnsignedMeta(tileEntityMMetaDataField, tTile);
             } catch (Exception ignored) {}
         }
         // BartWorks meta blocks – use cached Class/Field references
@@ -296,6 +303,25 @@ public class DeterminingIdentical {
      * Returns {@code true} if {@code block} at the given metadata is a GT large-vein ore,
      * explicitly excluding GT surface small ores (贫瘠矿).
      *
+     * <p>
+     * This overload cannot inspect the tile entity at the candidate position, so for
+     * {@code BlockOresAbstractLegacy} blocks it conservatively returns {@code true} for all
+     * instances (safe for most callers). When world access is available, prefer
+     * {@link #isGTLargeVeinOre(Block, int, World, int, int, int)} which correctly excludes
+     * small ores in the legacy system.
+     *
+     * @param block the block instance to test
+     * @param meta  the block metadata at the candidate position (NEID-extended for new system)
+     * @return {@code true} only for GT large-vein ore blocks
+     */
+    public static boolean isGTLargeVeinOre(Block block, int meta) {
+        return isGTLargeVeinOre(block, meta, null, 0, 0, 0);
+    }
+
+    /**
+     * Returns {@code true} if {@code block} at the given metadata is a GT large-vein ore,
+     * explicitly excluding GT surface small ores (贫瘠矿).
+     *
      * <h3>New ore system ({@code GTBlockOre})</h3>
      * GT5 ≥ 5.09 stores both large-vein and small ores in the same {@code GTBlockOre}
      * block class, distinguished purely by extended block metadata (requires NEID):
@@ -308,36 +334,81 @@ public class DeterminingIdentical {
      * reflection.
      *
      * <h3>Legacy ore system ({@code BlockOresAbstractLegacy})</h3>
-     * The legacy system uses a separate block class for small ores, so every
-     * {@code BlockOresAbstractLegacy} instance is by definition a large-vein ore.
+     * In GT5-Unofficial, both large-vein <em>and</em> small ores use the same
+     * {@code BlockOresLegacy extends BlockOresAbstractLegacy} class. The only reliable
+     * way to distinguish them is via {@code TileEntityOres.mMetaData}: values &ge; 16000
+     * indicate a small ore (matching the same encoding used by {@code GTBlockOre}).
+     * When {@code world} is provided, this tile-entity check is performed. When
+     * {@code world} is {@code null} the method conservatively returns {@code true}
+     * (accepts the block) to avoid silently dropping valid large-vein ores.
      *
      * <h3>Really-old legacy system ({@code BlockOresAbstract})</h3>
-     * Same reasoning as above — accepted unconditionally.
+     * Same tile-entity check as above.
      *
      * @param block the block instance to test
      * @param meta  the block metadata at the candidate position (NEID-extended for new system)
+     * @param world the server world; may be {@code null} (see legacy note above)
+     * @param x     world X of the candidate position
+     * @param y     world Y of the candidate position
+     * @param z     world Z of the candidate position
      * @return {@code true} only for GT large-vein ore blocks
      */
-    public static boolean isGTLargeVeinOre(Block block, int meta) {
+    public static boolean isGTLargeVeinOre(Block block, int meta, World world, int x, int y, int z) {
         // ── New ore system: GTBlockOre ─────────────────────────────────────────────────────
         // Small ores have NEID-extended metadata >= GT_SMALL_ORE_META_OFFSET (16000).
-        // We use the constant directly to avoid a reflective method call and to ensure
-        // no silent exception causes the check to be skipped.
+        // We use the constant directly to avoid a reflective method call.
         if (hasGTBlockOre && gtBlockOreClass != null && gtBlockOreClass.isInstance(block)) {
             return meta < GT_SMALL_ORE_META_OFFSET;
         }
         // ── Legacy ore system: BlockOresAbstractLegacy ─────────────────────────────────────
-        // The legacy system uses entirely separate block classes for small ores, so every
-        // BlockOresAbstractLegacy instance is a large-vein ore.
+        // Both large-vein and small ores share BlockOresLegacy (extends BlockOresAbstractLegacy).
+        // Distinguish them via TileEntityOres.mMetaData: >= 16000 means small ore.
         if (hasBlockOresAbstractLegacy && gtBlockOresAbstractLegacyClass != null
             && gtBlockOresAbstractLegacyClass.isInstance(block)) {
-            return true;
+            return isLargeVeinByTileEntity(world, x, y, z);
         }
         // ── Really-old legacy system: BlockOresAbstract ────────────────────────────────────
         if (hasBlockOresAbstract && gtBlockOresAbstractClass != null && gtBlockOresAbstractClass.isInstance(block)) {
-            return true;
+            return isLargeVeinByTileEntity(world, x, y, z);
         }
         return false;
+    }
+
+    /**
+     * Reads {@code TileEntityOres.mMetaData} at the given position and returns
+     * {@code true} when the value indicates a large-vein ore (mMetaData < 16000).
+     *
+     * <p>
+     * Falls back to {@code true} (accept) when the world is null, the tile entity is
+     * absent, or reflection fails — this is the safe direction because it never hides
+     * a valid large-vein ore from the vein-mining queue.
+     */
+    private static boolean isLargeVeinByTileEntity(World world, int x, int y, int z) {
+        if (world == null || !hasTileEntityOres || gtTileEntityOresClass == null || tileEntityMMetaDataField == null) {
+            return true; // conservative: accept when we cannot verify
+        }
+        TileEntity te = world.getTileEntity(x, y, z);
+        if (te == null || !gtTileEntityOresClass.isInstance(te)) {
+            return true; // no ore tile entity — conservative accept
+        }
+        try {
+            return readUnsignedMeta(tileEntityMMetaDataField, te) < GT_SMALL_ORE_META_OFFSET;
+        } catch (Exception ignored) {
+            return true; // reflection failure — conservative accept
+        }
+    }
+
+    /**
+     * Reads a {@code public short} field from a tile entity and returns its value as an
+     * unsigned integer in the range [0, 65535].
+     *
+     * <p>
+     * The cast through {@code Short} (auto-unboxed by reflection) and the subsequent
+     * {@code & 0xFFFF} mask ensures that metadata values in the range 16000–32767
+     * (used by GT small-ore and natural-ore flags) are compared as positive integers.
+     */
+    private static int readUnsignedMeta(Field field, TileEntity te) throws ReflectiveOperationException {
+        return ((Short) field.get(te)) & 0xFFFF;
     }
 
     /** Returns true if two ItemStacks are identical (type, damage, NBT). */
