@@ -14,11 +14,12 @@ import io.netty.buffer.ByteBuf;
 public class PacketChainModeSwitch implements IMessage {
 
     private static final int MAX_MAIN_MODE = 2;
-    private static final int MAX_BLAST_MODE = 5;
-    // Current chain mode count is 1 (basic mode only), so max index is 0.
-    private static final int MAX_CHAIN_MODE = 0;
-    // Current special mode count is 1 (minesweeper mode only), so max index is 0.
-    private static final int MAX_SPECIAL_MODE = 0;
+    // Keep in sync with MinerModeState.BLAST_MODES.length - 1.
+    private static final int MAX_BLAST_MODE = 6;
+    // Keep in sync with MinerModeState.CHAIN_MODES.length - 1.
+    private static final int MAX_CHAIN_MODE = 1;
+    // Keep in sync with MinerModeState.SPECIAL_MODES.length - 1.
+    private static final int MAX_SPECIAL_MODE = 1;
 
     public int mainMode;
     public int blastMode;
