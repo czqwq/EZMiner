@@ -18,8 +18,11 @@ ezminer.mode.blast.sameType=爆破: 同类筛选
 ezminer.mode.blast.tunnel=爆破: 隧道爆破
 ezminer.mode.blast.oreOnly=爆破: 矿石爆破
 ezminer.mode.blast.logging=爆破: 爆破伐木
+ezminer.mode.blast.inverse=爆破: 反向连锁
+ezminer.mode.blast.gtVeinOre=爆破: GT矿脉精准
 
 ezminer.mode.chain.basic=连锁: 基础连锁
+ezminer.mode.chain.fuzzy=连锁: 模糊模式
 ezminer.mode.special.minesweeper=特殊连锁: 扫雷模式
 ezminer.mode.special.crop=特殊连锁: 一键收作物
 
@@ -36,6 +39,9 @@ ezminer.config.usePreview=按住连锁键时显示方块轮廓预览
 ezminer.config.useChainDoneMessage=连锁结束后显示提示消息
 ezminer.config.chainActivationMode=连锁键激活方式
 ezminer.config.suppressIngameInfoHud=显示EZMiner HUD时临时隐藏InGame Info XML
+ezminer.config.hudAnimationStyle=HUD动画样式
+ezminer.config.hudAnimStyle.rainbow=彩虹弹跳
+ezminer.config.hudAnimStyle.wave=波浪高亮
 ezminer.config.breakPerTick=每Tick最多破坏方块数
 ezminer.config.minesweeperCooldown=扫雷探测冷却时间（秒）
 ezminer.config.serverPreviewRadius=服务端允许的最大预览半径
