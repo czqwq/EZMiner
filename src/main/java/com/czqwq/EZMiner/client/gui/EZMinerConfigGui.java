@@ -49,6 +49,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_SERVER_RELOAD = 10;
     private static final int BTN_SERVER_SAVE = 11;
     private static final int BTN_CLOSE = 12;
+    private static final int BTN_HUD_ANIM_STYLE = 13;
 
     // ── Layout constants ──────────────────────────────────────────────────────
     private static final int GUI_W = 256;
@@ -114,6 +115,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnUseChainDoneMsg;
     private GuiButton btnChainActivationMode;
     private GuiButton btnSuppressIngameInfo;
+    private GuiButton btnHudAnimStyle;
     private GuiButton btnServerDropToPlayer;
     private GuiButton btnServerUsePreview;
 
@@ -186,6 +188,9 @@ public class EZMinerConfigGui extends GuiScreen {
             FIELD_H,
             boolLabel("ezminer.config.suppressIngameInfoHud", Config.suppressIngameInfoHud));
         buttonList.add(btnSuppressIngameInfo);
+
+        btnHudAnimStyle = new GuiButton(BTN_HUD_ANIM_STYLE, bx, clientRowY(10), bw, FIELD_H, hudAnimStyleLabel());
+        buttonList.add(btnHudAnimStyle);
 
         // Client bottom buttons
         buttonList.add(
@@ -313,6 +318,10 @@ public class EZMinerConfigGui extends GuiScreen {
                 btnSuppressIngameInfo.displayString = boolLabel(
                     "ezminer.config.suppressIngameInfoHud",
                     Config.suppressIngameInfoHud);
+                break;
+            case BTN_HUD_ANIM_STYLE:
+                Config.hudAnimationStyle = 1 - Config.hudAnimationStyle;
+                btnHudAnimStyle.displayString = hudAnimStyleLabel();
                 break;
 
             // ── Client actions ────────────────────────────────────────────────
@@ -491,6 +500,7 @@ public class EZMinerConfigGui extends GuiScreen {
             boolean isClientOnly = btn.id == BTN_USE_PREVIEW || btn.id == BTN_USE_CHAIN_DONE_MSG
                 || btn.id == BTN_CHAIN_ACTIVATION_MODE
                 || btn.id == BTN_SUPPRESS_INGAME_INFO
+                || btn.id == BTN_HUD_ANIM_STYLE
                 || btn.id == BTN_CLIENT_RELOAD
                 || btn.id == BTN_CLIENT_SAVE;
             boolean isServerOnly = btn.id == BTN_SERVER_DROP_TO_PLAYER || btn.id == BTN_SERVER_USE_PREVIEW
@@ -565,5 +575,11 @@ public class EZMinerConfigGui extends GuiScreen {
         String desc = Config.chainActivationMode == 0 ? I18n.format("ezminer.command.active_mode.desc.0")
             : I18n.format("ezminer.command.active_mode.desc.1");
         return I18n.format("ezminer.config.chainActivationMode") + ": " + desc;
+    }
+
+    private static String hudAnimStyleLabel() {
+        String style = Config.hudAnimationStyle == 0 ? I18n.format("ezminer.config.hudAnimStyle.rainbow")
+            : I18n.format("ezminer.config.hudAnimStyle.wave");
+        return I18n.format("ezminer.config.hudAnimationStyle") + ": \u00a7e" + style + "\u00a7r";
     }
 }

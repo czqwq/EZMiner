@@ -6,6 +6,7 @@ import com.czqwq.EZMiner.chain.mode.ChainModeBootstrap;
 import com.czqwq.EZMiner.chain.mode.ChainSubModeBootstrap;
 import com.czqwq.EZMiner.command.ReloadConfigCommand;
 import com.czqwq.EZMiner.core.PlayerManager;
+import com.czqwq.EZMiner.core.crop.CropAdapterRegistry;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
@@ -32,7 +33,9 @@ public class CommonProxy {
 
     public void init(FMLInitializationEvent event) {}
 
-    public void postInit(FMLPostInitializationEvent event) {}
+    public void postInit(FMLPostInitializationEvent event) {
+        CropAdapterRegistry.init();
+    }
 
     public void serverStarting(FMLServerStartingEvent event) {
         PlayerManager.instance = new PlayerManager();

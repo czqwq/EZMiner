@@ -4,13 +4,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockCrops;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentTranslation;
-import net.minecraftforge.common.util.ForgeDirection;
 
 import org.joml.Vector3i;
 
@@ -21,10 +17,11 @@ import com.czqwq.EZMiner.chain.execution.ChainActionExecutor;
 import com.czqwq.EZMiner.chain.execution.ChainExecutionErrorReporter;
 import com.czqwq.EZMiner.chain.execution.ChainExecutor;
 import com.czqwq.EZMiner.chain.execution.ChainHarvestExhaustionStrategy;
+import com.czqwq.EZMiner.chain.execution.CropHarvestActionExecutor;
 import com.czqwq.EZMiner.chain.execution.VisualProspectingBridge;
 import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
 import com.czqwq.EZMiner.chain.planning.ChainPlanningTask;
-import com.czqwq.EZMiner.core.founder.CropFounder;
+import com.czqwq.EZMiner.core.crop.CropAdapterRegistry;
 import com.czqwq.EZMiner.utils.MessageUtils;
 
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -53,6 +50,7 @@ public class BaseOperator {
      */
     private final Set<Long> vpNotifiedChunks = new HashSet<>();
     private final ChainActionExecutor harvestActionExecutor = new BlockHarvestActionExecutor();
+    private final ChainActionExecutor cropHarvestActionExecutor = new CropHarvestActionExecutor();
     private final ChainExecutor chainExecutor = new ChainExecutor(harvestActionExecutor);
     private final ChainHarvestExhaustionStrategy exhaustionStrategy = new ChainHarvestExhaustionStrategy();
     private final VisualProspectingBridge vpBridge = new VisualProspectingBridge();
@@ -166,7 +164,7 @@ public class BaseOperator {
     private boolean shouldHarvest(Vector3i pos) {
         if (!manager.isSpecialCropMode()) return true;
         if (playerMP.worldObj == null) return false;
-        return CropFounder.isMatureCrop(playerMP.worldObj, pos.x, pos.y, pos.z);
+        return CropAdapterRegistry.isMatureCrop(playerMP.worldObj, pos.x, pos.y, pos.z);
     }
 
     private boolean processCandidate(Vector3i pos) {
@@ -176,39 +174,17 @@ public class BaseOperator {
         }
         try {
             if (!shouldHarvest(pos)) return true;
-            Block preHarvestBlock = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
-            int preHarvestMeta = playerMP.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
             vpBridge.notifyOreDiscovery(playerMP, pos, vpNotifiedChunks);
-            boolean harvested = exhaustionStrategy.harvestWithConfiguredExhaustion(
-                playerMP,
-                pos,
-                (float) manager.pConfig.addExhaustion,
-                harvestActionExecutor);
+            ChainActionExecutor executor = manager.isSpecialCropMode() ? cropHarvestActionExecutor
+                : harvestActionExecutor;
+            boolean harvested = exhaustionStrategy
+                .harvestWithConfiguredExhaustion(playerMP, pos, (float) manager.pConfig.addExhaustion, executor);
             if (!harvested) return true;
-            replantVanillaCropIfNeeded(pos, preHarvestBlock, preHarvestMeta);
             operatorCount++;
         } catch (Exception e) {
             manager.reportRuntimeError("harvest_error");
             ChainExecutionErrorReporter.reportHarvestError(manager, pos, e);
         }
         return true;
-    }
-
-    private void replantVanillaCropIfNeeded(Vector3i pos, Block preHarvestBlock, int preHarvestMeta) {
-        if (!manager.isSpecialCropMode()) return;
-        if (!(preHarvestBlock instanceof BlockCrops)) return;
-        if (preHarvestMeta < 7) return;
-        Block current = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
-        if (current == Blocks.air && canSustainReplantedCrop(pos, (BlockCrops) preHarvestBlock)) {
-            playerMP.worldObj.setBlock(pos.x, pos.y, pos.z, preHarvestBlock, 0, 3);
-        }
-    }
-
-    private boolean canSustainReplantedCrop(Vector3i cropPos, BlockCrops cropBlock) {
-        if (cropPos.y <= 0) return false;
-        Block soil = playerMP.worldObj.getBlock(cropPos.x, cropPos.y - 1, cropPos.z);
-        if (soil == null || soil == Blocks.air) return false;
-        return soil == Blocks.farmland || soil
-            .canSustainPlant(playerMP.worldObj, cropPos.x, cropPos.y - 1, cropPos.z, ForgeDirection.UP, cropBlock);
     }
 }
