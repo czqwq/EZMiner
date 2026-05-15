@@ -18,8 +18,11 @@ ezminer.mode.blast.sameType=Blast: Same Type
 ezminer.mode.blast.tunnel=Blast: Tunnel
 ezminer.mode.blast.oreOnly=Blast: Ore Only
 ezminer.mode.blast.logging=Blast: Logging
+ezminer.mode.blast.inverse=Blast: Inverse Chain
+ezminer.mode.blast.gtVeinOre=Blast: GT Vein Ore (Precise)
 
 ezminer.mode.chain.basic=Chain: Basic
+ezminer.mode.chain.fuzzy=Chain: Fuzzy Mode
 ezminer.mode.special.minesweeper=Special Chain: Minesweeper Mode
 ezminer.mode.special.crop=Special Chain: Crop Harvest
 
@@ -36,6 +39,9 @@ ezminer.config.usePreview=Show block outline preview while chain key is held
 ezminer.config.useChainDoneMessage=Show completion message after each chain operation
 ezminer.config.chainActivationMode=Chain key activation mode
 ezminer.config.suppressIngameInfoHud=Temporarily hide InGame Info XML while EZMiner HUD is visible
+ezminer.config.hudAnimationStyle=HUD Animation
+ezminer.config.hudAnimStyle.rainbow=Rainbow Bounce
+ezminer.config.hudAnimStyle.wave=Wave Highlight
 ezminer.config.breakPerTick=Max blocks broken per server tick
 ezminer.config.minesweeperCooldown=Minesweeper probe cooldown (seconds)
 ezminer.config.serverPreviewRadius=Server max preview radius

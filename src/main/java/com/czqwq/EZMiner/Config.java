@@ -132,6 +132,19 @@ public class Config {
      */
     public static boolean suppressIngameInfoHud = false;
 
+    /**
+     * Controls which brand animation is rendered in the HUD header.
+     * <ul>
+     * <li>0 = Rainbow Bounce – the original per-character rainbow colour + bounce effect.</li>
+     * <li>1 = Wave Highlight – letters of "EZMiner" light up one-by-one as white italic
+     * (wave phase), then fill white left-to-right (fill phase), hold all-white briefly,
+     * then restart.</li>
+     * </ul>
+     */
+    public static int hudAnimationStyle = 0;
+
+    private static final String HUD_ANIMATION_STYLE_COMMENT = "HUD brand animation style. 0 = Rainbow Bounce (original). 1 = Wave Highlight (letters light up one-by-one then fill left-to-right).";
+
     private static final String CHAIN_ACTIVATION_MODE_COMMENT = "Controls how the chain key activates mining. "
         + "0 = Hold (keep the key held to keep mining, release to stop). "
         + "1 = Toggle (press once to start, press again to stop).";
@@ -461,6 +474,8 @@ public class Config {
             .getInt("chainActivationMode", CLIENT_CATEGORY, 0, 0, 1, CHAIN_ACTIVATION_MODE_COMMENT);
         suppressIngameInfoHud = clientConfiguration
             .getBoolean("suppressIngameInfoHud", CLIENT_CATEGORY, false, SUPPRESS_INGAMEINFO_HUD_COMMENT);
+        hudAnimationStyle = clientConfiguration
+            .getInt("hudAnimationStyle", CLIENT_CATEGORY, 0, 0, 1, HUD_ANIMATION_STYLE_COMMENT);
     }
 
     public static void setLegacyServerPreviewCaps(int maxBigRadius, int maxBlockLimit) {
@@ -535,6 +550,8 @@ public class Config {
             .set(chainActivationMode);
         clientConfiguration.get(CLIENT_CATEGORY, "suppressIngameInfoHud", false)
             .set(suppressIngameInfoHud);
+        clientConfiguration.get(CLIENT_CATEGORY, "hudAnimationStyle", 0)
+            .set(hudAnimationStyle);
         clientConfiguration.save();
     }
 }
