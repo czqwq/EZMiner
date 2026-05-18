@@ -35,6 +35,12 @@ import gregtech.common.blocks.TileEntityOres;
  * Fortune bonus.
  *
  * <p>
+ * <strong>Small ores</strong> ({@code mMetaData >= 16000}) use their own gem/crushed/dust drop
+ * table in GT5 and already scale with Fortune without a hard cap. This mixin therefore does not
+ * replace that logic; it only applies {@link Config#enableFortuneForPlacedOre} (if set) and then
+ * delegates back to the original method.
+ *
+ * <p>
  * <strong>This Mixin is applied once at JVM startup. Changes to the three fortune config options
  * cannot be picked up by {@code /EZMiner reloadConfig} — a full game restart is required.</strong>
  */
@@ -123,6 +129,16 @@ public abstract class MixinTileEntityOres {
                     }
                 }
             }
+        } else {
+            // Small ore (mMetaData >= 16000): the original GT5 small-ore drop system uses its own
+            // gem/crushed/dust table and already scales with fortune without a hard cap, so there
+            // is nothing to override here. We only need to honour enableFortuneForPlacedOre by
+            // marking placed ores as natural before delegating back to the original method.
+            if (Config.enableFortuneForPlacedOre) {
+                mNatural = true;
+            }
+            // Do NOT cancel — let the original GT5 small-ore drop logic run.
+            return;
         }
 
         cir.setReturnValue(rList);
