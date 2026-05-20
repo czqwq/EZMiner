@@ -93,10 +93,18 @@ When the [Visual Prospecting](https://github.com/GTNewHorizons/VisualProspecting
 
 ## Configuration
 
-Config file: `config/EZMiner/EZMiner.cfg`  
-Hot-reload command: `/EZMiner reloadConfig`
+EZMiner uses two separate config files stored in different locations:
 
-### Server-side Limits (admin-controlled caps)
+| File | Path | Description |
+|------|------|-------------|
+| **Client config** | `config/EZMiner/EZMiner.cfg` | Per-player local settings |
+| **Server config** | `EZMiner/EZMiner_Server.cfg` | Admin-controlled server settings, stored in the game root directory — `.minecraft/EZMiner/` on a client, `./EZMiner/` on a dedicated server |
+
+Most options support live hot-reload via `/EZMiner reloadConfig` without restarting the game.
+
+### Server Config (`EZMiner/EZMiner_Server.cfg`)
+
+Set by the server administrator. The effective value on each client is capped to these limits.
 
 | Key | Default | Description |
 |-----|---------|-------------|
@@ -105,20 +113,35 @@ Hot-reload command: `/EZMiner reloadConfig`
 | `smallRadius` | `2` | Adjacency detection radius in chain mode — blocks within this range count as "connected" |
 | `tunnelWidth` | `1` | Half-width of the tunnel in Tunnel sub-mode (blocks) |
 | `breakPerTick` | `16` | Maximum blocks broken per server tick (hard cap 64) — lower values reduce TPS impact on large veins |
+| `addExhaustion` | `0.025` | Food exhaustion added per block mined (negative values restore food) |
+| `dropToPlayer` | `true` | Where to deliver batched drops: `true` = at the player's feet (default), `false` = at the origin block where mining started |
+| `serverUsePreview` | `true` | Global server preview switch — `false` disables the block-outline preview for all clients |
+| `serverMaxPreviewBigRadius` | `8` | Maximum preview search radius allowed by the server |
+| `serverMaxPreviewBlockLimit` | `1024` | Maximum preview block count allowed by the server |
+| `minesweeperProbeCooldownSeconds` | `5` | Cooldown in seconds between auto-flag operations in Special / Minesweeper mode |
 
-### Client / Player Settings
+### Client Config (`config/EZMiner/EZMiner.cfg`)
+
+Adjusted by each player individually. Effective values are capped by the server limits above.
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `addExhaustion` | `0.025` | Food exhaustion added per block mined (negative values restore food) |
-| `dropToPlayer` | `true` | Where to deliver batched drops: `true` = at the player's feet (default), `false` = at the origin block where mining started |
 | `usePreview` | `true` | Show block outline preview while chain is active |
 | `useChainDoneMessage` | `true` | Show a chat summary when a chain operation finishes |
+| `clientBigRadius` | `8` | Preferred chain radius (capped by server max) |
+| `clientBlockLimit` | `1024` | Preferred max blocks per operation (capped by server max) |
+| `clientSmallRadius` | `2` | Preferred adjacency detection radius (capped by server max) |
+| `clientTunnelWidth` | `1` | Preferred tunnel half-width (capped by server max) |
+| `previewBigRadius` | `8` | Max search radius for the client-side preview (capped by server max) |
+| `previewBlockLimit` | `256` | Max blocks shown in the client-side preview (capped by server max) |
 | `chainActivationMode` | `0` | Chain key behaviour: `0` = **hold** to activate (default), `1` = **click to toggle** on/off |
+| `hudPosX` / `hudPosY` | `5` / `5` | HUD position on screen in pixels (origin at top-left) |
+| `suppressIngameInfoHud` | `false` | Temporarily hide the InGame Info XML HUD while the chain key is held, preventing overlap (requires InGame Info XML) |
+| `hudAnimationStyle` | `0` | HUD brand animation style: `0` = Rainbow Bounce (default), `1` = Wave Highlight |
 
-### Fortune Cap Override (Mixin feature, disabled by default)
+### Fortune Cap Override (server config, Mixin feature, disabled by default)
 
-> ⚠️ **The three options below are applied via Mixin at JVM startup. They cannot be changed via `/EZMiner reloadConfig` — a full game restart is required after editing them.**
+> ⚠️ **The three options below are in the server config (`EZMiner/EZMiner_Server.cfg`) and are applied via Mixin at JVM startup. They cannot be changed via `/EZMiner reloadConfig` — a full game restart is required after editing them.**
 
 | Key | Default | Description |
 |-----|---------|-------------|

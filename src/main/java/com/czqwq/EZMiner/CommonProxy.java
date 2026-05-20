@@ -17,13 +17,21 @@ import cpw.mods.fml.common.event.FMLServerStartingEvent;
 public class CommonProxy {
 
     public void preInit(FMLPreInitializationEvent event) {
-        // Put config into config/EZMiner/EZMiner.cfg instead of the default config root
-        File configDir = new File(
+        // Client config: config/EZMiner/EZMiner.cfg
+        File clientConfigDir = new File(
             event.getSuggestedConfigurationFile()
                 .getParentFile(),
             "EZMiner");
-        configDir.mkdirs();
-        Config.init(new File(configDir, "EZMiner.cfg"), new File(configDir, "EZMiner_Server.cfg"));
+        clientConfigDir.mkdirs();
+        // Server config: <game_root>/EZMiner/EZMiner_Server.cfg
+        // On a dedicated server this is ./EZMiner/; on a client it is .minecraft/EZMiner/
+        File serverConfigDir = new File(
+            event.getSuggestedConfigurationFile()
+                .getParentFile()
+                .getParentFile(),
+            "EZMiner");
+        serverConfigDir.mkdirs();
+        Config.init(new File(clientConfigDir, "EZMiner.cfg"), new File(serverConfigDir, "EZMiner_Server.cfg"));
         Config.register();
         EZMiner.network.registry();
         ChainModeBootstrap.bootstrap(EZMiner.chainModeRegistry);

@@ -88,9 +88,18 @@
 
 ## 配置文件
 
-配置文件位于 `config/EZMiner/EZMiner.cfg`，大多数选项支持 `/EZMiner reloadConfig` 热重载。
+EZMiner 将配置文件分为两个，分别存放在不同位置：
 
-### 服务端限制（管理员设置上限）
+| 文件 | 路径 | 说明 |
+|------|------|------|
+| **客户端配置** | `config/EZMiner/EZMiner.cfg` | 玩家本地设置，每个客户端独立 |
+| **服务端配置** | `EZMiner/EZMiner_Server.cfg` | 服务器管理员设置（位于游戏根目录下）；单人游戏时在 `.minecraft/EZMiner/`，多人服务端时在 `./EZMiner/` |
+
+大多数选项支持 `/EZMiner reloadConfig` 热重载，无需重启游戏。
+
+### 服务端配置（`EZMiner/EZMiner_Server.cfg`）
+
+由管理员统一设置，客户端的实际生效值不会超过此处的上限。
 
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
@@ -99,20 +108,35 @@
 | `smallRadius` | `2` | 连锁模式邻接检测半径（格）——在此半径内的相同方块视为"相邻" |
 | `tunnelWidth` | `1` | 隧道爆破的半宽度（格） |
 | `breakPerTick` | `16` | 每个服务端 tick 最多破坏的方块数（最高 64）——数值越低对 TPS 影响越小 |
+| `addExhaustion` | `0.025` | 每挖一个方块消耗的饥饿值（负值可恢复饥饿） |
+| `dropToPlayer` | `true` | 掉落物处理方式（`true` = 直接掉落到玩家脚下（默认）；`false` = 掉落在首个被挖掘的方块处） |
+| `serverUsePreview` | `true` | 服务器全局预览开关，`false` 时禁用所有客户端的预览功能 |
+| `serverMaxPreviewBigRadius` | `8` | 服务端允许的最大预览半径 |
+| `serverMaxPreviewBlockLimit` | `1024` | 服务端允许的最大预览方块数 |
+| `minesweeperProbeCooldownSeconds` | `5` | 特殊模式/扫雷自动标记操作的冷却时间（秒） |
 
-### 客户端/玩家设置
+### 客户端配置（`config/EZMiner/EZMiner.cfg`）
+
+由玩家自行调整，实际生效值受服务端上限约束。
 
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
-| `addExhaustion` | `0.025` | 每挖一个方块消耗的饥饿值（负值可恢复饥饿） |
-| `dropToPlayer` | `true` | 掉落物处理方式（`true` = 直接掉落到玩家脚下（默认）；`false` = 掉落在首个被挖掘的方块处） |
 | `usePreview` | `true` | 是否显示方块边框预览 |
 | `useChainDoneMessage` | `true` | 连锁结束后是否在聊天栏显示统计消息 |
+| `clientBigRadius` | `8` | 客户端期望的连锁半径（受服务端上限约束） |
+| `clientBlockLimit` | `1024` | 客户端期望的最大挖掘方块数（受服务端上限约束） |
+| `clientSmallRadius` | `2` | 客户端期望的邻接检测半径（受服务端上限约束） |
+| `clientTunnelWidth` | `1` | 客户端期望的隧道半宽度（受服务端上限约束） |
+| `previewBigRadius` | `8` | 客户端预览的最大搜索半径（受服务端上限约束） |
+| `previewBlockLimit` | `256` | 客户端预览最多显示的方块数（受服务端上限约束） |
 | `chainActivationMode` | `0` | 连锁键激活方式：`0` = **按住**激活（默认），`1` = **点击切换**开关 |
+| `hudPosX` / `hudPosY` | `5` / `5` | HUD 在屏幕上的像素坐标（原点在左上角） |
+| `suppressIngameInfoHud` | `false` | 按住连锁键时临时隐藏 InGame Info XML 的 HUD，防止两者重叠（需安装 InGame Info XML）|
+| `hudAnimationStyle` | `0` | HUD 标题动画风格：`0` = 彩虹弹跳（默认），`1` = 波浪高亮 |
 
-### 时运破上限（Mixin 功能，默认关闭）
+### 时运破上限（服务端配置，Mixin 功能，默认关闭）
 
-> ⚠️ **以下三项通过 Mixin 在 JVM 启动时注入，修改后必须重启游戏才能生效，无法通过 `/EZMiner reloadConfig` 热重载。**
+> ⚠️ **以下三项位于服务端配置文件（`EZMiner/EZMiner_Server.cfg`），通过 Mixin 在 JVM 启动时注入，修改后必须重启游戏才能生效，无法通过 `/EZMiner reloadConfig` 热重载。**
 
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
