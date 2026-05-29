@@ -1,8 +1,6 @@
 package com.czqwq.EZMiner.core;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -80,11 +78,8 @@ public class PlayerManager {
 
     @SubscribeEvent
     public void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.START) return;
-        List<Manager> managerSnapshot = new ArrayList<>(managers.values());
-        for (Manager manager : managerSnapshot) {
-            manager.tickSpecialMode();
-        }
+        // Per-player special-mode ticking is now handled in Manager.onWorldTick
+        // (once per world tick for the player's own world), so nothing to do here.
     }
 
     public void registry() {

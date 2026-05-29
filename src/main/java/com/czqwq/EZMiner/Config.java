@@ -143,6 +143,21 @@ public class Config {
      */
     public static int hudAnimationStyle = 0;
 
+    /**
+     * Controls the rendering style of the block-outline preview.
+     * <ul>
+     * <li>0 = Native – single-pass wireframe with no depth test (original).</li>
+     * <li>1 = Modern – two-pass rendering inspired by FTB-Ultimine: solid visible edges
+     * (depth-tested) and translucent hidden edges (no depth test) giving a clean silhouette
+     * with depth perception.</li>
+     * </ul>
+     */
+    public static int renderStyle = 0;
+
+    private static final String RENDER_STYLE_COMMENT = "Preview outline rendering style. "
+        + "0 = Native (single-pass wireframe, original). "
+        + "1 = Modern (two-pass: solid visible lines + translucent hidden lines, FTB-Ultimine inspired).";
+
     private static final String HUD_ANIMATION_STYLE_COMMENT = "HUD brand animation style. 0 = Rainbow Bounce (original). 1 = Wave Highlight (letters light up one-by-one then fill left-to-right).";
 
     private static final String CHAIN_ACTIVATION_MODE_COMMENT = "Controls how the chain key activates mining. "
@@ -476,6 +491,7 @@ public class Config {
             .getBoolean("suppressIngameInfoHud", CLIENT_CATEGORY, false, SUPPRESS_INGAMEINFO_HUD_COMMENT);
         hudAnimationStyle = clientConfiguration
             .getInt("hudAnimationStyle", CLIENT_CATEGORY, 0, 0, 1, HUD_ANIMATION_STYLE_COMMENT);
+        renderStyle = clientConfiguration.getInt("renderStyle", CLIENT_CATEGORY, 0, 0, 1, RENDER_STYLE_COMMENT);
     }
 
     public static void setLegacyServerPreviewCaps(int maxBigRadius, int maxBlockLimit) {
@@ -552,6 +568,8 @@ public class Config {
             .set(suppressIngameInfoHud);
         clientConfiguration.get(CLIENT_CATEGORY, "hudAnimationStyle", 0)
             .set(hudAnimationStyle);
+        clientConfiguration.get(CLIENT_CATEGORY, "renderStyle", 0)
+            .set(renderStyle);
         clientConfiguration.save();
     }
 }

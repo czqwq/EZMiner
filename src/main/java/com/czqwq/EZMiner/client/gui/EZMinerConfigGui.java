@@ -50,6 +50,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_SERVER_SAVE = 11;
     private static final int BTN_CLOSE = 12;
     private static final int BTN_HUD_ANIM_STYLE = 13;
+    private static final int BTN_RENDER_STYLE = 14;
 
     // ── Layout constants ──────────────────────────────────────────────────────
     private static final int GUI_W = 256;
@@ -72,7 +73,7 @@ public class EZMinerConfigGui extends GuiScreen {
      * Number of content rows that must fit between {@link #CONTENT_START_Y} and the
      * action-button strip. The server tab has the most rows (9 fields + 2 toggles = 11).
      */
-    private static final int MAX_CONTENT_ROWS = 11;
+    private static final int MAX_CONTENT_ROWS = 12;
     /** Minimum row height in pixels (must be >= FIELD_H + 1). */
     private static final int MIN_ROW_H = 13;
     /** Height of the action-button strip at the bottom of the panel (px). */
@@ -116,6 +117,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnChainActivationMode;
     private GuiButton btnSuppressIngameInfo;
     private GuiButton btnHudAnimStyle;
+    private GuiButton btnRenderStyle;
     private GuiButton btnServerDropToPlayer;
     private GuiButton btnServerUsePreview;
 
@@ -192,6 +194,9 @@ public class EZMinerConfigGui extends GuiScreen {
         btnHudAnimStyle = new GuiButton(BTN_HUD_ANIM_STYLE, bx, clientRowY(10), bw, FIELD_H, hudAnimStyleLabel());
         buttonList.add(btnHudAnimStyle);
 
+        btnRenderStyle = new GuiButton(BTN_RENDER_STYLE, bx, clientRowY(11), bw, FIELD_H, renderStyleLabel());
+        buttonList.add(btnRenderStyle);
+
         // Client bottom buttons
         buttonList.add(
             new GuiButton(
@@ -266,7 +271,7 @@ public class EZMinerConfigGui extends GuiScreen {
         // Title
         drawCenteredString(
             mc.fontRenderer,
-            "\u00a7b[EZMiner] \u00a7f" + I18n.format("ezminer.gui.title"),
+            "§b[EZMiner] §f" + I18n.format("ezminer.gui.title"),
             guiLeft + GUI_W / 2,
             guiTop + 6,
             0xFFFFFF);
@@ -322,6 +327,10 @@ public class EZMinerConfigGui extends GuiScreen {
             case BTN_HUD_ANIM_STYLE:
                 Config.hudAnimationStyle = 1 - Config.hudAnimationStyle;
                 btnHudAnimStyle.displayString = hudAnimStyleLabel();
+                break;
+            case BTN_RENDER_STYLE:
+                Config.renderStyle = 1 - Config.renderStyle;
+                btnRenderStyle.displayString = renderStyleLabel();
                 break;
 
             // ── Client actions ────────────────────────────────────────────────
@@ -501,6 +510,7 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_CHAIN_ACTIVATION_MODE
                 || btn.id == BTN_SUPPRESS_INGAME_INFO
                 || btn.id == BTN_HUD_ANIM_STYLE
+                || btn.id == BTN_RENDER_STYLE
                 || btn.id == BTN_CLIENT_RELOAD
                 || btn.id == BTN_CLIENT_SAVE;
             boolean isServerOnly = btn.id == BTN_SERVER_DROP_TO_PLAYER || btn.id == BTN_SERVER_USE_PREVIEW
@@ -568,7 +578,7 @@ public class EZMinerConfigGui extends GuiScreen {
     }
 
     private static String boolLabel(String key, boolean value) {
-        return I18n.format(key) + ": " + (value ? "\u00a7aON\u00a7r" : "\u00a7cOFF\u00a7r");
+        return I18n.format(key) + ": " + (value ? "§aON§r" : "§cOFF§r");
     }
 
     private static String activationModeLabel() {
@@ -580,6 +590,12 @@ public class EZMinerConfigGui extends GuiScreen {
     private static String hudAnimStyleLabel() {
         String style = Config.hudAnimationStyle == 0 ? I18n.format("ezminer.config.hudAnimStyle.rainbow")
             : I18n.format("ezminer.config.hudAnimStyle.wave");
-        return I18n.format("ezminer.config.hudAnimationStyle") + ": \u00a7e" + style + "\u00a7r";
+        return I18n.format("ezminer.config.hudAnimationStyle") + ": §e" + style + "§r";
+    }
+
+    private static String renderStyleLabel() {
+        String style = Config.renderStyle == 0 ? I18n.format("ezminer.config.renderStyle.native")
+            : I18n.format("ezminer.config.renderStyle.modern");
+        return I18n.format("ezminer.config.renderStyle") + ": §e" + style + "§r";
     }
 }
