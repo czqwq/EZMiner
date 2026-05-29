@@ -271,7 +271,7 @@ public class EZMinerConfigGui extends GuiScreen {
         // Title
         drawCenteredString(
             mc.fontRenderer,
-            "\u00a7b[EZMiner] \u00a7f" + I18n.format("ezminer.gui.title"),
+            "§b[EZMiner] §f" + I18n.format("ezminer.gui.title"),
             guiLeft + GUI_W / 2,
             guiTop + 6,
             0xFFFFFF);
@@ -578,7 +578,7 @@ public class EZMinerConfigGui extends GuiScreen {
     }
 
     private static String boolLabel(String key, boolean value) {
-        return I18n.format(key) + ": " + (value ? "\u00a7aON\u00a7r" : "\u00a7cOFF\u00a7r");
+        return I18n.format(key) + ": " + (value ? "§aON§r" : "§cOFF§r");
     }
 
     private static String activationModeLabel() {
@@ -590,12 +590,12 @@ public class EZMinerConfigGui extends GuiScreen {
     private static String hudAnimStyleLabel() {
         String style = Config.hudAnimationStyle == 0 ? I18n.format("ezminer.config.hudAnimStyle.rainbow")
             : I18n.format("ezminer.config.hudAnimStyle.wave");
-        return I18n.format("ezminer.config.hudAnimationStyle") + ": \u00a7e" + style + "\u00a7r";
+        return I18n.format("ezminer.config.hudAnimationStyle") + ": §e" + style + "§r";
     }
 
     private static String renderStyleLabel() {
         String style = Config.renderStyle == 0 ? I18n.format("ezminer.config.renderStyle.native")
             : I18n.format("ezminer.config.renderStyle.modern");
-        return I18n.format("ezminer.config.renderStyle") + ": \u00a7e" + style + "\u00a7r";
+        return I18n.format("ezminer.config.renderStyle") + ": §e" + style + "§r";
     }
 }
