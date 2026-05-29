@@ -77,3 +77,7 @@ ezminer.command.hud.pos.set=EZMiner: HUD位置已设置为 x=%s, y=%s。
 ezminer.message.chain.done=EZMiner: 连锁完成；方块数=%s；耗时=%ss
 ezminer.message.chain.error=EZMiner: 挖掘方块 %s 时出错：%s
 ezminer.message.special.minesweeper.marked=EZMiner: 已标记雷点 -> (%s, %s, %s), 距离=%s格
+
+ezminer.config.renderStyle=预览渲染风格
+ezminer.config.renderStyle.native=原生
+ezminer.config.renderStyle.modern=现代

@@ -277,6 +277,15 @@ public class MinerRenderer {
      * without any matrix math.
      */
     private void doRender() {
+        if (Config.renderStyle == 1) {
+            doRenderModern();
+        } else {
+            doRenderNative();
+        }
+    }
+
+    /** Native single-pass wireframe (original behaviour). */
+    private void doRenderNative() {
         if (lastIndexCount <= 0) return;
 
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
@@ -291,6 +300,45 @@ public class MinerRenderer {
         GL11.glLineWidth(2.0F);
         GL11.glColor4f(0.25F, 0.9F, 1.0F, 0.8F);
 
+        renderCache.render(lastIndexCount);
+
+        GL11.glPopMatrix();
+        GL11.glPopAttrib();
+    }
+
+    /**
+     * Modern two-pass rendering inspired by FTB-Ultimine.
+     *
+     * <p>
+     * Pass 1 – depth-tested: draws visible outline edges as solid, opaque, thicker lines so
+     * the preview hugs block surfaces correctly and has clear depth perception.
+     *
+     * <p>
+     * Pass 2 – no depth test: draws the same edges with low alpha so the selection shape
+     * is still readable through solid geometry (hidden-line ghost effect).
+     */
+    private void doRenderModern() {
+        if (lastIndexCount <= 0) return;
+
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushMatrix();
+        GL11.glTranslated(-RenderManager.renderPosX, -RenderManager.renderPosY, -RenderManager.renderPosZ);
+
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_CULL_FACE);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+        // Pass 1: visible edges – depth-tested, solid, thick, bright white-cyan
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glLineWidth(2.5F);
+        GL11.glColor4f(0.8F, 1.0F, 1.0F, 1.0F);
+        renderCache.render(lastIndexCount);
+
+        // Pass 2: hidden edges – no depth test, translucent, thin, dim cyan
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glLineWidth(1.0F);
+        GL11.glColor4f(0.25F, 0.9F, 1.0F, 0.2F);
         renderCache.render(lastIndexCount);
 
         GL11.glPopMatrix();
