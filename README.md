@@ -33,8 +33,7 @@
 
 ### 连锁模式
 
-从玩家击中的方块出发，以**同心圆层**向外扩展，自动搜索并连锁所有**相同类型**的相邻方块。  
-搜索以优先队列实现，距离越近的方块越先被挖掘，视觉上呈现由近及远的球形扩散效果。
+从玩家击中的方块出发，自动搜索并连锁所有**相同类型**的相邻方块。距离越近的方块越先被挖掘，呈现由近及远的球形扩散效果。
 
 ### 爆破模式
 
@@ -133,6 +132,7 @@ EZMiner 将配置文件分为两个，分别存放在不同位置：
 | `hudPosX` / `hudPosY` | `5` / `5` | HUD 在屏幕上的像素坐标（原点在左上角） |
 | `suppressIngameInfoHud` | `false` | 按住连锁键时临时隐藏 InGame Info XML 的 HUD，防止两者重叠（需安装 InGame Info XML）|
 | `hudAnimationStyle` | `0` | HUD 标题动画风格：`0` = 彩虹弹跳（默认），`1` = 波浪高亮 |
+| `renderStyle` | `0` | 方块边框预览渲染风格：`0` = 原生（单通道线框，默认），`1` = 现代（双通道渲染，可见边实心、遮挡边半透明） |
 
 ### 时运破上限（服务端配置，Mixin 功能，默认关闭）
 
@@ -180,85 +180,3 @@ EZMiner 将配置文件分为两个，分别存放在不同位置：
 - Minecraft **1.7.10**
 - Forge **10.13.4.1614**
 - GregTech: New Horizons（GTNH）整合包
-- 已启用 Mixin（`usesMixins = true`），用于时运破上限功能；连锁采矿主体逻辑通过 Forge/FML 事件与分层模块实现
-
----
-
-## 性能优化
-
-EZMiner 针对大矿脉连锁场景做了多项专项优化，力求对服务器 TPS 影响降到最低：
-
-- **掉落物合并 O(1)**：用 `LinkedHashMap<ItemStackKey, ItemStack>` 替换线性扫描，消除了原版实现中每 tick 数千次 `isSame` 调用造成的 50%+ 主线程占用
-- **已访问集合压缩**：用 `HashSet<Long>` 代替 `HashSet<Vector3i>` 跟踪已遍历坐标，大幅降低 GC 压力
-- **优先队列 BFS**：连锁模式使用优先队列按欧式距离排序，不仅保证视觉上的球形扩散效果，也使短链操作提前结束而非遍历整个半径
-- **分片 Tick 预算**：搜索线程每 64 次候选检查主动让出一次，配合 `breakPerTick` 上限共同控制每 tick 的世界写入量，避免瞬时光照更新堆积
-- **区块安全防线**：所有后台搜索操作均通过 `blockExists()` 检查，防止触发异步区块生成导致"TickNextTick list out of synch"崩溃
-- **客户端坐标缓存**：玩家脚下坐标在搜索启动时缓存一次，避免每次候选检查都重新计算 `Math.floor`
-
----
-
-## 架构（重构后）
-
-```
-输入命令层（客户端）:
-  KeyListener -> PacketKeyState / PacketChainModeSwitch
-
-权威状态层（服务端）:
-  ChainStateService
-    ├─ ChainPlayerState（长期状态）
-    ├─ ChainRuntimeState（运行态）
-    └─ ChainSession（会话）
-
-规划层（只读世界）:
-  chain/planning/*  +  ParallelTick 纯计算任务
-
-执行层（主线程写世界）:
-  BaseOperator -> ChainExecutor / BlockHarvestActionExecutor
-              -> ChainDropCollector / 饥饿策略 / VP 桥接
-
-同步层:
-  PacketChainStateSync（服务端权威回传）
-
-客户端显示层:
-  ChainClientState + ChainPreviewController + HudRenderer/MinerRenderer
-```
-
-### 运行态状态机（简化）
-
-1. 客户端按键变化发送命令包  
-2. 服务端更新权威状态，满足条件后启动会话  
-3. 规划线程产出候选方块（不写世界）  
-4. 主线程执行收获并同步 `PacketChainStateSync`  
-5. 结束时统一掉落投放并清理会话/运行态
-
-### 网络时序（简化）
-
-1. C -> S: `PacketKeyState`（按下/松开）  
-2. C -> S: `PacketChainModeSwitch`（模式切换）  
-3. S -> C: `PacketChainStateSync`（session/count/elapsed/inOperate）
-
----
-
-## 调试与排障
-
-- 推荐先执行：`./gradlew spotlessApply build`
-- 重点日志入口：
-  - 执行错误：`ChainExecutionErrorReporter`
-  - 生命周期清理：`chain/lifecycle/ChainLifecycleService`
-  - 状态同步：`chain/network/PacketChainStateSync`
-- 常见排查：
-  - 预览不更新：检查客户端 `ChainPreviewController` 冻结/解冻状态
-  - 多人串线：检查 `sessionId` 与 UUID 维度匹配
-  - 掉落异常：检查 `Manager.onHarvestDrops` 与 Bandit 共存分支
-
----
-
-## 迁移对照（旧 -> 新）
-
-| 旧职责/类 | 新职责/类 |
-|---|---|
-| `Manager` 运行态拼装 | `ChainStateService` + `ChainPlayerState`/`ChainRuntimeState` |
-| `MinerModeState#createPositionFounder` | `chain/mode/*` + `ChainPlanningRuntimeFactory` |
-| `BaseOperator` 内聚执行逻辑 | `ChainExecutor` + `ChainActionExecutor` + 独立策略组件 |
-| 旧预览与执行耦合 | `ChainPreviewController` + `ChainClientState` |
-| 字段式状态同步 | 命令包（`PacketKeyState`/`PacketChainModeSwitch`）+ 权威回传（`PacketChainStateSync`） |

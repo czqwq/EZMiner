@@ -33,7 +33,7 @@ A high-performance chain-mining mod for **Minecraft 1.7.10**, designed specifica
 
 ### Chain Mode
 
-Starting from the block you break, EZMiner performs a **priority-queue BFS flood-fill** outward, finding all connected blocks of the **same type**. Blocks closest to the origin are mined first, producing a smooth sphere-shaped expansion effect.
+Starting from the block you break, EZMiner automatically finds all connected blocks of the **same type** and mines them outward. Blocks closest to the origin are mined first, producing a smooth sphere-shaped expansion effect.
 
 ### Blast Mode
 
@@ -138,6 +138,7 @@ Adjusted by each player individually. Effective values are capped by the server 
 | `hudPosX` / `hudPosY` | `5` / `5` | HUD position on screen in pixels (origin at top-left) |
 | `suppressIngameInfoHud` | `false` | Temporarily hide the InGame Info XML HUD while the chain key is held, preventing overlap (requires InGame Info XML) |
 | `hudAnimationStyle` | `0` | HUD brand animation style: `0` = Rainbow Bounce (default), `1` = Wave Highlight |
+| `renderStyle` | `0` | Block outline preview style: `0` = Native (single-pass wireframe, default), `1` = Modern (two-pass: solid visible lines + translucent hidden lines) |
 
 ### Fortune Cap Override (server config, Mixin feature, disabled by default)
 
