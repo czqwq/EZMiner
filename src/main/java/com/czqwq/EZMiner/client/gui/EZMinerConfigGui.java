@@ -3,9 +3,13 @@ package com.czqwq.EZMiner.client.gui;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.util.MathHelper;
 
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.GL11;
 
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
@@ -19,14 +23,10 @@ import cpw.mods.fml.relauncher.SideOnly;
 /**
  * In-game configuration GUI for EZMiner.
  *
- * <ul>
- * <li><strong>Client Settings</strong> tab – edits the local client config file.
- * <em>Reload</em> re-fetches server runtime limits and reloads client config from disk.
- * <em>Save &amp; Apply</em> writes in-memory edits to disk and syncs to server.</li>
- * <li><strong>Server Settings</strong> tab – visible only to OP players. Edits are
- * sent to the server via {@link PacketSaveServerConfig}.
- * <em>Reload</em> makes the server re-read its config file.</li>
- * </ul>
+ * <p>
+ * Content rows are rendered in a scrollable viewport so the GUI works on any screen
+ * resolution. The header (title + tab selectors) and the action-button strip (Save /
+ * Reload / Close) are always visible; only the middle content area scrolls.
  */
 @SideOnly(Side.CLIENT)
 public class EZMinerConfigGui extends GuiScreen {
@@ -53,39 +53,41 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_RENDER_STYLE = 14;
 
     // ── Layout constants ──────────────────────────────────────────────────────
-    private static final int GUI_W = 256;
-    /** Maximum GUI height; actual height is capped to the available screen height. */
-    private static final int MAX_GUI_H = 280;
-    /** X offset of the label column relative to guiLeft. */
-    private static final int LABEL_X = 8;
-    /** X offset of the value text-field column relative to guiLeft. */
-    private static final int FIELD_X = 148;
-    /** Width of each text field. */
-    private static final int FIELD_W = 76;
-    /**
-     * Height of each text field / toggle button.
-     * Kept at 12 px so it always fits within the minimum adaptive row height.
-     */
-    private static final int FIELD_H = 12;
-    /** Y position of the first content row relative to guiTop. */
-    private static final int CONTENT_START_Y = 38;
-    /**
-     * Number of content rows that must fit between {@link #CONTENT_START_Y} and the
-     * action-button strip. The server tab has the most rows (9 fields + 2 toggles = 11).
-     */
+    private static final int GUI_W = 290;
+    /** Maximum GUI height before clamping to screen. */
+    private static final int MAX_GUI_H = 318;
+    private static final int LABEL_X = 10;
+    private static final int FIELD_X = 162;
+    private static final int FIELD_W = 100;
+    private static final int FIELD_H = 14;
+    /** Y (relative to guiTop) where scrollable content begins. */
+    private static final int CONTENT_START_Y = 42;
     private static final int MAX_CONTENT_ROWS = 12;
-    /** Minimum row height in pixels (must be >= FIELD_H + 1). */
-    private static final int MIN_ROW_H = 13;
-    /** Height of the action-button strip at the bottom of the panel (px). */
-    private static final int ACTION_STRIP_H = 44;
+    private static final int ROW_H = 20;
+    /** Height reserved for the action-button strip at the bottom. */
+    private static final int ACTION_STRIP_H = 48;
+    /** Minimum height of the scrollable content viewport. */
+    private static final int MIN_VIEWPORT_H = ROW_H * 3;
+    /** Scrollbar width in pixels. */
+    private static final int SCROLLBAR_W = 4;
 
-    // ── Adaptive layout (computed per initGui call) ───────────────────────────
+    // ── Adaptive layout (computed in initGui) ─────────────────────────────────
     /** Actual panel height for the current screen. */
     private int guiH;
-    /** Pixels between content rows for the current screen. */
-    private int rowH;
-    /** Y offset (relative to guiTop) of the bottom action-button row. */
+    /** Y of the action-button row, relative to guiTop. */
     private int actionBtnY;
+    /** Top of scrollable viewport, in absolute screen Y. */
+    private int viewportTop;
+    /** Bottom of scrollable viewport (= top of action-button strip), in absolute screen Y. */
+    private int viewportBottom;
+    /** Height of the scrollable viewport in pixels. */
+    private int viewportH;
+    /** Total height of all content rows for the active tab. */
+    private int totalContentH;
+
+    // ── Scroll state ──────────────────────────────────────────────────────────
+    /** Current scroll offset in pixels (0 = top). */
+    private int scrollY = 0;
 
     // ── State ────────────────────────────────────────────────────────────────
     private int activeTab = TAB_CLIENT;
@@ -111,7 +113,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiTextField tfServerMaxPreviewRadius;
     private GuiTextField tfServerMaxPreviewLimit;
 
-    // ── Toggle button references (for updating display text on click) ─────────
+    // ── Toggle button references ──────────────────────────────────────────────
     private GuiButton btnUsePreview;
     private GuiButton btnUseChainDoneMsg;
     private GuiButton btnChainActivationMode;
@@ -126,39 +128,47 @@ public class EZMinerConfigGui extends GuiScreen {
     @Override
     @SuppressWarnings("unchecked")
     public void initGui() {
-        // ── Adaptive layout ───────────────────────────────────────────────────
-        guiH = Math.min(MAX_GUI_H, height - 10);
-        rowH = Math.max(MIN_ROW_H, (guiH - CONTENT_START_Y - ACTION_STRIP_H) / MAX_CONTENT_ROWS);
-        actionBtnY = guiH - 26;
+        // ── Panel sizing ──────────────────────────────────────────────────────
+        // Reserve at least MIN_VIEWPORT_H for content + fixed header/footer.
+        int minH = CONTENT_START_Y + MIN_VIEWPORT_H + ACTION_STRIP_H + 6;
+        guiH = MathHelper.clamp_int(MAX_GUI_H, minH, height - 6);
         guiLeft = (width - GUI_W) / 2;
         guiTop = (height - guiH) / 2;
+
+        actionBtnY = guiH - ACTION_STRIP_H + 10;
+        viewportTop = guiTop + CONTENT_START_Y;
+        viewportBottom = guiTop + actionBtnY - 6;
+        viewportH = viewportBottom - viewportTop;
+
+        // Reset scroll when GUI is (re)opened.
+        scrollY = 0;
         buttonList.clear();
 
-        // Tab selector buttons
+        // ── Fixed: tab selector buttons ───────────────────────────────────────
         buttonList.add(
-            new GuiButton(BTN_TAB_CLIENT, guiLeft + 4, guiTop + 18, 116, 16, I18n.format("ezminer.gui.tab.client")));
+            new GuiButton(BTN_TAB_CLIENT, guiLeft + 4, guiTop + 18, 138, 18, I18n.format("ezminer.gui.tab.client")));
         if (EZMiner.clientIsOp) {
             buttonList.add(
                 new GuiButton(
                     BTN_TAB_SERVER,
-                    guiLeft + 124,
+                    guiLeft + 148,
                     guiTop + 18,
-                    116,
-                    16,
+                    138,
+                    18,
                     I18n.format("ezminer.gui.tab.server")));
         }
 
-        // Close button (top-right)
+        // Close button (top-right corner)
         buttonList.add(new GuiButton(BTN_CLOSE, guiLeft + GUI_W - 20, guiTop + 4, 16, 12, "X"));
 
-        // ── Client tab toggles ────────────────────────────────────────────────
+        // ── Scrollable: client tab toggle buttons ─────────────────────────────
         int bx = guiLeft + LABEL_X;
-        int bw = GUI_W - 2 * LABEL_X;
-        int y = clientRowY(6);
+        int bw = GUI_W - 2 * LABEL_X - SCROLLBAR_W - 2;
+
         btnUsePreview = new GuiButton(
             BTN_USE_PREVIEW,
             bx,
-            y,
+            contentRowScreenY(6),
             bw,
             FIELD_H,
             boolLabel("ezminer.config.usePreview", Config.usePreview));
@@ -167,7 +177,7 @@ public class EZMinerConfigGui extends GuiScreen {
         btnUseChainDoneMsg = new GuiButton(
             BTN_USE_CHAIN_DONE_MSG,
             bx,
-            clientRowY(7),
+            contentRowScreenY(7),
             bw,
             FIELD_H,
             boolLabel("ezminer.config.useChainDoneMessage", Config.useChainDoneMessage));
@@ -176,7 +186,7 @@ public class EZMinerConfigGui extends GuiScreen {
         btnChainActivationMode = new GuiButton(
             BTN_CHAIN_ACTIVATION_MODE,
             bx,
-            clientRowY(8),
+            contentRowScreenY(8),
             bw,
             FIELD_H,
             activationModeLabel());
@@ -185,42 +195,48 @@ public class EZMinerConfigGui extends GuiScreen {
         btnSuppressIngameInfo = new GuiButton(
             BTN_SUPPRESS_INGAME_INFO,
             bx,
-            clientRowY(9),
+            contentRowScreenY(9),
             bw,
             FIELD_H,
             boolLabel("ezminer.config.suppressIngameInfoHud", Config.suppressIngameInfoHud));
         buttonList.add(btnSuppressIngameInfo);
 
-        btnHudAnimStyle = new GuiButton(BTN_HUD_ANIM_STYLE, bx, clientRowY(10), bw, FIELD_H, hudAnimStyleLabel());
+        btnHudAnimStyle = new GuiButton(
+            BTN_HUD_ANIM_STYLE,
+            bx,
+            contentRowScreenY(10),
+            bw,
+            FIELD_H,
+            hudAnimStyleLabel());
         buttonList.add(btnHudAnimStyle);
 
-        btnRenderStyle = new GuiButton(BTN_RENDER_STYLE, bx, clientRowY(11), bw, FIELD_H, renderStyleLabel());
+        btnRenderStyle = new GuiButton(BTN_RENDER_STYLE, bx, contentRowScreenY(11), bw, FIELD_H, renderStyleLabel());
         buttonList.add(btnRenderStyle);
 
-        // Client bottom buttons
+        // ── Fixed: client action buttons ──────────────────────────────────────
         buttonList.add(
             new GuiButton(
                 BTN_CLIENT_RELOAD,
-                guiLeft + 4,
+                guiLeft + 6,
                 guiTop + actionBtnY,
-                120,
-                18,
+                134,
+                20,
                 I18n.format("ezminer.gui.apply")));
         buttonList.add(
             new GuiButton(
                 BTN_CLIENT_SAVE,
-                guiLeft + 128,
+                guiLeft + 150,
                 guiTop + actionBtnY,
-                120,
-                18,
+                134,
+                20,
                 I18n.format("ezminer.gui.saveAndExit")));
 
-        // ── Server tab toggles ────────────────────────────────────────────────
+        // ── Scrollable: server tab toggle buttons ─────────────────────────────
         if (EZMiner.clientIsOp) {
             btnServerDropToPlayer = new GuiButton(
                 BTN_SERVER_DROP_TO_PLAYER,
                 bx,
-                serverRowY(9),
+                contentRowScreenY(9),
                 bw,
                 FIELD_H,
                 boolLabel("ezminer.config.dropToPlayer", Config.dropToPlayer));
@@ -229,27 +245,28 @@ public class EZMinerConfigGui extends GuiScreen {
             btnServerUsePreview = new GuiButton(
                 BTN_SERVER_USE_PREVIEW,
                 bx,
-                serverRowY(10),
+                contentRowScreenY(10),
                 bw,
                 FIELD_H,
                 boolLabel("ezminer.config.serverUsePreview", Config.serverUsePreview));
             buttonList.add(btnServerUsePreview);
 
+            // Fixed: server action buttons
             buttonList.add(
                 new GuiButton(
                     BTN_SERVER_RELOAD,
-                    guiLeft + 4,
+                    guiLeft + 6,
                     guiTop + actionBtnY,
-                    120,
-                    18,
+                    134,
+                    20,
                     I18n.format("ezminer.gui.reload.server")));
             buttonList.add(
                 new GuiButton(
                     BTN_SERVER_SAVE,
-                    guiLeft + 128,
+                    guiLeft + 150,
                     guiTop + actionBtnY,
-                    120,
-                    18,
+                    134,
+                    20,
                     I18n.format("ezminer.gui.save")));
         }
 
@@ -259,15 +276,31 @@ public class EZMinerConfigGui extends GuiScreen {
             initServerFields();
         }
 
+        recalcTotalContentH();
         updateTabVisibility();
+    }
+
+    @Override
+    public void handleMouseInput() {
+        super.handleMouseInput();
+        int wheel = Mouse.getEventDWheel();
+        if (wheel != 0) {
+            int delta = wheel > 0 ? -ROW_H : ROW_H;
+            scrollY = MathHelper.clamp_int(scrollY + delta, 0, maxScroll());
+            updateScrolledPositions();
+        }
     }
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
-        // Panel background
+
+        // Outer shadow / panel
+        drawRect(guiLeft - 1, guiTop - 1, guiLeft + GUI_W + 1, guiTop + guiH + 1, 0x88000000);
         drawRect(guiLeft, guiTop, guiLeft + GUI_W, guiTop + guiH, 0xCC000000);
         drawRect(guiLeft + 1, guiTop + 1, guiLeft + GUI_W - 1, guiTop + guiH - 1, 0xFF1A1A2E);
+        // Top accent line
+        drawRect(guiLeft + 1, guiTop + 1, guiLeft + GUI_W - 1, guiTop + 3, 0xFF4466CC);
         // Title
         drawCenteredString(
             mc.fontRenderer,
@@ -275,9 +308,13 @@ public class EZMinerConfigGui extends GuiScreen {
             guiLeft + GUI_W / 2,
             guiTop + 6,
             0xFFFFFF);
-        // Horizontal dividers
-        drawRect(guiLeft + 2, guiTop + 36, guiLeft + GUI_W - 2, guiTop + 37, 0xFF4444AA);
-        drawRect(guiLeft + 2, guiTop + actionBtnY - 4, guiLeft + GUI_W - 2, guiTop + actionBtnY - 3, 0xFF444466);
+        // Tab divider
+        drawRect(guiLeft + 2, guiTop + 36, guiLeft + GUI_W - 2, guiTop + 37, 0xFF4455AA);
+        // Action-strip divider
+        drawRect(guiLeft + 2, guiTop + actionBtnY - 6, guiLeft + GUI_W - 2, guiTop + actionBtnY - 5, 0xFF333355);
+
+        // ── Viewport clipping ─────────────────────────────────────────────────
+        enableScissor(guiLeft + 1, viewportTop, GUI_W - 2, viewportH);
 
         if (activeTab == TAB_CLIENT) {
             drawClientTab();
@@ -285,6 +322,12 @@ public class EZMinerConfigGui extends GuiScreen {
             drawServerTab();
         }
 
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+
+        // ── Scrollbar ────────────────────────────────────────────────────────
+        drawScrollbar();
+
+        // Draw fixed buttons and everything else (outside scissor)
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -293,17 +336,22 @@ public class EZMinerConfigGui extends GuiScreen {
         switch (button.id) {
             case BTN_TAB_CLIENT:
                 activeTab = TAB_CLIENT;
+                scrollY = 0;
+                recalcTotalContentH();
                 updateTabVisibility();
+                updateScrolledPositions();
                 break;
             case BTN_TAB_SERVER:
                 activeTab = TAB_SERVER;
+                scrollY = 0;
+                recalcTotalContentH();
                 updateTabVisibility();
+                updateScrolledPositions();
                 break;
             case BTN_CLOSE:
                 mc.displayGuiScreen(null);
                 break;
 
-            // ── Client toggles ────────────────────────────────────────────────
             case BTN_USE_PREVIEW:
                 Config.usePreview = !Config.usePreview;
                 btnUsePreview.displayString = boolLabel("ezminer.config.usePreview", Config.usePreview);
@@ -333,18 +381,14 @@ public class EZMinerConfigGui extends GuiScreen {
                 btnRenderStyle.displayString = renderStyleLabel();
                 break;
 
-            // ── Client actions ────────────────────────────────────────────────
             case BTN_CLIENT_RELOAD:
-                // "Apply" – saves current field values to disk and syncs to server, stays open.
                 applyAndSaveClientConfig();
                 break;
             case BTN_CLIENT_SAVE:
-                // "Save & Exit" – saves then closes the GUI.
                 applyAndSaveClientConfig();
                 mc.displayGuiScreen(null);
                 break;
 
-            // ── Server toggles ────────────────────────────────────────────────
             case BTN_SERVER_DROP_TO_PLAYER:
                 Config.dropToPlayer = !Config.dropToPlayer;
                 btnServerDropToPlayer.displayString = boolLabel("ezminer.config.dropToPlayer", Config.dropToPlayer);
@@ -356,7 +400,6 @@ public class EZMinerConfigGui extends GuiScreen {
                     Config.serverUsePreview);
                 break;
 
-            // ── Server actions ────────────────────────────────────────────────
             case BTN_SERVER_RELOAD:
                 EZMiner.network.network.sendToServer(new PacketReloadServerConfig());
                 break;
@@ -372,6 +415,8 @@ public class EZMinerConfigGui extends GuiScreen {
     @Override
     protected void mouseClicked(int x, int y, int mouseButton) {
         super.mouseClicked(x, y, mouseButton);
+        // Only forward clicks that land inside the scrollable viewport.
+        if (y < viewportTop || y >= viewportBottom) return;
         if (activeTab == TAB_CLIENT) {
             tfClientBigRadius.mouseClicked(x, y, mouseButton);
             tfClientBlockLimit.mouseClicked(x, y, mouseButton);
@@ -423,105 +468,221 @@ public class EZMinerConfigGui extends GuiScreen {
         return false;
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // ── Layout helpers ────────────────────────────────────────────────────────
 
-    /** Y coordinate (absolute screen) for client-tab row {@code index} (0-based). */
-    private int clientRowY(int index) {
-        return guiTop + CONTENT_START_Y + index * rowH;
+    /**
+     * Returns the current absolute screen-Y of content row {@code index}, accounting
+     * for the current scroll offset.
+     */
+    private int contentRowScreenY(int index) {
+        return viewportTop + index * ROW_H - scrollY;
     }
 
-    /** Y coordinate (absolute screen) for server-tab row {@code index} (0-based). */
-    private int serverRowY(int index) {
-        return guiTop + CONTENT_START_Y + index * rowH;
+    /** Maximum allowed scrollY for the active tab. */
+    private int maxScroll() {
+        return Math.max(0, totalContentH - viewportH);
     }
 
-    /** Initialises all client-tab text fields at their correct positions. */
+    /** Recalculates totalContentH based on active tab row count. */
+    private void recalcTotalContentH() {
+        int rows = (activeTab == TAB_CLIENT) ? MAX_CONTENT_ROWS : 11;
+        totalContentH = rows * ROW_H;
+    }
+
+    /**
+     * Repositions all scrollable content (text fields + toggle buttons) after the
+     * scroll offset or active tab changes.
+     */
+    private void updateScrolledPositions() {
+        // Clamp first
+        scrollY = MathHelper.clamp_int(scrollY, 0, maxScroll());
+
+        if (activeTab == TAB_CLIENT) {
+            int fx = guiLeft + FIELD_X;
+            tfClientBigRadius.yPosition = contentRowScreenY(0);
+            tfClientBlockLimit.yPosition = contentRowScreenY(1);
+            tfClientSmallRadius.yPosition = contentRowScreenY(2);
+            tfClientTunnelWidth.yPosition = contentRowScreenY(3);
+            tfPreviewBigRadius.yPosition = contentRowScreenY(4);
+            tfPreviewBlockLimit.yPosition = contentRowScreenY(5);
+
+            setScrolledButtonY(BTN_USE_PREVIEW, contentRowScreenY(6));
+            setScrolledButtonY(BTN_USE_CHAIN_DONE_MSG, contentRowScreenY(7));
+            setScrolledButtonY(BTN_CHAIN_ACTIVATION_MODE, contentRowScreenY(8));
+            setScrolledButtonY(BTN_SUPPRESS_INGAME_INFO, contentRowScreenY(9));
+            setScrolledButtonY(BTN_HUD_ANIM_STYLE, contentRowScreenY(10));
+            setScrolledButtonY(BTN_RENDER_STYLE, contentRowScreenY(11));
+        } else if (EZMiner.clientIsOp) {
+            tfServerBigRadius.yPosition = contentRowScreenY(0);
+            tfServerBlockLimit.yPosition = contentRowScreenY(1);
+            tfServerSmallRadius.yPosition = contentRowScreenY(2);
+            tfServerTunnelWidth.yPosition = contentRowScreenY(3);
+            tfBreakPerTick.yPosition = contentRowScreenY(4);
+            tfAddExhaustion.yPosition = contentRowScreenY(5);
+            tfMinesweeperCooldown.yPosition = contentRowScreenY(6);
+            tfServerMaxPreviewRadius.yPosition = contentRowScreenY(7);
+            tfServerMaxPreviewLimit.yPosition = contentRowScreenY(8);
+
+            setScrolledButtonY(BTN_SERVER_DROP_TO_PLAYER, contentRowScreenY(9));
+            setScrolledButtonY(BTN_SERVER_USE_PREVIEW, contentRowScreenY(10));
+        }
+
+        // Update per-button visibility: hide when scrolled out of viewport.
+        updateTabVisibility();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void setScrolledButtonY(int id, int y) {
+        for (Object obj : buttonList) {
+            GuiButton btn = (GuiButton) obj;
+            if (btn.id == id) {
+                btn.yPosition = y;
+                return;
+            }
+        }
+    }
+
+    // ── Field initialisation ──────────────────────────────────────────────────
+
     private void initClientFields() {
         int fx = guiLeft + FIELD_X;
-        tfClientBigRadius = field(fx, clientRowY(0), String.valueOf(Config.clientBigRadius));
-        tfClientBlockLimit = field(fx, clientRowY(1), String.valueOf(Config.clientBlockLimit));
-        tfClientSmallRadius = field(fx, clientRowY(2), String.valueOf(Config.clientSmallRadius));
-        tfClientTunnelWidth = field(fx, clientRowY(3), String.valueOf(Config.clientTunnelWidth));
-        tfPreviewBigRadius = field(fx, clientRowY(4), String.valueOf(Config.previewBigRadius));
-        tfPreviewBlockLimit = field(fx, clientRowY(5), String.valueOf(Config.previewBlockLimit));
+        tfClientBigRadius = field(fx, contentRowScreenY(0), String.valueOf(Config.clientBigRadius));
+        tfClientBlockLimit = field(fx, contentRowScreenY(1), String.valueOf(Config.clientBlockLimit));
+        tfClientSmallRadius = field(fx, contentRowScreenY(2), String.valueOf(Config.clientSmallRadius));
+        tfClientTunnelWidth = field(fx, contentRowScreenY(3), String.valueOf(Config.clientTunnelWidth));
+        tfPreviewBigRadius = field(fx, contentRowScreenY(4), String.valueOf(Config.previewBigRadius));
+        tfPreviewBlockLimit = field(fx, contentRowScreenY(5), String.valueOf(Config.previewBlockLimit));
     }
 
-    /** Initialises all server-tab text fields at their correct positions. */
     private void initServerFields() {
         int fx = guiLeft + FIELD_X;
-        tfServerBigRadius = field(fx, serverRowY(0), String.valueOf(Config.bigRadius));
-        tfServerBlockLimit = field(fx, serverRowY(1), String.valueOf(Config.blockLimit));
-        tfServerSmallRadius = field(fx, serverRowY(2), String.valueOf(Config.smallRadius));
-        tfServerTunnelWidth = field(fx, serverRowY(3), String.valueOf(Config.tunnelWidth));
-        tfBreakPerTick = field(fx, serverRowY(4), String.valueOf(Config.breakPerTick));
-        tfAddExhaustion = field(fx, serverRowY(5), String.valueOf(Config.addExhaustion));
-        tfMinesweeperCooldown = field(fx, serverRowY(6), String.valueOf(Config.minesweeperProbeCooldownSeconds));
-        tfServerMaxPreviewRadius = field(fx, serverRowY(7), String.valueOf(Config.serverMaxPreviewBigRadius));
-        tfServerMaxPreviewLimit = field(fx, serverRowY(8), String.valueOf(Config.serverMaxPreviewBlockLimit));
+        tfServerBigRadius = field(fx, contentRowScreenY(0), String.valueOf(Config.bigRadius));
+        tfServerBlockLimit = field(fx, contentRowScreenY(1), String.valueOf(Config.blockLimit));
+        tfServerSmallRadius = field(fx, contentRowScreenY(2), String.valueOf(Config.smallRadius));
+        tfServerTunnelWidth = field(fx, contentRowScreenY(3), String.valueOf(Config.tunnelWidth));
+        tfBreakPerTick = field(fx, contentRowScreenY(4), String.valueOf(Config.breakPerTick));
+        tfAddExhaustion = field(fx, contentRowScreenY(5), String.valueOf(Config.addExhaustion));
+        tfMinesweeperCooldown = field(fx, contentRowScreenY(6), String.valueOf(Config.minesweeperProbeCooldownSeconds));
+        tfServerMaxPreviewRadius = field(fx, contentRowScreenY(7), String.valueOf(Config.serverMaxPreviewBigRadius));
+        tfServerMaxPreviewLimit = field(fx, contentRowScreenY(8), String.valueOf(Config.serverMaxPreviewBlockLimit));
     }
 
-    /** Convenience factory for a positioned, pre-filled text field. */
     private GuiTextField field(int x, int y, String initialText) {
         GuiTextField tf = new GuiTextField(mc.fontRenderer, x, y, FIELD_W, FIELD_H);
         tf.setText(initialText);
         return tf;
     }
 
-    /** Draws labels and text fields for the client settings tab. */
+    // ── Draw helpers ──────────────────────────────────────────────────────────
+
     private void drawClientTab() {
         int lx = guiLeft + LABEL_X;
         int lc = 0xCCCCCC;
-        drawRow(lx, clientRowY(0), lc, "ezminer.config.bigRadius", tfClientBigRadius);
-        drawRow(lx, clientRowY(1), lc, "ezminer.config.blockLimit", tfClientBlockLimit);
-        drawRow(lx, clientRowY(2), lc, "ezminer.config.smallRadius", tfClientSmallRadius);
-        drawRow(lx, clientRowY(3), lc, "ezminer.config.tunnelWidth", tfClientTunnelWidth);
-        drawRow(lx, clientRowY(4), lc, "ezminer.config.previewBigRadius", tfPreviewBigRadius);
-        drawRow(lx, clientRowY(5), lc, "ezminer.config.previewBlockLimit", tfPreviewBlockLimit);
-        // Boolean toggles are rendered by super.drawScreen via the buttonList.
+
+        drawSectionHeader(lx, contentRowScreenY(0) - 10, "§9§l— §7Mining §9§l—");
+        drawRow(lx, contentRowScreenY(0), lc, "ezminer.config.bigRadius", tfClientBigRadius);
+        drawRow(lx, contentRowScreenY(1), lc, "ezminer.config.blockLimit", tfClientBlockLimit);
+        drawRow(lx, contentRowScreenY(2), lc, "ezminer.config.smallRadius", tfClientSmallRadius);
+        drawRow(lx, contentRowScreenY(3), lc, "ezminer.config.tunnelWidth", tfClientTunnelWidth);
+
+        drawSectionHeader(lx, contentRowScreenY(4) - 10, "§9§l— §7Preview §9§l—");
+        drawRow(lx, contentRowScreenY(4), lc, "ezminer.config.previewBigRadius", tfPreviewBigRadius);
+        drawRow(lx, contentRowScreenY(5), lc, "ezminer.config.previewBlockLimit", tfPreviewBlockLimit);
+
+        int sepY = contentRowScreenY(5) + FIELD_H + (ROW_H - FIELD_H) / 2;
+        drawRect(guiLeft + LABEL_X, sepY, guiLeft + GUI_W - LABEL_X - SCROLLBAR_W - 2, sepY + 1, 0xFF33335A);
+
+        drawSectionHeader(lx, contentRowScreenY(6) - 10, "§9§l— §7Options §9§l—");
     }
 
-    /** Draws labels and text fields for the server settings tab. */
     private void drawServerTab() {
         int lx = guiLeft + LABEL_X;
         int lc = 0xCCCCCC;
-        drawRow(lx, serverRowY(0), lc, "ezminer.config.bigRadius", tfServerBigRadius);
-        drawRow(lx, serverRowY(1), lc, "ezminer.config.blockLimit", tfServerBlockLimit);
-        drawRow(lx, serverRowY(2), lc, "ezminer.config.smallRadius", tfServerSmallRadius);
-        drawRow(lx, serverRowY(3), lc, "ezminer.config.tunnelWidth", tfServerTunnelWidth);
-        drawRow(lx, serverRowY(4), lc, "ezminer.config.breakPerTick", tfBreakPerTick);
-        drawRow(lx, serverRowY(5), lc, "ezminer.config.addExhaustion", tfAddExhaustion);
-        drawRow(lx, serverRowY(6), lc, "ezminer.config.minesweeperCooldown", tfMinesweeperCooldown);
-        drawRow(lx, serverRowY(7), lc, "ezminer.config.serverPreviewRadius", tfServerMaxPreviewRadius);
-        drawRow(lx, serverRowY(8), lc, "ezminer.config.serverPreviewLimit", tfServerMaxPreviewLimit);
+
+        drawSectionHeader(lx, contentRowScreenY(0) - 10, "§9§l— §7Mining §9§l—");
+        drawRow(lx, contentRowScreenY(0), lc, "ezminer.config.bigRadius", tfServerBigRadius);
+        drawRow(lx, contentRowScreenY(1), lc, "ezminer.config.blockLimit", tfServerBlockLimit);
+        drawRow(lx, contentRowScreenY(2), lc, "ezminer.config.smallRadius", tfServerSmallRadius);
+        drawRow(lx, contentRowScreenY(3), lc, "ezminer.config.tunnelWidth", tfServerTunnelWidth);
+        drawRow(lx, contentRowScreenY(4), lc, "ezminer.config.breakPerTick", tfBreakPerTick);
+        drawRow(lx, contentRowScreenY(5), lc, "ezminer.config.addExhaustion", tfAddExhaustion);
+        drawRow(lx, contentRowScreenY(6), lc, "ezminer.config.minesweeperCooldown", tfMinesweeperCooldown);
+
+        drawSectionHeader(lx, contentRowScreenY(7) - 10, "§9§l— §7Preview §9§l—");
+        drawRow(lx, contentRowScreenY(7), lc, "ezminer.config.serverPreviewRadius", tfServerMaxPreviewRadius);
+        drawRow(lx, contentRowScreenY(8), lc, "ezminer.config.serverPreviewLimit", tfServerMaxPreviewLimit);
+
+        int sepY = contentRowScreenY(8) + FIELD_H + (ROW_H - FIELD_H) / 2;
+        drawRect(guiLeft + LABEL_X, sepY, guiLeft + GUI_W - LABEL_X - SCROLLBAR_W - 2, sepY + 1, 0xFF33335A);
+
+        drawSectionHeader(lx, contentRowScreenY(9) - 10, "§9§l— §7Options §9§l—");
     }
 
-    /** Draws a label and its associated text field on a single row. */
     private void drawRow(int labelX, int y, int color, String labelKey, GuiTextField field) {
         mc.fontRenderer.drawStringWithShadow(I18n.format(labelKey) + ":", labelX, y + 2, color);
         field.drawTextBox();
     }
 
-    /** Shows only buttons belonging to the currently-active tab. */
+    private void drawSectionHeader(int x, int y, String text) {
+        mc.fontRenderer.drawStringWithShadow(text, x, y, 0xFF7788BB);
+    }
+
+    /**
+     * Draws a thin scrollbar on the right edge of the content viewport.
+     * Hidden when all content fits without scrolling.
+     */
+    private void drawScrollbar() {
+        if (totalContentH <= viewportH) return;
+        int trackX = guiLeft + GUI_W - SCROLLBAR_W - 2;
+        int trackY = viewportTop;
+        int trackH = viewportH;
+        // Track background
+        drawRect(trackX, trackY, trackX + SCROLLBAR_W, trackY + trackH, 0xFF222233);
+        // Thumb
+        int thumbH = Math.max(12, trackH * viewportH / totalContentH);
+        int thumbY = trackY + (trackH - thumbH) * scrollY / Math.max(1, maxScroll());
+        drawRect(trackX, thumbY, trackX + SCROLLBAR_W, thumbY + thumbH, 0xFF6688CC);
+    }
+
+    // ── Tab visibility / button management ───────────────────────────────────
+
     @SuppressWarnings("unchecked")
     private void updateTabVisibility() {
         for (Object obj : buttonList) {
             GuiButton btn = (GuiButton) obj;
-            boolean isClientOnly = btn.id == BTN_USE_PREVIEW || btn.id == BTN_USE_CHAIN_DONE_MSG
+
+            boolean isClientContent = btn.id == BTN_USE_PREVIEW || btn.id == BTN_USE_CHAIN_DONE_MSG
                 || btn.id == BTN_CHAIN_ACTIVATION_MODE
                 || btn.id == BTN_SUPPRESS_INGAME_INFO
                 || btn.id == BTN_HUD_ANIM_STYLE
-                || btn.id == BTN_RENDER_STYLE
-                || btn.id == BTN_CLIENT_RELOAD
-                || btn.id == BTN_CLIENT_SAVE;
-            boolean isServerOnly = btn.id == BTN_SERVER_DROP_TO_PLAYER || btn.id == BTN_SERVER_USE_PREVIEW
-                || btn.id == BTN_SERVER_RELOAD
-                || btn.id == BTN_SERVER_SAVE;
-            if (isClientOnly) btn.visible = (activeTab == TAB_CLIENT);
-            if (isServerOnly) btn.visible = (activeTab == TAB_SERVER);
+                || btn.id == BTN_RENDER_STYLE;
+            boolean isClientAction = btn.id == BTN_CLIENT_RELOAD || btn.id == BTN_CLIENT_SAVE;
+            boolean isServerContent = btn.id == BTN_SERVER_DROP_TO_PLAYER || btn.id == BTN_SERVER_USE_PREVIEW;
+            boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;
+
+            if (isClientContent || isClientAction) {
+                btn.visible = (activeTab == TAB_CLIENT);
+                // Also hide if scrolled out of the viewport
+                if (isClientContent && btn.visible) {
+                    btn.visible = isInViewport(btn.yPosition);
+                }
+            }
+            if (isServerContent || isServerAction) {
+                btn.visible = (activeTab == TAB_SERVER);
+                if (isServerContent && btn.visible) {
+                    btn.visible = isInViewport(btn.yPosition);
+                }
+            }
         }
     }
 
-    /** Reads client text fields, updates Config, and writes to disk. */
+    /** Returns true if a row at screen-Y {@code y} (top edge) is at least partially visible. */
+    private boolean isInViewport(int y) {
+        return y + FIELD_H > viewportTop && y < viewportBottom;
+    }
+
+    // ── Config I/O ────────────────────────────────────────────────────────────
+
     private void applyAndSaveClientConfig() {
         Config.clientBigRadius = parseI(tfClientBigRadius, Config.clientBigRadius, 0);
         Config.clientBlockLimit = parseI(tfClientBlockLimit, Config.clientBlockLimit, 0);
@@ -532,11 +693,9 @@ public class EZMinerConfigGui extends GuiScreen {
         Config.clampClientMiningToServerCaps();
         Config.clampClientPreviewToServerCaps();
         Config.saveClientConfig();
-        // Sync updated values to server
         EZMiner.network.network.sendToServer(new PacketMinerConfig(Config.buildClientMinerConfigForSync()));
     }
 
-    /** Reads server text fields and sends a save packet to the server. */
     private void applyAndSaveServerConfig() {
         EZMiner.network.network.sendToServer(
             new PacketSaveServerConfig(
@@ -553,7 +712,27 @@ public class EZMinerConfigGui extends GuiScreen {
                 parseI(tfMinesweeperCooldown, Config.minesweeperProbeCooldownSeconds, 1)));
     }
 
-    // ── Static helpers ────────────────────────────────────────────────────────
+    // ── GL scissor helper ─────────────────────────────────────────────────────
+
+    /**
+     * Enables GL scissor test mapped to the given GUI-space rectangle.
+     * MC GUI coordinates (top-left origin, Y down) are converted to GL screen
+     * coordinates (bottom-left origin, Y up) using the active GUI scale factor.
+     */
+    private void enableScissor(int x, int y, int w, int h) {
+        // Use ScaledResolution so the scale factor is always correct,
+        // including guiScale = 0 (auto) where manual detection was broken.
+        ScaledResolution sr = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+        int factor = sr.getScaleFactor();
+        int glX = x * factor;
+        int glY = mc.displayHeight - (y + h) * factor;
+        int glW = Math.max(0, w * factor);
+        int glH = Math.max(0, h * factor);
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(glX, glY, glW, glH);
+    }
+
+    // ── Static parse helpers ──────────────────────────────────────────────────
 
     private static int parseI(GuiTextField field, int fallback, int min) {
         try {
