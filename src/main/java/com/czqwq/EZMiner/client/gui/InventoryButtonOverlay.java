@@ -2,9 +2,12 @@ package com.czqwq.EZMiner.client.gui;
 
 import java.awt.Rectangle;
 import java.lang.reflect.Field;
+import java.util.List;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainerCreative;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.Tessellator;
@@ -26,9 +29,10 @@ import cpw.mods.fml.relauncher.SideOnly;
  *
  * <p>
  * When ServerUtilities is present the button is positioned dynamically below
- * SU's entire sidebar block (read from {@code GuiSidebar.lastDrawnArea} via
- * reflection so the layout stays correct regardless of how many SU buttons are
- * enabled or whether the sidebar has been dragged). When SU is absent the
+ * SU's entire sidebar block (by finding the {@code GuiSidebar} button instance in
+ * the screen's button list and reading its real on-screen bounds) so the layout
+ * stays correct regardless of how many SU buttons are enabled or whether the
+ * sidebar has been dragged. When SU is absent the
  * button falls back to a fixed position at the left edge of the inventory panel.
  *
  * <p>
@@ -89,16 +93,19 @@ public class InventoryButtonOverlay {
         "ezminer",
         "textures/icons/settings.png");
 
-    // ── Reflection cache for GuiSidebar.lastDrawnArea ────────────────────────
+    // ── Reflection cache for GuiSidebar bounds ──────────────────────────────
 
-    /** {@code true} once the one-time field lookup has been attempted. */
-    private static boolean suFieldLookupDone = false;
+    /** {@code true} once the one-time class / field lookup has been attempted. */
+    private static boolean suLookupDone = false;
 
-    /**
-     * Cached reference to {@code serverutils.client.gui.GuiSidebar.lastDrawnArea},
-     * or {@code null} if SU is not on the class-path.
-     */
-    private static Field suLastDrawnAreaField = null;
+    /** Cached {@code serverutils.client.gui.GuiSidebar} class, or null if SU absent. */
+    private static Class<?> suSidebarClass = null;
+
+    /** Cached {@code GuiScreen.buttonList} field, set during first successful lookup. */
+    private static Field suButtonListField;
+
+    /** Cached {@code GuiButton} field accessors, set during first successful lookup. */
+    private static Field suXField, suYField, suWField, suHField;
 
     // ── State ─────────────────────────────────────────────────────────────────
 
@@ -127,9 +134,9 @@ public class InventoryButtonOverlay {
 
     /**
      * Before each frame is drawn, reposition the button to sit directly below
-     * SU's sidebar block (using {@code GuiSidebar.lastDrawnArea}) so the two
-     * never overlap regardless of how many SU buttons are visible or whether the
-     * sidebar has been dragged.
+     * SU's sidebar block (by reading the {@code GuiSidebar} button's actual
+     * on-screen bounds) so the two never overlap regardless of how many SU
+     * buttons are visible or whether the sidebar has been dragged.
      */
     @SubscribeEvent
     public void onDrawScreenPre(GuiScreenEvent.DrawScreenEvent.Pre event) {
@@ -137,7 +144,7 @@ public class InventoryButtonOverlay {
         int[] offsets = guiOffsets(event.gui);
         if (offsets == null) return;
 
-        Rectangle suArea = getSuLastDrawnArea();
+        Rectangle suArea = getSuArea(event.gui);
         int btnX;
         int btnY;
         if (suArea != null && suArea.width > 0 && suArea.height > 0) {
@@ -270,26 +277,53 @@ public class InventoryButtonOverlay {
     }
 
     /**
-     * Returns the value of {@code serverutils.client.gui.GuiSidebar.lastDrawnArea}
-     * via reflection, or {@code null} if SU is not installed or the field is inaccessible.
-     * The {@code Field} object is cached after the first lookup so reflection overhead
-     * is paid only once per JVM session.
+     * Finds the {@code serverutils.client.gui.GuiSidebar} button instance in the
+     * current screen's button list and returns its bounds as a Rectangle.
+     * {@code GuiSidebar} extends {@code GuiButton} and updates its own
+     * {@code xPosition / yPosition / width / height} in {@code drawButton()}
+     * to the bounding box of all visible sidebar buttons (with 2 px padding).
+     *
+     * <p>
+     * Returns {@code null} when SU is not installed, the sidebar is not in the
+     * button list, or its bounds are still zero (before the first draw call).
      */
-    private static Rectangle getSuLastDrawnArea() {
-        if (!suFieldLookupDone) {
-            suFieldLookupDone = true;
+    private static Rectangle getSuArea(GuiScreen gui) {
+        if (!suLookupDone) {
+            suLookupDone = true;
             try {
-                Class<?> cls = Class.forName("serverutils.client.gui.GuiSidebar");
-                suLastDrawnAreaField = cls.getField("lastDrawnArea");
+                suSidebarClass = Class.forName("serverutils.client.gui.GuiSidebar");
+                suButtonListField = GuiScreen.class.getDeclaredField("buttonList");
+                suButtonListField.setAccessible(true);
+                suXField = GuiButton.class.getField("xPosition");
+                suYField = GuiButton.class.getField("yPosition");
+                suWField = GuiButton.class.getDeclaredField("width");
+                suHField = GuiButton.class.getDeclaredField("height");
+                suWField.setAccessible(true);
+                suHField.setAccessible(true);
             } catch (Throwable ignored) {
-                // SU is not on the class-path; suLastDrawnAreaField stays null.
+                // SU not on the class-path; all fields stay null, subsequent calls are no-ops.
             }
         }
-        if (suLastDrawnAreaField == null) return null;
+        if (suSidebarClass == null) return null;
         try {
-            return (Rectangle) suLastDrawnAreaField.get(null);
-        } catch (Throwable ignored) {
-            return null;
-        }
+            @SuppressWarnings("unchecked")
+            List<GuiButton> buttonList = (List<GuiButton>) suButtonListField.get(gui);
+            for (GuiButton btn : buttonList) {
+                if (suSidebarClass.isInstance(btn)) {
+                    int w = suWField.getInt(btn);
+                    int h = suHField.getInt(btn);
+                    // Ignore the sidebar before its first drawButton() call (bounds are 0).
+                    if (w <= 0 || h <= 0) return null;
+                    int x = suXField.getInt(btn);
+                    int y = suYField.getInt(btn);
+                    // Reject bogus bounds from integer overflow when all SU sidebar
+                    // buttons are hidden (GuiSidebar's bounding-box computation
+                    // produces x/y near Integer.MAX_VALUE in that case).
+                    if (x < 0 || y < 0 || x >= gui.width || y >= gui.height) return null;
+                    return new Rectangle(x, y, w, h);
+                }
+            }
+        } catch (Throwable ignored) {}
+        return null;
     }
 }
