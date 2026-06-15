@@ -1,16 +1,19 @@
 package com.czqwq.EZMiner.mixin;
 
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+
 import com.czqwq.EZMiner.utils.FortuneCompatHelper;
 import com.llamalad7.mixinextras.expression.Definition;
 import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
+
 import gregtech.common.ores.GTPPOreAdapter;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(value = GTPPOreAdapter.class, remap = false)
 public abstract class MixinGTPPOreAdapter {
+
     @Definition(id = "fortuneLevel", local = @Local(type = int.class, argsOnly = true))
     @Expression("fortuneLevel > 3")
     @ModifyExpressionValue(
