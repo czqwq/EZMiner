@@ -1,13 +1,17 @@
 {
   "required": false,
   "minVersion": "0.8.5-GTNH",
+  "mixinextras": {
+    "minVersion": "0.5.0"
+  },
   "package": "com.czqwq.EZMiner.mixin",
   "refmap": "mixins.EZMiner.refmap.json",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "MixinTileEntityOres",
-    "MixinBWTileEntityMetaGenOre"
+    "MixinGTOreAdapter",
+    "MixinBWOreAdapter",
+    "MixinGTPPOreAdapter"
   ],
   "client": [],
   "server": []
