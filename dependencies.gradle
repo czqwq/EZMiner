@@ -1,7 +1,7 @@
 
 elytraModpackVersion {
     // 在这配置的gtnh版本 用于自动拉取依赖版本
-    gtnhVersion = "2.8.4"
+    gtnhVersion = "2.9.0-beta-1"
     // 是否不缓存拉取的依赖清单文件
     manifestNoCache = false
     // 是否自动为输出的jar添加 `gtnhVersion` 后缀
@@ -18,7 +18,6 @@ dependencies {
     runtimeOnlyNonPublishable(gtnhDev("Galaxy-Space-GTNH"))
     runtimeOnlyNonPublishable(gtnhDev("SGCraft"))
     runtimeOnlyNonPublishable(gtnhDev("AE2FluidCraft-Rework"))
-    runtimeOnlyNonPublishable(gtnhDev("ae2stuff"))
     runtimeOnlyNonPublishable(gtnhDev("Avaritia"))
     runtimeOnlyNonPublishable(gtnhDev("Avaritiaddons"))
     runtimeOnlyNonPublishable(gtnhDev("neiaddons"))
@@ -38,7 +37,6 @@ dependencies {
     // runtime
     runtimeOnlyNonPublishable(gtnhDev("BetterP2P"))
     runtimeOnlyNonPublishable(gtnhDev("InGame-Info-XML"))
-    runtimeOnlyNonPublishable(gtnhDev("Chisel"))
     runtimeOnlyNonPublishable(gtnhDev("VisualProspecting"))
     runtimeOnlyNonPublishable rfg.deobf(files("libs/journeymap-1.7.10-5.2.10-fairplay.jar"))
     runtimeOnlyNonPublishable rfg.deobf(files("libs/spark-1.10.19.jar"))

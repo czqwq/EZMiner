@@ -104,6 +104,8 @@ public class BaseOperator {
 
     private boolean canOperate() {
         if (!manager.isKeyPressed()) return false;
+        if (playerMP.getFoodStats()
+            .getFoodLevel() <= 0) return false;
         ItemStack item = playerMP.getCurrentEquippedItem();
         if (item != null && item.isItemStackDamageable()) {
             return (item.getMaxDamage() - item.getItemDamage()) > 1;
