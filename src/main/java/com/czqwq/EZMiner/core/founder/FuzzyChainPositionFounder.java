@@ -51,7 +51,11 @@ public class FuzzyChainPositionFounder extends ChainPositionFounder {
         if (pos.x == cachedPlayerFloorX && pos.y == (cachedPlayerFloorY - 1) && pos.z == cachedPlayerFloorZ)
             return false;
         // Fuzzy identity: block type must match; metadata (orientation, variant) is ignored.
-        if (!sampleBlock.equals(block)) return false;
+        // Use class equality (not instance equality) so that blocks that share the same
+        // class but differ in state (e.g. lit vs unlit redstone ore, which are separate
+        // Block instances of the same BlockRedstoneOre class) are correctly matched.
+        if (!sampleBlock.getClass()
+            .equals(block.getClass())) return false;
         if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
         return block.canHarvestBlock(player, blockMeta);
