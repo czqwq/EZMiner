@@ -102,7 +102,6 @@ public class DeterminingIdentical {
         hasBWTileEntity = classExists("bartworks.system.material.TileEntityMetaGeneratedBlock");
         hasBlockOresAbstract = classExists("gregtech.common.blocks.BlockOresAbstract");
         hasBWSmallOres = classExists("bartworks.system.material.BWMetaGeneratedSmallOres");
-        hasBWOres = classExists("bartworks.system.material.BWMetaGeneratedOres");
         hasBlockBaseOre = classExists("gtPlusPlus.core.block.base.BlockBaseOre");
         hasAEQuartz = classExists("appeng.block.solids.OreQuartz");
         hasAEQuartzCharged = classExists("appeng.block.solids.OreQuartzCharged");
