@@ -65,16 +65,14 @@ public class InventoryButtonOverlay {
     /**
      * Y offset of SU's first sidebar button in the survival inventory
      * (from {@code GuiSidebar.setButtonLocations}: {@code offsetY = 8}).
-     * Used as the fallback Y when SU is not installed.
      */
-    private static final int SU_FALLBACK_Y_SURVIVAL = 8;
+    private static final int SU_FIRST_BTN_Y_SURVIVAL = 8;
 
     /**
      * Y offset of SU's first sidebar button in the creative inventory
      * (from {@code GuiSidebar.setButtonLocations}: {@code offsetY = 6} for GuiContainerCreative).
-     * Used as the fallback Y when SU is not installed.
      */
-    private static final int SU_FALLBACK_Y_CREATIVE = 6;
+    private static final int SU_FIRST_BTN_Y_CREATIVE = 6;
 
     /** Vanilla survival inventory panel size (GuiInventory). */
     private static final int INV_X_SIZE = 176;
@@ -83,6 +81,22 @@ public class InventoryButtonOverlay {
     /** Vanilla creative inventory panel size (GuiContainerCreative). */
     private static final int CREATIVE_X_SIZE = 195;
     private static final int CREATIVE_Y_SIZE = 136;
+
+    /**
+     * Bottom margin (px) from the inventory panel bottom for the fallback
+     * button position when SU is absent or its sidebar bounds cannot be read.
+     */
+    private static final int FALLBACK_BOTTOM_MARGIN = 4;
+
+    // ── SRG field names for production (reobfuscated) environments ─────────
+    // In a deobfuscated dev environment Minecraft fields use MCP names;
+    // in production they use SRG names. We try MCP first, then SRG.
+
+    private static final String SRG_BUTTON_LIST = "field_146292_n"; // GuiScreen.buttonList
+    private static final String SRG_X_POS = "field_146128_h"; // GuiButton.xPosition
+    private static final String SRG_Y_POS = "field_146129_i"; // GuiButton.yPosition
+    private static final String SRG_WIDTH = "field_146120_f"; // GuiButton.width
+    private static final String SRG_HEIGHT = "field_146121_g"; // GuiButton.height
 
     /**
      * Settings icon texture.
@@ -107,6 +121,46 @@ public class InventoryButtonOverlay {
     /** Cached {@code GuiButton} field accessors, set during first successful lookup. */
     private static Field suXField, suYField, suWField, suHField;
 
+    /**
+     * Gets a public field by MCP name first, falling back to the SRG name
+     * for production (reobfuscated) environments.
+     */
+    private static Field getFieldMcpSrg(Class<?> clazz, String mcp, String srg) {
+        try {
+            Field f = clazz.getField(mcp);
+            f.setAccessible(true);
+            return f;
+        } catch (NoSuchFieldException e) {
+            try {
+                Field f = clazz.getField(srg);
+                f.setAccessible(true);
+                return f;
+            } catch (NoSuchFieldException e2) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Gets a declared field by MCP name first, falling back to the SRG name
+     * for production (reobfuscated) environments.
+     */
+    private static Field getDeclaredFieldMcpSrg(Class<?> clazz, String mcp, String srg) {
+        try {
+            Field f = clazz.getDeclaredField(mcp);
+            f.setAccessible(true);
+            return f;
+        } catch (NoSuchFieldException e) {
+            try {
+                Field f = clazz.getDeclaredField(srg);
+                f.setAccessible(true);
+                return f;
+            } catch (NoSuchFieldException e2) {
+                return null;
+            }
+        }
+    }
+
     // ── State ─────────────────────────────────────────────────────────────────
 
     /** Reference to the button we most recently added so we can reposition it each frame. */
@@ -124,10 +178,10 @@ public class InventoryButtonOverlay {
     public void onInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
         int[] offsets = guiOffsets(event.gui);
         if (offsets == null) return;
-        // Place at a conservative default: same column as SU, below a full 6-button
-        // grid (6 × 17 px = 102 px). The real position is refined in onDrawScreenPre.
+        // Place at the bottom of the inventory panel as a safe default;
+        // the real position is refined in onDrawScreenPre.
         int btnX = offsets[0] - SU_OFFSET_X;
-        int btnY = offsets[1] + offsets[2];
+        int btnY = offsets[1] + offsets[2] - BTN_SIZE - FALLBACK_BOTTOM_MARGIN;
         ourButton = new TexturedButton(BTN_ID, btnX, btnY, BTN_SIZE, BTN_SIZE, SETTINGS_TEXTURE);
         event.buttonList.add(ourButton);
     }
@@ -152,9 +206,10 @@ public class InventoryButtonOverlay {
             btnX = suArea.x + 2; // +2 skips SU's 2-px bounding-box padding
             btnY = suArea.y + suArea.height; // bottom of SU area (includes 2-px padding)
         } else {
-            // SU absent or has no visible buttons: fall back to the top of the SU slot.
+            // SU absent or has no visible buttons: fall back to the bottom of the
+            // inventory panel so the button never overlaps with SU buttons.
             btnX = offsets[0] - SU_OFFSET_X;
-            btnY = offsets[1] + offsets[2];
+            btnY = offsets[1] + offsets[2] - BTN_SIZE - FALLBACK_BOTTOM_MARGIN;
         }
         ourButton.xPosition = btnX;
         ourButton.yPosition = btnY;
@@ -206,19 +261,21 @@ public class InventoryButtonOverlay {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**
-     * Returns {@code [guiLeft, guiTop, suFallbackOffsetY]} for a supported inventory GUI,
+     * Returns {@code [guiLeft, guiTop, invHeight]} for a supported inventory GUI,
      * or {@code null} if the GUI is not a recognised inventory screen.
+     * The invHeight is used for computing the fallback button position at the
+     * bottom of the inventory panel.
      */
     private static int[] guiOffsets(net.minecraft.client.gui.GuiScreen gui) {
         if (gui instanceof GuiInventory) {
             int guiLeft = (gui.width - INV_X_SIZE) / 2;
             int guiTop = (gui.height - INV_Y_SIZE) / 2;
-            return new int[] { guiLeft, guiTop, SU_FALLBACK_Y_SURVIVAL };
+            return new int[] { guiLeft, guiTop, INV_Y_SIZE };
         }
         if (gui instanceof GuiContainerCreative) {
             int guiLeft = (gui.width - CREATIVE_X_SIZE) / 2;
             int guiTop = (gui.height - CREATIVE_Y_SIZE) / 2;
-            return new int[] { guiLeft, guiTop, SU_FALLBACK_Y_CREATIVE };
+            return new int[] { guiLeft, guiTop, CREATIVE_Y_SIZE };
         }
         return null;
     }
@@ -292,14 +349,11 @@ public class InventoryButtonOverlay {
             suLookupDone = true;
             try {
                 suSidebarClass = Class.forName("serverutils.client.gui.GuiSidebar");
-                suButtonListField = GuiScreen.class.getDeclaredField("buttonList");
-                suButtonListField.setAccessible(true);
-                suXField = GuiButton.class.getField("xPosition");
-                suYField = GuiButton.class.getField("yPosition");
-                suWField = GuiButton.class.getDeclaredField("width");
-                suHField = GuiButton.class.getDeclaredField("height");
-                suWField.setAccessible(true);
-                suHField.setAccessible(true);
+                suButtonListField = getDeclaredFieldMcpSrg(GuiScreen.class, "buttonList", SRG_BUTTON_LIST);
+                suXField = getFieldMcpSrg(GuiButton.class, "xPosition", SRG_X_POS);
+                suYField = getFieldMcpSrg(GuiButton.class, "yPosition", SRG_Y_POS);
+                suWField = getFieldMcpSrg(GuiButton.class, "width", SRG_WIDTH);
+                suHField = getFieldMcpSrg(GuiButton.class, "height", SRG_HEIGHT);
             } catch (Throwable ignored) {
                 // SU not on the class-path; all fields stay null, subsequent calls are no-ops.
             }
