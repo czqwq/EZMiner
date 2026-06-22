@@ -32,13 +32,14 @@ public class PacketSaveServerConfig implements IMessage {
     public boolean serverUsePreview;
     public int serverMaxPreviewBigRadius;
     public int serverMaxPreviewBlockLimit;
-    public int minesweeperProbeCooldownSeconds;
+    public double minesweeperProbeCooldownSeconds;
+    public double sudokuProbeCooldownSeconds;
 
     public PacketSaveServerConfig() {}
 
     public PacketSaveServerConfig(int bigRadius, int blockLimit, int smallRadius, int tunnelWidth, int breakPerTick,
         double addExhaustion, boolean dropToPlayer, boolean serverUsePreview, int serverMaxPreviewBigRadius,
-        int serverMaxPreviewBlockLimit, int minesweeperProbeCooldownSeconds) {
+        int serverMaxPreviewBlockLimit, double minesweeperProbeCooldownSeconds, double sudokuProbeCooldownSeconds) {
         this.bigRadius = bigRadius;
         this.blockLimit = blockLimit;
         this.smallRadius = smallRadius;
@@ -50,6 +51,7 @@ public class PacketSaveServerConfig implements IMessage {
         this.serverMaxPreviewBigRadius = serverMaxPreviewBigRadius;
         this.serverMaxPreviewBlockLimit = serverMaxPreviewBlockLimit;
         this.minesweeperProbeCooldownSeconds = minesweeperProbeCooldownSeconds;
+        this.sudokuProbeCooldownSeconds = sudokuProbeCooldownSeconds;
     }
 
     @Override
@@ -64,7 +66,8 @@ public class PacketSaveServerConfig implements IMessage {
         serverUsePreview = buf.readBoolean();
         serverMaxPreviewBigRadius = buf.readInt();
         serverMaxPreviewBlockLimit = buf.readInt();
-        minesweeperProbeCooldownSeconds = buf.readInt();
+        minesweeperProbeCooldownSeconds = buf.readDouble();
+        sudokuProbeCooldownSeconds = buf.readDouble();
     }
 
     @Override
@@ -79,7 +82,8 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeBoolean(serverUsePreview);
         buf.writeInt(serverMaxPreviewBigRadius);
         buf.writeInt(serverMaxPreviewBlockLimit);
-        buf.writeInt(minesweeperProbeCooldownSeconds);
+        buf.writeDouble(minesweeperProbeCooldownSeconds);
+        buf.writeDouble(sudokuProbeCooldownSeconds);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -101,7 +105,8 @@ public class PacketSaveServerConfig implements IMessage {
             Config.serverUsePreview = msg.serverUsePreview;
             Config.serverMaxPreviewBigRadius = Math.max(0, msg.serverMaxPreviewBigRadius);
             Config.serverMaxPreviewBlockLimit = Math.max(0, msg.serverMaxPreviewBlockLimit);
-            Config.minesweeperProbeCooldownSeconds = Math.max(1, msg.minesweeperProbeCooldownSeconds);
+            Config.minesweeperProbeCooldownSeconds = Math.max(0.1, msg.minesweeperProbeCooldownSeconds);
+            Config.sudokuProbeCooldownSeconds = Math.max(0.1, msg.sudokuProbeCooldownSeconds);
 
             // Persist to disk
             Config.saveServerConfig();

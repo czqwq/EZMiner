@@ -62,6 +62,8 @@ public class MinerRenderer {
     private int lastIndexCount = 0;
     /** Last minesweeperFlaggedVersion seen; used to detect when the flagged-mine list changed. */
     private int lastMinesweeperVersion = -1;
+    /** Last sudokuFilledVersion seen; used to detect when the filled-cell list changed. */
+    private int lastSudokuVersion = -1;
 
     private final ClientStateContainer clientState;
     private final ChainPreviewController previewController = new ChainPreviewController();
@@ -122,6 +124,19 @@ public class MinerRenderer {
                 lastMinesweeperVersion = -1;
             }
             renderMinesweeperMarks();
+            return;
+        }
+
+        // ── Sudoku mode: render filled cell positions (board origins). ──
+        if (clientState.minerModeState.mainMode == 2 && clientState.minerModeState.specialMode == 2) {
+            if (founder != null) {
+                founder.interrupt();
+                founder = null;
+                foundQueue.clear();
+                lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+                lastSudokuVersion = -1;
+            }
+            renderSudokuFills();
             return;
         }
 
@@ -264,6 +279,54 @@ public class MinerRenderer {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glLineWidth(2.0F);
         GL11.glColor4f(1.0F, 0.3F, 0.1F, 0.9F);
+
+        renderCache.render(lastIndexCount);
+
+        GL11.glPopMatrix();
+        GL11.glPopAttrib();
+    }
+
+    /**
+     * Rebuilds the wireframe mesh from filled Sudoku cell positions when the list has changed,
+     * then renders the outlines in a green colour to distinguish them from minesweeper marks.
+     */
+    private void renderSudokuFills() {
+        int version = clientState.sudokuFilledVersion;
+        if (version != lastSudokuVersion) {
+            spaceCalc.posSet.clear();
+            spaceCalc.positions.clear();
+            spaceCalc.hasChange = false;
+            for (Vector3i pos : clientState.sudokuFilledPositions) {
+                spaceCalc.add(pos);
+            }
+            if (!spaceCalc.positions.isEmpty()) {
+                SpaceCalculator.VertexAndIndex vi = spaceCalc.getVertexAndIndex();
+                lastIndexCount = vi.indices.length;
+                renderCache.updateData(vi.vertices, vi.indices);
+            } else {
+                lastIndexCount = 0;
+            }
+            clientState.previewRenderedCount = spaceCalc.positions.size();
+            lastSudokuVersion = version;
+        }
+        doRenderSudoku();
+    }
+
+    /** Renders the Sudoku-fill wireframe using a green colour to distinguish it from minesweeper marks. */
+    private void doRenderSudoku() {
+        if (lastIndexCount <= 0) return;
+
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushMatrix();
+        GL11.glTranslated(-RenderManager.renderPosX, -RenderManager.renderPosY, -RenderManager.renderPosZ);
+
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_CULL_FACE);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glLineWidth(2.0F);
+        GL11.glColor4f(0.3F, 1.0F, 0.3F, 0.9F); // green
 
         renderCache.render(lastIndexCount);
 

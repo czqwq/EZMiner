@@ -15,6 +15,7 @@ import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.chain.execution.ChainDropCollector;
 import com.czqwq.EZMiner.chain.execution.MinesweeperModeHandler;
+import com.czqwq.EZMiner.chain.execution.SudokuModeHandler;
 import com.czqwq.EZMiner.chain.state.ChainPlayerState;
 import com.czqwq.EZMiner.chain.state.ChainSession;
 import com.czqwq.EZMiner.core.founder.CropFounder;
@@ -71,6 +72,7 @@ public class Manager {
      */
     private final ChainDropCollector dropCollector = new ChainDropCollector();
     private final MinesweeperModeHandler minesweeperHandler = new MinesweeperModeHandler();
+    private final SudokuModeHandler sudokuHandler = new SudokuModeHandler();
 
     public Manager(EntityPlayerMP player) {
         this.player = player;
@@ -187,6 +189,7 @@ public class Manager {
         state.runtimeState.queuedCandidates = 0;
         state.runtimeState.lastErrorCode = "";
         minesweeperHandler.reset();
+        sudokuHandler.reset();
         EZMiner.chainStateService.markSessionStop(playerUUID);
         activeSession = null;
     }
@@ -232,19 +235,29 @@ public class Manager {
         return minerModeState.mainMode == 2 && minerModeState.specialMode == 0;
     }
 
+    public boolean isSpecialSudokuMode() {
+        return minerModeState.mainMode == 2 && minerModeState.specialMode == 2;
+    }
+
     public void tickSpecialMode() {
-        if (!isSpecialMinesweeperMode()) {
-            // Not in minesweeper mode — do nothing.
-            // The cooldown timer and detected-bomb set are intentionally preserved so that
-            // quickly switching to another mode and back cannot bypass the probe interval.
-            // They are only cleared in cleanupState() (player disconnect / logout).
+        // ── Minesweeper mode ──
+        if (isSpecialMinesweeperMode()) {
+            if (!isKeyPressed()) return;
+            if (isInOperate() || player == null || player.worldObj == null || player.isDead) return;
+            minesweeperHandler.tick(player, playerUUID);
             return;
         }
-        // Key not held: keep the cooldown timer intact so quickly releasing and
-        // re-pressing the key cannot bypass the configured probe interval.
-        if (!isKeyPressed()) return;
-        if (isInOperate() || player == null || player.worldObj == null || player.isDead) return;
-        minesweeperHandler.tick(player, playerUUID);
+        // ── Sudoku mode ──
+        if (isSpecialSudokuMode()) {
+            if (!isKeyPressed()) return;
+            if (isInOperate() || player == null || player.worldObj == null || player.isDead) return;
+            sudokuHandler.tick(player, playerUUID);
+            return;
+        }
+        // Not in a tickable special mode — do nothing.
+        // Cooldown and state are intentionally preserved so that quickly switching
+        // to another mode and back cannot bypass the probe interval.
+        // They are only cleared in cleanupState() (player disconnect / logout).
     }
 
     /**
@@ -256,6 +269,10 @@ public class Manager {
      */
     public void resendMinesweeperMarks(EntityPlayerMP target) {
         minesweeperHandler.resendMarks(target);
+    }
+
+    public void resendSudokuFills(EntityPlayerMP target) {
+        sudokuHandler.resendFills(target);
     }
 
     public boolean isKeyPressed() {

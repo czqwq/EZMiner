@@ -25,6 +25,7 @@ ezminer.mode.chain.basic=连锁: 基础连锁
 ezminer.mode.chain.fuzzy=连锁: 模糊模式
 ezminer.mode.special.minesweeper=特殊连锁: 扫雷模式
 ezminer.mode.special.crop=特殊连锁: 一键收作物
+ezminer.mode.special.sudoku=特殊连锁: 数独助手
 
 ezminer.message.mainMode=当前主模式
 ezminer.message.subMode=当前子模式
@@ -44,6 +45,7 @@ ezminer.config.hudAnimStyle.rainbow=彩虹弹跳
 ezminer.config.hudAnimStyle.wave=波浪高亮
 ezminer.config.breakPerTick=每Tick最多破坏方块数
 ezminer.config.minesweeperCooldown=扫雷探测冷却时间（秒）
+ezminer.config.sudokuCooldown=数独解算冷却时间（秒）
 ezminer.config.serverPreviewRadius=服务端允许的最大预览半径
 ezminer.config.serverPreviewLimit=服务端允许的最大预览方块数
 ezminer.config.serverUsePreview=服务端全局预览开关
@@ -77,6 +79,7 @@ ezminer.command.hud.pos.set=EZMiner: HUD位置已设置为 x=%s, y=%s。
 ezminer.message.chain.done=EZMiner: 连锁完成；方块数=%s；耗时=%ss
 ezminer.message.chain.error=EZMiner: 挖掘方块 %s 时出错：%s
 ezminer.message.special.minesweeper.marked=EZMiner: 已标记雷点 -> (%s, %s, %s), 距离=%s格
+ezminer.message.special.sudoku.filled=EZMiner: 数独单元格 (%s, %s) 已填入 %s
 
 ezminer.config.renderStyle=预览渲染风格
 ezminer.config.renderStyle.native=原生
