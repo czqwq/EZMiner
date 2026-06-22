@@ -111,6 +111,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiTextField tfBreakPerTick;
     private GuiTextField tfAddExhaustion;
     private GuiTextField tfMinesweeperCooldown;
+    private GuiTextField tfSudokuCooldown;
     private GuiTextField tfServerMaxPreviewRadius;
     private GuiTextField tfServerMaxPreviewLimit;
 
@@ -450,6 +451,7 @@ public class EZMinerConfigGui extends GuiScreen {
             tfBreakPerTick.mouseClicked(x, y, mouseButton);
             tfAddExhaustion.mouseClicked(x, y, mouseButton);
             tfMinesweeperCooldown.mouseClicked(x, y, mouseButton);
+            tfSudokuCooldown.mouseClicked(x, y, mouseButton);
             tfServerMaxPreviewRadius.mouseClicked(x, y, mouseButton);
             tfServerMaxPreviewLimit.mouseClicked(x, y, mouseButton);
         }
@@ -476,6 +478,7 @@ public class EZMinerConfigGui extends GuiScreen {
             tfBreakPerTick.textboxKeyTyped(typedChar, keyCode);
             tfAddExhaustion.textboxKeyTyped(typedChar, keyCode);
             tfMinesweeperCooldown.textboxKeyTyped(typedChar, keyCode);
+            tfSudokuCooldown.textboxKeyTyped(typedChar, keyCode);
             tfServerMaxPreviewRadius.textboxKeyTyped(typedChar, keyCode);
             tfServerMaxPreviewLimit.textboxKeyTyped(typedChar, keyCode);
         }
@@ -503,7 +506,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
     /** Recalculates totalContentH based on active tab row count. */
     private void recalcTotalContentH() {
-        int rows = (activeTab == TAB_CLIENT) ? MAX_CONTENT_ROWS : 11;
+        int rows = (activeTab == TAB_CLIENT) ? MAX_CONTENT_ROWS : 12;
         totalContentH = rows * ROW_H;
     }
 
@@ -539,11 +542,12 @@ public class EZMinerConfigGui extends GuiScreen {
             tfBreakPerTick.yPosition = contentRowScreenY(4);
             tfAddExhaustion.yPosition = contentRowScreenY(5);
             tfMinesweeperCooldown.yPosition = contentRowScreenY(6);
-            tfServerMaxPreviewRadius.yPosition = contentRowScreenY(7);
-            tfServerMaxPreviewLimit.yPosition = contentRowScreenY(8);
+            tfSudokuCooldown.yPosition = contentRowScreenY(7);
+            tfServerMaxPreviewRadius.yPosition = contentRowScreenY(8);
+            tfServerMaxPreviewLimit.yPosition = contentRowScreenY(9);
 
-            setScrolledButtonY(BTN_SERVER_DROP_TO_PLAYER, contentRowScreenY(9));
-            setScrolledButtonY(BTN_SERVER_USE_PREVIEW, contentRowScreenY(10));
+            setScrolledButtonY(BTN_SERVER_DROP_TO_PLAYER, contentRowScreenY(10));
+            setScrolledButtonY(BTN_SERVER_USE_PREVIEW, contentRowScreenY(11));
         }
 
         // Update per-button visibility: hide when scrolled out of viewport.
@@ -582,8 +586,9 @@ public class EZMinerConfigGui extends GuiScreen {
         tfBreakPerTick = field(fx, contentRowScreenY(4), String.valueOf(Config.breakPerTick));
         tfAddExhaustion = field(fx, contentRowScreenY(5), String.valueOf(Config.addExhaustion));
         tfMinesweeperCooldown = field(fx, contentRowScreenY(6), String.valueOf(Config.minesweeperProbeCooldownSeconds));
-        tfServerMaxPreviewRadius = field(fx, contentRowScreenY(7), String.valueOf(Config.serverMaxPreviewBigRadius));
-        tfServerMaxPreviewLimit = field(fx, contentRowScreenY(8), String.valueOf(Config.serverMaxPreviewBlockLimit));
+        tfSudokuCooldown = field(fx, contentRowScreenY(7), String.valueOf(Config.sudokuProbeCooldownSeconds));
+        tfServerMaxPreviewRadius = field(fx, contentRowScreenY(8), String.valueOf(Config.serverMaxPreviewBigRadius));
+        tfServerMaxPreviewLimit = field(fx, contentRowScreenY(9), String.valueOf(Config.serverMaxPreviewBlockLimit));
     }
 
     private GuiTextField field(int x, int y, String initialText) {
@@ -626,15 +631,16 @@ public class EZMinerConfigGui extends GuiScreen {
         drawRow(lx, contentRowScreenY(4), lc, "ezminer.config.breakPerTick", tfBreakPerTick);
         drawRow(lx, contentRowScreenY(5), lc, "ezminer.config.addExhaustion", tfAddExhaustion);
         drawRow(lx, contentRowScreenY(6), lc, "ezminer.config.minesweeperCooldown", tfMinesweeperCooldown);
+        drawRow(lx, contentRowScreenY(7), lc, "ezminer.config.sudokuCooldown", tfSudokuCooldown);
 
-        drawSectionHeader(lx, contentRowScreenY(7) - 10, "§9§l— §7Preview §9§l—");
-        drawRow(lx, contentRowScreenY(7), lc, "ezminer.config.serverPreviewRadius", tfServerMaxPreviewRadius);
-        drawRow(lx, contentRowScreenY(8), lc, "ezminer.config.serverPreviewLimit", tfServerMaxPreviewLimit);
+        drawSectionHeader(lx, contentRowScreenY(8) - 10, "§9§l— §7Preview §9§l—");
+        drawRow(lx, contentRowScreenY(8), lc, "ezminer.config.serverPreviewRadius", tfServerMaxPreviewRadius);
+        drawRow(lx, contentRowScreenY(9), lc, "ezminer.config.serverPreviewLimit", tfServerMaxPreviewLimit);
 
-        int sepY = contentRowScreenY(8) + FIELD_H + (ROW_H - FIELD_H) / 2;
+        int sepY = contentRowScreenY(9) + FIELD_H + (ROW_H - FIELD_H) / 2;
         drawRect(guiLeft + LABEL_X, sepY, guiLeft + GUI_W - LABEL_X - SCROLLBAR_W - 2, sepY + 1, 0xFF33335A);
 
-        drawSectionHeader(lx, contentRowScreenY(9) - 10, "§9§l— §7Options §9§l—");
+        drawSectionHeader(lx, contentRowScreenY(10) - 10, "§9§l— §7Options §9§l—");
     }
 
     private void drawRow(int labelX, int y, int color, String labelKey, GuiTextField field) {
@@ -729,7 +735,8 @@ public class EZMinerConfigGui extends GuiScreen {
                 Config.serverUsePreview,
                 parseI(tfServerMaxPreviewRadius, Config.serverMaxPreviewBigRadius, 0),
                 parseI(tfServerMaxPreviewLimit, Config.serverMaxPreviewBlockLimit, 0),
-                parseI(tfMinesweeperCooldown, Config.minesweeperProbeCooldownSeconds, 1)));
+                parseD(tfMinesweeperCooldown, Config.minesweeperProbeCooldownSeconds),
+                parseD(tfSudokuCooldown, Config.sudokuProbeCooldownSeconds)));
     }
 
     // ── GL scissor helper ─────────────────────────────────────────────────────

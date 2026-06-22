@@ -39,6 +39,16 @@ public class NetworkMain {
             com.czqwq.EZMiner.chain.network.PacketMinesweeperClear.class,
             packetId++,
             Side.CLIENT);
+        network.registerMessage(
+            com.czqwq.EZMiner.chain.network.PacketSudokuFill.Handler.class,
+            com.czqwq.EZMiner.chain.network.PacketSudokuFill.class,
+            packetId++,
+            Side.CLIENT);
+        network.registerMessage(
+            com.czqwq.EZMiner.chain.network.PacketSudokuClear.Handler.class,
+            com.czqwq.EZMiner.chain.network.PacketSudokuClear.class,
+            packetId++,
+            Side.CLIENT);
         // Server config management (OP only): client → server
         network.registerMessage(
             PacketSaveServerConfig.Handler.class,

@@ -34,9 +34,14 @@ public class Config {
     public static int breakPerTick = 16;
     /**
      * Cooldown in seconds between successive minesweeper auto-flag operations
-     * when the chain key is held in Special / Minesweeper mode.
+     * when the chain key is held in Special / Minesweeper mode. Minimum: 0.1 s (2 ticks).
      */
-    public static int minesweeperProbeCooldownSeconds = 5;
+    public static double minesweeperProbeCooldownSeconds = 5.0;
+    /**
+     * Cooldown in seconds between successive Sudoku auto-fill operations
+     * when the chain key is held in Special / Sudoku mode. Minimum: 0.1 s (2 ticks).
+     */
+    public static double sudokuProbeCooldownSeconds = 5.0;
 
     /**
      * When {@code true}, removes the Fortune III cap for GT / BartWorks ore drops, allowing higher
@@ -289,14 +294,26 @@ public class Config {
             0,
             Integer.MAX_VALUE,
             "Server-side maximum allowed preview block count.");
-        minesweeperProbeCooldownSeconds = serverConfiguration.getInt(
-            "minesweeperProbeCooldownSeconds",
-            Configuration.CATEGORY_GENERAL,
-            5,
-            1,
-            3600,
-            "Cooldown in seconds between successive auto-flag operations in Special / Minesweeper mode "
-                + "(while the chain key is held). Default: 5.");
+        minesweeperProbeCooldownSeconds = serverConfiguration
+            .get(
+                "minesweeperProbeCooldownSeconds",
+                Configuration.CATEGORY_GENERAL,
+                5.0,
+                "Cooldown in seconds between successive auto-flag operations in Special / Minesweeper mode "
+                    + "(while the chain key is held). Minimum: 0.1. Default: 5.",
+                0.1,
+                3600.0)
+            .getDouble();
+        sudokuProbeCooldownSeconds = serverConfiguration
+            .get(
+                "sudokuProbeCooldownSeconds",
+                Configuration.CATEGORY_GENERAL,
+                5.0,
+                "Cooldown in seconds between successive auto-fill operations in Special / Sudoku mode "
+                    + "(while the chain key is held). Minimum: 0.1. Default: 5.",
+                0.1,
+                3600.0)
+            .getDouble();
         enableUnlimitedOreFortune = serverConfiguration.getBoolean(
             "enableUnlimitedOreFortune",
             Configuration.CATEGORY_GENERAL,
@@ -548,8 +565,10 @@ public class Config {
             .set(serverMaxPreviewBigRadius);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "serverMaxPreviewBlockLimit", 1024)
             .set(serverMaxPreviewBlockLimit);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "minesweeperProbeCooldownSeconds", 5)
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "minesweeperProbeCooldownSeconds", 5.0)
             .set(minesweeperProbeCooldownSeconds);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "sudokuProbeCooldownSeconds", 5.0)
+            .set(sudokuProbeCooldownSeconds);
         serverConfiguration.save();
     }
 

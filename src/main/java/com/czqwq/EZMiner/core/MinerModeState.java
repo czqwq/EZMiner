@@ -24,6 +24,7 @@ package com.czqwq.EZMiner.core;
  * Special sub-modes (specialMode):
  * 0 = Minesweeper (扫雷模式)
  * 1 = Crop harvest (一键收作物)
+ * 2 = Sudoku assistant (数独助手)
  */
 public class MinerModeState {
 
@@ -46,6 +47,7 @@ public class MinerModeState {
     };
     public static final String[] SPECIAL_MODES = { "ezminer.mode.special.minesweeper", // 0
         "ezminer.mode.special.crop", // 1
+        "ezminer.mode.special.sudoku", // 2
     };
 
     public int mainMode = 1; // default: chain mode

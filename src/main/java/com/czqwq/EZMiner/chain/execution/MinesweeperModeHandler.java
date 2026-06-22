@@ -59,7 +59,7 @@ public class MinesweeperModeHandler {
 
         long now = System.currentTimeMillis();
         if (now < nextDetectAtMs) return;
-        long cooldownMs = Math.max(1L, (long) Config.minesweeperProbeCooldownSeconds) * 1000L;
+        long cooldownMs = (long) (Math.max(0.1, Config.minesweeperProbeCooldownSeconds) * 1000.0);
         nextDetectAtMs = now + cooldownMs;
         Vector3i flaggedPos = bridge.detectNearestBomb(player, detectedBombs);
         if (flaggedPos != null) {

@@ -25,6 +25,7 @@ ezminer.mode.chain.basic=Chain: Basic
 ezminer.mode.chain.fuzzy=Chain: Fuzzy Mode
 ezminer.mode.special.minesweeper=Special Chain: Minesweeper Mode
 ezminer.mode.special.crop=Special Chain: Crop Harvest
+ezminer.mode.special.sudoku=Special Chain: Sudoku Assistant
 
 ezminer.message.mainMode=Main Mode
 ezminer.message.subMode=Sub Mode
@@ -44,6 +45,7 @@ ezminer.config.hudAnimStyle.rainbow=Rainbow Bounce
 ezminer.config.hudAnimStyle.wave=Wave Highlight
 ezminer.config.breakPerTick=Max blocks broken per server tick
 ezminer.config.minesweeperCooldown=Minesweeper probe cooldown (seconds)
+ezminer.config.sudokuCooldown=Sudoku fill cooldown (seconds)
 ezminer.config.serverPreviewRadius=Server max preview radius
 ezminer.config.serverPreviewLimit=Server max preview block count
 ezminer.config.serverUsePreview=Server global preview enabled
@@ -77,6 +79,7 @@ ezminer.command.hud.pos.set=EZMiner: HUD position set to x=%s, y=%s.
 ezminer.message.chain.done=EZMiner: chain done; blocks=%s; time=%ss
 ezminer.message.chain.error=EZMiner: Error while harvesting block at %s: %s
 ezminer.message.special.minesweeper.marked=EZMiner: Mine flagged at (%s, %s, %s), distance=%s blocks
+ezminer.message.special.sudoku.filled=EZMiner: Sudoku cell (%s, %s) filled with %s
 
 ezminer.config.renderStyle=Preview Render Style
 ezminer.config.renderStyle.native=Native
