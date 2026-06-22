@@ -2,6 +2,7 @@ package com.czqwq.EZMiner.client;
 
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.common.MinecraftForge;
 
 import org.lwjgl.input.Keyboard;
@@ -159,6 +160,46 @@ public class KeyListener {
     private void syncModeToServer(MinerModeState state) {
         EZMiner.network.network.sendToServer(
             new PacketChainModeSwitch(state.mainMode, state.blastMode, state.chainMode, state.specialMode));
+    }
+
+    /**
+     * Blocks inventory hotbar slot scrolling via mouse wheel while the chain key is held,
+     * so that scrolling is reserved for switching EZMiner sub-modes.
+     *
+     * <p>
+     * The Forge {@link MouseEvent} fires once per LWJGL mouse event (before vanilla
+     * processing) and is {@code @Cancelable}. Cancelling a scroll event here prevents
+     * {@code Minecraft#runTick()} from calling {@code InventoryPlayer#changeCurrentItem()},
+     * which effectively disables hotbar scroll.
+     *
+     * <p>
+     * <strong>Important:</strong> Cancelling the {@code MouseEvent} also skips the
+     * {@code FMLCommonHandler#fireMouseInput()} call later in the same loop iteration
+     * (see {@code Minecraft#runTick()} line 1826), which means the {@link InputEvent.MouseInputEvent}
+     * that normally triggers {@link #handleSubModeScroll} is never fired. To compensate,
+     * this method directly invokes the sub-mode switching logic after cancelling so that
+     * scrolling still switches EZMiner sub-modes.
+     */
+    @SubscribeEvent
+    public void onMouseEvent(MouseEvent event) {
+        if (!Config.blockScrollOnChainKey) return;
+        if (event.dwheel == 0 || !KEY_CHAIN.getIsKeyPressed()) return;
+
+        // Cancel the vanilla MouseEvent to block inventory hotbar scroll.
+        event.setCanceled(true);
+
+        // The cancel above also skips fireMouseInput(), so handleSubModeScroll() in
+        // onInput() will never see this scroll event. Trigger sub-mode switching here
+        // directly so scrolling still changes EZMiner sub-modes while the chain key
+        // is held.
+        ClientProxy proxy = (ClientProxy) EZMiner.proxy;
+        if (Config.chainActivationMode == 1) {
+            if (chainToggled) {
+                handleSubModeScroll(proxy.clientState.minerModeState);
+            }
+        } else {
+            handleSubModeScroll(proxy.clientState.minerModeState);
+        }
     }
 
     /**

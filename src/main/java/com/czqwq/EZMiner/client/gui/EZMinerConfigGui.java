@@ -51,6 +51,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_CLOSE = 12;
     private static final int BTN_HUD_ANIM_STYLE = 13;
     private static final int BTN_RENDER_STYLE = 14;
+    private static final int BTN_BLOCK_SCROLL_ON_CHAIN_KEY = 15;
 
     // ── Layout constants ──────────────────────────────────────────────────────
     private static final int GUI_W = 290;
@@ -62,7 +63,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int FIELD_H = 14;
     /** Y (relative to guiTop) where scrollable content begins. */
     private static final int CONTENT_START_Y = 42;
-    private static final int MAX_CONTENT_ROWS = 12;
+    private static final int MAX_CONTENT_ROWS = 13;
     private static final int ROW_H = 20;
     /** Height reserved for the action-button strip at the bottom. */
     private static final int ACTION_STRIP_H = 48;
@@ -120,6 +121,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnSuppressIngameInfo;
     private GuiButton btnHudAnimStyle;
     private GuiButton btnRenderStyle;
+    private GuiButton btnBlockScrollOnChainKey;
     private GuiButton btnServerDropToPlayer;
     private GuiButton btnServerUsePreview;
 
@@ -212,6 +214,15 @@ public class EZMinerConfigGui extends GuiScreen {
 
         btnRenderStyle = new GuiButton(BTN_RENDER_STYLE, bx, contentRowScreenY(11), bw, FIELD_H, renderStyleLabel());
         buttonList.add(btnRenderStyle);
+
+        btnBlockScrollOnChainKey = new GuiButton(
+            BTN_BLOCK_SCROLL_ON_CHAIN_KEY,
+            bx,
+            contentRowScreenY(12),
+            bw,
+            FIELD_H,
+            boolLabel("ezminer.config.blockScrollOnChainKey", Config.blockScrollOnChainKey));
+        buttonList.add(btnBlockScrollOnChainKey);
 
         // ── Fixed: client action buttons ──────────────────────────────────────
         buttonList.add(
@@ -381,6 +392,13 @@ public class EZMinerConfigGui extends GuiScreen {
                 btnRenderStyle.displayString = renderStyleLabel();
                 break;
 
+            case BTN_BLOCK_SCROLL_ON_CHAIN_KEY:
+                Config.blockScrollOnChainKey = !Config.blockScrollOnChainKey;
+                btnBlockScrollOnChainKey.displayString = boolLabel(
+                    "ezminer.config.blockScrollOnChainKey",
+                    Config.blockScrollOnChainKey);
+                break;
+
             case BTN_CLIENT_RELOAD:
                 applyAndSaveClientConfig();
                 break;
@@ -512,6 +530,7 @@ public class EZMinerConfigGui extends GuiScreen {
             setScrolledButtonY(BTN_SUPPRESS_INGAME_INFO, contentRowScreenY(9));
             setScrolledButtonY(BTN_HUD_ANIM_STYLE, contentRowScreenY(10));
             setScrolledButtonY(BTN_RENDER_STYLE, contentRowScreenY(11));
+            setScrolledButtonY(BTN_BLOCK_SCROLL_ON_CHAIN_KEY, contentRowScreenY(12));
         } else if (EZMiner.clientIsOp) {
             tfServerBigRadius.yPosition = contentRowScreenY(0);
             tfServerBlockLimit.yPosition = contentRowScreenY(1);
@@ -655,7 +674,8 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_CHAIN_ACTIVATION_MODE
                 || btn.id == BTN_SUPPRESS_INGAME_INFO
                 || btn.id == BTN_HUD_ANIM_STYLE
-                || btn.id == BTN_RENDER_STYLE;
+                || btn.id == BTN_RENDER_STYLE
+                || btn.id == BTN_BLOCK_SCROLL_ON_CHAIN_KEY;
             boolean isClientAction = btn.id == BTN_CLIENT_RELOAD || btn.id == BTN_CLIENT_SAVE;
             boolean isServerContent = btn.id == BTN_SERVER_DROP_TO_PLAYER || btn.id == BTN_SERVER_USE_PREVIEW;
             boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;

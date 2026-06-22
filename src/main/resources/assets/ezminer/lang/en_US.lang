@@ -81,3 +81,4 @@ ezminer.message.special.minesweeper.marked=EZMiner: Mine flagged at (%s, %s, %s)
 ezminer.config.renderStyle=Preview Render Style
 ezminer.config.renderStyle.native=Native
 ezminer.config.renderStyle.modern=Modern
+ezminer.config.blockScrollOnChainKey=Block hotbar scroll while chain key is held

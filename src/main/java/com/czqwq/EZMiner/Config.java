@@ -153,6 +153,14 @@ public class Config {
      * </ul>
      */
     public static int renderStyle = 0;
+    /**
+     * When {@code true}, mouse-wheel scrolling is blocked from changing the inventory
+     * hotbar slot while the chain key is held, so that scrolling is reserved for switching
+     * EZMiner sub-modes. When {@code false}, scrolling behaves normally.
+     */
+    public static boolean blockScrollOnChainKey = true;
+
+    private static final String BLOCK_SCROLL_ON_CHAIN_KEY_COMMENT = "When true, mouse-wheel scrolling is blocked from changing the inventory hotbar slot while the chain key is held, so that scrolling is reserved for switching EZMiner sub-modes.";
 
     private static final String RENDER_STYLE_COMMENT = "Preview outline rendering style. "
         + "0 = Native (single-pass wireframe, original). "
@@ -492,6 +500,8 @@ public class Config {
         hudAnimationStyle = clientConfiguration
             .getInt("hudAnimationStyle", CLIENT_CATEGORY, 0, 0, 1, HUD_ANIMATION_STYLE_COMMENT);
         renderStyle = clientConfiguration.getInt("renderStyle", CLIENT_CATEGORY, 0, 0, 1, RENDER_STYLE_COMMENT);
+        blockScrollOnChainKey = clientConfiguration
+            .getBoolean("blockScrollOnChainKey", CLIENT_CATEGORY, true, BLOCK_SCROLL_ON_CHAIN_KEY_COMMENT);
     }
 
     public static void setLegacyServerPreviewCaps(int maxBigRadius, int maxBlockLimit) {
@@ -570,6 +580,8 @@ public class Config {
             .set(hudAnimationStyle);
         clientConfiguration.get(CLIENT_CATEGORY, "renderStyle", 0)
             .set(renderStyle);
+        clientConfiguration.get(CLIENT_CATEGORY, "blockScrollOnChainKey", true)
+            .set(blockScrollOnChainKey);
         clientConfiguration.save();
     }
 }
