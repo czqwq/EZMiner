@@ -87,6 +87,40 @@ public class LootGamesMinesweeperBridge {
         compatibilityChecked = true;
     }
 
+    /**
+     * Checks whether any LootGames minesweeper game is currently active (in {@code StageWaiting})
+     * in the given world. Used by {@link MinesweeperModeHandler} to detect when a game ends so
+     * that previously-flagged positions can be cleared before the next game starts.
+     *
+     * @param world the world to scan
+     * @return true if at least one MSMasterTile has a generated board in StageWaiting
+     */
+    public boolean isAnyGameActive(World world) {
+        if (world == null) return false;
+        if (!compatibilityChecked) checkCompatibility();
+        if (!hasLootGamesApi || msMasterTileClass == null) return false;
+
+        try {
+            @SuppressWarnings("unchecked")
+            List<TileEntity> loadedTileEntities = new ArrayList<>(world.loadedTileEntityList);
+            for (TileEntity te : loadedTileEntities) {
+                if (te == null || te.isInvalid() || te.getWorldObj() != world) continue;
+                if (!msMasterTileClass.isInstance(te)) continue;
+
+                Object game = getGameMethod.invoke(te);
+                if (game == null) continue;
+                if (!((Boolean) isBoardGeneratedMethod.invoke(game))) continue;
+                Object stage = getStageMethod.invoke(game);
+                if (stage != null && stageWaitingClass.isInstance(stage)) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            EZMiner.LOG.debug("EZMiner: LootGames isAnyGameActive check failed: {}", e.getMessage());
+        }
+        return false;
+    }
+
     public Vector3i detectNearestBomb(EntityPlayerMP player, Set<String> detectedBombs) {
         if (player == null || player.worldObj == null || detectedBombs == null) return null;
         if (!compatibilityChecked) checkCompatibility();

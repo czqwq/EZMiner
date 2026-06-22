@@ -11,7 +11,7 @@ elytraModpackVersion {
 dependencies {
     implementation('org.joml:joml:1.10.8')
     implementation(gtnhDev("GT5-Unofficial"))
-    implementation('com.github.GTNewHorizons:LootGames:2.2.12:dev')
+    implementation('com.github.GTNewHorizons:LootGames:2.2.13:dev')
     runtimeOnlyNonPublishable(gtnhDev("Avaritia"))
     runtimeOnlyNonPublishable(gtnhDev("neiaddons"))
     runtimeOnlyNonPublishable('com.github.GTNewHorizons:Binnie:2.5.16:dev')

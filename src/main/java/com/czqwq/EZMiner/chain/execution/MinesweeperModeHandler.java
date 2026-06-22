@@ -12,6 +12,7 @@ import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.network.PacketMinesweeperClear;
 import com.czqwq.EZMiner.chain.network.PacketMinesweeperMark;
 
 /**
@@ -29,6 +30,12 @@ public class MinesweeperModeHandler {
     /** World positions of all mines flagged in this session; used to re-send on key re-press. */
     private final List<Vector3i> detectedPositions = new ArrayList<>();
     private long nextDetectAtMs = 0L;
+    /**
+     * Tracks whether any LootGames minesweeper game was in {@code StageWaiting} during the
+     * previous probe cycle. Used to detect game-end transitions so that stale flagged-mine
+     * state can be cleared before a new game starts on the same tile entity.
+     */
+    private boolean wasGameActive = false;
 
     /**
      * Runs one probe cycle. Sends a {@link PacketMinesweeperMark} packet if a new mine
@@ -38,6 +45,18 @@ public class MinesweeperModeHandler {
      * @param playerUUID the player's UUID (used for packet targeting)
      */
     public void tick(EntityPlayerMP player, UUID playerUUID) {
+        // ── Detect game-end transitions: if a LootGames game was active last probe but no
+        // game is in StageWaiting now, the game just ended — clear all stale marks so
+        // the next game's scan starts fresh.
+        boolean gameActive = bridge.isAnyGameActive(player.worldObj);
+        if (wasGameActive && !gameActive && !detectedBombs.isEmpty()) {
+            reset();
+            EZMiner.network.network.sendTo(new PacketMinesweeperClear(), player);
+        }
+        wasGameActive = gameActive;
+
+        if (!gameActive) return;
+
         long now = System.currentTimeMillis();
         if (now < nextDetectAtMs) return;
         long cooldownMs = Math.max(1L, (long) Config.minesweeperProbeCooldownSeconds) * 1000L;
@@ -84,5 +103,6 @@ public class MinesweeperModeHandler {
         nextDetectAtMs = 0L;
         detectedBombs.clear();
         detectedPositions.clear();
+        wasGameActive = false;
     }
 }

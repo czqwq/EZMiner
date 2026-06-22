@@ -1,4 +1,6 @@
 /tmp/
+/.claude/
+.mcp.
 .gradle
 .settings
 /.idea/
