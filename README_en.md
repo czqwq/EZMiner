@@ -2,262 +2,220 @@
 
 > 🌐 [中文文档](README.md)
 
-A high-performance chain-mining mod for **Minecraft 1.7.10**, designed specifically for the **GregTech: New Horizons (GTNH)** modpack.
+A high-performance chain-mining mod designed for **GregTech: New Horizons (GTNH)**, running on Minecraft 1.7.10. Hold a key to mine in bulk — release to stop instantly.
 
 ---
 
-## Features at a Glance
+## Quick Start
 
-- Activate chain mining by **holding the chain key** (or **click-to-toggle** — configurable)
-- Two primary modes: **Chain Mode** and **Blast Mode**
-- Blast Mode has **5 sub-modes**, switchable with the mouse scroll wheel
-- Real-time **HUD** shows the active mode and live block count while mining
-- **Block outline preview**: targeted blocks are highlighted through walls before mining begins
-- All drops are **batch-collected** and delivered after the chain ends — no entity spam lag
-- Full hot-reload support via `/EZMiner reloadConfig` — no restart needed
-- Full English and Chinese localisation
+1. Aim at the block you want to mine
+2. Hold **`` ` ``** (grave / backtick, rebindable) — block outlines appear
+3. Keep holding — blocks are chained and mined
+4. Release the key — mining stops immediately
+5. Scroll the mouse wheel to switch sub-modes
+6. Press `V` to cycle main modes (Blast → Chain → Special)
 
 ---
 
-## Key Bindings
-
-| Key | Default | Description |
-|-----|---------|-------------|
-| Chain Key | `` ` `` (grave / backtick) | Start/stop chain mining |
-| Mode Switch | `V` | Cycle the main mode (Chain ↔ Blast) |
-| Mouse Scroll | — | While chain is active, cycle the sub-mode |
-
----
-
-## Primary Modes
-
-### Chain Mode
-
-Starting from the block you break, EZMiner automatically finds all connected blocks of the **same type** and mines them outward. Blocks closest to the origin are mined first, producing a smooth sphere-shaped expansion effect.
+## Three Main Modes
 
 ### Blast Mode
 
-Mines all blocks in a configurable radius around the target. Six sub-modes are available:
+Mines all blocks within a configurable radius around the target. **7 sub-modes**, switchable with the mouse wheel:
 
 | Sub-mode | Description |
 |----------|-------------|
 | All Blocks | Mines every harvestable block in the radius |
-| Same Type | Mines only blocks that match the targeted block |
-| Tunnel | Digs a straight tunnel in the direction you are looking |
+| Same Type | Mines only blocks that match the targeted block exactly |
+| Tunnel | Digs a straight tunnel in the direction you are facing |
 | Ore Only | Mines only ore blocks |
-| Logging | Mines only wood blocks (great for clearing trees) |
-| Crop Harvest | Right-click to trigger; automatically harvests all mature crops (vanilla & IC2) in range |
+| Logging | Mines only log blocks (bulk tree removal) |
+| Inverse Chain | Mines everything in the radius **except** the targeted block type |
+| GT Vein Ore | Mines only GT large-vein ore blocks, skipping scattered surface deposits |
+
+### Chain Mode
+
+Starting from the target block, automatically finds and mines all **connected blocks of the same type**. **2 sub-modes**:
+
+| Sub-mode | Description |
+|----------|-------------|
+| Basic | Blocks must match both ID and metadata to be chained |
+| Fuzzy | Blocks only need to match ID — metadata is ignored (e.g. all wool colours together) |
+
+### Special Mode
+
+Non-mining utility functions. **3 sub-modes**:
+
+| Sub-mode | Description |
+|----------|-------------|
+| Minesweeper | Automatically detects and flags mines in [LootGames](https://github.com/GTNewHorizons/LootGames) minesweeper puzzles |
+| Crop Harvest | Right-click to harvest all mature crops in range (supports Vanilla, IC2, CropsNH, Natura) |
+| Sudoku Assistant | Automatically fills correct answers in [LootGames](https://github.com/GTNewHorizons/LootGames) Sudoku puzzles |
+
+---
+
+## Controls
+
+### Key Bindings
+
+| Action | Default | Description |
+|--------|---------|-------------|
+| Activate Chain | `` ` `` | Hold to mine, release to stop |
+| Switch Main Mode | `V` | Cycle Blast → Chain → Special |
+| Switch Sub-mode | Mouse Wheel | Active while chain key is held; arrow keys also work |
+| Open Config | Inventory Screen | Click the `[EZMiner] Settings` button on the left side of your inventory |
+
+### Activation Mode
+
+Two activation behaviours, configurable in the settings GUI:
+
+- **Hold** (default): chain is active while the key is pressed
+- **Toggle**: press once to start, press again to stop
+
+### Scroll Lock
+
+While the chain key is held, the **mouse wheel is locked** from switching hotbar slots and is dedicated to cycling sub-modes. This can be disabled in the config.
+
+---
+
+## Block Preview
+
+While the chain key is held and you are aiming at a block, all blocks that would be included in the chain are **highlighted with glowing outlines**:
+
+- Outlines are visible through walls — buried veins are fully visible
+- Only blocks within render distance are shown to keep performance smooth
+- Two render styles: **Native** (clean single-pass wireframe) and **Modern** (solid visible edges + translucent hidden edges)
+- Can be turned off in the config
 
 ---
 
 ## HUD Display
 
-While chain mining is active, the top-left corner shows:
+While the chain key is held, real-time info appears in the top-left corner:
 
 ```
 [EZMiner] ■ Chain Active
-  ○─ <Main Mode>
-  └─ <Sub-mode>
-  └─ Chained Blocks: N        ← shown only while mining
+  ○─ Blast Mode
+  └─ Same Type
+  └─ Chained Blocks: 128
 ```
 
----
-
-## Block Outline Preview
-
-Aim at a block with the chain key held and EZMiner will render glowing outlines around every block that would be included in the current chain.
-
-- Outlines are **visible through walls** so you can see the full vein even if it's buried
-- Only blocks within render distance are outlined — performance is not affected
-- Preview stops automatically when targeting air or entities
-- Can be disabled with `usePreview = false` in the config
+- HUD hides automatically when the key is released
+- Position can be set with `/EZMiner hud pos <x> <y>`
+- Title animation can be set to **Rainbow Bounce** or **Wave Highlight**
 
 ---
 
 ## Drop Handling
 
-All drops generated during a chain are **collected silently** and delivered in one batch when the operation finishes, preventing item-entity lag spikes.
+All drops generated during a chain are **collected and held back**, then delivered in a single batch at the player's feet once the operation finishes — no entity-spam lag spikes.
 
-- `dropToPlayer = true` (default): drops spawn as item entities at the player's current feet position
-- `dropToPlayer = false`: drops spawn as item entities at the location of the first mined block
-
-Stack sizes always respect each item's `maxStackSize`.
-
----
-
-## Visual Prospecting Integration
-
-When the [Visual Prospecting](https://github.com/GTNewHorizons/VisualProspecting) mod is installed, EZMiner automatically **records ore-vein data to the map overlay** as it mines GregTech ore blocks — no need to manually right-click each ore. This works across all mining modes whenever a GT ore block is encountered.
+Stack sizes always respect each item's maximum stack limit.
 
 ---
 
 ## Configuration
 
-EZMiner uses two separate config files stored in different locations:
+EZMiner's configuration is split into client and server parts:
+
+### In-Game Config GUI
+
+Press `E` to open your inventory, then click the `[EZMiner] Settings` button on the left:
+
+- **Client Settings** tab: preview, display, key mode, HUD animation, etc.
+- **Server Settings** tab (OP only): radius, block limits, costs, preview caps, etc.
+
+Numeric fields accept direct input; toggle options switch ON/OFF with a click.
+
+### Config File Locations
 
 | File | Path | Description |
 |------|------|-------------|
-| **Client config** | `config/EZMiner/EZMiner.cfg` | Per-player local settings |
-| **Server config** | `EZMiner/EZMiner_Server.cfg` | Admin-controlled server settings, stored in the game root directory — `.minecraft/EZMiner/` on a client, `./EZMiner/` on a dedicated server |
+| Client Config | `config/EZMiner/EZMiner.cfg` | Per-player preferences |
+| Server Config | `EZMiner/EZMiner_Server.cfg` | Server rules (single-player: `.minecraft/EZMiner/`) |
 
-Most options support live hot-reload via `/EZMiner reloadConfig` without restarting the game.
+### Common Server Options (OP only)
 
-### Server Config (`EZMiner/EZMiner_Server.cfg`)
+| Option | Default | Description |
+|--------|---------|-------------|
+| Max Radius | 8 | Maximum range for chain/blast operations (blocks) |
+| Max Blocks | 1024 | Maximum blocks per operation |
+| Adjacency Radius | 2 | Range in which same-type blocks count as "connected" in chain mode |
+| Tunnel Width | 1 | Half-width for tunnel blast (0 = 1 wide, 1 = 3 wide) |
+| Blocks Per Tick | 16 | Maximum blocks broken per game tick (max 64; lower = less TPS impact) |
+| Food Cost | 0.025 | Hunger exhaustion per block mined |
+| Drop Location | Player feet | Where batched drops appear — at the player or at the origin block |
+| Minesweeper Cooldown | 5 s | Delay between auto-flag operations in Minesweeper mode |
+| Sudoku Cooldown | 5 s | Delay between auto-fill operations in Sudoku mode |
 
-Set by the server administrator. The effective value on each client is capped to these limits.
+### Common Client Options
 
-| Key | Default | Description |
-|-----|---------|-------------|
-| `bigRadius` | `8` | Maximum chain / blast radius (blocks) |
-| `blockLimit` | `1024` | Maximum blocks per chain operation |
-| `smallRadius` | `2` | Adjacency detection radius in chain mode — blocks within this range count as "connected" |
-| `tunnelWidth` | `1` | Half-width of the tunnel in Tunnel sub-mode (blocks) |
-| `breakPerTick` | `16` | Maximum blocks broken per server tick (hard cap 64) — lower values reduce TPS impact on large veins |
-| `addExhaustion` | `0.025` | Food exhaustion added per block mined (negative values restore food) |
-| `dropToPlayer` | `true` | Where to deliver batched drops: `true` = at the player's feet (default), `false` = at the origin block where mining started |
-| `serverUsePreview` | `true` | Global server preview switch — `false` disables the block-outline preview for all clients |
-| `serverMaxPreviewBigRadius` | `8` | Maximum preview search radius allowed by the server |
-| `serverMaxPreviewBlockLimit` | `1024` | Maximum preview block count allowed by the server |
-| `minesweeperProbeCooldownSeconds` | `5` | Cooldown in seconds between auto-flag operations in Special / Minesweeper mode |
+| Option | Default | Description |
+|--------|---------|-------------|
+| Block Preview | ON | Show highlighted outlines of chained blocks |
+| Completion Message | ON | Show chat summary after each chain operation |
+| Key Mode | Hold | Hold = hold-to-activate, Toggle = click-to-toggle |
+| Scroll Lock | ON | Block hotbar scroll while chain key is held |
+| Hide IGI HUD | OFF | Temporarily hide InGame Info XML HUD while EZMiner is active |
+| HUD Animation | Rainbow Bounce | Title animation style |
+| Render Style | Native | Preview outline rendering style |
 
-### Client Config (`config/EZMiner/EZMiner.cfg`)
+---
 
-Adjusted by each player individually. Effective values are capped by the server limits above.
+## Commands
 
-| Key | Default | Description |
-|-----|---------|-------------|
-| `usePreview` | `true` | Show block outline preview while chain is active |
-| `useChainDoneMessage` | `true` | Show a chat summary when a chain operation finishes |
-| `clientBigRadius` | `8` | Preferred chain radius (capped by server max) |
-| `clientBlockLimit` | `1024` | Preferred max blocks per operation (capped by server max) |
-| `clientSmallRadius` | `2` | Preferred adjacency detection radius (capped by server max) |
-| `clientTunnelWidth` | `1` | Preferred tunnel half-width (capped by server max) |
-| `previewBigRadius` | `8` | Max search radius for the client-side preview (capped by server max) |
-| `previewBlockLimit` | `256` | Max blocks shown in the client-side preview (capped by server max) |
-| `chainActivationMode` | `0` | Chain key behaviour: `0` = **hold** to activate (default), `1` = **click to toggle** on/off |
-| `hudPosX` / `hudPosY` | `5` / `5` | HUD position on screen in pixels (origin at top-left) |
-| `suppressIngameInfoHud` | `false` | Temporarily hide the InGame Info XML HUD while the chain key is held, preventing overlap (requires InGame Info XML) |
-| `hudAnimationStyle` | `0` | HUD brand animation style: `0` = Rainbow Bounce (default), `1` = Wave Highlight |
-| `renderStyle` | `0` | Block outline preview style: `0` = Native (single-pass wireframe, default), `1` = Modern (two-pass: solid visible lines + translucent hidden lines) |
+All commands start with `/EZMiner`:
 
-### Fortune Cap Override (server config, Mixin feature, disabled by default)
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `reloadConfig` | OP | Reload server config from disk, syncs to all online players |
+| `reloadClientConfig` | Anyone | Reload local client config from disk |
+| `active_mode <0\|1>` | Anyone | Set chain key behaviour (0 = Hold, 1 = Toggle) |
+| `hud pos <x> <y>` | Anyone | Set HUD pixel position on screen |
 
-> ⚠️ **The three options below are in the server config (`EZMiner/EZMiner_Server.cfg`) and are applied via Mixin at JVM startup. They cannot be changed via `/EZMiner reloadConfig` — a full game restart is required after editing them.**
+---
 
-| Key | Default | Description |
-|-----|---------|-------------|
-| `enableUnlimitedOreFortune` | `false` | When enabled, GregTech and BartWorks ores respond to Fortune levels above III, yielding more drops |
-| `maxFortuneLevel` | `3` | Maximum Fortune level ores will respond to when `enableUnlimitedOreFortune` is `true` (max 255) |
-| `enableFortuneForPlacedOre` | `false` | When enabled, player-placed ores are treated as naturally generated and also benefit from the Fortune bonus |
+## Mod Integration
+
+### Visual Prospecting
+
+When [Visual Prospecting](https://github.com/GTNewHorizons/VisualProspecting) is installed, EZMiner **automatically records ore-vein data to the map overlay** as it mines GT ore blocks — no need to manually right-click each ore. Works across all mining modes.
+
+### LootGames
+
+With [LootGames](https://github.com/GTNewHorizons/LootGames) installed, the Special mode's **Minesweeper** and **Sudoku** assistants can automatically solve puzzles for you.
+
+### InGame Info XML
+
+When installed, EZMiner can optionally **auto-hide the IGI HUD** while its own HUD is visible to prevent overlap.
+
+---
+
+## Fortune Cap Override (Mixin — disabled by default)
+
+By default, GT and BartWorks ores only respond to Fortune III and below. EZMiner can lift this cap:
+
+- When enabled, Fortune V, X, and higher enchantment levels work on GT/BW ores
+- A configurable max Fortune level (up to 255)
+- Option to treat player-placed ores as natural for Fortune bonuses
+
+> ⚠️ This feature is injected via Mixin at game startup. **Changes require a full game restart** and cannot be applied through `/EZMiner reloadConfig`.
 
 ---
 
 ## Safety Features
 
-- Checks tool durability before each block — stops automatically before the tool would break
-- Exhaustion is consumed per block to prevent "free" infinite mining
-- Never mines the block directly under the player's feet to prevent accidental falls
-- Ignores fake-player interactions to prevent exploit automation
+- Stops automatically before the tool would break (durability < 1)
+- Hunger is consumed per block to prevent infinite free mining
+- Never mines the block directly under the player's feet
+- Ignores FakePlayer interactions to prevent exploits
 - Immediately halts all operations when a player logs out
-- Full exception handling with detailed log output
-
----
-
-## Hot-reload Commands
-
-```
-/EZMiner reloadConfig          # Reload config from disk (OP only; syncs all online players)
-/EZMiner reloadClientConfig    # Reload local client config (no OP required)
-```
-
-**Note:** The Fortune cap override options (`enableUnlimitedOreFortune` / `maxFortuneLevel` / `enableFortuneForPlacedOre`) are applied via Mixin at JVM startup and are **not** affected by hot-reload — a full game restart is required after changing them.
+- Full error logging for easy troubleshooting
 
 ---
 
 ## Compatibility
 
 - Minecraft **1.7.10**
-- Forge **10.13.4.1614**
-- GregTech: New Horizons (GTNH) modpack
-- Mixins are **enabled** (`usesMixins = true`) for the Fortune cap override feature; chain-mining logic is implemented through Forge/FML events and layered modules
-
----
-
-## Performance Optimisations
-
-EZMiner includes several targeted optimisations to keep server TPS impact minimal on large veins:
-
-- **O(1) drop merging**: replaces the previous linear scan with a `LinkedHashMap<ItemStackKey, ItemStack>`, eliminating thousands of `isSame` calls per tick that previously caused 50%+ main-thread CPU usage
-- **Compressed visited-set**: uses `HashSet<Long>` instead of `HashSet<Vector3i>` to track visited positions, dramatically reducing GC pressure
-- **Priority-queue BFS**: chain mode uses a min-heap ordered by Euclidean distance, producing the smooth sphere-expansion effect while allowing short chains to finish early
-- **Tick-slice budget**: the search thread yields every 64 candidate checks; combined with the `breakPerTick` cap, this distributes world-write work evenly across ticks and avoids light-update spikes
-- **Chunk safety guard**: every background position check calls `blockExists()` first to prevent async chunk generation, which would corrupt `TickNextTick` lists
-- **Cached player floor position**: computed once at session start and reused for every candidate check, avoiding repeated `Math.floor` allocations
-
----
-
-## Architecture (Post-Refactor)
-
-```
-Client command input:
-  KeyListener -> PacketKeyState / PacketChainModeSwitch
-
-Server authoritative state:
-  ChainStateService
-    ├─ ChainPlayerState (persistent player state)
-    ├─ ChainRuntimeState (runtime state)
-    └─ ChainSession (single chain session context)
-
-Planning layer (read-only world access):
-  chain/planning/* + ParallelTick compute-only tasks
-
-Execution layer (main-thread world mutation):
-  BaseOperator -> ChainExecutor / BlockHarvestActionExecutor
-              -> ChainDropCollector / exhaustion strategy / VP bridge
-
-Sync layer:
-  PacketChainStateSync (server-authoritative projection)
-
-Client presentation:
-  ChainClientState + ChainPreviewController + HudRenderer/MinerRenderer
-```
-
-### Runtime State Flow (Simplified)
-
-1. Client sends key/mode command packets  
-2. Server updates authoritative state and starts a session when eligible  
-3. Planning threads produce candidate positions (no world mutation)  
-4. Main thread executes harvesting and sends `PacketChainStateSync`  
-5. End-of-session drop flush and lifecycle cleanup
-
-### Network Sequence (Simplified)
-
-1. C -> S: `PacketKeyState` (press/release)  
-2. C -> S: `PacketChainModeSwitch` (mode switch)  
-3. S -> C: `PacketChainStateSync` (session/count/elapsed/inOperate)
-
----
-
-## Debugging
-
-- Recommended baseline check: `./gradlew spotlessApply build`
-- Key log/entry points:
-  - Execution errors: `ChainExecutionErrorReporter`
-  - Lifecycle cleanup: `chain/lifecycle/ChainLifecycleService`
-  - Runtime sync: `chain/network/PacketChainStateSync`
-- Quick triage:
-  - Preview not updating: inspect freeze/unfreeze transitions in `ChainPreviewController`
-  - Multiplayer state leakage: verify UUID/sessionId/dimension guards
-  - Drop anomalies: inspect `Manager.onHarvestDrops` and Bandit compatibility branch
-
----
-
-## Migration Map (Legacy -> New)
-
-| Legacy responsibility/class | New responsibility/class |
-|---|---|
-| `Manager` runtime orchestration | `ChainStateService` + `ChainPlayerState`/`ChainRuntimeState` |
-| `MinerModeState#createPositionFounder` | `chain/mode/*` + `ChainPlanningRuntimeFactory` |
-| Monolithic `BaseOperator` logic | `ChainExecutor` + `ChainActionExecutor` + isolated strategies |
-| Preview/execution coupling | `ChainPreviewController` + `ChainClientState` |
-| Field-style bidirectional sync | Command packets (`PacketKeyState`/`PacketChainModeSwitch`) + authoritative projection (`PacketChainStateSync`) |
+- Forge **10.13.4.1614+**
+- Optimised for GregTech: New Horizons (GTNH) modpack
