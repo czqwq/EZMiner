@@ -16,7 +16,7 @@ dependencies {
     runtimeOnlyNonPublishable(gtnhDev("neiaddons"))
     runtimeOnlyNonPublishable('com.github.GTNewHorizons:Binnie:2.5.16:dev')
     runtimeOnlyNonPublishable(gtnhDev("NotEnoughItems"))
-    runtimeOnlyNonPublishable('com.github.GTNewHorizons:worldedit-gtnh:v0.0.8:dev')
+    runtimeOnlyNonPublishable('com.github.GTNewHorizons:worldedit-gtnh:v0.0.9:dev')
 
     // runtime
     runtimeOnlyNonPublishable(gtnhDev("InGame-Info-XML"))

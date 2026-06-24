@@ -88,3 +88,20 @@ ezminer.config.renderStyle=Preview Render Style
 ezminer.config.renderStyle.native=Native
 ezminer.config.renderStyle.modern=Modern
 ezminer.config.blockScrollOnChainKey=Block Hotbar Scroll\nWhile Chain Key Held
+
+key.ezminer.smartToolSwitch=Smart Tool Switch
+
+ezminer.gui.section.smartToolSwitch=Smart Tool Switch
+ezminer.config.smartToolSwitchEnabled=Smart Tool Switch\nON: auto-swap best tool\nOFF: feature disabled
+ezminer.config.smartToolSwitchActivationMode=Tool Switch Key Mode
+
+ezminer.smartToolSwitch.toggle=EZMiner: Smart Tool Switch %s
+ezminer.smartToolSwitch.enabled=§aON§r
+ezminer.smartToolSwitch.disabled=§cOFF§r
+
+ezminer.hud.smartToolSwitch=Smart Tool Switch
+ezminer.hud.smartToolSwitch.enabled=Active
+ezminer.hud.smartToolSwitch.disabled=Inactive
+
+ezminer.smartToolSwitch.tempDisabled=§7[EZMiner] Smart Tool Switch suppressed§7 — Shift+click air to resume§r
+ezminer.smartToolSwitch.tempReEnabled=§a[EZMiner] Smart Tool Switch resumed§r
