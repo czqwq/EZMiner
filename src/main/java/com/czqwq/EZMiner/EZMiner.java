@@ -56,6 +56,7 @@ public class EZMiner {
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
+        LOG.info("Ciallo～(∠・ω< )⌒★");
         proxy.postInit(event);
     }
 

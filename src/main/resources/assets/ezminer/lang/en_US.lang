@@ -1,8 +1,8 @@
 ezminer.hud.active=Chain Active
 ezminer.hud.chainCount=Chained Blocks
 ezminer.hud.chainElapsed=Chain Elapsed
-ezminer.hud.previewCount=Client Rendered Blocks
-ezminer.hud.minesweeper.cooldown=Next Probe In
+ezminer.hud.previewCount=Rendered Blocks
+ezminer.hud.minesweeper.cooldown=Probe Cooldown
 ezminer.hud.minesweeper.ready=Probe Ready
 
 key.ezminer.chainKey=Chain Key
@@ -11,48 +11,51 @@ key.categories.ezminer=EZMiner
 
 ezminer.mode.blast=Blast Mode
 ezminer.mode.chain=Chain Mode
-ezminer.mode.special=Special Chain Mode
+ezminer.mode.special=Special Mode
 
 ezminer.mode.blast.allBlocks=Blast: All Blocks
 ezminer.mode.blast.sameType=Blast: Same Type
 ezminer.mode.blast.tunnel=Blast: Tunnel
 ezminer.mode.blast.oreOnly=Blast: Ore Only
 ezminer.mode.blast.logging=Blast: Logging
-ezminer.mode.blast.inverse=Blast: Inverse Chain
-ezminer.mode.blast.gtVeinOre=Blast: GT Vein Ore (Precise)
+ezminer.mode.blast.inverse=Blast: Inverse
+ezminer.mode.blast.gtVeinOre=Blast: GT Vein Ore
 
 ezminer.mode.chain.basic=Chain: Basic
-ezminer.mode.chain.fuzzy=Chain: Fuzzy Mode
-ezminer.mode.special.minesweeper=Special Chain: Minesweeper Mode
-ezminer.mode.special.crop=Special Chain: Crop Harvest
-ezminer.mode.special.sudoku=Special Chain: Sudoku Assistant
+ezminer.mode.chain.fuzzy=Chain: Fuzzy
+ezminer.mode.special.minesweeper=Special: Minesweeper
+ezminer.mode.special.crop=Special: Crop Harvest
+ezminer.mode.special.sudoku=Special: Sudoku
 
 ezminer.message.mainMode=Main Mode
 ezminer.message.subMode=Sub Mode
 
-ezminer.config.bigRadius=Maximum chain/blast radius
-ezminer.config.blockLimit=Maximum blocks per chain
-ezminer.config.smallRadius=Adjacency radius for chain mode
-ezminer.config.tunnelWidth=Tunnel half-width
-ezminer.config.addExhaustion=Exhaustion added per block mined (negative restores food)
-ezminer.config.dropToPlayer=Drop at player feet (true) or origin block (false)
-ezminer.config.usePreview=Show block outline preview while chain key is held
-ezminer.config.useChainDoneMessage=Show completion message after each chain operation
-ezminer.config.chainActivationMode=Chain key activation mode
-ezminer.config.suppressIngameInfoHud=Temporarily hide InGame Info XML while EZMiner HUD is visible
+ezminer.config.bigRadius=Max Mining Radius
+ezminer.config.blockLimit=Max Blocks
+ezminer.config.smallRadius=Adjacency Radius
+ezminer.config.tunnelWidth=Tunnel Width
+ezminer.config.addExhaustion=Food Cost
+ezminer.config.dropToPlayer=Drop Location\nON: at player feet\nOFF: at origin block
+ezminer.config.usePreview=Show Block Preview
+ezminer.config.useChainDoneMessage=Show Completion Message
+ezminer.config.chainActivationMode=Chain Key Mode
+ezminer.config.suppressIngameInfoHud=Hide IGI HUD When Active
 ezminer.config.hudAnimationStyle=HUD Animation
 ezminer.config.hudAnimStyle.rainbow=Rainbow Bounce
 ezminer.config.hudAnimStyle.wave=Wave Highlight
-ezminer.config.breakPerTick=Max blocks broken per server tick
-ezminer.config.minesweeperCooldown=Minesweeper probe cooldown (seconds)
-ezminer.config.sudokuCooldown=Sudoku fill cooldown (seconds)
-ezminer.config.serverPreviewRadius=Server max preview radius
-ezminer.config.serverPreviewLimit=Server max preview block count
-ezminer.config.serverUsePreview=Server global preview enabled
-ezminer.config.previewBigRadius=Client preview max radius
-ezminer.config.previewBlockLimit=Client preview max blocks
+ezminer.config.breakPerTick=Blocks Per Tick
+ezminer.config.minesweeperCooldown=Minesweeper Cooldown (s)
+ezminer.config.sudokuCooldown=Sudoku Cooldown (s)
+ezminer.config.serverPreviewRadius=Server Max Preview Radius
+ezminer.config.serverPreviewLimit=Server Max Preview Blocks
+ezminer.config.serverUsePreview=Server Preview Enabled
+ezminer.config.previewBigRadius=Client Preview Radius
+ezminer.config.previewBlockLimit=Client Preview Blocks
 
 ezminer.gui.title=Config
+ezminer.gui.section.mining=Mining
+ezminer.gui.section.preview=Preview
+ezminer.gui.section.options=Options
 ezminer.gui.tab.client=§aClient Settings§r
 ezminer.gui.tab.server=§cServer Settings §7(OP)§r
 ezminer.gui.apply=§eApply§r
@@ -73,7 +76,7 @@ ezminer.command.usage.reloadclientconfig=§e/EZMiner reloadClientConfig§r - rel
 ezminer.command.usage.active_mode=§e/EZMiner active_mode <0|1>§r - set chain key activation mode
 ezminer.command.usage.hud_pos=§e/EZMiner hud pos <x> <y>§r - set HUD position (top-left origin)
 ezminer.command.active_mode.usage.0=§e/EZMiner active_mode 0§r - Hold: keep the chain key held to mine, release to stop
-ezminer.command.active_mode.usage.1=§e/EZMiner active_mode 1§r - Toggle: press once to active, press again to stop
+ezminer.command.active_mode.usage.1=§e/EZMiner active_mode 1§r - Toggle: press once to activate, press again to stop
 ezminer.command.hud.pos.usage=§e/EZMiner hud pos <x> <y>§r - set HUD position (top-left origin)
 ezminer.command.hud.pos.set=EZMiner: HUD position set to x=%s, y=%s.
 ezminer.message.chain.done=EZMiner: chain done; blocks=%s; time=%ss
@@ -84,4 +87,4 @@ ezminer.message.special.sudoku.filled=EZMiner: Sudoku cell (%s, %s) filled with 
 ezminer.config.renderStyle=Preview Render Style
 ezminer.config.renderStyle.native=Native
 ezminer.config.renderStyle.modern=Modern
-ezminer.config.blockScrollOnChainKey=Block hotbar scroll while chain key is held
+ezminer.config.blockScrollOnChainKey=Block Hotbar Scroll\nWhile Chain Key Held
