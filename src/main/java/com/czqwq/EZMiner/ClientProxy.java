@@ -10,6 +10,7 @@ import com.czqwq.EZMiner.compat.GT5ToolCompat;
 
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartedEvent;
+import gregtech.api.enums.Mods;
 
 public class ClientProxy extends CommonProxy {
 
@@ -24,7 +25,9 @@ public class ClientProxy extends CommonProxy {
     public void preInit(FMLPreInitializationEvent event) {
         super.preInit(event);
         // Initialise optional-mod compat bridges before any features that may use them
-        GT5ToolCompat.init();
+        if (Mods.GregTech.isModLoaded()) {
+            GT5ToolCompat.init();
+        }
         hudRenderer.registry();
         keyListener.registry();
         minerRenderer.registry();
