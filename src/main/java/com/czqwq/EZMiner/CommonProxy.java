@@ -31,6 +31,16 @@ public class CommonProxy {
                 .getParentFile(),
             "EZMiner");
         serverConfigDir.mkdirs();
+        // Clean up legacy server config that was previously stored alongside the client config.
+        // The server config now lives under <game_root>/EZMiner/ instead of config/EZMiner/.
+        File legacyServerConfig = new File(clientConfigDir, "EZMiner_Server.cfg");
+        if (legacyServerConfig.exists()) {
+            if (legacyServerConfig.delete()) {
+                EZMiner.LOG.info("Removed legacy server config at {}", legacyServerConfig.getAbsolutePath());
+            } else {
+                EZMiner.LOG.warn("Failed to remove legacy server config at {}", legacyServerConfig.getAbsolutePath());
+            }
+        }
         Config.init(new File(clientConfigDir, "EZMiner.cfg"), new File(serverConfigDir, "EZMiner_Server.cfg"));
         Config.register();
         EZMiner.network.registry();

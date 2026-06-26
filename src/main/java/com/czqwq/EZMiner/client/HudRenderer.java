@@ -87,6 +87,21 @@ public class HudRenderer {
         int y = Config.hudPosY;
         int lineH = fr.FONT_HEIGHT + 2;
 
+        // Smart-tool-switch status — shown above the main HUD when the chain key is pressed.
+        // Green when the feature is enabled, red when disabled.
+        if (Config.smartToolSwitchEnabled) {
+            SmartToolSwitchHandler stsHandler = ((ClientProxy) EZMiner.proxy).smartToolSwitchHandler;
+            String statusKey = stsHandler.isActive() ? "ezminer.hud.smartToolSwitch.enabled"
+                : "ezminer.hud.smartToolSwitch.disabled";
+            String statusColor = stsHandler.isActive() ? "§a" : "§7";
+            fr.drawStringWithShadow(
+                "§b◆ " + I18n.format("ezminer.hud.smartToolSwitch") + ": " + statusColor + I18n.format(statusKey),
+                x,
+                y,
+                0xFFFFFF);
+            y += lineH;
+        }
+
         // Line 1: animated header – "[EZMiner] ■ 连锁已启用"
         drawAnimatedHeader(fr, x, y, "\u00a7a\u25a0 " + I18n.format("ezminer.hud.active"));
         y += lineH;

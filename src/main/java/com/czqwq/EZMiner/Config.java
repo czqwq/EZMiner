@@ -165,7 +165,28 @@ public class Config {
      */
     public static boolean blockScrollOnChainKey = true;
 
+    /**
+     * Master switch for Smart Tool Switching. When false the feature is completely
+     * disabled regardless of key input.
+     */
+    public static boolean smartToolSwitchEnabled = true;
+
+    /**
+     * Smart Tool Switch key activation mode.
+     * <ul>
+     * <li>0 = Hold – tool switching is active only while the key is held.</li>
+     * <li>1 = Toggle – press once to activate, press again to deactivate (default).</li>
+     * </ul>
+     */
+    public static int smartToolSwitchActivationMode = 1;
+
     private static final String BLOCK_SCROLL_ON_CHAIN_KEY_COMMENT = "When true, mouse-wheel scrolling is blocked from changing the inventory hotbar slot while the chain key is held, so that scrolling is reserved for switching EZMiner sub-modes.";
+
+    private static final String SMART_TOOL_SWITCH_ENABLED_COMMENT = "Master switch for Smart Tool Switching. When false, the feature is completely disabled.";
+
+    private static final String SMART_TOOL_SWITCH_ACTIVATION_MODE_COMMENT = "Smart Tool Switch key activation mode. "
+        + "0 = Hold (tool switching active only while key is held). "
+        + "1 = Toggle (press once to activate, press again to deactivate, default).";
 
     private static final String RENDER_STYLE_COMMENT = "Preview outline rendering style. "
         + "0 = Native (single-pass wireframe, original). "
@@ -519,6 +540,15 @@ public class Config {
         renderStyle = clientConfiguration.getInt("renderStyle", CLIENT_CATEGORY, 0, 0, 1, RENDER_STYLE_COMMENT);
         blockScrollOnChainKey = clientConfiguration
             .getBoolean("blockScrollOnChainKey", CLIENT_CATEGORY, true, BLOCK_SCROLL_ON_CHAIN_KEY_COMMENT);
+        smartToolSwitchEnabled = clientConfiguration
+            .getBoolean("smartToolSwitchEnabled", CLIENT_CATEGORY, true, SMART_TOOL_SWITCH_ENABLED_COMMENT);
+        smartToolSwitchActivationMode = clientConfiguration.getInt(
+            "smartToolSwitchActivationMode",
+            CLIENT_CATEGORY,
+            1,
+            0,
+            1,
+            SMART_TOOL_SWITCH_ACTIVATION_MODE_COMMENT);
     }
 
     public static void setLegacyServerPreviewCaps(int maxBigRadius, int maxBlockLimit) {
@@ -601,6 +631,10 @@ public class Config {
             .set(renderStyle);
         clientConfiguration.get(CLIENT_CATEGORY, "blockScrollOnChainKey", true)
             .set(blockScrollOnChainKey);
+        clientConfiguration.get(CLIENT_CATEGORY, "smartToolSwitchEnabled", true)
+            .set(smartToolSwitchEnabled);
+        clientConfiguration.get(CLIENT_CATEGORY, "smartToolSwitchActivationMode", 1)
+            .set(smartToolSwitchActivationMode);
         clientConfiguration.save();
     }
 }

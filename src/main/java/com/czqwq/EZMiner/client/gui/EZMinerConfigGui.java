@@ -52,6 +52,8 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_HUD_ANIM_STYLE = 13;
     private static final int BTN_RENDER_STYLE = 14;
     private static final int BTN_BLOCK_SCROLL_ON_CHAIN_KEY = 15;
+    private static final int BTN_SMART_TOOL_SWITCH_ENABLED = 16;
+    private static final int BTN_SMART_TOOL_SWITCH_ACTIVATION_MODE = 17;
 
     // ── Layout constants ──────────────────────────────────────────────────────
     private static final int GUI_W = 290;
@@ -63,7 +65,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int FIELD_H = 14;
     /** Y (relative to guiTop) where scrollable content begins. */
     private static final int CONTENT_START_Y = 42;
-    private static final int MAX_CONTENT_ROWS = 13;
+    private static final int MAX_CONTENT_ROWS = 15;
     private static final int ROW_H = 20;
     /** Extra vertical spacing added between lines when a label contains \n. */
     private static final int EXTRA_LINE_SPACING = 2;
@@ -136,6 +138,8 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnHudAnimStyle;
     private GuiButton btnRenderStyle;
     private GuiButton btnBlockScrollOnChainKey;
+    private GuiButton btnSmartToolSwitchEnabled;
+    private GuiButton btnSmartToolSwitchActivationMode;
     private GuiButton btnServerDropToPlayer;
     private GuiButton btnServerUsePreview;
 
@@ -241,6 +245,23 @@ public class EZMinerConfigGui extends GuiScreen {
             boolLabel("ezminer.config.blockScrollOnChainKey", Config.blockScrollOnChainKey),
             boolValue(Config.blockScrollOnChainKey));
         buttonList.add(btnBlockScrollOnChainKey);
+
+        // Smart Tool Switch section
+        btnSmartToolSwitchEnabled = newOptionButton(
+            BTN_SMART_TOOL_SWITCH_ENABLED,
+            13,
+            "ezminer.config.smartToolSwitchEnabled",
+            boolLabel("ezminer.config.smartToolSwitchEnabled", Config.smartToolSwitchEnabled),
+            boolValue(Config.smartToolSwitchEnabled));
+        buttonList.add(btnSmartToolSwitchEnabled);
+
+        btnSmartToolSwitchActivationMode = newOptionButton(
+            BTN_SMART_TOOL_SWITCH_ACTIVATION_MODE,
+            14,
+            "ezminer.config.smartToolSwitchActivationMode",
+            smartToolSwitchActivationModeLabel(),
+            smartToolSwitchActivationModeValue());
+        buttonList.add(btnSmartToolSwitchActivationMode);
 
         // ── Fixed: client action buttons ──────────────────────────────────────
         buttonList.add(
@@ -414,6 +435,16 @@ public class EZMinerConfigGui extends GuiScreen {
                     "ezminer.config.blockScrollOnChainKey",
                     Config.blockScrollOnChainKey);
                 break;
+            case BTN_SMART_TOOL_SWITCH_ENABLED:
+                Config.smartToolSwitchEnabled = !Config.smartToolSwitchEnabled;
+                btnSmartToolSwitchEnabled.displayString = boolDisplayText(
+                    "ezminer.config.smartToolSwitchEnabled",
+                    Config.smartToolSwitchEnabled);
+                break;
+            case BTN_SMART_TOOL_SWITCH_ACTIVATION_MODE:
+                Config.smartToolSwitchActivationMode = 1 - Config.smartToolSwitchActivationMode;
+                btnSmartToolSwitchActivationMode.displayString = smartToolSwitchActivationModeLabel();
+                break;
 
             case BTN_CLIENT_RELOAD:
                 applyAndSaveClientConfig();
@@ -560,6 +591,10 @@ public class EZMinerConfigGui extends GuiScreen {
                     return "ezminer.config.renderStyle";
                 case 12:
                     return "ezminer.config.blockScrollOnChainKey";
+                case 13:
+                    return "ezminer.config.smartToolSwitchEnabled";
+                case 14:
+                    return "ezminer.config.smartToolSwitchActivationMode";
                 default:
                     return null;
             }
@@ -654,7 +689,7 @@ public class EZMinerConfigGui extends GuiScreen {
      */
     private boolean isSectionBreak(int index) {
         if (activeTab == TAB_CLIENT) {
-            return index == 3 || index == 5; // after Mining, after Preview
+            return index == 3 || index == 5 || index == 12; // after Mining, after Preview, before Smart Tool Switch
         }
         return index == 7 || index == 9; // after Mining, after Preview
     }
@@ -739,6 +774,8 @@ public class EZMinerConfigGui extends GuiScreen {
             setScrolledButtonY(BTN_HUD_ANIM_STYLE, getControlY(10));
             setScrolledButtonY(BTN_RENDER_STYLE, getControlY(11));
             setScrolledButtonY(BTN_BLOCK_SCROLL_ON_CHAIN_KEY, getControlY(12));
+            setScrolledButtonY(BTN_SMART_TOOL_SWITCH_ENABLED, getControlY(13));
+            setScrolledButtonY(BTN_SMART_TOOL_SWITCH_ACTIVATION_MODE, getControlY(14));
         } else if (EZMiner.clientIsOp) {
             tfServerBigRadius.yPosition = getControlY(0);
             tfServerBlockLimit.yPosition = getControlY(1);
@@ -851,6 +888,10 @@ public class EZMinerConfigGui extends GuiScreen {
         drawButtonRowLabel(lx, contentRowScreenY(10), lc, "ezminer.config.hudAnimationStyle");
         drawButtonRowLabel(lx, contentRowScreenY(11), lc, "ezminer.config.renderStyle");
         drawButtonRowLabel(lx, contentRowScreenY(12), lc, "ezminer.config.blockScrollOnChainKey");
+        // Smart Tool Switch section
+        drawSectionHeader(lx, contentRowScreenY(12) + ROW_H + 4, "ezminer.gui.section.smartToolSwitch");
+        drawButtonRowLabel(lx, contentRowScreenY(13), lc, "ezminer.config.smartToolSwitchEnabled");
+        drawButtonRowLabel(lx, contentRowScreenY(14), lc, "ezminer.config.smartToolSwitchActivationMode");
     }
 
     private void drawServerTab() {
@@ -947,7 +988,9 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_SUPPRESS_INGAME_INFO
                 || btn.id == BTN_HUD_ANIM_STYLE
                 || btn.id == BTN_RENDER_STYLE
-                || btn.id == BTN_BLOCK_SCROLL_ON_CHAIN_KEY;
+                || btn.id == BTN_BLOCK_SCROLL_ON_CHAIN_KEY
+                || btn.id == BTN_SMART_TOOL_SWITCH_ENABLED
+                || btn.id == BTN_SMART_TOOL_SWITCH_ACTIVATION_MODE;
             boolean isClientAction = btn.id == BTN_CLIENT_RELOAD || btn.id == BTN_CLIENT_SAVE;
             boolean isServerContent = btn.id == BTN_SERVER_DROP_TO_PLAYER || btn.id == BTN_SERVER_USE_PREVIEW;
             boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;
@@ -1078,5 +1121,16 @@ public class EZMinerConfigGui extends GuiScreen {
         String style = Config.renderStyle == 0 ? I18n.format("ezminer.config.renderStyle.native")
             : I18n.format("ezminer.config.renderStyle.modern");
         return firstLine(I18n.format("ezminer.config.renderStyle")) + ": §e" + style + "§r";
+    }
+
+    private static String smartToolSwitchActivationModeLabel() {
+        String desc = Config.smartToolSwitchActivationMode == 0 ? I18n.format("ezminer.command.active_mode.desc.0")
+            : I18n.format("ezminer.command.active_mode.desc.1");
+        return firstLine(I18n.format("ezminer.config.smartToolSwitchActivationMode")) + ": " + desc;
+    }
+
+    private static String smartToolSwitchActivationModeValue() {
+        return Config.smartToolSwitchActivationMode == 0 ? I18n.format("ezminer.command.active_mode.desc.0")
+            : I18n.format("ezminer.command.active_mode.desc.1");
     }
 }
