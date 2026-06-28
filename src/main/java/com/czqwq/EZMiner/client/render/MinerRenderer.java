@@ -1,5 +1,6 @@
 package com.czqwq.EZMiner.client.render;
 
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import net.minecraft.client.Minecraft;
@@ -144,6 +145,12 @@ public class MinerRenderer {
         ChainPreviewState previewState = previewController.getState();
         if (previewState.frozen) {
             doRender();
+            return;
+        }
+
+        // ── Cached chain mode: render server-authoritative pre-calculated preview. ──
+        if (clientState.minerModeState.isCachedChainMode()) {
+            renderCachedPreview();
             return;
         }
 
@@ -412,5 +419,56 @@ public class MinerRenderer {
         FMLCommonHandler.instance()
             .bus()
             .unregister(this);
+    }
+
+    // ── Cached chain preview (server-authoritative, decoupled from client-side search) ──
+
+    /** Last cached preview version we've built mesh data for; -1 forces a rebuild. */
+    private int lastCachedPreviewVersion = -1;
+
+    /**
+     * Renders the server-authoritative cached preview for cached chain sub-modes.
+     *
+     * <p>
+     * Unlike the normal preview which runs its own client-side founder search,
+     * cached chain modes rely on the server to pre-calculate and sync the block
+     * list. This method rebuilds the wireframe mesh when a new cache version
+     * arrives from the server, and draws the cached outlines directly.
+     */
+    private void renderCachedPreview() {
+        // Stop any running normal-mode founder — cached mode doesn't use client-side search.
+        if (founder != null) {
+            founder.interrupt();
+            founder = null;
+            foundQueue.clear();
+            searchComplete = false;
+        }
+        // Check for updated cache from the server.
+        if (clientState.cachedPreviewVersion != lastCachedPreviewVersion) {
+            lastCachedPreviewVersion = clientState.cachedPreviewVersion;
+            List<Vector3i> positions = clientState.cachedPreviewPositions;
+            if (positions != null && !positions.isEmpty()) {
+                // Build mesh from cached positions.
+                spaceCalc.posSet.clear();
+                spaceCalc.positions.clear();
+                spaceCalc.hasChange = false;
+                for (Vector3i pos : positions) {
+                    spaceCalc.add(pos);
+                }
+                if (!spaceCalc.positions.isEmpty()) {
+                    SpaceCalculator.VertexAndIndex vi = spaceCalc.getVertexAndIndex();
+                    lastIndexCount = vi.indices.length;
+                    renderCache.updateData(vi.vertices, vi.indices);
+                    clientState.previewRenderedCount = spaceCalc.positions.size();
+                } else {
+                    lastIndexCount = 0;
+                }
+            } else {
+                // Empty cache — clear the preview.
+                lastIndexCount = 0;
+                clientState.previewRenderedCount = 0;
+            }
+        }
+        doRender();
     }
 }

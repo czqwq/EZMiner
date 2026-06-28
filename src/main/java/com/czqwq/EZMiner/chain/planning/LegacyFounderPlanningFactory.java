@@ -30,7 +30,9 @@ public class LegacyFounderPlanningFactory {
     public BasePositionFounder createFounder(MinerModeState modeState, Vector3i center,
         LinkedBlockingQueue<Vector3i> results, EntityPlayer player, MinerConfig config) {
         if (modeState.mainMode == 1) {
-            if (modeState.chainMode == 1) {
+            // Chain mode 0 = basic, 1 = fuzzy, 2 = cached, 3 = cached fuzzy.
+            // Cached modes use the same BFS algorithm; caching is orchestrated by Manager.
+            if (modeState.chainMode == 1 || modeState.chainMode == 3) {
                 return new FuzzyChainPositionFounder(center, results, player, config);
             }
             return new ChainPositionFounder(center, results, player, config);

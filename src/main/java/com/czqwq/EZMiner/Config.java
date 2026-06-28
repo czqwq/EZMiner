@@ -33,6 +33,38 @@ public class Config {
      */
     public static int breakPerTick = 16;
     /**
+     * Maximum number of blocks broken per server tick during <strong>cached</strong>
+     * chain operations. Cached chains have no background founder search overhead,
+     * so a higher rate (default 64) matches Bandit's throughput without increasing
+     * per-tick load beyond what the server already handles.
+     * Hard cap: 64.
+     */
+    public static int cachedBreakPerTick = 64;
+    /**
+     * When {@code true}, block drops are spawned immediately after each block is
+     * harvested during a chain operation, instead of being collected and flushed
+     * all at once at the end. This eliminates the end-of-chain lag spike caused by
+     * spawning hundreds of {@code EntityItem}s simultaneously.
+     *
+     * <p>
+     * When {@code false} (default), drops are batched and flushed after the chain
+     * ends, which is more vanilla-friendly but can cause a noticeable stutter on
+     * large veins.
+     */
+    public static boolean dropImmediately = false;
+    /**
+     * When {@code true}, the cached chain sub-modes (2 = Cached, 3 = Cached Fuzzy)
+     * are available in the chain mode cycle. When {@code false} (default), these
+     * sub-modes are hidden entirely and the chain mode switches between Basic and
+     * Fuzzy only.
+     *
+     * <p>
+     * <strong>WIP:</strong> cached chain is an experimental feature. The server-side
+     * BFS pre-calculation may exhibit undefined behaviour with certain modded ores.
+     * Enable at your own risk.
+     */
+    public static boolean enableCachedChain = false;
+    /**
      * Cooldown in seconds between successive minesweeper auto-flag operations
      * when the chain key is held in Special / Minesweeper mode. Minimum: 0.1 s (2 ticks).
      */
@@ -279,6 +311,30 @@ public class Config {
             "Maximum blocks broken per server tick during a chain operation. "
                 + "Lower values reduce light-update lag on large veins (recommended: 16). "
                 + "Hard cap: 64.");
+        cachedBreakPerTick = serverConfiguration.getInt(
+            "cachedBreakPerTick",
+            Configuration.CATEGORY_GENERAL,
+            64,
+            1,
+            64,
+            "Maximum blocks broken per server tick during a cached chain operation. "
+                + "Cached chains have no background founder overhead, so a higher rate "
+                + "(default 64) is safe. Hard cap: 64.");
+        dropImmediately = serverConfiguration.getBoolean(
+            "dropImmediately",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "When true, drops are spawned immediately after each block harvest during a "
+                + "chain, instead of being batched and flushed at the end. "
+                + "Eliminates the end-of-chain lag spike on large veins.");
+        enableCachedChain = serverConfiguration.getBoolean(
+            "enableCachedChain",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "WIP — When true, the cached chain sub-modes appear in the chain mode cycle. "
+                + "Cached chain pre-calculates block positions on the server thread and "
+                + "feeds them to the operator without a background founder. "
+                + "May have bugs with certain modded ores. Default: false.");
         addExhaustion = serverConfiguration
             .get(
                 Configuration.CATEGORY_GENERAL,
@@ -585,6 +641,12 @@ public class Config {
             .set(tunnelWidth);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "breakPerTick", 16)
             .set(breakPerTick);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "cachedBreakPerTick", 64)
+            .set(cachedBreakPerTick);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "dropImmediately", false)
+            .set(dropImmediately);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableCachedChain", false)
+            .set(enableCachedChain);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "addExhaustion", 0.025)
             .set(addExhaustion);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "dropToPlayer", true)

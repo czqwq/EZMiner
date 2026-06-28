@@ -1,6 +1,7 @@
 package com.czqwq.EZMiner.core;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -20,6 +21,7 @@ import com.czqwq.EZMiner.chain.execution.ChainHarvestExhaustionStrategy;
 import com.czqwq.EZMiner.chain.execution.CropHarvestActionExecutor;
 import com.czqwq.EZMiner.chain.execution.VisualProspectingBridge;
 import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
+import com.czqwq.EZMiner.chain.planning.CachedPositionsPlanningTask;
 import com.czqwq.EZMiner.chain.planning.ChainPlanningTask;
 import com.czqwq.EZMiner.core.crop.CropAdapterRegistry;
 import com.czqwq.EZMiner.utils.MessageUtils;
@@ -36,7 +38,7 @@ public class BaseOperator {
 
     public final EntityPlayerMP playerMP;
     public final Manager manager;
-    public final ChainPlanningTask planningTask;
+    public ChainPlanningTask planningTask;
     public final LinkedBlockingQueue<Vector3i> canBreakPositions = new LinkedBlockingQueue<>();
 
     private long startTime;
@@ -62,6 +64,29 @@ public class BaseOperator {
             .createTaskForMode(manager.minerModeState, pos, canBreakPositions, playerMP, manager.pConfig);
     }
 
+    /**
+     * Creates a {@link BaseOperator} that feeds from pre-calculated positions instead
+     * of running a background founder search.
+     *
+     * <p>
+     * <strong>Decoupling:</strong> this factory method is the single integration point
+     * between the cached-position planning system and the operator. The operator itself
+     * does not know or care where the positions came from — it only sees
+     * {@link #canBreakPositions} and {@link #planningTask}.
+     *
+     * @param origin    the block position that was broken (used as drop-spawn reference)
+     * @param manager   the player's Manager
+     * @param positions the pre-calculated positions (ownership is transferred)
+     */
+    public static BaseOperator createCached(Vector3i origin, Manager manager, List<Vector3i> positions) {
+        BaseOperator op = new BaseOperator(origin, manager);
+        // Replace the founder-based planning task with a lazy cache-feeding task.
+        op.planningTask.interrupt(); // stop the default founder that was created in constructor
+        op.canBreakPositions.clear();
+        op.planningTask = new CachedPositionsPlanningTask(positions);
+        return op;
+    }
+
     @SubscribeEvent
     public void operatorTask(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
@@ -70,6 +95,18 @@ public class BaseOperator {
             unRegistry();
             return;
         }
+
+        // For cached tasks, feed positions on-demand instead of pre-loading the
+        // entire list into the queue. This keeps memory pressure low and allows
+        // cancellation to take effect within one tick.
+        final int perTick = planningTask instanceof CachedPositionsPlanningTask ? Config.cachedBreakPerTick
+            : Config.breakPerTick;
+
+        if (planningTask instanceof CachedPositionsPlanningTask) {
+            CachedPositionsPlanningTask cached = (CachedPositionsPlanningTask) planningTask;
+            cached.feedTo(canBreakPositions, perTick);
+        }
+
         if (canBreakPositions.isEmpty()) {
             if (planningTask.isStopped()) unRegistry();
             return;
@@ -81,7 +118,7 @@ public class BaseOperator {
         }
 
         stopRequested = false;
-        chainExecutor.executeBatch(canBreakPositions, Config.breakPerTick, this::processCandidate);
+        chainExecutor.executeBatch(canBreakPositions, perTick, this::processCandidate);
         if (stopRequested) {
             unRegistry();
             return;

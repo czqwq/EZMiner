@@ -2,6 +2,7 @@ ezminer.hud.active=Chain Active
 ezminer.hud.chainCount=Chained Blocks
 ezminer.hud.chainElapsed=Chain Elapsed
 ezminer.hud.previewCount=Rendered Blocks
+ezminer.hud.cachedCount=Cached Blocks
 ezminer.hud.minesweeper.cooldown=Probe Cooldown
 ezminer.hud.minesweeper.ready=Probe Ready
 
@@ -23,6 +24,8 @@ ezminer.mode.blast.gtVeinOre=Blast: GT Vein Ore
 
 ezminer.mode.chain.basic=Chain: Basic
 ezminer.mode.chain.fuzzy=Chain: Fuzzy
+ezminer.mode.chain.cached=Chain: Cached
+ezminer.mode.chain.cached_fuzzy=Chain: Cached Fuzzy
 ezminer.mode.special.minesweeper=Special: Minesweeper
 ezminer.mode.special.crop=Special: Crop Harvest
 ezminer.mode.special.sudoku=Special: Sudoku
@@ -44,6 +47,9 @@ ezminer.config.hudAnimationStyle=HUD Animation
 ezminer.config.hudAnimStyle.rainbow=Rainbow Bounce
 ezminer.config.hudAnimStyle.wave=Wave Highlight
 ezminer.config.breakPerTick=Blocks Per Tick
+ezminer.config.cachedBreakPerTick=Cached Blocks Per Tick
+ezminer.config.dropImmediately=Drop Items Immediately\nON: spawn drops each harvest\nOFF: batch at chain end
+ezminer.config.enableCachedChain=Enable Cached Chain Sub-Modes\n⚠ WIP – may have bugs with certain modded ores\nON: show cached/fuzzy-cached in chain\nOFF: basic/fuzzy only
 ezminer.config.minesweeperCooldown=Minesweeper Cooldown (s)
 ezminer.config.sudokuCooldown=Sudoku Cooldown (s)
 ezminer.config.serverPreviewRadius=Server Max Preview Radius

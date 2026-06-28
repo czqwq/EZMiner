@@ -106,12 +106,25 @@ public class HudRenderer {
         drawAnimatedHeader(fr, x, y, "\u00a7a\u25a0 " + I18n.format("ezminer.hud.active"));
         y += lineH;
 
-        // Line 2: preview rendered count
-        fr.drawStringWithShadow(
-            "\u00a77  \u2514\u2500 " + I18n.format("ezminer.hud.previewCount") + ": \u00a7e" + previewCount,
-            x,
-            y,
-            0xFFFFFF);
+        // Line 2: preview / cached count (label and value differ by mode).
+        // In cached chain mode the server pre-calculates and syncs positions;
+        // the HUD shows "Cached Blocks" with the server-authoritative count.
+        // In all other modes the HUD shows "Rendered Blocks" from the local preview.
+        if (modeState.isCachedChainMode()) {
+            java.util.List<org.joml.Vector3i> cachedPositions = state.cachedPreviewPositions;
+            int cachedCount = cachedPositions != null ? cachedPositions.size() : 0;
+            fr.drawStringWithShadow(
+                "\u00a77  \u2514\u2500 " + I18n.format("ezminer.hud.cachedCount") + ": \u00a7e" + cachedCount,
+                x,
+                y,
+                0xFFFFFF);
+        } else {
+            fr.drawStringWithShadow(
+                "\u00a77  \u2514\u2500 " + I18n.format("ezminer.hud.previewCount") + ": \u00a7e" + previewCount,
+                x,
+                y,
+                0xFFFFFF);
+        }
         y += lineH;
 
         // Line 3: main mode

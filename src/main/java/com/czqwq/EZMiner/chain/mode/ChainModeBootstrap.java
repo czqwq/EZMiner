@@ -12,7 +12,10 @@ public class ChainModeBootstrap {
                 .addSubMode(new ChainSubModeDefinition("blast_log", "ezminer.mode.blast.logging")));
         modeRegistry.register(
             new ChainModeDefinition(ChainMode.CHAIN, "ezminer.mode.chain")
-                .addSubMode(new ChainSubModeDefinition("chain_basic", "ezminer.mode.chain.basic")));
+                .addSubMode(new ChainSubModeDefinition("chain_basic", "ezminer.mode.chain.basic"))
+                .addSubMode(new ChainSubModeDefinition("chain_fuzzy", "ezminer.mode.chain.fuzzy"))
+                .addSubMode(new ChainSubModeDefinition("chain_cached", "ezminer.mode.chain.cached"))
+                .addSubMode(new ChainSubModeDefinition("chain_cached_fuzzy", "ezminer.mode.chain.cached_fuzzy")));
         modeRegistry.register(
             new ChainModeDefinition(ChainMode.SPECIAL, "ezminer.mode.special")
                 .addSubMode(new ChainSubModeDefinition("special_minesweeper", "ezminer.mode.special.minesweeper"))

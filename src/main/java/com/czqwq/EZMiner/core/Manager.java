@@ -2,8 +2,10 @@ package com.czqwq.EZMiner.core;
 
 import java.util.UUID;
 
+import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -16,6 +18,9 @@ import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.chain.execution.ChainDropCollector;
 import com.czqwq.EZMiner.chain.execution.MinesweeperModeHandler;
 import com.czqwq.EZMiner.chain.execution.SudokuModeHandler;
+import com.czqwq.EZMiner.chain.planning.ChainPreCalcCache;
+import com.czqwq.EZMiner.chain.planning.ChainPreCalcCache.CachedEntry;
+import com.czqwq.EZMiner.chain.planning.ChainPreCalcEngine;
 import com.czqwq.EZMiner.chain.state.ChainPlayerState;
 import com.czqwq.EZMiner.chain.state.ChainSession;
 import com.czqwq.EZMiner.core.founder.CropFounder;
@@ -74,6 +79,20 @@ public class Manager {
     private final MinesweeperModeHandler minesweeperHandler = new MinesweeperModeHandler();
     private final SudokuModeHandler sudokuHandler = new SudokuModeHandler();
 
+    // ── Pre-calculation engine for cached chain sub-modes ──
+    //
+    // The BFS runs directly on the server thread (inside onWorldTick), processing a
+    // limited number of candidates per tick. This avoids the Hodgepodge
+    // ServerThreadLongHashMap off-thread warning that background founder threads
+    // trigger on every blockExists() / chunkExists() call.
+    //
+    // Encapsulated in ChainPreCalcEngine (chain/planning/) — decoupled from Manager
+    // so the BFS logic is independently testable and the chain subsystem owns all
+    // planning concerns.
+
+    /** Per-player server-thread BFS engine for cached chain pre-calculation. */
+    private final ChainPreCalcEngine preCalcEngine = new ChainPreCalcEngine();
+
     public Manager(EntityPlayerMP player) {
         this.player = player;
         this.playerUUID = player.getUniqueID();
@@ -90,6 +109,15 @@ public class Manager {
         if (isInOperate() || !isKeyPressed()) return;
         if (isSpecialMinesweeperMode()) return;
         if (isSpecialCropMode()) return;
+        // For cached chain modes, try to use the pre-calculated cache first.
+        if (isCachedChainMode()) {
+            Vector3i pos = new Vector3i(event.x, event.y, event.z);
+            if (tryStartCachedChain(pos, (EntityPlayerMP) event.getPlayer())) return;
+            // Cache miss — the pre-calculation is preserved for the next attempt
+            // (the player may have aimed at a slightly different block; the next
+            // break of a matching-type block within range will still hit the cache).
+            // Fall through to normal chain start with a fresh founder.
+        }
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.getPlayer());
     }
 
@@ -122,6 +150,31 @@ public class Manager {
         // items drop normally and Bandit can intercept them as designed.
         if (BANDIT_LOADED) return;
         dropCollector.collect(event.drops);
+        if (Config.dropImmediately) {
+            // Flush drops after every harvest instead of batching at chain end.
+            // This eliminates the lag spike caused by spawning hundreds of EntityItems
+            // simultaneously when a large vein finishes.
+            flushCollectedDrops();
+        }
+    }
+
+    /** Spawns accumulated drops immediately without the usual end-of-chain guard. */
+    private void flushCollectedDrops() {
+        if (dropCollector.isEmpty() || player == null || player.worldObj == null) {
+            dropCollector.clear();
+            return;
+        }
+        final double spawnX, spawnY, spawnZ;
+        if (Config.dropToPlayer || originPos == null) {
+            spawnX = player.posX;
+            spawnY = player.posY;
+            spawnZ = player.posZ;
+        } else {
+            spawnX = originPos.x + 0.5;
+            spawnY = originPos.y + 0.5;
+            spawnZ = originPos.z + 0.5;
+        }
+        dropCollector.flush(player.worldObj, spawnX, spawnY, spawnZ);
     }
 
     // ===== Tick: flush drops after chain ends =====
@@ -132,8 +185,11 @@ public class Manager {
         if (player == null || event.world != player.worldObj || isInOperate()) return;
         if (isKeyPressed()) {
             tickSpecialMode();
+            preCalcEngine.tick(player, pConfig, minerModeState);
             return;
         }
+        // Key released: stop any in-progress pre-calculation and flush drops.
+        preCalcEngine.stop(player);
         flushDrops();
     }
 
@@ -181,6 +237,8 @@ public class Manager {
     }
 
     public void cleanupState() {
+        preCalcEngine.cleanup();
+        ChainPreCalcCache.remove(playerUUID);
         ChainPlayerState state = state();
         state.keyPressed = false;
         state.runtimeState.inOperate = false;
@@ -237,6 +295,76 @@ public class Manager {
 
     public boolean isSpecialSudokuMode() {
         return minerModeState.mainMode == 2 && minerModeState.specialMode == 2;
+    }
+
+    // ── Cached chain sub-mode helpers ──
+
+    /** Delegates to {@link MinerModeState#isCachedChainMode()}. */
+    public boolean isCachedChainMode() {
+        return minerModeState.isCachedChainMode();
+    }
+
+    /** Returns true for the fuzzy variant of cached chain. */
+    public boolean isCachedChainFuzzyMode() {
+        return minerModeState.isCachedChainMode() && minerModeState.chainMode == 3;
+    }
+
+    /**
+     * Attempts to start a cached chain operation using the pre-calculated block list.
+     *
+     * @return true if the cache was valid and the cached chain was started
+     */
+    private boolean tryStartCachedChain(Vector3i pos, EntityPlayerMP playerMP) {
+        CachedEntry entry = ChainPreCalcCache.get(playerUUID);
+        if (entry == null || entry.isEmpty()) return false;
+
+        // Validate: player must still be in the same dimension.
+        if (playerMP.dimension != entry.dimension) return false;
+
+        // Validate: the broken block must be of the same type as what was pre-calculated,
+        // and within reasonable distance of the pre-calc center.
+        World world = playerMP.worldObj;
+        if (world == null || !world.blockExists(pos.x, pos.y, pos.z)) return false;
+        Block block = world.getBlock(pos.x, pos.y, pos.z);
+
+        if (entry.fuzzyTypeClassName != null) {
+            // Fuzzy mode: class-based matching (isAssignableFrom).
+            boolean fuzzyMatch = false;
+            try {
+                Class<?> entryClass = Class.forName(entry.fuzzyTypeClassName);
+                Class<?> brokenClass = block.getClass();
+                fuzzyMatch = entryClass.isAssignableFrom(brokenClass) || brokenClass.isAssignableFrom(entryClass);
+            } catch (ClassNotFoundException ignored) {}
+            if (!fuzzyMatch) return false;
+        } else {
+            // Exact mode (Bandit-style): compare by block ID, ignore meta.
+            int blockIdHash = ChainPreCalcCache.computeBlockIdHash(Block.getIdFromBlock(block), playerMP.dimension);
+            if (blockIdHash != entry.typeHash) return false;
+        }
+
+        int dx = pos.x - entry.centerX;
+        int dy = pos.y - entry.centerY;
+        int dz = pos.z - entry.centerZ;
+        int distSq = dx * dx + dy * dy + dz * dz;
+        int bigR = pConfig.bigRadius;
+        if (distSq > bigR * bigR) return false;
+
+        // Cache is valid — start the cached chain operation.
+        if (operator != null) {
+            operator.stopImmediately();
+            operator = null;
+        }
+        this.player = playerMP;
+        originPos = pos;
+        activeSession = EZMiner.chainStateService.markSessionStart(playerUUID, pos, playerMP.dimension);
+        setInOperate(true);
+        operator = BaseOperator.createCached(pos, this, entry.positions);
+        operator.registry();
+
+        // Clear the cache so it's not accidentally reused for another block type.
+        ChainPreCalcCache.remove(playerUUID);
+        preCalcEngine.stop(playerMP);
+        return true;
     }
 
     public void tickSpecialMode() {

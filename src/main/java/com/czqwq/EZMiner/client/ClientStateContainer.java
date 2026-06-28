@@ -81,4 +81,15 @@ public class ClientStateContainer {
         sudokuFilledPositions.clear();
         sudokuFilledVersion++;
     }
+
+    // ── Cached chain preview (server-authoritative pre-calculation) ──────────
+
+    /** Server-authoritative pre-calculated block positions for cached chain preview rendering. */
+    public volatile List<Vector3i> cachedPreviewPositions = null;
+    /** Target block position the pre-calculation was performed against. */
+    public volatile Vector3i cachedPreviewTarget = null;
+    /** Dimension the pre-calculation was performed in. */
+    public volatile int cachedPreviewDimension = 0;
+    /** Monotonically increasing counter bumped when cached positions are updated. */
+    public volatile int cachedPreviewVersion = 0;
 }

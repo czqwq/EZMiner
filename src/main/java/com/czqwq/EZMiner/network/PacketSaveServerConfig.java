@@ -27,6 +27,8 @@ public class PacketSaveServerConfig implements IMessage {
     public int smallRadius;
     public int tunnelWidth;
     public int breakPerTick;
+    public int cachedBreakPerTick;
+    public boolean dropImmediately;
     public double addExhaustion;
     public boolean dropToPlayer;
     public boolean serverUsePreview;
@@ -34,17 +36,21 @@ public class PacketSaveServerConfig implements IMessage {
     public int serverMaxPreviewBlockLimit;
     public double minesweeperProbeCooldownSeconds;
     public double sudokuProbeCooldownSeconds;
+    public boolean enableCachedChain;
 
     public PacketSaveServerConfig() {}
 
     public PacketSaveServerConfig(int bigRadius, int blockLimit, int smallRadius, int tunnelWidth, int breakPerTick,
-        double addExhaustion, boolean dropToPlayer, boolean serverUsePreview, int serverMaxPreviewBigRadius,
-        int serverMaxPreviewBlockLimit, double minesweeperProbeCooldownSeconds, double sudokuProbeCooldownSeconds) {
+        int cachedBreakPerTick, boolean dropImmediately, double addExhaustion, boolean dropToPlayer,
+        boolean serverUsePreview, int serverMaxPreviewBigRadius, int serverMaxPreviewBlockLimit,
+        double minesweeperProbeCooldownSeconds, double sudokuProbeCooldownSeconds, boolean enableCachedChain) {
         this.bigRadius = bigRadius;
         this.blockLimit = blockLimit;
         this.smallRadius = smallRadius;
         this.tunnelWidth = tunnelWidth;
         this.breakPerTick = breakPerTick;
+        this.cachedBreakPerTick = cachedBreakPerTick;
+        this.dropImmediately = dropImmediately;
         this.addExhaustion = addExhaustion;
         this.dropToPlayer = dropToPlayer;
         this.serverUsePreview = serverUsePreview;
@@ -52,6 +58,7 @@ public class PacketSaveServerConfig implements IMessage {
         this.serverMaxPreviewBlockLimit = serverMaxPreviewBlockLimit;
         this.minesweeperProbeCooldownSeconds = minesweeperProbeCooldownSeconds;
         this.sudokuProbeCooldownSeconds = sudokuProbeCooldownSeconds;
+        this.enableCachedChain = enableCachedChain;
     }
 
     @Override
@@ -61,6 +68,8 @@ public class PacketSaveServerConfig implements IMessage {
         smallRadius = buf.readInt();
         tunnelWidth = buf.readInt();
         breakPerTick = buf.readInt();
+        cachedBreakPerTick = buf.readInt();
+        dropImmediately = buf.readBoolean();
         addExhaustion = buf.readDouble();
         dropToPlayer = buf.readBoolean();
         serverUsePreview = buf.readBoolean();
@@ -68,6 +77,7 @@ public class PacketSaveServerConfig implements IMessage {
         serverMaxPreviewBlockLimit = buf.readInt();
         minesweeperProbeCooldownSeconds = buf.readDouble();
         sudokuProbeCooldownSeconds = buf.readDouble();
+        enableCachedChain = buf.readBoolean();
     }
 
     @Override
@@ -77,6 +87,8 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeInt(smallRadius);
         buf.writeInt(tunnelWidth);
         buf.writeInt(breakPerTick);
+        buf.writeInt(cachedBreakPerTick);
+        buf.writeBoolean(dropImmediately);
         buf.writeDouble(addExhaustion);
         buf.writeBoolean(dropToPlayer);
         buf.writeBoolean(serverUsePreview);
@@ -84,6 +96,7 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeInt(serverMaxPreviewBlockLimit);
         buf.writeDouble(minesweeperProbeCooldownSeconds);
         buf.writeDouble(sudokuProbeCooldownSeconds);
+        buf.writeBoolean(enableCachedChain);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -100,6 +113,8 @@ public class PacketSaveServerConfig implements IMessage {
             Config.smallRadius = Math.max(0, msg.smallRadius);
             Config.tunnelWidth = Math.max(0, msg.tunnelWidth);
             Config.breakPerTick = Math.max(1, Math.min(64, msg.breakPerTick));
+            Config.cachedBreakPerTick = Math.max(1, Math.min(64, msg.cachedBreakPerTick));
+            Config.dropImmediately = msg.dropImmediately;
             Config.addExhaustion = msg.addExhaustion;
             Config.dropToPlayer = msg.dropToPlayer;
             Config.serverUsePreview = msg.serverUsePreview;
@@ -107,6 +122,7 @@ public class PacketSaveServerConfig implements IMessage {
             Config.serverMaxPreviewBlockLimit = Math.max(0, msg.serverMaxPreviewBlockLimit);
             Config.minesweeperProbeCooldownSeconds = Math.max(0.1, msg.minesweeperProbeCooldownSeconds);
             Config.sudokuProbeCooldownSeconds = Math.max(0.1, msg.sudokuProbeCooldownSeconds);
+            Config.enableCachedChain = msg.enableCachedChain;
 
             // Persist to disk
             Config.saveServerConfig();
