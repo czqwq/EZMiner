@@ -1,5 +1,7 @@
 package com.czqwq.EZMiner.core;
 
+import com.czqwq.EZMiner.Config;
+
 /**
  * Tracks the current mining mode for a player (both client and server side).
  *
@@ -44,6 +46,8 @@ public class MinerModeState {
 
     public static final String[] CHAIN_MODES = { "ezminer.mode.chain.basic", // 0
         "ezminer.mode.chain.fuzzy", // 1
+        "ezminer.mode.chain.cached", // 2
+        "ezminer.mode.chain.cached_fuzzy", // 3
     };
     public static final String[] SPECIAL_MODES = { "ezminer.mode.special.minesweeper", // 0
         "ezminer.mode.special.crop", // 1
@@ -111,18 +115,41 @@ public class MinerModeState {
     }
 
     // ===== Chain sub-mode =====
+    private int visibleChainModeCount() {
+        return Config.enableCachedChain ? CHAIN_MODES.length : 2; // basic(0), fuzzy(1)
+    }
+
     public String nextChainMode() {
-        chainMode = (chainMode + 1) % CHAIN_MODES.length;
+        int cnt = visibleChainModeCount();
+        chainMode = (chainMode + 1) % cnt;
+        if (!Config.enableCachedChain && chainMode >= 2) chainMode = 0;
         return currentChainMode();
     }
 
     public String previousChainMode() {
-        chainMode = (chainMode - 1 + CHAIN_MODES.length) % CHAIN_MODES.length;
+        int cnt = visibleChainModeCount();
+        chainMode = (chainMode - 1 + cnt) % cnt;
+        if (!Config.enableCachedChain && chainMode >= 2) chainMode = 0;
         return currentChainMode();
     }
 
     public String currentChainMode() {
+        if (!Config.enableCachedChain && chainMode >= 2) chainMode = 0;
         return CHAIN_MODES[chainMode];
+    }
+
+    /**
+     * Returns true when the player is in a cached chain sub-mode (server-side
+     * pre-calculation with cached preview). Used by HUD, renderer, and mining
+     * manager — all callers reference this single method rather than duplicating
+     * the index check.
+     *
+     * <p>
+     * Always returns {@code false} when {@link Config#enableCachedChain} is
+     * {@code false}.
+     */
+    public boolean isCachedChainMode() {
+        return Config.enableCachedChain && mainMode == 1 && (chainMode == 2 || chainMode == 3);
     }
 
     // ===== Special sub-mode =====

@@ -2,6 +2,7 @@ ezminer.hud.active=连锁已启用
 ezminer.hud.chainCount=已连锁方块
 ezminer.hud.chainElapsed=连锁耗时
 ezminer.hud.previewCount=已渲染方块
+ezminer.hud.cachedCount=已缓存方块
 ezminer.hud.minesweeper.cooldown=扫雷冷却
 ezminer.hud.minesweeper.ready=探测就绪
 
@@ -23,6 +24,8 @@ ezminer.mode.blast.gtVeinOre=爆破: GT矿脉
 
 ezminer.mode.chain.basic=连锁: 基础
 ezminer.mode.chain.fuzzy=连锁: 模糊
+ezminer.mode.chain.cached=连锁: 缓存连锁
+ezminer.mode.chain.cached_fuzzy=连锁: 缓存连锁(模糊)
 ezminer.mode.special.minesweeper=特殊: 扫雷模式
 ezminer.mode.special.crop=特殊: 收作物
 ezminer.mode.special.sudoku=特殊: 数独助手
@@ -44,6 +47,9 @@ ezminer.config.hudAnimationStyle=HUD动画样式
 ezminer.config.hudAnimStyle.rainbow=彩虹弹跳
 ezminer.config.hudAnimStyle.wave=波浪高亮
 ezminer.config.breakPerTick=每Tick破坏数
+ezminer.config.cachedBreakPerTick=缓存模式每Tick破坏数
+ezminer.config.dropImmediately=即时掉落\n开: 挖一块立即掉落\n关: 连锁结束后统一掉落
+ezminer.config.enableCachedChain=启用缓存连锁子模式\n⚠ WIP – 部分模组矿物可能存在bug\n开: 显示缓存/模糊缓存连锁\n关: 仅基础/模糊连锁
 ezminer.config.minesweeperCooldown=扫雷探测冷却（秒）
 ezminer.config.sudokuCooldown=数独解算冷却（秒）
 ezminer.config.serverPreviewRadius=服务端最大预览半径
