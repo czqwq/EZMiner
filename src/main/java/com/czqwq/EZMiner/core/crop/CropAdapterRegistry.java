@@ -7,6 +7,8 @@ import java.util.List;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.world.World;
 
+import com.czqwq.EZMiner.compat.EtFuturumCropCompat;
+
 import cpw.mods.fml.common.Loader;
 
 /**
@@ -39,6 +41,11 @@ public class CropAdapterRegistry {
         }
         if (Loader.isModLoaded("cropsnh")) {
             list.add(new CropsNHCropAdapter());
+        }
+        // EFR – Et Futurum Requiem crops (berry bush, cave vines)
+        EtFuturumCropCompat.init();
+        if (EtFuturumCropCompat.isLoaded()) {
+            list.add(new EtFuturumCropCompat());
         }
         adapters = Collections.unmodifiableList(list);
         initialized = true;

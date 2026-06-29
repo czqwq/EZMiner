@@ -18,6 +18,7 @@ import net.minecraft.world.World;
 import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.compat.EtFuturumOreCompat;
 
 /**
  * Utilities for comparing blocks and identifying ore blocks.
@@ -107,6 +108,9 @@ public class DeterminingIdentical {
         hasAEQuartzCharged = classExists("appeng.block.solids.OreQuartzCharged");
         hasGTBlockOre = classExists("gregtech.common.blocks.GTBlockOre");
         hasBlockOresAbstractLegacy = classExists("gregtech.common.blocks.BlockOresAbstractLegacy");
+
+        // EFR – delegate to dedicated compat class (Et Futurum Requiem)
+        EtFuturumOreCompat.init();
 
         // Cache reflection references so identical() / isOreBlock() never call Class.forName()
         if (hasTileEntityOres) {
@@ -272,6 +276,9 @@ public class DeterminingIdentical {
         // AE2 – uses cached class references
         if (hasAEQuartz && aeQuartzClass != null && aeQuartzClass.isInstance(block)) return true;
         if (hasAEQuartzCharged && aeQuartzChargedClass != null && aeQuartzChargedClass.isInstance(block)) return true;
+
+        // EFR – Et Futurum Requiem ores (delegated to compat class)
+        if (EtFuturumOreCompat.isOreBlock(block)) return true;
 
         // Fallback: unlocalized name contains "ore"
         String unloc = block.getUnlocalizedName()
