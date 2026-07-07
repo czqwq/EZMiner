@@ -7,6 +7,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ChatComponentTranslation;
 
 import org.joml.Vector3i;
@@ -145,7 +146,9 @@ public class BaseOperator {
             .getFoodLevel() <= 0) return false;
         ItemStack item = playerMP.getCurrentEquippedItem();
         if (item != null && item.isItemStackDamageable()) {
-            return (item.getMaxDamage() - item.getItemDamage()) > 1;
+            if (item.getMaxDamage() - item.getItemDamage() > 1) return true;
+            // 无耐久，判断下是不是耐久10
+            return isTinkersConstructToolUnBreaking(item);
         }
         return true;
     }
@@ -225,5 +228,11 @@ public class BaseOperator {
             ChainExecutionErrorReporter.reportHarvestError(manager, pos, e);
         }
         return true;
+    }
+
+    private boolean isTinkersConstructToolUnBreaking(ItemStack item) {
+        if (item == null) return false;
+        if (!item.getTagCompound().hasKey("InfiTool")) return false;
+        return item.getTagCompound().getCompoundTag("InfiTool").getInteger("Unbreaking") >=10;
     }
 }
