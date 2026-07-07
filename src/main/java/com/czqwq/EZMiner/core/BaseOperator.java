@@ -232,6 +232,7 @@ public class BaseOperator {
 
     private boolean isTinkersConstructToolUnBreaking(ItemStack item) {
         if (item == null) return false;
+        if (!item.hasTagCompound()) return false;
         if (!item.getTagCompound().hasKey("InfiTool")) return false;
         return item.getTagCompound().getCompoundTag("InfiTool").getInteger("Unbreaking") >=10;
     }
