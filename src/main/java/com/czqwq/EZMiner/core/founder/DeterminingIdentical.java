@@ -271,9 +271,11 @@ public class DeterminingIdentical {
     /**
      * True if GT large-vein ore, excluding surface small ores (贫瘠矿).
      *
-     * <p>New system (GTBlockOre): meta &lt; 16000 = large vein (NEID required).
+     * <p>
+     * New system (GTBlockOre): meta &lt; 16000 = large vein (NEID required).
      * Legacy (BlockOresAbstractLegacy/BlockOresAbstract): checks TileEntityOres.mMetaData.
-     * When world is null, conservatively returns true for legacy ore blocks.</p>
+     * When world is null, conservatively returns true for legacy ore blocks.
+     * </p>
      */
     public static boolean isGTLargeVeinOre(Block block, int meta, World world, int x, int y, int z) {
         // ── New ore system: GTBlockOre ─────────────────────────────────────────────────────

@@ -6,12 +6,16 @@ import net.minecraft.nbt.NBTTagCompound;
 /**
  * TiC tool durability compat — NBT-based, zero reflection, zero compile-time dependency.
  *
- * <p>TiC stores real durability in NBT ({@code InfiTool.Damage}/{@code InfiTool.TotalDurability}),
+ * <p>
+ * TiC stores real durability in NBT ({@code InfiTool.Damage}/{@code InfiTool.TotalDurability}),
  * not in vanilla metadata. {@code getMaxDamage()} always returns 100 for TiC tools —
- * a hardcoded placeholder for the durability bar, not the real cap.</p>
+ * a hardcoded placeholder for the durability bar, not the real cap.
+ * </p>
  *
- * <p>Unbreakable tools ({@code InfiTool.Unbreaking >= 10}) never take durability damage
- * and should always be allowed to chain-mine.</p>
+ * <p>
+ * Unbreakable tools ({@code InfiTool.Unbreaking >= 10}) never take durability damage
+ * and should always be allowed to chain-mine.
+ * </p>
  */
 public final class TinkersConstructCompat {
 

@@ -53,7 +53,8 @@ public class InventoryButtonOverlay {
 
     /** MC 1.7.10 lowercases ResourceLocation domain — must match assets/ezminer/. */
     private static final ResourceLocation SETTINGS_TEXTURE = new ResourceLocation(
-        "ezminer", "textures/icons/settings.png");
+        "ezminer",
+        "textures/icons/settings.png");
 
     // ── Reflection cache for GuiSidebar bounds ──────────────────────────────
 
@@ -170,7 +171,9 @@ public class InventoryButtonOverlay {
 
     public void registry() {
         MinecraftForge.EVENT_BUS.register(this);
-        FMLCommonHandler.instance().bus().register(this);
+        FMLCommonHandler.instance()
+            .bus()
+            .register(this);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

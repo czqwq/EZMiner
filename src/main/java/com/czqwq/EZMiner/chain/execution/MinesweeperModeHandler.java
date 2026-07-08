@@ -53,7 +53,9 @@ public class MinesweeperModeHandler {
         }
     }
 
-    public boolean isReady() { return System.currentTimeMillis() >= nextDetectAtMs; }
+    public boolean isReady() {
+        return System.currentTimeMillis() >= nextDetectAtMs;
+    }
 
     /** Re-send all flagged positions (player re-pressed key in minesweeper mode). */
     public void resendMarks(EntityPlayerMP target) {

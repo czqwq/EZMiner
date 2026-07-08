@@ -37,7 +37,9 @@ public final class EtFuturumOreCompat {
             || moddedDeepslateOreType != null;
     }
 
-    public static boolean isLoaded() { return efLoaded; }
+    public static boolean isLoaded() {
+        return efLoaded;
+    }
 
     /** True if block is an EFR ore (class check → registry-name fallback). */
     public static boolean isOreBlock(Block block) {

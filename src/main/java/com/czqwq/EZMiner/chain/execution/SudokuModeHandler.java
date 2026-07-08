@@ -76,7 +76,9 @@ public class SudokuModeHandler {
         }
     }
 
-    public boolean isReady() { return System.currentTimeMillis() >= nextFillAtMs; }
+    public boolean isReady() {
+        return System.currentTimeMillis() >= nextFillAtMs;
+    }
 
     /** Full reset on session cleanup. */
     public void reset() {

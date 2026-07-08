@@ -22,9 +22,17 @@ public final class ChainPreCalcCache {
 
     private static final Map<UUID, CachedEntry> entries = new ConcurrentHashMap<>();
 
-    public static CachedEntry get(UUID playerId) { return entries.get(playerId); }
-    public static void put(UUID playerId, CachedEntry entry) { entries.put(playerId, Objects.requireNonNull(entry)); }
-    public static void remove(UUID playerId) { entries.remove(playerId); }
+    public static CachedEntry get(UUID playerId) {
+        return entries.get(playerId);
+    }
+
+    public static void put(UUID playerId, CachedEntry entry) {
+        entries.put(playerId, Objects.requireNonNull(entry));
+    }
+
+    public static void remove(UUID playerId) {
+        entries.remove(playerId);
+    }
 
     /** Hash of (pos, block class, meta, dimension). */
     public static int computeHash(Vector3i pos, Block block, int meta, int dimension) {

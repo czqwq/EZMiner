@@ -19,9 +19,11 @@ import com.czqwq.EZMiner.thread.Pauseable;
  * Shell-expansion block finder. Scans concentric cubes from radius 1 to bigRadius,
  * collecting non-air/liquid/bedrock blocks harvestable by the player.
  *
- * <p>Performance: visited set uses compact {@code long} keys ({@link #encodePos})
+ * <p>
+ * Performance: visited set uses compact {@code long} keys ({@link #encodePos})
  * instead of {@code Vector3i} to avoid GC pressure. Player floor pos and sample block
- * are cached at construction time.</p>
+ * are cached at construction time.
+ * </p>
  */
 public class BasePositionFounder extends Pauseable {
 
