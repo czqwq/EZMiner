@@ -23,6 +23,7 @@ import com.czqwq.EZMiner.chain.execution.VisualProspectingBridge;
 import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
 import com.czqwq.EZMiner.chain.planning.CachedPositionsPlanningTask;
 import com.czqwq.EZMiner.chain.planning.ChainPlanningTask;
+import com.czqwq.EZMiner.compat.TinkersConstructCompat;
 import com.czqwq.EZMiner.core.crop.CropAdapterRegistry;
 import com.czqwq.EZMiner.utils.MessageUtils;
 
@@ -145,6 +146,9 @@ public class BaseOperator {
             .getFoodLevel() <= 0) return false;
         ItemStack item = playerMP.getCurrentEquippedItem();
         if (item != null && item.isItemStackDamageable()) {
+            if (TinkersConstructCompat.isTiCTool(item)) {
+                return TinkersConstructCompat.canContinueMining(item);
+            }
             return (item.getMaxDamage() - item.getItemDamage()) > 1;
         }
         return true;
