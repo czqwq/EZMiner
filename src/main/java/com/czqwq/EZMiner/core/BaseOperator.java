@@ -7,7 +7,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ChatComponentTranslation;
 
 import org.joml.Vector3i;
@@ -233,7 +232,10 @@ public class BaseOperator {
     private boolean isTinkersConstructToolUnBreaking(ItemStack item) {
         if (item == null) return false;
         if (!item.hasTagCompound()) return false;
-        if (!item.getTagCompound().hasKey("InfiTool")) return false;
-        return item.getTagCompound().getCompoundTag("InfiTool").getInteger("Unbreaking") >=10;
+        if (!item.getTagCompound()
+            .hasKey("InfiTool")) return false;
+        return item.getTagCompound()
+            .getCompoundTag("InfiTool")
+            .getInteger("Unbreaking") >= 10;
     }
 }
