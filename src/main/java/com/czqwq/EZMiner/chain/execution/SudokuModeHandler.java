@@ -16,35 +16,21 @@ import com.czqwq.EZMiner.chain.network.PacketSudokuClear;
 import com.czqwq.EZMiner.chain.network.PacketSudokuFill;
 
 /**
- * Encapsulates the per-player Sudoku assistant special-mode state and fill logic.
- *
- * <p>
- * Follows the same pattern as {@link MinesweeperModeHandler}: each probe cycle finds
- * one unfilled/incorrect cell on a nearby LootGames Sudoku board and fills the correct
- * answer, then sends a {@link PacketSudokuFill} to the client for HUD / rendering.
+ * Per-player Sudoku assistant special-mode state and fill logic.
+ * Follows the same pattern as {@link MinesweeperModeHandler}.
  */
 public class SudokuModeHandler {
 
     private final LootGamesSudokuBridge bridge = new LootGamesSudokuBridge();
     private final Set<String> filledCells = new HashSet<>();
-    /** World positions of all cells filled in this session; used to re-send on key re-press. */
     private final List<Vector3i> filledPositions = new ArrayList<>();
     private long nextFillAtMs = 0L;
-    /**
-     * Tracks whether any LootGames Sudoku game was in {@code StageWaiting} during the
-     * previous probe cycle. Used to detect game-end transitions.
-     */
+    /** Detects game-end transitions (StageWaiting → other stage). */
     private boolean wasGameActive = false;
-    /** Last known board fingerprint; used to detect board regeneration after a level-up. */
+    /** Detects board regeneration after level-up. */
     private String lastBoardFingerprint = null;
 
-    /**
-     * Runs one probe cycle. Finds the nearest unfilled/incorrect cell, fills the
-     * correct answer, and sends a {@link PacketSudokuFill} to the client.
-     *
-     * @param player     the owning player
-     * @param playerUUID the player's UUID
-     */
+    /** One probe cycle. Fills nearest incorrect cell, sends PacketSudokuFill. */
     public void tick(EntityPlayerMP player, UUID playerUUID) {
         // Detect game-end transitions (stage changed away from StageWaiting).
         boolean gameActive = bridge.isAnyGameActive(player.worldObj);
@@ -81,9 +67,7 @@ public class SudokuModeHandler {
         }
     }
 
-    /**
-     * Re-sends all previously-filled cell positions to {@code target}.
-     */
+    /** Re-send all filled positions (player re-pressed key in Sudoku mode). */
     public void resendFills(EntityPlayerMP target) {
         if (filledPositions.isEmpty()) return;
         long remainingMs = Math.max(0L, nextFillAtMs - System.currentTimeMillis());
@@ -92,16 +76,9 @@ public class SudokuModeHandler {
         }
     }
 
-    /**
-     * Returns whether the next probe is due.
-     */
-    public boolean isReady() {
-        return System.currentTimeMillis() >= nextFillAtMs;
-    }
+    public boolean isReady() { return System.currentTimeMillis() >= nextFillAtMs; }
 
-    /**
-     * Resets all Sudoku assistant state.
-     */
+    /** Full reset on session cleanup. */
     public void reset() {
         nextFillAtMs = 0L;
         filledCells.clear();

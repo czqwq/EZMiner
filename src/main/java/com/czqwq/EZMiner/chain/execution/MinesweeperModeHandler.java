@@ -16,34 +16,18 @@ import com.czqwq.EZMiner.chain.network.PacketMinesweeperClear;
 import com.czqwq.EZMiner.chain.network.PacketMinesweeperMark;
 
 /**
- * Encapsulates the per-player minesweeper special-mode state and probe logic.
- *
- * <p>
- * Extracted from {@link com.czqwq.EZMiner.core.Manager} to give the minesweeper
- * feature a clear owner with a single responsibility: detecting and flagging mines
- * for one player.
+ * Per-player minesweeper special-mode state and probe logic.
  */
 public class MinesweeperModeHandler {
 
     private final LootGamesMinesweeperBridge bridge = new LootGamesMinesweeperBridge();
     private final Set<String> detectedBombs = new HashSet<>();
-    /** World positions of all mines flagged in this session; used to re-send on key re-press. */
     private final List<Vector3i> detectedPositions = new ArrayList<>();
     private long nextDetectAtMs = 0L;
-    /**
-     * Tracks whether any LootGames minesweeper game was in {@code StageWaiting} during the
-     * previous probe cycle. Used to detect game-end transitions so that stale flagged-mine
-     * state can be cleared before a new game starts on the same tile entity.
-     */
+    /** True when a LootGames game was active last probe cycle — for game-end cleanup. */
     private boolean wasGameActive = false;
 
-    /**
-     * Runs one probe cycle. Sends a {@link PacketMinesweeperMark} packet if a new mine
-     * is found. Must be called from the server thread.
-     *
-     * @param player     the owning player
-     * @param playerUUID the player's UUID (used for packet targeting)
-     */
+    /** One probe cycle. Sends {@link PacketMinesweeperMark} if a new mine is found. */
     public void tick(EntityPlayerMP player, UUID playerUUID) {
         // ── Detect game-end transitions: if a LootGames game was active last probe but no
         // game is in StageWaiting now, the game just ended — clear all stale marks so
@@ -69,20 +53,9 @@ public class MinesweeperModeHandler {
         }
     }
 
-    /**
-     * Returns whether the next probe is due (i.e. the cooldown has elapsed).
-     */
-    public boolean isReady() {
-        return System.currentTimeMillis() >= nextDetectAtMs;
-    }
+    public boolean isReady() { return System.currentTimeMillis() >= nextDetectAtMs; }
 
-    /**
-     * Re-sends all previously-flagged mine positions to {@code target}.
-     *
-     * <p>
-     * Called when the player re-presses the chain key in minesweeper mode so that the
-     * client's flagged-mine list is repopulated without requiring the server to re-probe.
-     */
+    /** Re-send all flagged positions (player re-pressed key in minesweeper mode). */
     public void resendMarks(EntityPlayerMP target) {
         if (detectedPositions.isEmpty()) return;
         long remainingMs = Math.max(0L, nextDetectAtMs - System.currentTimeMillis());
@@ -91,14 +64,7 @@ public class MinesweeperModeHandler {
         }
     }
 
-    /**
-     * Resets all minesweeper state. Called on session cleanup (player logout, respawn, etc.).
-     *
-     * <p>
-     * The cooldown timer and detected-bomb set are intentionally preserved across mode
-     * switches (only cleared here) so that quickly switching away and back cannot bypass
-     * the configured probe interval.
-     */
+    /** Full reset on session cleanup. Cooldown preserved across mode switches. */
     public void reset() {
         nextDetectAtMs = 0L;
         detectedBombs.clear();

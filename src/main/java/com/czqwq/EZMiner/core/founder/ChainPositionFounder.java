@@ -13,18 +13,8 @@ import org.joml.Vector3i;
 import com.czqwq.EZMiner.core.MinerConfig;
 
 /**
- * Chain mode: priority-queue BFS flood-fill from the targeted block.
- *
- * <p>
- * Blocks are expanded in non-decreasing Euclidean-distance order from the
- * origin (same strategy as Bandit-Legacy's {@code ManhattanExecutorGenerator}).
- * This produces "ring-layer" outward scanning: all same-type blocks at distance 1
- * are found before those at distance 2, etc., so the player sees a smooth sphere
- * of outlines expanding from the targeted block.
- *
- * <p>
- * Each found block expands its {@code smallRadius}-neighbourhood; only blocks
- * of the same type within {@code bigRadius} of the origin are included.
+ * Chain mode: priority-queue BFS flood-fill, same-type blocks only.
+ * Expands in ring layers by Euclidean distance from origin.
  */
 public class ChainPositionFounder extends BasePositionFounder {
 
@@ -94,16 +84,7 @@ public class ChainPositionFounder extends BasePositionFounder {
         return dx * dx + dy * dy + dz * dz;
     }
 
-    /**
-     * No explicit adjacency check needed – PQ-BFS guarantees we only visit positions
-     * reachable from an already-found block within {@code smallRadius}.
-     *
-     * <p>
-     * Pre-fetches block and metadata once and passes them to
-     * {@link DeterminingIdentical#identical} to avoid duplicate world lookups.
-     * Uses the {@link BasePositionFounder#visitedPositions} long-encoded set and
-     * the cached player floor position to avoid allocating temporary objects.
-     */
+    /** Pre-fetches block+meta for identical() check — single world lookup per candidate. */
     @Override
     public boolean checkCanAdd(Vector3i pos) {
         if (isVisited(pos.x, pos.y, pos.z)) return false;

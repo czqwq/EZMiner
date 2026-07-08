@@ -12,110 +12,51 @@ import net.minecraft.block.Block;
 import org.joml.Vector3i;
 
 /**
- * Standalone per-player cache for pre-calculated chain mining block positions.
- *
- * <p>
- * Decoupled from founder, operator, and network layers — this is a plain data store.
- * The cache is keyed by a compound hash of (block position, block class, metadata, dimension)
- * so that the cached list is only reused when the player targets the same block type
- * at the same location in the same dimension.
- *
- * <p>
- * Thread safety: reads and writes are guarded by {@link ConcurrentHashMap}. The cache
- * entries themselves are immutable snapshots. All world access during pre-calculation
- * happens inside the server-tick window via the existing {@code Pauseable} system,
- * so Hodgepodge chunk-loading guards are never triggered off-thread.
+ * Per-player cache of pre-calculated chain-mining block positions.
+ * Plain data store — decoupled from founder, operator, and network layers.
+ * Thread-safe via {@link ConcurrentHashMap}; entries are immutable snapshots.
  */
 public final class ChainPreCalcCache {
 
     private ChainPreCalcCache() {}
 
-    /** Per-player cache entries, keyed by player UUID. */
     private static final Map<UUID, CachedEntry> entries = new ConcurrentHashMap<>();
 
-    /**
-     * Returns the cached entry for {@code playerId}, or {@code null} if none exists.
-     */
-    public static CachedEntry get(UUID playerId) {
-        return entries.get(playerId);
-    }
+    public static CachedEntry get(UUID playerId) { return entries.get(playerId); }
+    public static void put(UUID playerId, CachedEntry entry) { entries.put(playerId, Objects.requireNonNull(entry)); }
+    public static void remove(UUID playerId) { entries.remove(playerId); }
 
-    /**
-     * Stores a pre-calculated result for {@code playerId}.
-     */
-    public static void put(UUID playerId, CachedEntry entry) {
-        entries.put(playerId, Objects.requireNonNull(entry));
-    }
-
-    /**
-     * Removes and discards the cached entry for {@code playerId}.
-     */
-    public static void remove(UUID playerId) {
-        entries.remove(playerId);
-    }
-
-    /**
-     * Computes a hash that uniquely identifies a mining target context.
-     * Two calls with the same arguments produce the same hash.
-     */
+    /** Hash of (pos, block class, meta, dimension). */
     public static int computeHash(Vector3i pos, Block block, int meta, int dimension) {
         return Objects.hash(pos.x, pos.y, pos.z, block.getClass(), meta, dimension);
     }
 
-    /**
-     * Computes a position-independent hash from block type, metadata and dimension.
-     * Two blocks of the same type in the same dimension produce the same hash
-     * regardless of where they are located. Used for cache validation when the
-     * player breaks a block that may not be the exact center the pre-calc started from.
-     */
+    /** Position-independent hash from (block class, meta, dimension). */
     public static int computeTypeHash(Block block, int meta, int dimension) {
         return Objects.hash(block.getClass(), meta, dimension);
     }
 
-    /**
-     * Computes a position-independent hash from a canonical {@link Class},
-     * metadata and dimension. Used by the pre-calc engine in fuzzy mode so that
-     * subclasses (e.g. {@code OreQuartzCharged extends OreQuartz}) share the
-     * same type hash as their parent class.
-     */
+    /** Fuzzy mode: subclasses share the canonical class hash (e.g. OreQuartzCharged → OreQuartz). */
     public static int computeTypeHash(Class<?> blockClass, int meta, int dimension) {
         return Objects.hash(blockClass, meta, dimension);
     }
 
-    /**
-     * Computes a hash from block registry ID and dimension. Used in exact
-     * (non-fuzzy) cached chain mode with Bandit-style matching: only block
-     * identity matters, metadata is ignored. This avoids matching failures
-     * when NEID or GT compatibility layers modify block metadata.
-     */
+    /** Registry-ID + dimension hash (Bandit-style, metadata ignored). */
     public static int computeBlockIdHash(int blockId, int dimension) {
         return Objects.hash(blockId, dimension);
     }
 
     // ------------------------------------------------------------------ //
 
-    /**
-     * Immutable snapshot of a completed pre-calculation.
-     */
+    /** Immutable snapshot of a completed pre-calculation. */
     public static final class CachedEntry {
 
-        /** The hash that identifies the target context this entry was computed for. */
         public final int contextHash;
-        /** Position-independent type hash for cache validation. */
         public final int typeHash;
-        /**
-         * Fully-qualified class name of the canonical type for fuzzy matching,
-         * or {@code null} when this entry was created in exact (non-fuzzy) mode.
-         * When non-null, {@code tryStartCachedChain} uses
-         * {@code isAssignableFrom} to validate the broken block's class against
-         * this class instead of requiring an exact class match.
-         */
+        /** FQ class name for fuzzy matching (null = exact mode). */
         public final String fuzzyTypeClassName;
-        /** Unmodifiable list of block positions matching the target. */
         public final List<Vector3i> positions;
-        /** Dimension the pre-calculation was performed in. */
         public final int dimension;
-        /** Center position the pre-calculation BFS started from. */
         public final int centerX, centerY, centerZ;
 
         public CachedEntry(int contextHash, int typeHash, String fuzzyTypeClassName, List<Vector3i> positions,

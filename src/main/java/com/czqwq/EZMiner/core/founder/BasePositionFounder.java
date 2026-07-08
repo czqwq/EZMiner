@@ -16,20 +16,12 @@ import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.thread.Pauseable;
 
 /**
- * Base position finder: collects all non-air, non-liquid, non-bedrock blocks
- * within bigRadius that can be harvested by the player.
+ * Shell-expansion block finder. Scans concentric cubes from radius 1 to bigRadius,
+ * collecting non-air/liquid/bedrock blocks harvestable by the player.
  *
- * <p>
- * <strong>Performance notes:</strong>
- * <ul>
- * <li>Visited positions are tracked via a {@code HashSet<Long>} using a compact
- * coordinate encoding ({@link #encodePos}) rather than {@code HashSet<Vector3i>},
- * reducing GC pressure significantly for large mining operations.</li>
- * <li>The player's floor position is cached once at construction time to avoid
- * creating a new {@link Vector3i} on every {@link #checkCanAdd} call.</li>
- * <li>The inner shell-scan loop checks the visited set before allocating a
- * {@link Vector3i}, so rejected positions create no garbage.</li>
- * </ul>
+ * <p>Performance: visited set uses compact {@code long} keys ({@link #encodePos})
+ * instead of {@code Vector3i} to avoid GC pressure. Player floor pos and sample block
+ * are cached at construction time.</p>
  */
 public class BasePositionFounder extends Pauseable {
 
@@ -41,39 +33,17 @@ public class BasePositionFounder extends Pauseable {
     /** External queue consumed by the operator. */
     public LinkedBlockingQueue<Vector3i> positions;
 
-    /**
-     * Visited-position dedup set, keyed by {@link #encodePos(int, int, int)}.
-     *
-     * <p>
-     * Uses {@code Long} rather than {@code Vector3i} to avoid allocating a temporary
-     * wrapper object on every containment check. Since the vast majority of candidates
-     * are rejected, this eliminates millions of short-lived {@code Vector3i} allocations
-     * per large mining operation.
-     *
-     * <p>
-     * Subclasses that inspect or mutate this set must use
-     * {@link #encodePos(int, int, int)} / {@link #isVisited(int, int, int)}.
-     */
+    /** Dedup set using compact long keys from {@link #encodePos} — avoids Vector3i allocations. */
     protected final HashSet<Long> visitedPositions = new HashSet<>();
 
     public int curCount = 0;
     protected boolean skipHarvestCheck = false;
 
-    // Sample block at center
     public final Block sampleBlock;
     public final int sampleBlockMeta;
     public final TileEntity sampleTileEntity;
 
-    /**
-     * Player floor position, cached once at construction time.
-     *
-     * <p>
-     * The player's position changes slowly relative to the search thread's lifetime,
-     * and using the position at search-start is both safe and consistent.
-     * Caching avoids creating a new {@link Vector3i} on every
-     * {@link #checkCanAdd} invocation (which can occur hundreds of thousands of times
-     * during a large blast or chain operation).
-     */
+    /** Player floor position cached at construction time. */
     protected final int cachedPlayerFloorX;
     protected final int cachedPlayerFloorY;
     protected final int cachedPlayerFloorZ;
@@ -131,12 +101,7 @@ public class BasePositionFounder extends Pauseable {
     public boolean checkCanAdd(Vector3i pos) {
         if (isVisited(pos.x, pos.y, pos.z)) return false;
         if (player.worldObj == null) return false; // player logged out
-        // Skip blocks whose chunk is not loaded. Calling getBlock() on an unloaded chunk
-        // triggers WorldServer to generate it on this background thread, which corrupts
-        // Minecraft's TickNextTick lists and causes "TickNextTick list out of synch" crashes.
-        // This guard is relevant when tunnelWidth is very large (many positions fall outside
-        // the server's loaded-chunk radius); for all other modes the radius is small enough
-        // that every accessed chunk is already loaded.
+        // Avoid chunk-gen on background thread (corrupts TickNextTick).
         if (!player.worldObj.blockExists(pos.x, pos.y, pos.z)) return false;
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
         if (block.equals(Blocks.air) || block.getMaterial()
@@ -166,48 +131,20 @@ public class BasePositionFounder extends Pauseable {
         }
     }
 
-    /**
-     * Returns {@code true} if the given coordinates have already been visited
-     * (added to the result queue), using the compact long encoding.
-     *
-     * <p>
-     * Callers should check this BEFORE constructing a {@link Vector3i} to avoid
-     * unnecessary object allocation for positions that will be immediately rejected.
-     */
+    /** Check visited set using compact long key — call BEFORE allocating a Vector3i. */
     protected boolean isVisited(int x, int y, int z) {
         return visitedPositions.contains(encodePos(x, y, z));
     }
 
     /**
-     * Encodes Minecraft world coordinates as a single {@code long} for use as a
-     * hash-set key.
-     *
-     * <p>
-     * Coordinate ranges supported:
-     * <ul>
-     * <li>x, z: {@code [-30,000,000 .. +30,000,000]} (Minecraft world border)</li>
-     * <li>y: {@code [0 .. 4095]}</li>
-     * </ul>
-     *
-     * <p>
-     * The encoding adds a bias of 30,000,000 to x and z so that negative coordinates
-     * produce distinct non-negative values, avoiding collisions that would arise from
-     * simple bitmask truncation of two's-complement negative numbers.
-     *
-     * @param x world X
-     * @param y world Y (0 – 255 in vanilla, higher in modded worlds)
-     * @param z world Z
-     * @return a unique {@code long} key for the coordinate triple
+     * Compact coordinate encoding: x/z + 30M bias in 26 bits, y in 12 bits → single long.
+     * Bias avoids collisions from two's-complement negative coordinates.
      */
     public static long encodePos(int x, int y, int z) {
-        // x+30M and z+30M each fit in 26 bits; y fits in 12 bits → total 64 bits.
         return ((long) (x + 30_000_000) << 38) | ((long) (y & 0xFFF) << 26) | (long) (z + 30_000_000);
     }
 
-    /**
-     * @deprecated Use {@link #cachedPlayerFloorX}/{@link #cachedPlayerFloorY}/{@link #cachedPlayerFloorZ}
-     *             instead of allocating a new {@link Vector3i} on every call.
-     */
+    /** @deprecated Use cached fields to avoid Vector3i allocation. */
     @Deprecated
     protected Vector3i playerFloorPos() {
         return new Vector3i(cachedPlayerFloorX, cachedPlayerFloorY, cachedPlayerFloorZ);

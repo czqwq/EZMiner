@@ -40,29 +40,9 @@ public class Config {
      * Hard cap: 64.
      */
     public static int cachedBreakPerTick = 64;
-    /**
-     * When {@code true}, block drops are spawned immediately after each block is
-     * harvested during a chain operation, instead of being collected and flushed
-     * all at once at the end. This eliminates the end-of-chain lag spike caused by
-     * spawning hundreds of {@code EntityItem}s simultaneously.
-     *
-     * <p>
-     * When {@code false} (default), drops are batched and flushed after the chain
-     * ends, which is more vanilla-friendly but can cause a noticeable stutter on
-     * large veins.
-     */
+    /** Spawn drops immediately per-block instead of batching at chain end (avoids lag spike). */
     public static boolean dropImmediately = false;
-    /**
-     * When {@code true}, the cached chain sub-modes (2 = Cached, 3 = Cached Fuzzy)
-     * are available in the chain mode cycle. When {@code false} (default), these
-     * sub-modes are hidden entirely and the chain mode switches between Basic and
-     * Fuzzy only.
-     *
-     * <p>
-     * <strong>WIP:</strong> cached chain is an experimental feature. The server-side
-     * BFS pre-calculation may exhibit undefined behaviour with certain modded ores.
-     * Enable at your own risk.
-     */
+    /** Enable cached chain sub-modes (2/3). WIP experimental feature — enable at own risk. */
     public static boolean enableCachedChain = false;
     /**
      * Cooldown in seconds between successive minesweeper auto-flag operations
@@ -75,35 +55,10 @@ public class Config {
      */
     public static double sudokuProbeCooldownSeconds = 5.0;
 
-    /**
-     * When {@code true}, removes the Fortune III cap for GT / BartWorks ore drops, allowing higher
-     * Fortune levels to yield additional drops.
-     *
-     * <p>
-     * <strong>This option is implemented via Mixin and is applied at JVM startup. It CANNOT be
-     * changed via the {@code /EZMiner reloadConfig} hot-reload command — a full game restart is
-     * required for any change to take effect.</strong>
-     *
-     * <p>
-     * Default: {@code false}.
-     */
+    /** Remove Fortune III cap for GT/BW ore drops. Mixin-based — requires game restart. */
     public static boolean enableUnlimitedOreFortune = false;
 
-    /**
-     * Maximum Fortune enchantment level that GT / BartWorks ores will respond to when
-     * {@link #enableUnlimitedOreFortune} is {@code true}. Values above 255 are clamped to 255.
-     *
-     * <p>
-     * Setting this to {@code 3} (the default) has no practical effect when
-     * {@link #enableUnlimitedOreFortune} is enabled — the vanilla Fortune III cap is preserved.
-     *
-     * <p>
-     * <strong>Like {@link #enableUnlimitedOreFortune}, this value is read once at startup via
-     * Mixin and cannot be changed without restarting the game.</strong>
-     *
-     * <p>
-     * Default: {@code 3}.
-     */
+    /** Max Fortune level for GT/BW ores (clamped to 255). Mixin-based — requires game restart. */
     public static int maxFortuneLevel = 3;
 
     /**
@@ -153,13 +108,7 @@ public class Config {
     public static int runtimeServerMaxPreviewBigRadius = Integer.MAX_VALUE;
     public static int runtimeServerMaxPreviewBlockLimit = Integer.MAX_VALUE;
     public static boolean runtimeServerUsePreview = true;
-    /**
-     * Chain key activation mode.
-     * <ul>
-     * <li>0 = Hold – keep the key pressed to keep chain active (default).</li>
-     * <li>1 = Toggle – press once to start chain, press again to stop.</li>
-     * </ul>
-     */
+    /** Chain key mode: 0 = Hold (default), 1 = Toggle. */
     public static int chainActivationMode = 0;
     /**
      * When {@code true} and InGame Info XML is installed, EZMiner will temporarily set
@@ -169,47 +118,18 @@ public class Config {
      */
     public static boolean suppressIngameInfoHud = false;
 
-    /**
-     * Controls which brand animation is rendered in the HUD header.
-     * <ul>
-     * <li>0 = Rainbow Bounce – the original per-character rainbow colour + bounce effect.</li>
-     * <li>1 = Wave Highlight – letters of "EZMiner" light up one-by-one as white italic
-     * (wave phase), then fill white left-to-right (fill phase), hold all-white briefly,
-     * then restart.</li>
-     * </ul>
-     */
+    /** HUD brand animation: 0 = Rainbow Bounce, 1 = Wave Highlight. */
     public static int hudAnimationStyle = 0;
 
-    /**
-     * Controls the rendering style of the block-outline preview.
-     * <ul>
-     * <li>0 = Native – single-pass wireframe with no depth test (original).</li>
-     * <li>1 = Modern – two-pass rendering inspired by FTB-Ultimine: solid visible edges
-     * (depth-tested) and translucent hidden edges (no depth test) giving a clean silhouette
-     * with depth perception.</li>
-     * </ul>
-     */
+    /** Preview render style: 0 = Native wireframe, 1 = Modern two-pass (Ultimine style). */
     public static int renderStyle = 0;
-    /**
-     * When {@code true}, mouse-wheel scrolling is blocked from changing the inventory
-     * hotbar slot while the chain key is held, so that scrolling is reserved for switching
-     * EZMiner sub-modes. When {@code false}, scrolling behaves normally.
-     */
+    /** Block hotbar scrolling while chain key held (reserved for sub-mode switching). */
     public static boolean blockScrollOnChainKey = true;
 
-    /**
-     * Master switch for Smart Tool Switching. When false the feature is completely
-     * disabled regardless of key input.
-     */
+    /** Master switch for Smart Tool Switching. */
     public static boolean smartToolSwitchEnabled = true;
 
-    /**
-     * Smart Tool Switch key activation mode.
-     * <ul>
-     * <li>0 = Hold – tool switching is active only while the key is held.</li>
-     * <li>1 = Toggle – press once to activate, press again to deactivate (default).</li>
-     * </ul>
-     */
+    /** Smart Tool Switch mode: 0 = Hold, 1 = Toggle (default). */
     public static int smartToolSwitchActivationMode = 1;
 
     private static final String BLOCK_SCROLL_ON_CHAIN_KEY_COMMENT = "When true, mouse-wheel scrolling is blocked from changing the inventory hotbar slot while the chain key is held, so that scrolling is reserved for switching EZMiner sub-modes.";

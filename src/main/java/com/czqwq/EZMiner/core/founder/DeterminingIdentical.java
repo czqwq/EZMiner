@@ -21,18 +21,9 @@ import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.compat.EtFuturumOreCompat;
 
 /**
- * Utilities for comparing blocks and identifying ore blocks.
- * Uses reflection-based soft compatibility with GT5 / BartWorks / GTPlusPlus.
- *
- * <p>
- * All reflection objects (Class, Method, Field) are cached once during
- * {@link #checkCompatibility()} to avoid repeated {@code Class.forName()} /
- * {@code getMethod()} / {@code getField()} lookups on every block check.
- *
- * <p>
- * Ore-block type classification is cached per {@link Block} instance so that
- * the reflection-heavy path in {@link #isOreBlock} is only evaluated once per
- * unique block type encountered during a mining operation.
+ * Block comparison and ore detection utilities.
+ * All reflection objects cached once in {@link #checkCompatibility()};
+ * ore-block results cached per {@link Block} instance.
  */
 public class DeterminingIdentical {
 
@@ -48,27 +39,17 @@ public class DeterminingIdentical {
     static boolean hasBlockBaseOre = false;
     static boolean hasAEQuartz = false;
     static boolean hasAEQuartzCharged = false;
-    /** True when the new-style {@code GTBlockOre} class is present (GT5 ≥ 5.09.xx). */
+    /** GT5 >= 5.09: new-style GTBlockOre. */
     static boolean hasGTBlockOre = false;
-    /** True when the legacy {@code BlockOresAbstractLegacy} class is present. */
+    /** Legacy BlockOresAbstractLegacy (GT5-Unofficial). */
     static boolean hasBlockOresAbstractLegacy = false;
 
-    /**
-     * Metadata offset above which a {@code GTBlockOre} block is classified as a
-     * small / surface ore (贫瘠矿). Mirrors {@code GTBlockOre.SMALL_ORE_META_OFFSET}
-     * to avoid a reflection call on every block check. With NEID installed,
-     * {@code World.getBlockMetadata()} returns the full extended integer value, so
-     * small-ore blocks at coordinates yield values &ge; this constant.
-     */
+    /** Meta >= 16000 → small/surface ore (贫瘠矿). Mirrors GTBlockOre.SMALL_ORE_META_OFFSET. */
     private static final int GT_SMALL_ORE_META_OFFSET = 16000;
 
-    // ===== Cached reflection objects (set once in checkCompatibility) =====
+    // ===== Cached reflection objects =====
     private static volatile Class<?> gtTileEntityOresClass;
-    /**
-     * {@code TileEntityOres.mMetaData} field. Used to read the ore-type metadata
-     * stored in legacy GT tile-entities. The {@code getMeta()} method was removed
-     * in GT5-Unofficial; the raw field is the only reliable accessor.
-     */
+    /** TileEntityOres.mMetaData — raw field access (getMeta() removed in GT5-Unofficial). */
     private static volatile Field tileEntityMMetaDataField;
     private static volatile Class<?> bwTileEntityClass;
     private static volatile Field bwMetaDataField;
@@ -78,21 +59,11 @@ public class DeterminingIdentical {
     private static volatile Class<?> gtPlusPlusBlockBaseOreClass;
     private static volatile Class<?> aeQuartzClass;
     private static volatile Class<?> aeQuartzChargedClass;
-    /**
-     * Cached {@code GTBlockOre} class reference; set once in {@link #checkCompatibility()}.
-     * Null when the new ore system is not present.
-     */
     private static volatile Class<?> gtBlockOreClass;
-    /**
-     * Cached {@code BlockOresAbstractLegacy} class reference; set once in
-     * {@link #checkCompatibility()}. In GT5-Unofficial, both large-vein and small ores use
-     * the same {@code BlockOresLegacy extends BlockOresAbstractLegacy} class; the ore size
-     * must be determined from {@code TileEntityOres.mMetaData}.
-     */
+    /** Legacy ore class — both large and small ores; distinguished via TileEntityOres.mMetaData. */
     private static volatile Class<?> gtBlockOresAbstractLegacyClass;
 
-    // ===== Per-block-type ore cache =====
-    /** Maps Block instance → isOreBlock result; populated lazily and shared across threads. */
+    // ===== Ore cache =====
     private static final ConcurrentHashMap<Block, Boolean> oreBlockCache = new ConcurrentHashMap<>();
 
     public static void checkCompatibility() {
@@ -203,18 +174,14 @@ public class DeterminingIdentical {
         }
     }
 
-    /** Returns true if the block at pos matches the given sample. */
+    /** True if block at pos matches sample (block + meta + optional tile entity). */
     public static boolean identical(Block sBlock, int sMeta, TileEntity sTile, Vector3i pos, EntityPlayer player) {
         Block tBlock = player.worldObj.getBlock(pos.x, pos.y, pos.z);
         int tMeta = player.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
         return identical(sBlock, sMeta, sTile, tBlock, tMeta, pos, player);
     }
 
-    /**
-     * Returns true if the target block matches the given sample, using pre-fetched
-     * {@code tBlock} and {@code tMeta} to avoid duplicate world lookups when the
-     * caller has already read the block data.
-     */
+    /** Same as above with pre-fetched tBlock/tMeta to avoid duplicate world lookups. */
     public static boolean identical(Block sBlock, int sMeta, TileEntity sTile, Block tBlock, int tMeta, Vector3i pos,
         EntityPlayer player) {
         if (!sBlock.equals(tBlock) || sMeta != tMeta) return false;
@@ -249,13 +216,7 @@ public class DeterminingIdentical {
 
     private static final Set<String> reportedOrePackages = new HashSet<>();
 
-    /**
-     * Returns true if the block at pos is considered an ore block.
-     *
-     * <p>
-     * Results are cached per {@link Block} instance so the reflection path is
-     * only executed once per unique block type.
-     */
+    /** True if block at pos is an ore. Results cached per Block instance. */
     public static boolean isOreBlock(Vector3i pos, EntityPlayer player) {
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
         return oreBlockCache.computeIfAbsent(block, DeterminingIdentical::computeIsOreBlock);
@@ -295,69 +256,24 @@ public class DeterminingIdentical {
         return false;
     }
 
-    /**
-     * Returns true if the block at pos is specifically a GregTech ore ({@code BlockOresAbstract}).
-     * Used to gate Visual Prospecting ore-vein discovery calls.
-     */
+    /** True if GregTech BlockOresAbstract — gates VisualProspecting vein discovery. */
     public static boolean isGTOreBlock(Vector3i pos, EntityPlayer player) {
         if (!hasBlockOresAbstract || gtBlockOresAbstractClass == null) return false;
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
         return gtBlockOresAbstractClass.isInstance(block);
     }
 
-    /**
-     * Returns {@code true} if {@code block} at the given metadata is a GT large-vein ore,
-     * explicitly excluding GT surface small ores (贫瘠矿).
-     *
-     * <p>
-     * This overload cannot inspect the tile entity at the candidate position, so for
-     * {@code BlockOresAbstractLegacy} blocks it conservatively returns {@code true} for all
-     * instances (safe for most callers). When world access is available, prefer
-     * {@link #isGTLargeVeinOre(Block, int, World, int, int, int)} which correctly excludes
-     * small ores in the legacy system.
-     *
-     * @param block the block instance to test
-     * @param meta  the block metadata at the candidate position (NEID-extended for new system)
-     * @return {@code true} only for GT large-vein ore blocks
-     */
+    /** Convenience overload — prefers world-less check (conservative for legacy). */
     public static boolean isGTLargeVeinOre(Block block, int meta) {
         return isGTLargeVeinOre(block, meta, null, 0, 0, 0);
     }
 
     /**
-     * Returns {@code true} if {@code block} at the given metadata is a GT large-vein ore,
-     * explicitly excluding GT surface small ores (贫瘠矿).
+     * True if GT large-vein ore, excluding surface small ores (贫瘠矿).
      *
-     * <h3>New ore system ({@code GTBlockOre})</h3>
-     * GT5 ≥ 5.09 stores both large-vein and small ores in the same {@code GTBlockOre}
-     * block class, distinguished purely by extended block metadata (requires NEID):
-     * <ul>
-     * <li>Large-vein ore: {@code meta < 16000} ({@code GT_SMALL_ORE_META_OFFSET})</li>
-     * <li>Small / surface ore: {@code meta >= 16000}</li>
-     * </ul>
-     * With NEID installed, {@code World.getBlockMetadata()} returns the full integer
-     * value, so this constant comparison works correctly without any method-call
-     * reflection.
-     *
-     * <h3>Legacy ore system ({@code BlockOresAbstractLegacy})</h3>
-     * In GT5-Unofficial, both large-vein <em>and</em> small ores use the same
-     * {@code BlockOresLegacy extends BlockOresAbstractLegacy} class. The only reliable
-     * way to distinguish them is via {@code TileEntityOres.mMetaData}: values &ge; 16000
-     * indicate a small ore (matching the same encoding used by {@code GTBlockOre}).
-     * When {@code world} is provided, this tile-entity check is performed. When
-     * {@code world} is {@code null} the method conservatively returns {@code true}
-     * (accepts the block) to avoid silently dropping valid large-vein ores.
-     *
-     * <h3>Really-old legacy system ({@code BlockOresAbstract})</h3>
-     * Same tile-entity check as above.
-     *
-     * @param block the block instance to test
-     * @param meta  the block metadata at the candidate position (NEID-extended for new system)
-     * @param world the server world; may be {@code null} (see legacy note above)
-     * @param x     world X of the candidate position
-     * @param y     world Y of the candidate position
-     * @param z     world Z of the candidate position
-     * @return {@code true} only for GT large-vein ore blocks
+     * <p>New system (GTBlockOre): meta &lt; 16000 = large vein (NEID required).
+     * Legacy (BlockOresAbstractLegacy/BlockOresAbstract): checks TileEntityOres.mMetaData.
+     * When world is null, conservatively returns true for legacy ore blocks.</p>
      */
     public static boolean isGTLargeVeinOre(Block block, int meta, World world, int x, int y, int z) {
         // ── New ore system: GTBlockOre ─────────────────────────────────────────────────────
@@ -380,15 +296,7 @@ public class DeterminingIdentical {
         return false;
     }
 
-    /**
-     * Reads {@code TileEntityOres.mMetaData} at the given position and returns
-     * {@code true} when the value indicates a large-vein ore (mMetaData < 16000).
-     *
-     * <p>
-     * Falls back to {@code true} (accept) when the world is null, the tile entity is
-     * absent, or reflection fails — this is the safe direction because it never hides
-     * a valid large-vein ore from the vein-mining queue.
-     */
+    /** Check TileEntityOres.mMetaData < 16000. Returns true on any failure (safe side). */
     private static boolean isLargeVeinByTileEntity(World world, int x, int y, int z) {
         if (world == null || !hasTileEntityOres || gtTileEntityOresClass == null || tileEntityMMetaDataField == null) {
             return true; // conservative: accept when we cannot verify
@@ -404,20 +312,12 @@ public class DeterminingIdentical {
         }
     }
 
-    /**
-     * Reads a {@code public short} field from a tile entity and returns its value as an
-     * unsigned integer in the range [0, 65535].
-     *
-     * <p>
-     * The cast through {@code Short} (auto-unboxed by reflection) and the subsequent
-     * {@code & 0xFFFF} mask ensures that metadata values in the range 16000–32767
-     * (used by GT small-ore and natural-ore flags) are compared as positive integers.
-     */
+    /** Read public short field as unsigned int [0, 65535] via reflection. */
     private static int readUnsignedMeta(Field field, TileEntity te) throws ReflectiveOperationException {
         return ((Short) field.get(te)) & 0xFFFF;
     }
 
-    /** Returns true if two ItemStacks are identical (type, damage, NBT). */
+    /** True if two ItemStacks match (item type, damage, NBT). */
     public static boolean isSame(ItemStack a, ItemStack b) {
         if (a == null || b == null) return a == b;
         if (!Objects.equals(a.getItem(), b.getItem())) return false;

@@ -24,73 +24,26 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
 /**
- * Injects a small EZMiner config button into both the vanilla survival inventory
- * screen and the creative inventory screen.
- *
- * <p>
- * When ServerUtilities is present the button is positioned dynamically below
- * SU's entire sidebar block (by finding the {@code GuiSidebar} button instance in
- * the screen's button list and reading its real on-screen bounds) so the layout
- * stays correct regardless of how many SU buttons are enabled or whether the
- * sidebar has been dragged. When SU is absent the
- * button falls back to a fixed position at the left edge of the inventory panel.
- *
- * <p>
- * Uses Forge's {@link GuiScreenEvent} so no Mixin or reflection is required.
- *
- * <p>
- * <strong>Texture note:</strong> Minecraft 1.7.10's {@code ResourceLocation}
- * constructor lowercases the domain, so the assets folder name must also be
- * all-lowercase ({@code assets/ezminer/}).
+ * Injects an EZMiner config button into the vanilla inventory screen.
+ * Dynamically positions below ServerUtilities sidebar when SU is present,
+ * falls back to a fixed position otherwise. Uses Forge events — no Mixin.
  */
 @SideOnly(Side.CLIENT)
 public class InventoryButtonOverlay {
 
-    /** Unique button ID – chosen high enough not to clash with any vanilla inventory buttons. */
     private static final int BTN_ID = 1000;
-
-    /**
-     * Button size in screen pixels.
-     * Matches the 16 × 16 px icon size used by ServerUtilities sidebar buttons.
-     */
     private static final int BTN_SIZE = 16;
-
-    /**
-     * Horizontal distance from guiLeft at which SU places its sidebar column.
-     * {@code GuiSidebar.setButtonLocations}: {@code button.x = gui.guiLeft - offsetX - buttonY*17}.
-     * For the default column (buttonY=0) this equals {@code guiLeft - 18}.
-     */
+    /** SU sidebar column X offset from guiLeft (GuiSidebar.setButtonLocations). */
     private static final int SU_OFFSET_X = 18;
-
-    /**
-     * Y offset of SU's first sidebar button in the survival inventory
-     * (from {@code GuiSidebar.setButtonLocations}: {@code offsetY = 8}).
-     */
     private static final int SU_FIRST_BTN_Y_SURVIVAL = 8;
-
-    /**
-     * Y offset of SU's first sidebar button in the creative inventory
-     * (from {@code GuiSidebar.setButtonLocations}: {@code offsetY = 6} for GuiContainerCreative).
-     */
     private static final int SU_FIRST_BTN_Y_CREATIVE = 6;
-
-    /** Vanilla survival inventory panel size (GuiInventory). */
     private static final int INV_X_SIZE = 176;
     private static final int INV_Y_SIZE = 166;
-
-    /** Vanilla creative inventory panel size (GuiContainerCreative). */
     private static final int CREATIVE_X_SIZE = 195;
     private static final int CREATIVE_Y_SIZE = 136;
-
-    /**
-     * Bottom margin (px) from the inventory panel bottom for the fallback
-     * button position when SU is absent or its sidebar bounds cannot be read.
-     */
     private static final int FALLBACK_BOTTOM_MARGIN = 4;
 
-    // ── SRG field names for production (reobfuscated) environments ─────────
-    // In a deobfuscated dev environment Minecraft fields use MCP names;
-    // in production they use SRG names. We try MCP first, then SRG.
+    // SRG names for production (reobfuscated) environments. Try MCP first, then SRG.
 
     private static final String SRG_BUTTON_LIST = "field_146292_n"; // GuiScreen.buttonList
     private static final String SRG_X_POS = "field_146128_h"; // GuiButton.xPosition
@@ -98,33 +51,18 @@ public class InventoryButtonOverlay {
     private static final String SRG_WIDTH = "field_146120_f"; // GuiButton.width
     private static final String SRG_HEIGHT = "field_146121_g"; // GuiButton.height
 
-    /**
-     * Settings icon texture.
-     * Domain must be all-lowercase because MC 1.7.10's {@code ResourceLocation}
-     * lowercases the domain, matching the {@code assets/ezminer/} folder.
-     */
+    /** MC 1.7.10 lowercases ResourceLocation domain — must match assets/ezminer/. */
     private static final ResourceLocation SETTINGS_TEXTURE = new ResourceLocation(
-        "ezminer",
-        "textures/icons/settings.png");
+        "ezminer", "textures/icons/settings.png");
 
     // ── Reflection cache for GuiSidebar bounds ──────────────────────────────
 
-    /** {@code true} once the one-time class / field lookup has been attempted. */
     private static boolean suLookupDone = false;
-
-    /** Cached {@code serverutils.client.gui.GuiSidebar} class, or null if SU absent. */
     private static Class<?> suSidebarClass = null;
-
-    /** Cached {@code GuiScreen.buttonList} field, set during first successful lookup. */
     private static Field suButtonListField;
-
-    /** Cached {@code GuiButton} field accessors, set during first successful lookup. */
     private static Field suXField, suYField, suWField, suHField;
 
-    /**
-     * Gets a public field by MCP name first, falling back to the SRG name
-     * for production (reobfuscated) environments.
-     */
+    /** Try MCP field name first, fall back to SRG for production. */
     private static Field getFieldMcpSrg(Class<?> clazz, String mcp, String srg) {
         try {
             Field f = clazz.getField(mcp);
@@ -141,10 +79,7 @@ public class InventoryButtonOverlay {
         }
     }
 
-    /**
-     * Gets a declared field by MCP name first, falling back to the SRG name
-     * for production (reobfuscated) environments.
-     */
+    /** Try MCP declared field first, fall back to SRG for production. */
     private static Field getDeclaredFieldMcpSrg(Class<?> clazz, String mcp, String srg) {
         try {
             Field f = clazz.getDeclaredField(mcp);
@@ -163,16 +98,11 @@ public class InventoryButtonOverlay {
 
     // ── State ─────────────────────────────────────────────────────────────────
 
-    /** Reference to the button we most recently added so we can reposition it each frame. */
     private TexturedButton ourButton = null;
 
     // ── Event handlers ────────────────────────────────────────────────────────
 
-    /**
-     * After the inventory GUI is initialised, inject the EZMiner config button
-     * to the left of the inventory panel. The initial position is a safe default;
-     * it is refined each frame by {@link #onDrawScreenPre}.
-     */
+    /** Inject config button after GUI init. Position refined each frame in onDrawScreenPre. */
     @SubscribeEvent
     @SuppressWarnings("unchecked")
     public void onInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
@@ -186,12 +116,7 @@ public class InventoryButtonOverlay {
         event.buttonList.add(ourButton);
     }
 
-    /**
-     * Before each frame is drawn, reposition the button to sit directly below
-     * SU's sidebar block (by reading the {@code GuiSidebar} button's actual
-     * on-screen bounds) so the two never overlap regardless of how many SU
-     * buttons are visible or whether the sidebar has been dragged.
-     */
+    /** Reposition button below SU sidebar block each frame. */
     @SubscribeEvent
     public void onDrawScreenPre(GuiScreenEvent.DrawScreenEvent.Pre event) {
         if (ourButton == null) return;
@@ -215,12 +140,7 @@ public class InventoryButtonOverlay {
         ourButton.yPosition = btnY;
     }
 
-    /**
-     * After each frame is drawn, render a tooltip over our button when the mouse is hovering
-     * on it. Drawing is deferred to Post so the tooltip always renders on top of everything else.
-     * The tooltip is drawn manually with GL11 to avoid accessing the protected
-     * {@code GuiScreen.drawHoveringText} method.
-     */
+    /** Render tooltip on hover (manually via GL11 to avoid protected drawHoveringText). */
     @SubscribeEvent
     public void onDrawScreenPost(GuiScreenEvent.DrawScreenEvent.Post event) {
         if (ourButton == null || !ourButton.visible) return;
@@ -237,9 +157,7 @@ public class InventoryButtonOverlay {
         }
     }
 
-    /**
-     * When the injected button is clicked, open the EZMiner config GUI.
-     */
+    /** Open EZMiner config GUI on button click. */
     @SubscribeEvent
     public void onActionPerformed(GuiScreenEvent.ActionPerformedEvent.Post event) {
         if (guiOffsets(event.gui) == null) return;
@@ -250,22 +168,14 @@ public class InventoryButtonOverlay {
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-    /** Registers this overlay with the Forge and FML event buses. */
     public void registry() {
         MinecraftForge.EVENT_BUS.register(this);
-        FMLCommonHandler.instance()
-            .bus()
-            .register(this);
+        FMLCommonHandler.instance().bus().register(this);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    /**
-     * Returns {@code [guiLeft, guiTop, invHeight]} for a supported inventory GUI,
-     * or {@code null} if the GUI is not a recognised inventory screen.
-     * The invHeight is used for computing the fallback button position at the
-     * bottom of the inventory panel.
-     */
+    /** Returns [guiLeft, guiTop, invHeight] for supported inventory GUIs, or null. */
     private static int[] guiOffsets(net.minecraft.client.gui.GuiScreen gui) {
         if (gui instanceof GuiInventory) {
             int guiLeft = (gui.width - INV_X_SIZE) / 2;
@@ -280,12 +190,7 @@ public class InventoryButtonOverlay {
         return null;
     }
 
-    /**
-     * Draws a MC-style tooltip box at the given screen position.
-     * Rendered manually with GL11/Tessellator to avoid accessing the protected
-     * {@code GuiScreen.drawHoveringText}. Supports Minecraft {@code §} colour codes in
-     * {@code text} via {@link FontRenderer#drawStringWithShadow}.
-     */
+    /** MC-style tooltip box rendered via GL11 (avoids protected drawHoveringText). */
     private static void drawTooltip(FontRenderer font, String text, int mx, int my, int screenW) {
         // Strip colour codes for width measurement so the box fits the visible text.
         int w = font.getStringWidth(net.minecraft.util.EnumChatFormatting.getTextWithoutFormattingCodes(text));
@@ -322,7 +227,6 @@ public class InventoryButtonOverlay {
         GL11.glColor4f(1f, 1f, 1f, 1f);
     }
 
-    /** Draws a filled axis-aligned rectangle using the current GL colour. */
     private static void fillRect(int x1, int y1, int x2, int y2) {
         Tessellator t = Tessellator.instance;
         t.startDrawingQuads();
@@ -333,17 +237,7 @@ public class InventoryButtonOverlay {
         t.draw();
     }
 
-    /**
-     * Finds the {@code serverutils.client.gui.GuiSidebar} button instance in the
-     * current screen's button list and returns its bounds as a Rectangle.
-     * {@code GuiSidebar} extends {@code GuiButton} and updates its own
-     * {@code xPosition / yPosition / width / height} in {@code drawButton()}
-     * to the bounding box of all visible sidebar buttons (with 2 px padding).
-     *
-     * <p>
-     * Returns {@code null} when SU is not installed, the sidebar is not in the
-     * button list, or its bounds are still zero (before the first draw call).
-     */
+    /** Find GuiSidebar button bounds via reflection. Returns null if SU absent or not yet drawn. */
     private static Rectangle getSuArea(GuiScreen gui) {
         if (!suLookupDone) {
             suLookupDone = true;
