@@ -1,0 +1,79 @@
+name: Report Bug
+description: "Report a crash, mod conflict, or any other type of bug."
+labels:
+  - "bug"
+assignees: czqwq
+body:
+  - type: input
+    id: pack_version
+    attributes:
+      label: Your Pack Version
+      description: What version of the pack are you playing? If you're using an ancient version maybe first try updating the pack. We usually fix hundreds of issues per release, so there is a good chance your problem have been fixed already in the latest version. There are also usually Dev releases inbetween Official releases that may not show up on other platforms.
+      placeholder: "Example: 2.1.1.0"
+    validations:
+      required: true
+  - type: input
+    id: mod_version
+    attributes:
+      label: Mod Version
+      description: What version of the mod are you using? Give an actual version number or jar name, not "latest". Speaking of which, if you are not on the latest jar, try updating first.
+      placeholder: "example: 3.4"
+    validations:
+      required: true
+  - type: textarea
+    id: whatistheissue
+    attributes:
+      label: Describe the Issue
+      description: Give a description of the issue, steps to reproduce the issue, as well as what you think the expected result should be.
+      placeholder: "Example: 1 Foo is crafted but no Bar is consumed. 1 Bar should be consumed."
+    validations:
+      required: true
+  - type: textarea
+    id: conflict
+    attributes:
+      label: Conflicting Mods
+      description: If this is a mod conflict, list the mods you think are causing the issue.
+      placeholder: "Example: Causes <insert feature> to break only if <insert modname> is installed"
+    validations:
+      required: false
+  - type: dropdown
+    id: java
+    attributes:
+      label: Java Version
+      description: What Java version are you using? It's worth mentioning that if you play on Java9+ you should try update to latest minor release (e.g. prefer Java 17.0.6 over 17.0.2) of that version.
+      options:
+        - Java 8
+        - Java 9
+        - Java 11
+        - Java 17
+        - Java 19
+        - Java 20
+        - Java 21
+        - Java 22
+        - Java 23
+        - Java 24
+        - Java 25
+        - Java 26
+        - Other versions in between
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Crash Report / Log
+      description: "If no crash report is created, attach `logs/fml-client-latest.log` or `logs/fml-server-latest.log`, depending on if it's a dedicated server crash or a client crash. You can also type in additional info that you consider important."
+      placeholder: "Example: pastebin/something OR submit the file to github by dragging it to this textbox."
+    validations:
+      required: true
+  - type: checkboxes
+    id: final
+    attributes:
+      label: Final Checklist
+      description: Please mark them so we can better handle this report.
+      options:
+        - label: "I have searched this issue tracker and there is nothing similar already. Posting on a closed issue saying the crash still exists will prompt us to investigate and reopen it once we confirm your report."
+          required: true
+        - label: "I can reproduce this crash consistently by following the exact steps I described above."
+          required: false
+        - label: "I have asked other people and they confirm they also crash by following the exact steps I described above."
+          required: false

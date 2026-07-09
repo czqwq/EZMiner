@@ -1,0 +1,58 @@
+name: 'Request New Feature'
+description: Request a new feature.
+labels:
+  - "Feature"
+body:
+  - type: markdown
+    attributes:
+      value: 'Examples of this category include: add a new item,add a new function
+
+    Please note that if you want to change an existing feature, e.g. think something is too OP, you should use the Suggest a Change template instead.'
+  - type: input
+    id: version
+    attributes:
+      label: Your Pack Version
+      description: What version of the pack are you playing? If you're using an ancient version maybe first try updating the pack. We add new features all the time, so your feature may already be in the latest version. There are also usually Dev releases inbetween Official releases that may not show up on other platforms.
+      placeholder: "Example: 2.1.1.0"
+    validations:
+      required: true
+  - type: input
+    id: mod_version
+    attributes:
+      label: Mod Version
+      description: What version of the mod are you using? Give an actual version number or jar name, not "latest". Speaking of which, if you are not on the latest jar, try updating first.
+      placeholder: "Example: 3.4"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Your Proposal
+      description: What do you propose? Please describe it briefly in one or two sentence.
+      placeholder: "Example: Add a new chain function."
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Your Goal
+      description: Why is this feature needed?
+      placeholder: "Example: Old mode can't fill my heart."
+    validations:
+      required: true
+  - type: checkboxes
+    id: final
+    attributes:
+      label: Final Checklist
+      description: Please mark them so we know you are serious with your suggestion.
+      options:
+        - label: "I have searched this issue tracker and there is nothing similar already. Posting on a closed issue saying *I like this feature please reconsider adding it* will prompt us to investigate and reopen it once we confirm your report."
+          required: true
+        - label: "I believe there is nothing similar in the pack already, or the existing solution isn't good enough."
+          required: true
+        - label: "I understand this change request may not attract enough attention and thus not be implemented."
+          required: true
+        - label: "I understand this change request may be rejected due to other community members thinking it's inappropriate."
+          required: true
+        - label: "I believe this feature would make the pack better."
+          required: true
