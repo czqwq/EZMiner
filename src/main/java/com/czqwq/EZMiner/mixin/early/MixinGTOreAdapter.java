@@ -1,4 +1,4 @@
-package com.czqwq.EZMiner.mixin;
+package com.czqwq.EZMiner.mixin.early;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -10,11 +10,11 @@ import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
-import gregtech.common.ores.BWOreAdapter;
+import gregtech.common.ores.GTOreAdapter;
 import gregtech.common.ores.OreInfo;
 
-@Mixin(value = BWOreAdapter.class, remap = false)
-public abstract class MixinBWOreAdapter {
+@Mixin(value = GTOreAdapter.class, remap = false)
+public abstract class MixinGTOreAdapter {
 
     @Redirect(
         method = "getOreDrops(Ljava/util/Random;Lgregtech/common/ores/OreInfo;ZI)Ljava/util/ArrayList;",
@@ -28,7 +28,7 @@ public abstract class MixinBWOreAdapter {
     @ModifyExpressionValue(
         method = "getBigOreDrops(Ljava/util/Random;Lgregtech/common/GTProxy$OreDropSystem;Lgregtech/common/ores/OreInfo;I)Ljava/util/ArrayList;",
         at = @At(value = "MIXINEXTRAS:EXPRESSION"))
-    private boolean ezminer$removeOreFortuneCap(boolean original) {
+    private boolean ezminer$removeNormalOreFortuneCap(boolean original) {
         return FortuneCompatHelper.shouldKeepFortuneCapCheck(original);
     }
 }

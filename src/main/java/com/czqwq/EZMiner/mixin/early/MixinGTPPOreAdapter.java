@@ -1,4 +1,4 @@
-package com.czqwq.EZMiner.mixin;
+package com.czqwq.EZMiner.mixin.early;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

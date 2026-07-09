@@ -35,13 +35,9 @@ public class FuzzyChainPositionFounder extends ChainPositionFounder {
         setName("EZMiner-FuzzyChainSearch");
     }
 
-    /**
-     * Same guards as the standard chain mode, but uses block-type equality only —
-     * metadata is intentionally ignored.
-     */
+    /** Fuzzy matching: block class equality only, ignoring metadata. */
     @Override
-    public boolean checkCanAdd(Vector3i pos) {
-        if (isVisited(pos.x, pos.y, pos.z)) return false;
+    protected boolean checkCanAddImpl(Vector3i pos) {
         if (player.worldObj == null) return false;
         if (!player.worldObj.blockExists(pos.x, pos.y, pos.z)) return false;
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
@@ -50,10 +46,6 @@ public class FuzzyChainPositionFounder extends ChainPositionFounder {
         int blockMeta = player.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
         if (pos.x == cachedPlayerFloorX && pos.y == (cachedPlayerFloorY - 1) && pos.z == cachedPlayerFloorZ)
             return false;
-        // Fuzzy identity: block type must match; metadata (orientation, variant) is ignored.
-        // Use class equality (not instance equality) so that blocks that share the same
-        // class but differ in state (e.g. lit vs unlit redstone ore, which are separate
-        // Block instances of the same BlockRedstoneOre class) are correctly matched.
         if (!sampleBlock.getClass()
             .equals(block.getClass())) return false;
         if (skipHarvestCheck) return true;

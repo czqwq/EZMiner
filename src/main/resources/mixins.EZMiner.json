@@ -4,7 +4,7 @@
   "mixinextras": {
     "minVersion": "0.5.0"
   },
-  "package": "com.czqwq.EZMiner.mixin",
+  "package": "com.czqwq.EZMiner.mixin.early",
   "refmap": "mixins.EZMiner.refmap.json",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",

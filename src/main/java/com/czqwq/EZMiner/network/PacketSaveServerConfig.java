@@ -37,13 +37,16 @@ public class PacketSaveServerConfig implements IMessage {
     public double minesweeperProbeCooldownSeconds;
     public double sudokuProbeCooldownSeconds;
     public boolean enableCachedChain;
+    public int searchWorkerThreads;
+    public boolean suppressHodgepodgeWarnings;
 
     public PacketSaveServerConfig() {}
 
     public PacketSaveServerConfig(int bigRadius, int blockLimit, int smallRadius, int tunnelWidth, int breakPerTick,
         int cachedBreakPerTick, boolean dropImmediately, double addExhaustion, boolean dropToPlayer,
         boolean serverUsePreview, int serverMaxPreviewBigRadius, int serverMaxPreviewBlockLimit,
-        double minesweeperProbeCooldownSeconds, double sudokuProbeCooldownSeconds, boolean enableCachedChain) {
+        double minesweeperProbeCooldownSeconds, double sudokuProbeCooldownSeconds, boolean enableCachedChain,
+        int searchWorkerThreads, boolean suppressHodgepodgeWarnings) {
         this.bigRadius = bigRadius;
         this.blockLimit = blockLimit;
         this.smallRadius = smallRadius;
@@ -59,6 +62,8 @@ public class PacketSaveServerConfig implements IMessage {
         this.minesweeperProbeCooldownSeconds = minesweeperProbeCooldownSeconds;
         this.sudokuProbeCooldownSeconds = sudokuProbeCooldownSeconds;
         this.enableCachedChain = enableCachedChain;
+        this.searchWorkerThreads = searchWorkerThreads;
+        this.suppressHodgepodgeWarnings = suppressHodgepodgeWarnings;
     }
 
     @Override
@@ -78,6 +83,8 @@ public class PacketSaveServerConfig implements IMessage {
         minesweeperProbeCooldownSeconds = buf.readDouble();
         sudokuProbeCooldownSeconds = buf.readDouble();
         enableCachedChain = buf.readBoolean();
+        searchWorkerThreads = buf.readInt();
+        suppressHodgepodgeWarnings = buf.readBoolean();
     }
 
     @Override
@@ -97,6 +104,8 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeDouble(minesweeperProbeCooldownSeconds);
         buf.writeDouble(sudokuProbeCooldownSeconds);
         buf.writeBoolean(enableCachedChain);
+        buf.writeInt(searchWorkerThreads);
+        buf.writeBoolean(suppressHodgepodgeWarnings);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -123,6 +132,8 @@ public class PacketSaveServerConfig implements IMessage {
             Config.minesweeperProbeCooldownSeconds = Math.max(0.1, msg.minesweeperProbeCooldownSeconds);
             Config.sudokuProbeCooldownSeconds = Math.max(0.1, msg.sudokuProbeCooldownSeconds);
             Config.enableCachedChain = msg.enableCachedChain;
+            Config.searchWorkerThreads = Math.max(0, Math.min(8, msg.searchWorkerThreads));
+            Config.suppressHodgepodgeWarnings = msg.suppressHodgepodgeWarnings;
 
             // Persist to disk
             Config.saveServerConfig();

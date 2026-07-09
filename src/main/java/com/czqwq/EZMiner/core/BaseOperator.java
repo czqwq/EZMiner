@@ -65,20 +65,7 @@ public class BaseOperator {
             .createTaskForMode(manager.minerModeState, pos, canBreakPositions, playerMP, manager.pConfig);
     }
 
-    /**
-     * Creates a {@link BaseOperator} that feeds from pre-calculated positions instead
-     * of running a background founder search.
-     *
-     * <p>
-     * <strong>Decoupling:</strong> this factory method is the single integration point
-     * between the cached-position planning system and the operator. The operator itself
-     * does not know or care where the positions came from — it only sees
-     * {@link #canBreakPositions} and {@link #planningTask}.
-     *
-     * @param origin    the block position that was broken (used as drop-spawn reference)
-     * @param manager   the player's Manager
-     * @param positions the pre-calculated positions (ownership is transferred)
-     */
+    /** Factory using pre-calculated positions instead of a background founder. */
     public static BaseOperator createCached(Vector3i origin, Manager manager, List<Vector3i> positions) {
         BaseOperator op = new BaseOperator(origin, manager);
         // Replace the founder-based planning task with a lazy cache-feeding task.
@@ -119,7 +106,14 @@ public class BaseOperator {
         }
 
         stopRequested = false;
-        chainExecutor.executeBatch(canBreakPositions, perTick, this::processCandidate);
+        // Use batched exhaustion for non-crop block mining: save once before batch,
+        // harvest N blocks, apply total exhaustion once after. Crop mode uses the
+        // legacy per-block exhaustion path since each crop may or may not be harvestable.
+        if (!manager.isSpecialCropMode()) {
+            processBatchWithBatchedExhaustion(perTick);
+        } else {
+            chainExecutor.executeBatch(canBreakPositions, perTick, this::processCandidate);
+        }
         if (stopRequested) {
             unRegistry();
             return;
@@ -180,15 +174,10 @@ public class BaseOperator {
             .bus()
             .unregister(this);
         planningTask.interrupt();
-        manager.clearRuntimeProjection();
-        EZMiner.chainStateService.markSessionStop(manager.playerUUID);
-        manager.activeSession = null;
+        cleanupOperatorState();
     }
 
-    /**
-     * Emergency stop called when the player logs out mid-operation.
-     * Does not attempt to send chat messages or deliver drops.
-     */
+    /** Emergency stop on player logout — no chat messages or drop delivery. */
     public void stopImmediately() {
         planningTask.interrupt();
         canBreakPositions.clear();
@@ -196,9 +185,11 @@ public class BaseOperator {
             FMLCommonHandler.instance()
                 .bus()
                 .unregister(this);
-        } catch (Exception ignored) {
-            // already unregistered – safe to ignore
-        }
+        } catch (Exception ignored) {}
+        cleanupOperatorState();
+    }
+
+    private void cleanupOperatorState() {
         manager.clearRuntimeProjection();
         EZMiner.chainStateService.markSessionStop(manager.playerUUID);
         manager.activeSession = null;
@@ -229,5 +220,33 @@ public class BaseOperator {
             ChainExecutionErrorReporter.reportHarvestError(manager, pos, e);
         }
         return true;
+    }
+
+    /** Saves exhaustion once, harvests up to {@code perTick} blocks, applies total exhaustion once. */
+    private void processBatchWithBatchedExhaustion(int perTick) {
+        net.minecraft.util.FoodStats food = playerMP.getFoodStats();
+        float exhaustionBefore = exhaustionStrategy.getExhaustion(food);
+        int harvested = 0;
+
+        Vector3i pos;
+        while (harvested < perTick && (pos = canBreakPositions.poll()) != null) {
+            if (!canOperate() || !isPlayerOnline()) {
+                stopRequested = true;
+                break;
+            }
+            try {
+                if (!shouldHarvest(pos)) continue;
+                vpBridge.notifyOreDiscovery(playerMP, pos, vpNotifiedChunks);
+                boolean ok = harvestActionExecutor.execute(pos, playerMP);
+                if (!ok) continue;
+                operatorCount++;
+                harvested++;
+            } catch (Exception e) {
+                manager.reportRuntimeError("harvest_error");
+                ChainExecutionErrorReporter.reportHarvestError(manager, pos, e);
+            }
+        }
+
+        exhaustionStrategy.setExhaustion(food, exhaustionBefore + harvested * (float) manager.pConfig.addExhaustion);
     }
 }

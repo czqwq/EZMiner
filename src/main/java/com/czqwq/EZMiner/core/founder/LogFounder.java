@@ -37,7 +37,7 @@ public class LogFounder extends BasePositionFounder {
         // Track the bounds already covered so each position is visited only once.
         int prevCurRadius = 0;
         int prevHighRadius = 0;
-        while (curCount < minerConfig.blockLimit) {
+        while (curCount.get() < minerConfig.blockLimit) {
             for (int x = center.x - curRadius; x <= center.x + curRadius; x++) {
                 for (int y = center.y - highRadius; y <= center.y + highRadius; y++) {
                     for (int z = center.z - curRadius; z <= center.z + curRadius; z++) {
@@ -48,7 +48,7 @@ public class LogFounder extends BasePositionFounder {
                             && Math.abs(z - center.z) <= prevCurRadius) continue;
                         Vector3i pos = new Vector3i(x, y, z);
                         if (checkCanAdd(pos)) addResult(pos);
-                        if (curCount >= minerConfig.blockLimit) return;
+                        if (curCount.get() >= minerConfig.blockLimit) return;
                         waitUntil();
                         if (Thread.currentThread()
                             .isInterrupted()) return;
