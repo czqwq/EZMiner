@@ -10,26 +10,20 @@ import org.joml.Vector3i;
 import cpw.mods.fml.relauncher.ReflectionHelper;
 
 /**
- * Harvest strategy that replaces vanilla exhaustion with configured exhaustion.
+ * Replaces vanilla exhaustion with configured per-block exhaustion.
+ * For batched harvests, use {@link #getExhaustion} / {@link #setExhaustion}
+ * around the batch to avoid per-block reflection overhead.
  */
 public class ChainHarvestExhaustionStrategy {
 
-    /**
-     * Reflected access to {@code FoodStats.foodExhaustionLevel} (private in 1.7.10).
-     * SRG name: {@code field_75126_c}.
-     */
+    /** Reflected {@code FoodStats.foodExhaustionLevel} (SRG: {@code field_75126_c}). */
     private static final Field FOOD_EXHAUSTION_LEVEL = ReflectionHelper
         .findField(FoodStats.class, "foodExhaustionLevel", "field_75126_c");
 
     public boolean harvestWithConfiguredExhaustion(EntityPlayerMP player, Vector3i pos, float configuredExhaustion,
         ChainActionExecutor actionExecutor) {
         FoodStats food = player.getFoodStats();
-        float exhaustionBefore;
-        try {
-            exhaustionBefore = FOOD_EXHAUSTION_LEVEL.getFloat(food);
-        } catch (IllegalAccessException ex) {
-            exhaustionBefore = 0f;
-        }
+        float exhaustionBefore = getExhaustion(food);
         boolean harvested = actionExecutor.execute(pos, player);
         try {
             FOOD_EXHAUSTION_LEVEL.setFloat(food, exhaustionBefore + configuredExhaustion);
@@ -37,5 +31,19 @@ public class ChainHarvestExhaustionStrategy {
             player.addExhaustion(configuredExhaustion);
         }
         return harvested;
+    }
+
+    public float getExhaustion(FoodStats food) {
+        try {
+            return FOOD_EXHAUSTION_LEVEL.getFloat(food);
+        } catch (IllegalAccessException ex) {
+            return 0f;
+        }
+    }
+
+    public void setExhaustion(FoodStats food, float newValue) {
+        try {
+            FOOD_EXHAUSTION_LEVEL.setFloat(food, newValue);
+        } catch (IllegalAccessException ignored) {}
     }
 }

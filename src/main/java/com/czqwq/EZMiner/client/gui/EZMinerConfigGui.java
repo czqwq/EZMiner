@@ -20,14 +20,7 @@ import com.czqwq.EZMiner.network.PacketSaveServerConfig;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
-/**
- * In-game configuration GUI for EZMiner.
- *
- * <p>
- * Content rows are rendered in a scrollable viewport so the GUI works on any screen
- * resolution. The header (title + tab selectors) and the action-button strip (Save /
- * Reload / Close) are always visible; only the middle content area scrolls.
- */
+/** In-game configuration GUI with scrollable content area. */
 @SideOnly(Side.CLIENT)
 public class EZMinerConfigGui extends GuiScreen {
 
@@ -56,6 +49,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_SMART_TOOL_SWITCH_ACTIVATION_MODE = 17;
     private static final int BTN_SERVER_DROP_IMMEDIATELY = 18;
     private static final int BTN_SERVER_ENABLE_CACHED_CHAIN = 19;
+    private static final int BTN_SERVER_SUPPRESS_HODGEPODGE_WARNINGS = 20;
 
     // ── Layout constants ──────────────────────────────────────────────────────
     private static final int GUI_W = 290;
@@ -71,22 +65,12 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int ROW_H = 20;
     /** Extra vertical spacing added between lines when a label contains \n. */
     private static final int EXTRA_LINE_SPACING = 2;
-    /**
-     * Pixel gap inserted after the last row of every section (Mining → Preview,
-     * Preview → Options). The section header is drawn inside this gap so it never
-     * overlaps with the adjacent rows' content.
-     */
+    /** Gap after each section's last row for the section header. */
     private static final int SECTION_GAP = 18;
-    /**
-     * Extra padding at the top of the scrollable area so the first section header
-     * (Mining) has room to render without overlapping row 0.
-     */
+    /** Top padding inside the scrollable area for the first section header. */
     private static final int TOP_PAD = 12;
-    /** Height reserved for the action-button strip at the bottom. */
     private static final int ACTION_STRIP_H = 48;
-    /** Minimum height of the scrollable content viewport. */
     private static final int MIN_VIEWPORT_H = ROW_H * 3;
-    /** Scrollbar width in pixels. */
     private static final int SCROLLBAR_W = 4;
 
     // ── Adaptive layout (computed in initGui) ─────────────────────────────────
@@ -127,6 +111,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiTextField tfServerTunnelWidth;
     private GuiTextField tfBreakPerTick;
     private GuiTextField tfCachedBreakPerTick;
+    private GuiTextField tfSearchWorkerThreads;
     private GuiTextField tfAddExhaustion;
     private GuiTextField tfMinesweeperCooldown;
     private GuiTextField tfSudokuCooldown;
@@ -147,6 +132,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnServerDropImmediately;
     private GuiButton btnServerUsePreview;
     private GuiButton btnServerEnableCachedChain;
+    private GuiButton btnServerSuppressHodgepodgeWarnings;
 
     // ── GuiScreen overrides ───────────────────────────────────────────────────
 
@@ -319,6 +305,14 @@ public class EZMinerConfigGui extends GuiScreen {
                 boolLabel("ezminer.config.enableCachedChain", Config.enableCachedChain),
                 boolValue(Config.enableCachedChain));
             buttonList.add(btnServerEnableCachedChain);
+
+            btnServerSuppressHodgepodgeWarnings = newOptionButton(
+                BTN_SERVER_SUPPRESS_HODGEPODGE_WARNINGS,
+                15,
+                "ezminer.config.suppressHodgepodgeWarnings",
+                boolLabel("ezminer.config.suppressHodgepodgeWarnings", Config.suppressHodgepodgeWarnings),
+                boolValue(Config.suppressHodgepodgeWarnings));
+            buttonList.add(btnServerSuppressHodgepodgeWarnings);
 
             // Fixed: server action buttons
             buttonList.add(
@@ -499,6 +493,12 @@ public class EZMinerConfigGui extends GuiScreen {
                     "ezminer.config.enableCachedChain",
                     Config.enableCachedChain);
                 break;
+            case BTN_SERVER_SUPPRESS_HODGEPODGE_WARNINGS:
+                Config.suppressHodgepodgeWarnings = !Config.suppressHodgepodgeWarnings;
+                btnServerSuppressHodgepodgeWarnings.displayString = boolDisplayText(
+                    "ezminer.config.suppressHodgepodgeWarnings",
+                    Config.suppressHodgepodgeWarnings);
+                break;
 
             case BTN_SERVER_RELOAD:
                 EZMiner.network.network.sendToServer(new PacketReloadServerConfig());
@@ -531,6 +531,7 @@ public class EZMinerConfigGui extends GuiScreen {
             tfServerTunnelWidth.mouseClicked(x, y, mouseButton);
             tfBreakPerTick.mouseClicked(x, y, mouseButton);
             tfCachedBreakPerTick.mouseClicked(x, y, mouseButton);
+            tfSearchWorkerThreads.mouseClicked(x, y, mouseButton);
             tfAddExhaustion.mouseClicked(x, y, mouseButton);
             tfMinesweeperCooldown.mouseClicked(x, y, mouseButton);
             tfSudokuCooldown.mouseClicked(x, y, mouseButton);
@@ -559,6 +560,7 @@ public class EZMinerConfigGui extends GuiScreen {
             tfServerTunnelWidth.textboxKeyTyped(typedChar, keyCode);
             tfBreakPerTick.textboxKeyTyped(typedChar, keyCode);
             tfCachedBreakPerTick.textboxKeyTyped(typedChar, keyCode);
+            tfSearchWorkerThreads.textboxKeyTyped(typedChar, keyCode);
             tfAddExhaustion.textboxKeyTyped(typedChar, keyCode);
             tfMinesweeperCooldown.textboxKeyTyped(typedChar, keyCode);
             tfSudokuCooldown.textboxKeyTyped(typedChar, keyCode);
@@ -593,10 +595,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
     // ── Multi-line label support ─────────────────────────────────────────────────
 
-    /**
-     * Returns the I18n key associated with the content row at {@code index} for the
-     * currently active tab, or {@code null} if the row has no localised label.
-     */
+    /** I18n key for the content row, or {@code null}. */
     private String getRowLabelKey(int index) {
         if (activeTab == TAB_CLIENT) {
             switch (index) {
@@ -648,35 +647,34 @@ public class EZMinerConfigGui extends GuiScreen {
                 case 5:
                     return "ezminer.config.cachedBreakPerTick";
                 case 6:
-                    return "ezminer.config.addExhaustion";
+                    return "ezminer.config.searchWorkerThreads";
                 case 7:
-                    return "ezminer.config.minesweeperCooldown";
+                    return "ezminer.config.addExhaustion";
                 case 8:
-                    return "ezminer.config.sudokuCooldown";
+                    return "ezminer.config.minesweeperCooldown";
                 case 9:
-                    return "ezminer.config.serverPreviewRadius";
+                    return "ezminer.config.sudokuCooldown";
                 case 10:
-                    return "ezminer.config.serverPreviewLimit";
+                    return "ezminer.config.serverPreviewRadius";
                 case 11:
-                    return "ezminer.config.dropToPlayer";
+                    return "ezminer.config.serverPreviewLimit";
                 case 12:
-                    return "ezminer.config.dropImmediately";
+                    return "ezminer.config.dropToPlayer";
                 case 13:
-                    return "ezminer.config.serverUsePreview";
+                    return "ezminer.config.dropImmediately";
                 case 14:
+                    return "ezminer.config.serverUsePreview";
+                case 15:
                     return "ezminer.config.enableCachedChain";
+                case 16:
+                    return "ezminer.config.suppressHodgepodgeWarnings";
                 default:
                     return null;
             }
         }
     }
 
-    /**
-     * Minecraft 1.7.10's .lang parser does NOT process escape sequences — {@code \n}
-     * written in the file stays as the two literal characters backslash + 'n'.
-     * This helper converts them to real newlines so the rest of the code can use
-     * standard {@code \n} splitting.
-     */
+    /** Converts literal {@code \n} chars stored by MC 1.7.10's .lang parser to real newlines. */
     private static String resolveNewlines(String text) {
         return text.replace("\\n", "\n");
     }
@@ -732,24 +730,17 @@ public class EZMinerConfigGui extends GuiScreen {
         if (activeTab == TAB_CLIENT) {
             return index == 3 || index == 5 || index == 12; // after Mining, after Preview, before Smart Tool Switch
         }
-        return index == 8 || index == 10; // after Mining, after Preview
+        return index == 9 || index == 11; // after Mining, after Preview
     }
 
-    /**
-     * Returns the content-only height of a row (label + control), <em>excluding</em>
-     * any section gap that may be appended below it. Used for positioning controls
-     * inside their row.
-     */
+    /** Content height of a row excluding any section gap. */
     private int getContentRowHeight(int index) {
         String key = getRowLabelKey(index);
         int lines = getLabelLines(key);
         return ROW_H + (lines - 1) * (mc.fontRenderer.FONT_HEIGHT + EXTRA_LINE_SPACING);
     }
 
-    /**
-     * Returns the total layout height for a row, including any {@link #SECTION_GAP}
-     * appended when this row is the last before a section break.
-     */
+    /** Total height including any {@link #SECTION_GAP} after section breaks. */
     private int getRowHeight(int index) {
         int h = getContentRowHeight(index);
         if (isSectionBreak(index)) {
@@ -758,11 +749,7 @@ public class EZMinerConfigGui extends GuiScreen {
         return h;
     }
 
-    /**
-     * Returns the first line of {@code text} (everything before the first {@code \n}),
-     * or the whole string if no newline is present. Handles both literal {@code \n}
-     * (two chars, as stored by MC 1.7.10's .lang parser) and real newlines.
-     */
+    /** First line of text before any {@code \n}, or the whole string. */
     private static String firstLine(String text) {
         String converted = resolveNewlines(text);
         int idx = converted.indexOf('\n');
@@ -771,7 +758,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
     /** Recalculates totalContentH based on active tab row count and multi-line labels. */
     private void recalcTotalContentH() {
-        int rows = (activeTab == TAB_CLIENT) ? MAX_CONTENT_ROWS : 15;
+        int rows = (activeTab == TAB_CLIENT) ? MAX_CONTENT_ROWS : 17;
         int total = TOP_PAD;
         for (int i = 0; i < rows; i++) {
             total += getRowHeight(i);
@@ -779,11 +766,7 @@ public class EZMinerConfigGui extends GuiScreen {
         totalContentH = total;
     }
 
-    /**
-     * Returns the Y position for a control (text field or button) on the given row,
-     * vertically centered within the <em>content area only</em> (section gap excluded
-     * — that space belongs to the next section's header, not to this row's controls).
-     */
+    /** Vertically-centered Y for a control on the given row (gap excluded). */
     private int getControlY(int index) {
         int rowTop = contentRowScreenY(index);
         int contentH = getContentRowHeight(index);
@@ -791,10 +774,7 @@ public class EZMinerConfigGui extends GuiScreen {
         return rowTop + (contentH - FIELD_H) / 2;
     }
 
-    /**
-     * Repositions all scrollable content (text fields + toggle buttons) after the
-     * scroll offset or active tab changes.
-     */
+    /** Re-positions all scrollable controls after scroll/tab change. */
     private void updateScrolledPositions() {
         // Clamp first
         scrollY = MathHelper.clamp_int(scrollY, 0, maxScroll());
@@ -824,16 +804,18 @@ public class EZMinerConfigGui extends GuiScreen {
             tfServerTunnelWidth.yPosition = getControlY(3);
             tfBreakPerTick.yPosition = getControlY(4);
             tfCachedBreakPerTick.yPosition = getControlY(5);
-            tfAddExhaustion.yPosition = getControlY(6);
-            tfMinesweeperCooldown.yPosition = getControlY(7);
-            tfSudokuCooldown.yPosition = getControlY(8);
-            tfServerMaxPreviewRadius.yPosition = getControlY(9);
-            tfServerMaxPreviewLimit.yPosition = getControlY(10);
+            tfSearchWorkerThreads.yPosition = getControlY(6);
+            tfAddExhaustion.yPosition = getControlY(7);
+            tfMinesweeperCooldown.yPosition = getControlY(8);
+            tfSudokuCooldown.yPosition = getControlY(9);
+            tfServerMaxPreviewRadius.yPosition = getControlY(10);
+            tfServerMaxPreviewLimit.yPosition = getControlY(11);
 
-            setScrolledButtonY(BTN_SERVER_DROP_TO_PLAYER, getControlY(11));
-            setScrolledButtonY(BTN_SERVER_DROP_IMMEDIATELY, getControlY(12));
-            setScrolledButtonY(BTN_SERVER_USE_PREVIEW, getControlY(13));
-            setScrolledButtonY(BTN_SERVER_ENABLE_CACHED_CHAIN, getControlY(14));
+            setScrolledButtonY(BTN_SERVER_DROP_TO_PLAYER, getControlY(12));
+            setScrolledButtonY(BTN_SERVER_DROP_IMMEDIATELY, getControlY(13));
+            setScrolledButtonY(BTN_SERVER_USE_PREVIEW, getControlY(14));
+            setScrolledButtonY(BTN_SERVER_ENABLE_CACHED_CHAIN, getControlY(15));
+            setScrolledButtonY(BTN_SERVER_SUPPRESS_HODGEPODGE_WARNINGS, getControlY(16));
         }
 
         // Update per-button visibility: hide when scrolled out of viewport.
@@ -871,11 +853,12 @@ public class EZMinerConfigGui extends GuiScreen {
         tfServerTunnelWidth = field(fx, contentRowScreenY(3), String.valueOf(Config.tunnelWidth));
         tfBreakPerTick = field(fx, contentRowScreenY(4), String.valueOf(Config.breakPerTick));
         tfCachedBreakPerTick = field(fx, contentRowScreenY(5), String.valueOf(Config.cachedBreakPerTick));
-        tfAddExhaustion = field(fx, contentRowScreenY(6), String.valueOf(Config.addExhaustion));
-        tfMinesweeperCooldown = field(fx, contentRowScreenY(7), String.valueOf(Config.minesweeperProbeCooldownSeconds));
-        tfSudokuCooldown = field(fx, contentRowScreenY(8), String.valueOf(Config.sudokuProbeCooldownSeconds));
-        tfServerMaxPreviewRadius = field(fx, contentRowScreenY(9), String.valueOf(Config.serverMaxPreviewBigRadius));
-        tfServerMaxPreviewLimit = field(fx, contentRowScreenY(10), String.valueOf(Config.serverMaxPreviewBlockLimit));
+        tfSearchWorkerThreads = field(fx, contentRowScreenY(6), String.valueOf(Config.searchWorkerThreads));
+        tfAddExhaustion = field(fx, contentRowScreenY(7), String.valueOf(Config.addExhaustion));
+        tfMinesweeperCooldown = field(fx, contentRowScreenY(8), String.valueOf(Config.minesweeperProbeCooldownSeconds));
+        tfSudokuCooldown = field(fx, contentRowScreenY(9), String.valueOf(Config.sudokuProbeCooldownSeconds));
+        tfServerMaxPreviewRadius = field(fx, contentRowScreenY(10), String.valueOf(Config.serverMaxPreviewBigRadius));
+        tfServerMaxPreviewLimit = field(fx, contentRowScreenY(11), String.valueOf(Config.serverMaxPreviewBlockLimit));
     }
 
     private GuiTextField field(int x, int y, String initialText) {
@@ -950,21 +933,23 @@ public class EZMinerConfigGui extends GuiScreen {
         drawRow(lx, contentRowScreenY(3), lc, "ezminer.config.tunnelWidth", tfServerTunnelWidth);
         drawRow(lx, contentRowScreenY(4), lc, "ezminer.config.breakPerTick", tfBreakPerTick);
         drawRow(lx, contentRowScreenY(5), lc, "ezminer.config.cachedBreakPerTick", tfCachedBreakPerTick);
-        drawRow(lx, contentRowScreenY(6), lc, "ezminer.config.addExhaustion", tfAddExhaustion);
-        drawRow(lx, contentRowScreenY(7), lc, "ezminer.config.minesweeperCooldown", tfMinesweeperCooldown);
-        drawRow(lx, contentRowScreenY(8), lc, "ezminer.config.sudokuCooldown", tfSudokuCooldown);
+        drawRow(lx, contentRowScreenY(6), lc, "ezminer.config.searchWorkerThreads", tfSearchWorkerThreads);
+        drawRow(lx, contentRowScreenY(7), lc, "ezminer.config.addExhaustion", tfAddExhaustion);
+        drawRow(lx, contentRowScreenY(8), lc, "ezminer.config.minesweeperCooldown", tfMinesweeperCooldown);
+        drawRow(lx, contentRowScreenY(9), lc, "ezminer.config.sudokuCooldown", tfSudokuCooldown);
 
-        // Preview section — header inside the SECTION_GAP appended below row 8
-        drawSectionHeader(lx, contentRowScreenY(8) + ROW_H + 4, "ezminer.gui.section.preview");
-        drawRow(lx, contentRowScreenY(9), lc, "ezminer.config.serverPreviewRadius", tfServerMaxPreviewRadius);
-        drawRow(lx, contentRowScreenY(10), lc, "ezminer.config.serverPreviewLimit", tfServerMaxPreviewLimit);
+        // Preview section — header inside the SECTION_GAP appended below row 9
+        drawSectionHeader(lx, contentRowScreenY(9) + ROW_H + 4, "ezminer.gui.section.preview");
+        drawRow(lx, contentRowScreenY(10), lc, "ezminer.config.serverPreviewRadius", tfServerMaxPreviewRadius);
+        drawRow(lx, contentRowScreenY(11), lc, "ezminer.config.serverPreviewLimit", tfServerMaxPreviewLimit);
 
-        // Options section — header inside the SECTION_GAP appended below row 10
-        drawSectionHeader(lx, contentRowScreenY(10) + ROW_H + 4, "ezminer.gui.section.options");
-        drawButtonRowLabel(lx, contentRowScreenY(11), lc, "ezminer.config.dropToPlayer");
-        drawButtonRowLabel(lx, contentRowScreenY(12), lc, "ezminer.config.dropImmediately");
-        drawButtonRowLabel(lx, contentRowScreenY(13), lc, "ezminer.config.serverUsePreview");
-        drawButtonRowLabel(lx, contentRowScreenY(14), lc, "ezminer.config.enableCachedChain");
+        // Options section — header inside the SECTION_GAP appended below row 11
+        drawSectionHeader(lx, contentRowScreenY(11) + ROW_H + 4, "ezminer.gui.section.options");
+        drawButtonRowLabel(lx, contentRowScreenY(12), lc, "ezminer.config.dropToPlayer");
+        drawButtonRowLabel(lx, contentRowScreenY(13), lc, "ezminer.config.dropImmediately");
+        drawButtonRowLabel(lx, contentRowScreenY(14), lc, "ezminer.config.serverUsePreview");
+        drawButtonRowLabel(lx, contentRowScreenY(15), lc, "ezminer.config.enableCachedChain");
+        drawButtonRowLabel(lx, contentRowScreenY(16), lc, "ezminer.config.suppressHodgepodgeWarnings");
 
     }
 
@@ -995,11 +980,6 @@ public class EZMinerConfigGui extends GuiScreen {
         }
     }
 
-    /**
-     * Draws a localised section header with extra vertical breathing room.
-     * The header text is formatted as {@code — SectionName —} and a subtle
-     * spacer strip is drawn above it to separate it from the previous section.
-     */
     private void drawSectionHeader(int x, int y, String labelKey) {
         String text = "§9§l— §7" + I18n.format(labelKey) + " §9§l—";
         // Subtle spacer strip above the header for visual separation
@@ -1008,10 +988,6 @@ public class EZMinerConfigGui extends GuiScreen {
         mc.fontRenderer.drawStringWithShadow(text, x, y + 2, 0xFF7788BB);
     }
 
-    /**
-     * Draws a thin scrollbar on the right edge of the content viewport.
-     * Hidden when all content fits without scrolling.
-     */
     private void drawScrollbar() {
         if (totalContentH <= viewportH) return;
         int trackX = guiLeft + GUI_W - SCROLLBAR_W - 2;
@@ -1043,7 +1019,8 @@ public class EZMinerConfigGui extends GuiScreen {
             boolean isClientAction = btn.id == BTN_CLIENT_RELOAD || btn.id == BTN_CLIENT_SAVE;
             boolean isServerContent = btn.id == BTN_SERVER_DROP_TO_PLAYER || btn.id == BTN_SERVER_DROP_IMMEDIATELY
                 || btn.id == BTN_SERVER_USE_PREVIEW
-                || btn.id == BTN_SERVER_ENABLE_CACHED_CHAIN;
+                || btn.id == BTN_SERVER_ENABLE_CACHED_CHAIN
+                || btn.id == BTN_SERVER_SUPPRESS_HODGEPODGE_WARNINGS;
             boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;
 
             if (isClientContent || isClientAction) {
@@ -1099,16 +1076,14 @@ public class EZMinerConfigGui extends GuiScreen {
                 parseI(tfServerMaxPreviewLimit, Config.serverMaxPreviewBlockLimit, 0),
                 parseD(tfMinesweeperCooldown, Config.minesweeperProbeCooldownSeconds),
                 parseD(tfSudokuCooldown, Config.sudokuProbeCooldownSeconds),
-                Config.enableCachedChain));
+                Config.enableCachedChain,
+                parseI(tfSearchWorkerThreads, Config.searchWorkerThreads, 0),
+                Config.suppressHodgepodgeWarnings));
     }
 
     // ── GL scissor helper ─────────────────────────────────────────────────────
 
-    /**
-     * Enables GL scissor test mapped to the given GUI-space rectangle.
-     * MC GUI coordinates (top-left origin, Y down) are converted to GL screen
-     * coordinates (bottom-left origin, Y up) using the active GUI scale factor.
-     */
+    /** Enables GL scissor test for the given GUI-space rectangle. */
     private void enableScissor(int x, int y, int w, int h) {
         // Use ScaledResolution so the scale factor is always correct,
         // including guiScale = 0 (auto) where manual detection was broken.
@@ -1150,11 +1125,7 @@ public class EZMinerConfigGui extends GuiScreen {
         return firstLine(I18n.format(key)) + ": " + (value ? "§aON§r" : "§cOFF§r");
     }
 
-    /**
-     * Returns the correct button display string for a boolean option, choosing
-     * the compact (value-only) format when the label is multi-line and the label
-     * text is drawn separately via {@link #drawButtonRowLabel}.
-     */
+    /** Compact display text when label is multi-line, full text otherwise. */
     private static String boolDisplayText(String key, boolean value) {
         return isMultiLineLabel(key) ? boolValue(value) : boolLabel(key, value);
     }

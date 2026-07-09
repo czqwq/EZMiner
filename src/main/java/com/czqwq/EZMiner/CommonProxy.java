@@ -7,12 +7,14 @@ import com.czqwq.EZMiner.chain.mode.ChainSubModeBootstrap;
 import com.czqwq.EZMiner.command.ReloadConfigCommand;
 import com.czqwq.EZMiner.core.PlayerManager;
 import com.czqwq.EZMiner.core.crop.CropAdapterRegistry;
+import com.czqwq.EZMiner.thread.SearchWorkerPool;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartedEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
+import cpw.mods.fml.common.event.FMLServerStoppingEvent;
 
 public class CommonProxy {
 
@@ -61,5 +63,11 @@ public class CommonProxy {
         event.registerServerCommand(new ReloadConfigCommand());
     }
 
-    public void serverStarted(FMLServerStartedEvent event) {}
+    public void serverStarted(FMLServerStartedEvent event) {
+        SearchWorkerPool.start(Config.searchWorkerThreads);
+    }
+
+    public void serverStopping(FMLServerStoppingEvent event) {
+        SearchWorkerPool.stop();
+    }
 }

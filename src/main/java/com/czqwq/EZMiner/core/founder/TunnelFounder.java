@@ -26,7 +26,7 @@ public class TunnelFounder extends BasePositionFounder {
         Vector3i vb = verticals.get(1);
         int tw = minerConfig.tunnelWidth;
         int curRadius = 0;
-        while (curCount < minerConfig.blockLimit && curRadius < minerConfig.bigRadius) {
+        while (curCount.get() < minerConfig.blockLimit && curRadius < minerConfig.bigRadius) {
             Vector3i mainPt = new Vector3i(axisDir).mul(curRadius);
             for (int a = -tw; a <= tw; a++) {
                 for (int b = -tw; b <= tw; b++) {
@@ -34,7 +34,7 @@ public class TunnelFounder extends BasePositionFounder {
                         .add(new Vector3i(va).mul(a))
                         .add(new Vector3i(vb).mul(b));
                     if (checkCanAdd(pos)) addResult(pos);
-                    if (curCount >= minerConfig.blockLimit) return;
+                    if (curCount.get() >= minerConfig.blockLimit) return;
                     waitUntil();
                     if (Thread.currentThread()
                         .isInterrupted()) return;

@@ -2,6 +2,9 @@ package com.czqwq.EZMiner;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.filter.AbstractFilter;
 
 import com.czqwq.EZMiner.chain.lifecycle.ChainLifecycleService;
 import com.czqwq.EZMiner.chain.mode.ChainModeRegistry;
@@ -18,6 +21,7 @@ import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartedEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
+import cpw.mods.fml.common.event.FMLServerStoppingEvent;
 
 @Mod(modid = EZMiner.MODID, version = Tags.VERSION, name = "EZMiner", acceptedMinecraftVersions = "[1.7.10]")
 public class EZMiner {
@@ -36,12 +40,7 @@ public class EZMiner {
     public static final ChainSubModeRegistry chainSubModeRegistry = new ChainSubModeRegistry();
     public static final ChainPlanningRuntimeFactory chainPlanningRuntimeFactory = new ChainPlanningRuntimeFactory();
 
-    /**
-     * Client-side OP flag. Set to {@code true} when the server sends a
-     * {@link com.czqwq.EZMiner.network.PacketServerConfig} with {@code isOp=true}.
-     * Used to show/hide the server config tab in the GUI.
-     * Always {@code false} on the server side (the flag is only meaningful on the client).
-     */
+    /** True when the server sends a {@code PacketServerConfig} with {@code isOp=true}. Client-side only. */
     public static volatile boolean clientIsOp = false;
 
     @Mod.EventHandler
@@ -57,7 +56,31 @@ public class EZMiner {
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         LOG.info("Ciallo～(∠・ω< )⌒★");
+        installHodgepodgeLogFilter();
         proxy.postInit(event);
+    }
+
+    /** Installs a Log4j2 filter that suppresses Hodgepodge off-thread warnings for EZMiner threads. */
+    private static void installHodgepodgeLogFilter() {
+        try {
+            org.apache.logging.log4j.core.Logger coreLogger = (org.apache.logging.log4j.core.Logger) LogManager
+                .getLogger("ServerThreadLongHashMap");
+            coreLogger.addFilter(new AbstractFilter() {
+
+                @Override
+                public Filter.Result filter(LogEvent event) {
+                    if (Config.suppressHodgepodgeWarnings && Thread.currentThread()
+                        .getName()
+                        .startsWith("EZMiner-")) {
+                        return Filter.Result.DENY;
+                    }
+                    return Filter.Result.NEUTRAL;
+                }
+            });
+            LOG.info("Hodgepodge log filter installed for EZMiner threads");
+        } catch (Exception e) {
+            LOG.warn("Failed to install Hodgepodge log filter — off-thread warnings will appear in log", e);
+        }
     }
 
     @Mod.EventHandler
@@ -68,5 +91,10 @@ public class EZMiner {
     @Mod.EventHandler
     public void serverStarted(FMLServerStartedEvent event) {
         proxy.serverStarted(event);
+    }
+
+    @Mod.EventHandler
+    public void serverStopping(FMLServerStoppingEvent event) {
+        proxy.serverStopping(event);
     }
 }

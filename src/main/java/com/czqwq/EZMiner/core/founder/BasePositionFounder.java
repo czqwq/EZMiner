@@ -1,7 +1,10 @@
 package com.czqwq.EZMiner.core.founder;
 
-import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
@@ -12,8 +15,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Vector3i;
 
+import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.thread.Pauseable;
+import com.czqwq.EZMiner.thread.SearchWorkerPool;
 
 /**
  * Shell-expansion block finder. Scans concentric cubes from radius 1 to bigRadius,
@@ -35,10 +40,12 @@ public class BasePositionFounder extends Pauseable {
     /** External queue consumed by the operator. */
     public LinkedBlockingQueue<Vector3i> positions;
 
-    /** Dedup set using compact long keys from {@link #encodePos} — avoids Vector3i allocations. */
-    protected final HashSet<Long> visitedPositions = new HashSet<>();
+    /** Dedup set using compact long keys from {@link #encodePos} — lock-free for multi-threaded search. */
+    protected final Set<Long> visitedPositions = ConcurrentHashMap.newKeySet(256);
 
-    public int curCount = 0;
+    /** Number of positions added so far. Atomic for multi-threaded workers. */
+    public final AtomicInteger curCount = new AtomicInteger(0);
+
     protected boolean skipHarvestCheck = false;
 
     public final Block sampleBlock;
@@ -73,8 +80,28 @@ public class BasePositionFounder extends Pauseable {
 
     @Override
     public void run1() {
+        if (minerConfig.blockLimit < 64 || Config.searchWorkerThreads <= 0
+            || SearchWorkerPool.get() == null
+            || SearchWorkerPool.get()
+                .isShutdown()) {
+            doSingleThreadedSearch();
+        } else {
+            doMultiThreadedSearch();
+        }
+    }
+
+    protected void doSingleThreadedSearch() {
+        run1SingleThreaded();
+    }
+
+    protected void doMultiThreadedSearch() {
+        run1MultiThreaded();
+    }
+
+    /** Original single-threaded shell-expansion scan (fallback for small operations). */
+    private void run1SingleThreaded() {
         int curRadius = 1;
-        while (curCount < minerConfig.blockLimit && curRadius <= minerConfig.bigRadius) {
+        while (curCount.get() < minerConfig.blockLimit && curRadius <= minerConfig.bigRadius) {
             if (player == null || player.isDead || player.worldObj == null) return;
             int xMin = center.x - curRadius, xMax = center.x + curRadius;
             int yMin = center.y - curRadius, yMax = center.y + curRadius;
@@ -82,14 +109,11 @@ public class BasePositionFounder extends Pauseable {
             for (int x = xMin; x <= xMax; x++) {
                 for (int y = yMin; y <= yMax; y++) {
                     for (int z = zMin; z <= zMax; z++) {
-                        // Only scan the shell at curRadius; interior positions were already
-                        // covered when processing smaller radii, so skip them here.
                         if (x != xMin && x != xMax && y != yMin && y != yMax && z != zMin && z != zMax) continue;
-                        // Fast visited check (no Vector3i allocation) before doing any world reads.
                         if (isVisited(x, y, z)) continue;
                         Vector3i pos = new Vector3i(x, y, z);
                         if (checkCanAdd(pos)) addResult(pos);
-                        if (curCount >= minerConfig.blockLimit) return;
+                        if (curCount.get() >= minerConfig.blockLimit) return;
                         waitUntil();
                         if (Thread.currentThread()
                             .isInterrupted()) return;
@@ -100,16 +124,83 @@ public class BasePositionFounder extends Pauseable {
         }
     }
 
+    // ── Multi-threaded shell-expansion ────────────────────────────────────────
+
+    /** Divides each shell layer into X-axis strips processed by worker threads. */
+    private void run1MultiThreaded() {
+        final int numWorkers = Math.max(1, Config.searchWorkerThreads);
+        int curRadius = 1;
+        while (curCount.get() < minerConfig.blockLimit && curRadius <= minerConfig.bigRadius) {
+            if (player == null || player.isDead || player.worldObj == null) return;
+            final int xMin = center.x - curRadius, xMax = center.x + curRadius;
+            final int yMin = center.y - curRadius, yMax = center.y + curRadius;
+            final int zMin = center.z - curRadius, zMax = center.z + curRadius;
+
+            final int stripW = Math.max(1, (xMax - xMin + 1) / numWorkers);
+            java.util.List<Callable<Void>> tasks = new java.util.ArrayList<>(numWorkers);
+            for (int w = 0; w < numWorkers; w++) {
+                final int sx = xMin + w * stripW;
+                final int ex = (w == numWorkers - 1) ? xMax : sx + stripW - 1;
+                if (sx > ex) continue;
+                tasks.add(() -> {
+                    scanShellStrip(sx, ex, xMin, xMax, yMin, yMax, zMin, zMax);
+                    return null;
+                });
+            }
+            try {
+                SearchWorkerPool.get()
+                    .invokeAll(tasks);
+            } catch (InterruptedException e) {
+                Thread.currentThread()
+                    .interrupt();
+                return;
+            }
+            curRadius++;
+            waitUntil();
+            if (Thread.currentThread()
+                .isInterrupted()) return;
+        }
+    }
+
+    /**
+     * Scans a subset of the shell for the given X-range. Called by worker threads.
+     * Reuses the existing {@link #checkCanAdd} / {@link #addResult} pipeline —
+     * the {@code addResult} method is already thread-safe (atomic visited-set add,
+     * non-blocking queue offer).
+     */
+    private void scanShellStrip(int sx, int ex, int xMin, int xMax, int yMin, int yMax, int zMin, int zMax) {
+        for (int x = sx; x <= ex; x++) {
+            for (int y = yMin; y <= yMax; y++) {
+                for (int z = zMin; z <= zMax; z++) {
+                    if (curCount.get() >= minerConfig.blockLimit) return;
+                    if (x != xMin && x != xMax && y != yMin && y != yMax && z != zMin && z != zMax) continue;
+                    // Fast visited check (no Vector3i allocation) before world reads.
+                    if (isVisited(x, y, z)) continue;
+                    Vector3i pos = new Vector3i(x, y, z);
+                    if (checkCanAdd(pos)) addResult(pos);
+                    if (curCount.get() >= minerConfig.blockLimit) return;
+                }
+            }
+        }
+    }
+
     public boolean checkCanAdd(Vector3i pos) {
         if (isVisited(pos.x, pos.y, pos.z)) return false;
-        if (player.worldObj == null) return false; // player logged out
-        // Avoid chunk-gen on background thread (corrupts TickNextTick).
+        return checkCanAddImpl(pos);
+    }
+
+    /** Same as {@link #checkCanAdd} but skips the visited-set lookup (caller already atomically added the key). */
+    protected boolean checkCanAddAfterVisited(Vector3i pos) {
+        return checkCanAddImpl(pos);
+    }
+
+    protected boolean checkCanAddImpl(Vector3i pos) {
+        if (player.worldObj == null) return false;
         if (!player.worldObj.blockExists(pos.x, pos.y, pos.z)) return false;
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
         if (block.equals(Blocks.air) || block.getMaterial()
             .isLiquid() || block.equals(Blocks.bedrock)) return false;
         int blockMeta = player.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
-        // Protect the block directly under the player's feet (cached, no allocation).
         if (pos.x == cachedPlayerFloorX && pos.y == (cachedPlayerFloorY - 1) && pos.z == cachedPlayerFloorZ)
             return false;
         if (skipHarvestCheck) return true;
@@ -122,15 +213,10 @@ public class BasePositionFounder extends Pauseable {
     }
 
     public void addResult(Vector3i pos) {
-        try {
-            positions.put(pos);
-            visitedPositions.add(encodePos(pos.x, pos.y, pos.z));
-            curCount++;
-        } catch (InterruptedException e) {
-            Thread.currentThread()
-                .interrupt();
-            return; // respect interrupt
-        }
+        long key = encodePos(pos.x, pos.y, pos.z);
+        if (!visitedPositions.add(key)) return; // already visited
+        positions.offer(pos);
+        curCount.incrementAndGet();
     }
 
     /** Check visited set using compact long key — call BEFORE allocating a Vector3i. */

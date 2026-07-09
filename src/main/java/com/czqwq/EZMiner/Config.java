@@ -55,6 +55,22 @@ public class Config {
      */
     public static double sudokuProbeCooldownSeconds = 5.0;
 
+    /**
+     * Number of background worker threads used for parallel block search during chain
+     * mining operations. Higher values scan large radii faster but consume more CPU.
+     * Set to 0 to disable multi-threaded search entirely (falls back to single-thread).
+     * Range: 0–8. Default: 3.
+     */
+    public static int searchWorkerThreads = 3;
+
+    /**
+     * Suppress Hodgepodge off-thread-read warnings for EZMiner background threads.
+     * When true, threads named "EZMiner-*" will not log warnings when reading the
+     * chunk map from off-thread (the snapshot still serves data safely).
+     * Applied via Log4j2 filter — no restart required. Default: true.
+     */
+    public static boolean suppressHodgepodgeWarnings = true;
+
     /** Remove Fortune III cap for GT/BW ore drops. Mixin-based — requires game restart. */
     public static boolean enableUnlimitedOreFortune = false;
 
@@ -255,6 +271,15 @@ public class Config {
                 + "Cached chain pre-calculates block positions on the server thread and "
                 + "feeds them to the operator without a background founder. "
                 + "May have bugs with certain modded ores. Default: false.");
+        searchWorkerThreads = serverConfiguration.getInt(
+            "searchWorkerThreads",
+            Configuration.CATEGORY_GENERAL,
+            3,
+            0,
+            8,
+            "Number of background worker threads for parallel block search. "
+                + "Higher values scan large radii faster. 0 disables multi-threading. "
+                + "Default: 3. Max: 8.");
         addExhaustion = serverConfiguration
             .get(
                 Configuration.CATEGORY_GENERAL,
@@ -320,6 +345,13 @@ public class Config {
                 + "IMPORTANT: This option is implemented via Mixin and is applied once at JVM startup. "
                 + "It CANNOT be changed via /EZMiner reloadConfig — a full game restart is required. "
                 + "Default: false.");
+        suppressHodgepodgeWarnings = serverConfiguration.getBoolean(
+            "suppressHodgepodgeWarnings",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "When true, suppresses Hodgepodge off-thread-read warnings for EZMiner background threads. "
+                + "Applied via Log4j2 filter at mod init — survives /EZMiner reloadConfig without restart. "
+                + "Default: true.");
         maxFortuneLevel = serverConfiguration.getInt(
             "maxFortuneLevel",
             Configuration.CATEGORY_GENERAL,
@@ -567,6 +599,10 @@ public class Config {
             .set(dropImmediately);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableCachedChain", false)
             .set(enableCachedChain);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "searchWorkerThreads", 3)
+            .set(searchWorkerThreads);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "suppressHodgepodgeWarnings", true)
+            .set(suppressHodgepodgeWarnings);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "addExhaustion", 0.025)
             .set(addExhaustion);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "dropToPlayer", true)

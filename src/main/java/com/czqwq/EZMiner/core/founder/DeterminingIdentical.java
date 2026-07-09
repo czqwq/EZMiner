@@ -1,7 +1,6 @@
 package com.czqwq.EZMiner.core.founder;
 
 import java.lang.reflect.Field;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -214,7 +213,8 @@ public class DeterminingIdentical {
         return sTile.getBlockMetadata() == tTile.getBlockMetadata();
     }
 
-    private static final Set<String> reportedOrePackages = new HashSet<>();
+    /** Thread-safe set of ore package names already logged. Uses CHM key set for lock-free reads. */
+    private static final Set<String> reportedOrePackages = ConcurrentHashMap.newKeySet();
 
     /** True if block at pos is an ore. Results cached per Block instance. */
     public static boolean isOreBlock(Vector3i pos, EntityPlayer player) {
