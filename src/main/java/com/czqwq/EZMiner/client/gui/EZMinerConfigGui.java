@@ -326,6 +326,7 @@ public class EZMinerConfigGui extends GuiScreen {
                 boolValue(Config.enableChainChunkLoading));
             buttonList.add(btnServerEnableChainChunkLoading);
 
+
             // Fixed: server action buttons
             buttonList.add(
                 new GuiButton(
