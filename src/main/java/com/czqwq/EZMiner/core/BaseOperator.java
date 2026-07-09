@@ -26,6 +26,7 @@ import com.czqwq.EZMiner.chain.planning.ChainPlanningTask;
 import com.czqwq.EZMiner.compat.TinkersConstructCompat;
 import com.czqwq.EZMiner.core.crop.CropAdapterRegistry;
 import com.czqwq.EZMiner.utils.MessageUtils;
+import com.czqwq.EZMiner.utils.TimeFormatUtils;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -45,6 +46,15 @@ public class BaseOperator {
     private long startTime;
     private int operatorCount = 0;
     private boolean stopRequested = false;
+    /** Timestamp of the most recent successful block harvest. Initialized to startTime in registry(). */
+    private long lastHarvestedTime = 0;
+    /**
+     * When non-zero, a 5-second auto-cancel countdown is active and this field holds the
+     * millisecond timestamp when the countdown began. Reset to 0 when a block is harvested.
+     */
+    private long countdownStartTime = 0;
+    /** Last countdown second that was announced to the player (1-5). */
+    private int lastCountdownSecond = -1;
     /**
      * Tracks chunk coords (encoded as a single long) for which VP ore-vein
      * discovery has already been triggered this operation. Multiple ore blocks
@@ -95,6 +105,38 @@ public class BaseOperator {
             cached.feedTo(canBreakPositions, perTick);
         }
 
+        // ── Always sync runtime to client, even when idle (so the timer keeps ticking) ──
+        long now = System.currentTimeMillis();
+        long elapsedMs = now - startTime;
+        manager.updateRuntimeProjection(operatorCount, elapsedMs, canBreakPositions.size());
+        EZMiner.network.network
+            .sendTo(new PacketChainStateSync(manager.activeSession, operatorCount, elapsedMs, true), playerMP);
+
+        // ── Idle timeout: auto-cancel when stuck at chunk boundary with no new blocks ──
+        if (operatorCount > 0 && Config.chainIdleTimeoutSeconds >= 0 && Config.chainIdleCountdownSeconds >= 0) {
+            long idleMs = now - lastHarvestedTime;
+            if (idleMs > Config.chainIdleTimeoutSeconds * 1000L) {
+                if (countdownStartTime == 0) {
+                    countdownStartTime = now;
+                    lastCountdownSecond = -1;
+                }
+                int countdownSec = Config.chainIdleCountdownSeconds - (int) ((now - countdownStartTime) / 1000);
+                if (countdownSec <= 0) {
+                    MessageUtils.serverSendPlayerMessage(
+                        new ChatComponentTranslation("ezminer.message.chain.idle_cancel"),
+                        manager.playerUUID);
+                    unRegistry();
+                    return;
+                }
+                if (countdownSec != lastCountdownSecond && countdownSec <= Config.chainIdleCountdownSeconds) {
+                    lastCountdownSecond = countdownSec;
+                    MessageUtils.serverSendPlayerMessage(
+                        new ChatComponentTranslation("ezminer.message.chain.idle_countdown", countdownSec),
+                        manager.playerUUID);
+                }
+            }
+        }
+
         if (canBreakPositions.isEmpty()) {
             if (planningTask.isStopped()) unRegistry();
             return;
@@ -118,12 +160,6 @@ public class BaseOperator {
             unRegistry();
             return;
         }
-
-        // Send server-authoritative runtime projection to client each tick.
-        long elapsedMs = System.currentTimeMillis() - startTime;
-        manager.updateRuntimeProjection(operatorCount, elapsedMs, canBreakPositions.size());
-        EZMiner.network.network
-            .sendTo(new PacketChainStateSync(manager.activeSession, operatorCount, elapsedMs, true), playerMP);
 
         if (planningTask.isStopped() && canBreakPositions.isEmpty()) unRegistry();
     }
@@ -150,6 +186,9 @@ public class BaseOperator {
 
     public void registry() {
         startTime = System.currentTimeMillis();
+        lastHarvestedTime = startTime;
+        countdownStartTime = 0;
+        lastCountdownSecond = -1;
         planningTask.schedule();
         FMLCommonHandler.instance()
             .bus()
@@ -163,7 +202,7 @@ public class BaseOperator {
                 new ChatComponentTranslation(
                     "ezminer.message.chain.done",
                     operatorCount,
-                    Math.round(ms / 10.0) / 100.0f),
+                    TimeFormatUtils.formatElapsedServer(ms)),
                 manager.playerUUID);
         }
         // Reset client-side chain count and elapsed time display
@@ -201,6 +240,13 @@ public class BaseOperator {
         return CropAdapterRegistry.isMatureCrop(playerMP.worldObj, pos.x, pos.y, pos.z);
     }
 
+    /** Record that a block was harvested (resets idle countdown). */
+    private void markHarvested() {
+        lastHarvestedTime = System.currentTimeMillis();
+        countdownStartTime = 0;
+        lastCountdownSecond = -1;
+    }
+
     private boolean processCandidate(Vector3i pos) {
         if (!canOperate() || !isPlayerOnline()) {
             stopRequested = true;
@@ -215,6 +261,7 @@ public class BaseOperator {
                 .harvestWithConfiguredExhaustion(playerMP, pos, (float) manager.pConfig.addExhaustion, executor);
             if (!harvested) return true;
             operatorCount++;
+            markHarvested();
         } catch (Exception e) {
             manager.reportRuntimeError("harvest_error");
             ChainExecutionErrorReporter.reportHarvestError(manager, pos, e);
@@ -241,6 +288,7 @@ public class BaseOperator {
                 if (!ok) continue;
                 operatorCount++;
                 harvested++;
+                markHarvested();
             } catch (Exception e) {
                 manager.reportRuntimeError("harvest_error");
                 ChainExecutionErrorReporter.reportHarvestError(manager, pos, e);

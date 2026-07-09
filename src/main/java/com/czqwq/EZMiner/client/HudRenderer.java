@@ -10,6 +10,7 @@ import com.czqwq.EZMiner.ClientProxy;
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.core.MinerModeState;
+import com.czqwq.EZMiner.utils.TimeFormatUtils;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -146,7 +147,7 @@ public class HudRenderer {
             fr.drawStringWithShadow(
                 "\u00a77  \u2514\u2500 " + I18n.format("ezminer.hud.chainElapsed")
                     + ": \u00a7e"
-                    + formatElapsed(chainElapsedMs),
+                    + TimeFormatUtils.formatElapsed(chainElapsedMs),
                 x,
                 y,
                 0xFFFFFF);
@@ -160,7 +161,7 @@ public class HudRenderer {
                 fr.drawStringWithShadow(
                     "\u00a77  \u2514\u2500 " + I18n.format("ezminer.hud.minesweeper.cooldown")
                         + ": \u00a7e"
-                        + formatElapsed(remainingMs),
+                        + TimeFormatUtils.formatElapsed(remainingMs),
                     x,
                     y,
                     0xFFFFFF);
@@ -180,7 +181,7 @@ public class HudRenderer {
                 fr.drawStringWithShadow(
                     "\u00a77  \u2514\u2500 " + I18n.format("ezminer.hud.minesweeper.cooldown")
                         + ": \u00a7e"
-                        + formatElapsed(remainingMs),
+                        + TimeFormatUtils.formatElapsed(remainingMs),
                     x,
                     y,
                     0xFFFFFF);
@@ -304,22 +305,6 @@ public class HudRenderer {
 
         // Render "§b] " + suffix
         fr.drawStringWithShadow("\u00a7b] " + suffix, curX, y, 0xFFFFFF);
-    }
-
-    /**
-     * Formats a duration in milliseconds for display.
-     * Values under 60 s are shown as {@code X.Xs}; minutes are shown as {@code X:XX.Xs}.
-     */
-    private static String formatElapsed(long ms) {
-        if (ms < 0) ms = 0;
-        long totalSeconds = ms / 1000;
-        long milliRemainder = ms % 1000;
-        long minutes = totalSeconds / 60;
-        long seconds = totalSeconds % 60;
-        if (minutes > 0) {
-            return String.format("%d:%02d.%ds", minutes, seconds, milliRemainder / 100);
-        }
-        return String.format("%d.%ds", seconds, milliRemainder / 100);
     }
 
     public void registry() {

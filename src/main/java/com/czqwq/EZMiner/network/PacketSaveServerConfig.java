@@ -39,6 +39,9 @@ public class PacketSaveServerConfig implements IMessage {
     public boolean enableCachedChain;
     public int searchWorkerThreads;
     public boolean suppressHodgepodgeWarnings;
+    public boolean enableChainChunkLoading;
+    public int chainIdleTimeoutSeconds;
+    public int chainIdleCountdownSeconds;
 
     public PacketSaveServerConfig() {}
 
@@ -46,7 +49,8 @@ public class PacketSaveServerConfig implements IMessage {
         int cachedBreakPerTick, boolean dropImmediately, double addExhaustion, boolean dropToPlayer,
         boolean serverUsePreview, int serverMaxPreviewBigRadius, int serverMaxPreviewBlockLimit,
         double minesweeperProbeCooldownSeconds, double sudokuProbeCooldownSeconds, boolean enableCachedChain,
-        int searchWorkerThreads, boolean suppressHodgepodgeWarnings) {
+        int searchWorkerThreads, boolean suppressHodgepodgeWarnings, boolean enableChainChunkLoading,
+        int chainIdleTimeoutSeconds, int chainIdleCountdownSeconds) {
         this.bigRadius = bigRadius;
         this.blockLimit = blockLimit;
         this.smallRadius = smallRadius;
@@ -64,6 +68,9 @@ public class PacketSaveServerConfig implements IMessage {
         this.enableCachedChain = enableCachedChain;
         this.searchWorkerThreads = searchWorkerThreads;
         this.suppressHodgepodgeWarnings = suppressHodgepodgeWarnings;
+        this.enableChainChunkLoading = enableChainChunkLoading;
+        this.chainIdleTimeoutSeconds = chainIdleTimeoutSeconds;
+        this.chainIdleCountdownSeconds = chainIdleCountdownSeconds;
     }
 
     @Override
@@ -85,6 +92,9 @@ public class PacketSaveServerConfig implements IMessage {
         enableCachedChain = buf.readBoolean();
         searchWorkerThreads = buf.readInt();
         suppressHodgepodgeWarnings = buf.readBoolean();
+        enableChainChunkLoading = buf.readBoolean();
+        chainIdleTimeoutSeconds = buf.readInt();
+        chainIdleCountdownSeconds = buf.readInt();
     }
 
     @Override
@@ -106,6 +116,9 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeBoolean(enableCachedChain);
         buf.writeInt(searchWorkerThreads);
         buf.writeBoolean(suppressHodgepodgeWarnings);
+        buf.writeBoolean(enableChainChunkLoading);
+        buf.writeInt(chainIdleTimeoutSeconds);
+        buf.writeInt(chainIdleCountdownSeconds);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -134,6 +147,11 @@ public class PacketSaveServerConfig implements IMessage {
             Config.enableCachedChain = msg.enableCachedChain;
             Config.searchWorkerThreads = Math.max(0, Math.min(8, msg.searchWorkerThreads));
             Config.suppressHodgepodgeWarnings = msg.suppressHodgepodgeWarnings;
+            Config.enableChainChunkLoading = msg.enableChainChunkLoading;
+            Config.chainIdleTimeoutSeconds = msg.chainIdleTimeoutSeconds <= 0 ? -1
+                : Math.max(1, msg.chainIdleTimeoutSeconds);
+            Config.chainIdleCountdownSeconds = msg.chainIdleCountdownSeconds <= 0 ? -1
+                : Math.max(1, msg.chainIdleCountdownSeconds);
 
             // Persist to disk
             Config.saveServerConfig();

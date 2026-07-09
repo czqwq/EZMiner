@@ -67,6 +67,23 @@ public class BasePositionFounder extends Pauseable {
         this.positions = results;
         this.minerConfig = minerConfig;
 
+        // Chunk pre-loading is intentionally NOT done here.
+        //
+        // The constructor runs on the server thread inside a BreakEvent handler.
+        // Calling world.getChunkFromChunkCoords → provideChunk here triggers
+        // synchronous disk I/O (AnvilChunkLoader.loadChunk → .mca reads) when
+        // Hodgepodge's ChunkGenScheduler has chunk generation blocked (isBlocked()
+        // is true from tick start until the chunk-gen phase completes).
+        //
+        // For cached chain mode, enableChainChunkLoading is handled by
+        // ChainPreCalcEngine.tickBfs() which runs on the server thread during
+        // the tick — it calls world.getChunkFromChunkCoords safely between
+        // the network-packet and chunk-gen phases.
+        //
+        // For blast mode, worker threads cannot safely mutate ChunkProviderServer
+        // state. Unloaded-chunk positions are skipped (not added to visited) so
+        // they are retried on future ticks after the player naturally loads them.
+
         sampleBlock = player.worldObj.getBlock(center.x, center.y, center.z);
         sampleBlockMeta = player.worldObj.getBlockMetadata(center.x, center.y, center.z);
         sampleTileEntity = player.worldObj.getTileEntity(center.x, center.y, center.z);

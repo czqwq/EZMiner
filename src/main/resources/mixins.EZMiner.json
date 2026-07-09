@@ -11,7 +11,8 @@
   "mixins": [
     "MixinGTOreAdapter",
     "MixinBWOreAdapter",
-    "MixinGTPPOreAdapter"
+    "MixinGTPPOreAdapter",
+    "MixinItemInWorldManager"
   ],
   "client": [],
   "server": []

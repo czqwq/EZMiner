@@ -11,6 +11,8 @@ import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 
 import org.joml.Vector3i;
 
@@ -43,6 +45,11 @@ public final class ChainPreCalcEngine {
 
     private Vector3i center;
     private Block sampleBlock;
+    /**
+     * Cached raw block ID for fast integer comparison in normal chain mode.
+     * Set in {@link #start} alongside {@link #sampleBlock}.
+     */
+    private int sampleBlockId;
     private int sampleMeta;
     private TileEntity sampleTE;
     /**
@@ -103,6 +110,7 @@ public final class ChainPreCalcEngine {
         results.clear();
         center = null;
         sampleBlock = null;
+        sampleBlockId = 0;
         sampleTE = null;
         fuzzyTypeClass = null;
         inProgress = false;
@@ -137,6 +145,7 @@ public final class ChainPreCalcEngine {
 
         center = new Vector3i(bx, by, bz);
         sampleBlock = block;
+        sampleBlockId = Block.getIdFromBlock(block);
         sampleMeta = meta;
         sampleTE = world.getTileEntity(bx, by, bz);
         fuzzyTypeClass = block.getClass();
@@ -165,6 +174,15 @@ public final class ChainPreCalcEngine {
         int cachedPlayerZ = (int) Math.floor(player.posZ);
 
         try {
+            // ── Sub-chunk cache: avoid repeated World→ChunkProvider→Chunk→EBS lookups ──
+            // Uses ExtendedBlockStorage.getBlockByExtId() which is safely patched by
+            // EndlessIDs to resolve extended block IDs (b2High, b3 arrays).
+            int lastChunkX = Integer.MIN_VALUE;
+            int lastChunkZ = Integer.MIN_VALUE;
+            int lastY4 = -1;
+            Chunk currentChunk = null;
+            ExtendedBlockStorage currentEbs = null;
+
             while (!frontier.isEmpty() && checksThisTick < CHECKS_PER_TICK && results.size() < pConfig.blockLimit) {
 
                 Vector3i current = frontier.pollFirst();
@@ -182,15 +200,46 @@ public final class ChainPreCalcEngine {
                             if (Math.abs(cz - center.z) > bigR) continue;
 
                             long key = BasePositionFounder.encodePos(cx, cy, cz);
-                            if (!visited.add(key)) continue;
+                            if (visited.contains(key)) continue;
 
                             checksThisTick++;
-                            if (!world.blockExists(cx, cy, cz)) continue;
-                            Block nbBlock = world.getBlock(cx, cy, cz);
+
+                            // ── Chunk + EBS cache (avoids LongHashMap lookup per block) ──
+                            int chunkX = cx >> 4;
+                            int chunkZ = cz >> 4;
+                            int y4 = cy >> 4;
+
+                            // When chunk loading is disabled, skip positions in unloaded chunks
+                            // without adding to visited so they can be retried after the player
+                            // moves and the chunk loads naturally.
+                            if (!com.czqwq.EZMiner.Config.enableChainChunkLoading && !world.blockExists(cx, cy, cz)) {
+                                continue;
+                            }
+
+                            if (chunkX != lastChunkX || chunkZ != lastChunkZ) {
+                                currentChunk = world.getChunkFromChunkCoords(chunkX, chunkZ);
+                                lastChunkX = chunkX;
+                                lastChunkZ = chunkZ;
+                                lastY4 = -1; // force EBS refresh
+                            }
+                            if (y4 != lastY4 || currentEbs == null) {
+                                currentEbs = currentChunk != null ? currentChunk.getBlockStorageArray()[y4] : null;
+                                lastY4 = y4;
+                            }
+
+                            // getBlockByExtId is safe with EndlessIDs (they @Overwrite it
+                            // to resolve b2High/b3 extended block IDs correctly).
+                            // If the chunk is not loaded, skip without adding to visited so
+                            // the position can be retried on future ticks when the chunk loads.
+                            Block nbBlock = currentEbs != null ? currentEbs.getBlockByExtId(cx & 15, cy & 15, cz & 15)
+                                : null;
                             if (nbBlock == null) continue;
-                            if (nbBlock == Blocks.air || nbBlock.getMaterial()
+
+                            // Position is now confirmed reachable — mark visited
+                            visited.add(key);
+
+                            if (nbBlock.isAir(world, cx, cy, cz) || nbBlock.getMaterial()
                                 .isLiquid() || nbBlock == Blocks.bedrock) continue;
-                            int nbMeta = world.getBlockMetadata(cx, cy, cz);
 
                             if (cx == cachedPlayerX && cy == (cachedPlayerY - 1) && cz == cachedPlayerZ) continue;
 
@@ -201,11 +250,10 @@ public final class ChainPreCalcEngine {
                                 Class<?> nbClass = nbBlock.getClass();
                                 match = sampleClass.isAssignableFrom(nbClass) || nbClass.isAssignableFrom(sampleClass);
                             } else {
-                                // Bandit's MATCH_BLOCK filter: only compare Block
-                                // instances, no metadata / TE checks. This avoids
-                                // issues where NEID or GT compat layers modify
-                                // block metadata for the same ore type.
-                                match = Block.getIdFromBlock(sampleBlock) == Block.getIdFromBlock(nbBlock);
+                                // Hodgepodge's MixinBlock_FastLookup makes getIdFromBlock a fast
+                                // array lookup — we trade the raw-array read for EndlessIDs safety
+                                // while keeping the Chunk-cache speedup.
+                                match = sampleBlockId == Block.getIdFromBlock(nbBlock);
                             }
                             if (!match) continue;
 
