@@ -45,6 +45,27 @@ public class Config {
     /** Enable cached chain sub-modes (2/3). WIP experimental feature — enable at own risk. */
     public static boolean enableCachedChain = false;
     /**
+     * When enabled, the BFS search will load chunks from disk as needed
+     * during chain mining operations instead of stopping at chunk boundaries.
+     * This allows chain mining to reach blocks beyond the player's current
+     * view distance. May cause brief server lag when many chunks are loaded.
+     * Default: false.
+     */
+    public static boolean enableChainChunkLoading = false;
+    /**
+     * Seconds without any new blocks mined before the idle countdown begins.
+     * When the chain hits the loaded-chunk boundary and stops making progress,
+     * this timeout triggers a player-visible countdown before auto-cancel.
+     * Set to -1 to disable. Default: 50.
+     */
+    public static int chainIdleTimeoutSeconds = 50;
+    /**
+     * Seconds of countdown (with chat warnings each second) before the chain
+     * operation is automatically cancelled due to inactivity.
+     * Set to -1 to disable. Default: 10.
+     */
+    public static int chainIdleCountdownSeconds = 10;
+    /**
      * Cooldown in seconds between successive minesweeper auto-flag operations
      * when the chain key is held in Special / Minesweeper mode. Minimum: 0.1 s (2 ticks).
      */
@@ -271,6 +292,30 @@ public class Config {
                 + "Cached chain pre-calculates block positions on the server thread and "
                 + "feeds them to the operator without a background founder. "
                 + "May have bugs with certain modded ores. Default: false.");
+        enableChainChunkLoading = serverConfiguration.getBoolean(
+            "enableChainChunkLoading",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "When enabled, the BFS search will load chunks from disk as needed "
+                + "during chain mining operations instead of stopping at chunk boundaries. "
+                + "This allows chain mining to reach blocks beyond the player's current "
+                + "view distance. May cause brief server lag when many chunks are loaded. "
+                + "Default: false.");
+        chainIdleTimeoutSeconds = serverConfiguration.getInt(
+            "chainIdleTimeoutSeconds",
+            Configuration.CATEGORY_GENERAL,
+            50,
+            -1,
+            Integer.MAX_VALUE,
+            "Seconds without any new blocks mined before the idle countdown begins. "
+                + "Set to -1 to disable. Default: 50.");
+        chainIdleCountdownSeconds = serverConfiguration.getInt(
+            "chainIdleCountdownSeconds",
+            Configuration.CATEGORY_GENERAL,
+            10,
+            -1,
+            Integer.MAX_VALUE,
+            "Countdown seconds before auto-cancelling an idle chain. " + "Set to -1 to disable. Default: 5.");
         searchWorkerThreads = serverConfiguration.getInt(
             "searchWorkerThreads",
             Configuration.CATEGORY_GENERAL,
@@ -603,6 +648,12 @@ public class Config {
             .set(searchWorkerThreads);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "suppressHodgepodgeWarnings", true)
             .set(suppressHodgepodgeWarnings);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableChainChunkLoading", false)
+            .set(enableChainChunkLoading);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "chainIdleTimeoutSeconds", 50)
+            .set(chainIdleTimeoutSeconds);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "chainIdleCountdownSeconds", 10)
+            .set(chainIdleCountdownSeconds);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "addExhaustion", 0.025)
             .set(addExhaustion);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "dropToPlayer", true)

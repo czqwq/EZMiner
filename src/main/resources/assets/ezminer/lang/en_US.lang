@@ -52,6 +52,9 @@ ezminer.config.searchWorkerThreads=Search Worker Threads
 ezminer.config.dropImmediately=Drop Items Immediately\nON: spawn drops each harvest\nOFF: batch at chain end
 ezminer.config.enableCachedChain=Enable Cached Chain Sub-Modes\n⚠ WIP – may have bugs with certain modded ores\nON: show cached/fuzzy-cached in chain\nOFF: basic/fuzzy only
 ezminer.config.suppressHodgepodgeWarnings=Suppress Hodgepodge Warnings\nON: hide off-thread warnings from EZMiner\nOFF: show warnings in log
+ezminer.config.enableChainChunkLoading=Load Chunks During Mining\nON: load chunks from disk as needed during chain mining\nOFF: only mine in already-loaded chunks
+ezminer.config.chainIdleTimeoutSeconds=Idle Timeout (s)
+ezminer.config.chainIdleCountdownSeconds=Idle Countdown (s)
 ezminer.config.minesweeperCooldown=Minesweeper Cooldown (s)
 ezminer.config.sudokuCooldown=Sudoku Cooldown (s)
 ezminer.config.serverPreviewRadius=Server Max Preview Radius
@@ -87,7 +90,9 @@ ezminer.command.active_mode.usage.0=§e/EZMiner active_mode 0§r - Hold: keep th
 ezminer.command.active_mode.usage.1=§e/EZMiner active_mode 1§r - Toggle: press once to activate, press again to stop
 ezminer.command.hud.pos.usage=§e/EZMiner hud pos <x> <y>§r - set HUD position (top-left origin)
 ezminer.command.hud.pos.set=EZMiner: HUD position set to x=%s, y=%s.
-ezminer.message.chain.done=EZMiner: chain done; blocks=%s; time=%ss
+ezminer.message.chain.done=EZMiner: chain done; blocks=%s; time=%s
+ezminer.message.chain.idle_countdown=EZMiner: No new blocks found. Auto-cancelling in %ss...
+ezminer.message.chain.idle_cancel=EZMiner: Auto-cancelled — no new blocks for 25 s
 ezminer.message.chain.error=EZMiner: Error while harvesting block at %s: %s
 ezminer.message.special.minesweeper.marked=EZMiner: Mine flagged at (%s, %s, %s), distance=%s blocks
 ezminer.message.special.sudoku.filled=EZMiner: Sudoku cell (%s, %s) filled with %s
@@ -110,6 +115,12 @@ ezminer.smartToolSwitch.disabled=§cOFF§r
 ezminer.hud.smartToolSwitch=Smart Tool Switch
 ezminer.hud.smartToolSwitch.enabled=Active
 ezminer.hud.smartToolSwitch.disabled=Inactive
+
+ezminer.hud.time.second=s
+ezminer.hud.time.minute=min
+ezminer.hud.time.hour=h
+ezminer.hud.time.day=d
+ezminer.hud.time.millisecond=ms
 
 ezminer.smartToolSwitch.tempDisabled=§7[EZMiner] Smart Tool Switch suppressed§7 — Shift+click air to resume§r
 ezminer.smartToolSwitch.tempReEnabled=§a[EZMiner] Smart Tool Switch resumed§r
