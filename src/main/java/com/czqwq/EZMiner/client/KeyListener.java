@@ -185,7 +185,17 @@ public class KeyListener {
     @SubscribeEvent
     public void onMouseEvent(MouseEvent event) {
         if (!Config.blockScrollOnChainKey) return;
-        if (event.dwheel == 0 || !KEY_CHAIN.getIsKeyPressed()) return;
+        if (event.dwheel == 0) return;
+
+        // In toggle mode the chain key is not physically held, so we must check
+        // the toggle state instead of KEY_CHAIN.getIsKeyPressed().
+        final boolean chainActive;
+        if (Config.chainActivationMode == 1) {
+            chainActive = chainToggled;
+        } else {
+            chainActive = KEY_CHAIN.getIsKeyPressed();
+        }
+        if (!chainActive) return;
 
         // Cancel the vanilla MouseEvent to block inventory hotbar scroll.
         event.setCanceled(true);
@@ -195,13 +205,7 @@ public class KeyListener {
         // directly so scrolling still changes EZMiner sub-modes while the chain key
         // is held.
         ClientProxy proxy = (ClientProxy) EZMiner.proxy;
-        if (Config.chainActivationMode == 1) {
-            if (chainToggled) {
-                handleSubModeScroll(proxy.clientState.minerModeState);
-            }
-        } else {
-            handleSubModeScroll(proxy.clientState.minerModeState);
-        }
+        handleSubModeScroll(proxy.clientState.minerModeState);
     }
 
     /**

@@ -28,18 +28,20 @@ public class Config {
     public static int serverMaxPreviewBlockLimit = 1024;
     /**
      * Maximum number of blocks broken per server tick during a chain operation.
-     * Lower values reduce per-tick light-propagation and entity-tracking load;
-     * higher values complete the chain faster. Hard cap: 64.
+     * Lower values reduce server load; higher values complete the chain faster.
      */
     public static int breakPerTick = 16;
     /**
      * Maximum number of blocks broken per server tick during <strong>cached</strong>
-     * chain operations. Cached chains have no background founder search overhead,
-     * so a higher rate (default 64) matches Bandit's throughput without increasing
-     * per-tick load beyond what the server already handles.
-     * Hard cap: 64.
+     * chain operations (no background search overhead, so a higher default is safe).
      */
     public static int cachedBreakPerTick = 64;
+    /**
+     * Crazy Mode — removes the per-tick block limit so chains complete as fast as
+     * possible. A built-in safety cap prevents the server from freezing.
+     * ⚠ May cause lag on extremely large veins. Default: false.
+     */
+    public static boolean crazyMode = false;
     /** Spawn drops immediately per-block instead of batching at chain end (avoids lag spike). */
     public static boolean dropImmediately = false;
     /** Enable cached chain sub-modes (2/3). WIP experimental feature — enable at own risk. */
@@ -91,6 +93,25 @@ public class Config {
      * Applied via Log4j2 filter — no restart required. Default: true.
      */
     public static boolean suppressHodgepodgeWarnings = true;
+
+    /**
+     * Enable direct {@code ExtendedBlockStorage.func_150818_a} writes during chain
+     * mining, bypassing {@code World.setBlock} and its neighbor notifications.
+     * <p>
+     * When enabled, blocks are written directly to sub-chunk arrays and
+     * {@code markBlockForUpdate} is called per block to sync clients. This eliminates
+     * 3 chunk lookups per block compared to the vanilla path but skips
+     * {@code onNeighborBlockChange} notifications — adjacent redstone/mechanism blocks
+     * will NOT react to mined blocks.
+     * <p>
+     * When disabled (default), the existing fast-harvest mixin path is used instead:
+     * {@code World.setBlock(x,y,z,air,0,2)} with flag=2 (client update only, skip
+     * neighbor notification). This is safer and still avoids 6 neighbor-change calls
+     * per block.
+     * <p>
+     * Compatible with EndlessIDs and Hodgepodge. Default: false (safe mode).
+     */
+    public static boolean useChunkCachedHarvest = false;
 
     /** Remove Fortune III cap for GT/BW ore drops. Mixin-based — requires game restart. */
     public static boolean enableUnlimitedOreFortune = false;
@@ -264,19 +285,24 @@ public class Config {
             Configuration.CATEGORY_GENERAL,
             16,
             1,
-            64,
+            512,
             "Maximum blocks broken per server tick during a chain operation. "
-                + "Lower values reduce light-update lag on large veins (recommended: 16). "
-                + "Hard cap: 64.");
+                + "Lower values reduce server load (recommended: 16).");
         cachedBreakPerTick = serverConfiguration.getInt(
             "cachedBreakPerTick",
             Configuration.CATEGORY_GENERAL,
             64,
             1,
-            64,
+            1024,
             "Maximum blocks broken per server tick during a cached chain operation. "
-                + "Cached chains have no background founder overhead, so a higher rate "
-                + "(default 64) is safe. Hard cap: 64.");
+                + "Cached chains have no background search overhead, so a higher rate is safe.");
+        crazyMode = serverConfiguration.getBoolean(
+            "crazyMode",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "Crazy Mode — removes the per-tick block limit. Chains complete as fast as "
+                + "possible. A built-in safety cap prevents server freezes. "
+                + "⚠ May cause lag on very large veins. Default: false.");
         dropImmediately = serverConfiguration.getBoolean(
             "dropImmediately",
             Configuration.CATEGORY_GENERAL,
@@ -296,10 +322,9 @@ public class Config {
             "enableChainChunkLoading",
             Configuration.CATEGORY_GENERAL,
             false,
-            "When enabled, the BFS search will load chunks from disk as needed "
-                + "during chain mining operations instead of stopping at chunk boundaries. "
-                + "This allows chain mining to reach blocks beyond the player's current "
-                + "view distance. May cause brief server lag when many chunks are loaded. "
+            "When enabled, actively loads unloaded chunks during chain and blast mining "
+                + "operations instead of stopping at chunk boundaries. "
+                + "Chunks are loaded incrementally (up to 4 per tick) to avoid server stalls. "
                 + "Default: false.");
         chainIdleTimeoutSeconds = serverConfiguration.getInt(
             "chainIdleTimeoutSeconds",
@@ -390,6 +415,13 @@ public class Config {
                 + "IMPORTANT: This option is implemented via Mixin and is applied once at JVM startup. "
                 + "It CANNOT be changed via /EZMiner reloadConfig — a full game restart is required. "
                 + "Default: false.");
+        useChunkCachedHarvest = serverConfiguration.getBoolean(
+            "useChunkCachedHarvest",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "EXPERIMENTAL — Enables a faster block-harvest path during chain mining. "
+                + "Skips some safety checks for maximum speed. "
+                + "⚠ Use with caution. Default: false.");
         suppressHodgepodgeWarnings = serverConfiguration.getBoolean(
             "suppressHodgepodgeWarnings",
             Configuration.CATEGORY_GENERAL,
@@ -640,6 +672,8 @@ public class Config {
             .set(breakPerTick);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "cachedBreakPerTick", 64)
             .set(cachedBreakPerTick);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "crazyMode", false)
+            .set(crazyMode);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "dropImmediately", false)
             .set(dropImmediately);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableCachedChain", false)
@@ -648,6 +682,8 @@ public class Config {
             .set(searchWorkerThreads);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "suppressHodgepodgeWarnings", true)
             .set(suppressHodgepodgeWarnings);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "useChunkCachedHarvest", false)
+            .set(useChunkCachedHarvest);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableChainChunkLoading", false)
             .set(enableChainChunkLoading);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "chainIdleTimeoutSeconds", 50)

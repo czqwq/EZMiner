@@ -18,6 +18,8 @@ import com.czqwq.EZMiner.chain.execution.ChainActionExecutor;
 import com.czqwq.EZMiner.chain.execution.ChainExecutionErrorReporter;
 import com.czqwq.EZMiner.chain.execution.ChainExecutor;
 import com.czqwq.EZMiner.chain.execution.ChainHarvestExhaustionStrategy;
+import com.czqwq.EZMiner.chain.execution.ChunkCachedHarvester;
+import com.czqwq.EZMiner.chain.execution.ChunkPreloader;
 import com.czqwq.EZMiner.chain.execution.CropHarvestActionExecutor;
 import com.czqwq.EZMiner.chain.execution.VisualProspectingBridge;
 import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
@@ -67,6 +69,8 @@ public class BaseOperator {
     private final ChainExecutor chainExecutor = new ChainExecutor(harvestActionExecutor);
     private final ChainHarvestExhaustionStrategy exhaustionStrategy = new ChainHarvestExhaustionStrategy();
     private final VisualProspectingBridge vpBridge = new VisualProspectingBridge();
+    /** Incremental chunk pre-loader for chain/blast modes when chunk loading is enabled. */
+    private final ChunkPreloader chunkPreloader = new ChunkPreloader();
 
     public BaseOperator(Vector3i pos, Manager manager) {
         this.playerMP = manager.player;
@@ -97,12 +101,26 @@ public class BaseOperator {
         // For cached tasks, feed positions on-demand instead of pre-loading the
         // entire list into the queue. This keeps memory pressure low and allows
         // cancellation to take effect within one tick.
-        final int perTick = planningTask instanceof CachedPositionsPlanningTask ? Config.cachedBreakPerTick
-            : Config.breakPerTick;
+        // Crazy mode: ignore per-tick limit with a 4096 safety cap to prevent freezes
+        final int perTick;
+        if (Config.crazyMode) {
+            perTick = 4096;
+        } else {
+            perTick = planningTask instanceof CachedPositionsPlanningTask ? Config.cachedBreakPerTick
+                : Config.breakPerTick;
+        }
 
         if (planningTask instanceof CachedPositionsPlanningTask) {
             CachedPositionsPlanningTask cached = (CachedPositionsPlanningTask) planningTask;
-            cached.feedTo(canBreakPositions, perTick);
+            cached.feedTo(canBreakPositions, Config.crazyMode ? 4096 : perTick);
+        }
+
+        // ── Chunk pre-loading (server thread) ──
+        // Loads 1 chunk/tick from disk only — never triggers terrain generation.
+        // The founder runs before operatorTask (pre-tick), so chunks loaded here
+        // become available on the NEXT tick for the founder to scan.
+        if (Config.enableChainChunkLoading && !(planningTask instanceof CachedPositionsPlanningTask)) {
+            chunkPreloader.tick();
         }
 
         // ── Always sync runtime to client, even when idle (so the timer keeps ticking) ──
@@ -122,8 +140,10 @@ public class BaseOperator {
                 }
                 int countdownSec = Config.chainIdleCountdownSeconds - (int) ((now - countdownStartTime) / 1000);
                 if (countdownSec <= 0) {
+                    int totalTimeout = Math.max(0, Config.chainIdleTimeoutSeconds)
+                        + Math.max(0, Config.chainIdleCountdownSeconds);
                     MessageUtils.serverSendPlayerMessage(
-                        new ChatComponentTranslation("ezminer.message.chain.idle_cancel"),
+                        new ChatComponentTranslation("ezminer.message.chain.idle_cancel", totalTimeout),
                         manager.playerUUID);
                     unRegistry();
                     return;
@@ -152,7 +172,11 @@ public class BaseOperator {
         // harvest N blocks, apply total exhaustion once after. Crop mode uses the
         // legacy per-block exhaustion path since each crop may or may not be harvestable.
         if (!manager.isSpecialCropMode()) {
-            processBatchWithBatchedExhaustion(perTick);
+            if (Config.useChunkCachedHarvest) {
+                processBatchChunkCached(perTick);
+            } else {
+                processBatchWithBatchedExhaustion(perTick);
+            }
         } else {
             chainExecutor.executeBatch(canBreakPositions, perTick, this::processCandidate);
         }
@@ -189,6 +213,10 @@ public class BaseOperator {
         lastHarvestedTime = startTime;
         countdownStartTime = 0;
         lastCountdownSecond = -1;
+        // Init chunk preloader (no chunks loaded yet — loading happens in tick())
+        if (Config.enableChainChunkLoading && manager.originPos != null) {
+            chunkPreloader.init(playerMP.worldObj, manager.originPos, manager.pConfig.bigRadius);
+        }
         planningTask.schedule();
         FMLCommonHandler.instance()
             .bus()
@@ -230,6 +258,7 @@ public class BaseOperator {
 
     private void cleanupOperatorState() {
         manager.clearRuntimeProjection();
+        chunkPreloader.reset();
         EZMiner.chainStateService.markSessionStop(manager.playerUUID);
         manager.activeSession = null;
     }
@@ -275,6 +304,7 @@ public class BaseOperator {
         float exhaustionBefore = exhaustionStrategy.getExhaustion(food);
         int harvested = 0;
 
+        // ── Collect batch positions ──
         Vector3i pos;
         while (harvested < perTick && (pos = canBreakPositions.poll()) != null) {
             if (!canOperate() || !isPlayerOnline()) {
@@ -294,6 +324,53 @@ public class BaseOperator {
                 ChainExecutionErrorReporter.reportHarvestError(manager, pos, e);
             }
         }
+
+        exhaustionStrategy.setExhaustion(food, exhaustionBefore + harvested * (float) manager.pConfig.addExhaustion);
+    }
+
+    /**
+     * Chunk-cached variant of {@link #processBatchWithBatchedExhaustion} that uses
+     * {@link ChunkCachedHarvester} to avoid repeated
+     * {@code world.getChunkFromChunkCoords()} LongHashMap lookups.
+     *
+     * <p>
+     * For non-crop block mining, this eliminates 3 chunk lookups per block compared
+     * to the standard path ({@code getBlock} + {@code getBlockMetadata} + {@code setBlock}).
+     * The inner loop delegates to {@link ChunkCachedHarvester#harvestNext} which caches
+     * chunk and ExtendedBlockStorage references internally.
+     */
+    private void processBatchChunkCached(int perTick) {
+        net.minecraft.util.FoodStats food = playerMP.getFoodStats();
+        float exhaustionBefore = exhaustionStrategy.getExhaustion(food);
+        int harvested = 0;
+
+        ChunkCachedHarvester harvester = new ChunkCachedHarvester();
+
+        Vector3i pos;
+        while (harvested < perTick && (pos = canBreakPositions.poll()) != null) {
+            if (!canOperate() || !isPlayerOnline()) {
+                stopRequested = true;
+                break;
+            }
+            try {
+                if (!shouldHarvest(pos)) continue;
+
+                vpBridge.notifyOreDiscovery(playerMP, pos, vpNotifiedChunks);
+
+                boolean ok = harvester.harvestNext(pos, playerMP);
+                if (!ok) continue;
+
+                operatorCount++;
+                harvested++;
+                markHarvested();
+            } catch (Exception e) {
+                manager.reportRuntimeError("harvest_error");
+                ChainExecutionErrorReporter.reportHarvestError(manager, pos, e);
+            }
+        }
+
+        // Flush height map for the last chunk touched
+        harvester.flushRemaining();
 
         exhaustionStrategy.setExhaustion(food, exhaustionBefore + harvested * (float) manager.pConfig.addExhaustion);
     }

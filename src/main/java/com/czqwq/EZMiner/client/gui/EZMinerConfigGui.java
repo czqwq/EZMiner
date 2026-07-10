@@ -51,6 +51,8 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_SERVER_ENABLE_CACHED_CHAIN = 19;
     private static final int BTN_SERVER_SUPPRESS_HODGEPODGE_WARNINGS = 20;
     private static final int BTN_SERVER_ENABLE_CHAIN_CHUNK_LOADING = 21;
+    private static final int BTN_SERVER_USE_CHUNK_CACHED_HARVEST = 22;
+    private static final int BTN_SERVER_CRAZY_MODE = 23;
 
     // ── Layout constants ──────────────────────────────────────────────────────
     private static final int GUI_W = 290;
@@ -137,6 +139,8 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnServerEnableCachedChain;
     private GuiButton btnServerSuppressHodgepodgeWarnings;
     private GuiButton btnServerEnableChainChunkLoading;
+    private GuiButton btnServerUseChunkCachedHarvest;
+    private GuiButton btnServerCrazyMode;
 
     // ── GuiScreen overrides ───────────────────────────────────────────────────
 
@@ -325,6 +329,22 @@ public class EZMinerConfigGui extends GuiScreen {
                 boolLabel("ezminer.config.enableChainChunkLoading", Config.enableChainChunkLoading),
                 boolValue(Config.enableChainChunkLoading));
             buttonList.add(btnServerEnableChainChunkLoading);
+
+            btnServerUseChunkCachedHarvest = newOptionButton(
+                BTN_SERVER_USE_CHUNK_CACHED_HARVEST,
+                18,
+                "ezminer.config.useChunkCachedHarvest",
+                boolLabel("ezminer.config.useChunkCachedHarvest", Config.useChunkCachedHarvest),
+                boolValue(Config.useChunkCachedHarvest));
+            buttonList.add(btnServerUseChunkCachedHarvest);
+
+            btnServerCrazyMode = newOptionButton(
+                BTN_SERVER_CRAZY_MODE,
+                19,
+                "ezminer.config.crazyMode",
+                boolLabel("ezminer.config.crazyMode", Config.crazyMode),
+                boolValue(Config.crazyMode));
+            buttonList.add(btnServerCrazyMode);
 
             // Fixed: server action buttons
             buttonList.add(
@@ -517,6 +537,16 @@ public class EZMinerConfigGui extends GuiScreen {
                     "ezminer.config.enableChainChunkLoading",
                     Config.enableChainChunkLoading);
                 break;
+            case BTN_SERVER_USE_CHUNK_CACHED_HARVEST:
+                Config.useChunkCachedHarvest = !Config.useChunkCachedHarvest;
+                btnServerUseChunkCachedHarvest.displayString = boolDisplayText(
+                    "ezminer.config.useChunkCachedHarvest",
+                    Config.useChunkCachedHarvest);
+                break;
+            case BTN_SERVER_CRAZY_MODE:
+                Config.crazyMode = !Config.crazyMode;
+                btnServerCrazyMode.displayString = boolDisplayText("ezminer.config.crazyMode", Config.crazyMode);
+                break;
 
             case BTN_SERVER_RELOAD:
                 EZMiner.network.network.sendToServer(new PacketReloadServerConfig());
@@ -693,8 +723,12 @@ public class EZMinerConfigGui extends GuiScreen {
                 case 17:
                     return "ezminer.config.enableChainChunkLoading";
                 case 18:
-                    return "ezminer.config.chainIdleTimeoutSeconds";
+                    return "ezminer.config.useChunkCachedHarvest";
                 case 19:
+                    return "ezminer.config.crazyMode";
+                case 20:
+                    return "ezminer.config.chainIdleTimeoutSeconds";
+                case 21:
                     return "ezminer.config.chainIdleCountdownSeconds";
                 default:
                     return null;
@@ -786,7 +820,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
     /** Recalculates totalContentH based on active tab row count and multi-line labels. */
     private void recalcTotalContentH() {
-        int rows = (activeTab == TAB_CLIENT) ? MAX_CONTENT_ROWS : 20;
+        int rows = (activeTab == TAB_CLIENT) ? MAX_CONTENT_ROWS : 22;
         int total = TOP_PAD;
         for (int i = 0; i < rows; i++) {
             total += getRowHeight(i);
@@ -838,8 +872,8 @@ public class EZMinerConfigGui extends GuiScreen {
             tfSudokuCooldown.yPosition = getControlY(9);
             tfServerMaxPreviewRadius.yPosition = getControlY(10);
             tfServerMaxPreviewLimit.yPosition = getControlY(11);
-            tfChainIdleTimeout.yPosition = getControlY(18);
-            tfChainIdleCountdown.yPosition = getControlY(19);
+            tfChainIdleTimeout.yPosition = getControlY(20);
+            tfChainIdleCountdown.yPosition = getControlY(21);
 
             setScrolledButtonY(BTN_SERVER_DROP_TO_PLAYER, getControlY(12));
             setScrolledButtonY(BTN_SERVER_DROP_IMMEDIATELY, getControlY(13));
@@ -847,6 +881,8 @@ public class EZMinerConfigGui extends GuiScreen {
             setScrolledButtonY(BTN_SERVER_ENABLE_CACHED_CHAIN, getControlY(15));
             setScrolledButtonY(BTN_SERVER_SUPPRESS_HODGEPODGE_WARNINGS, getControlY(16));
             setScrolledButtonY(BTN_SERVER_ENABLE_CHAIN_CHUNK_LOADING, getControlY(17));
+            setScrolledButtonY(BTN_SERVER_USE_CHUNK_CACHED_HARVEST, getControlY(18));
+            setScrolledButtonY(BTN_SERVER_CRAZY_MODE, getControlY(19));
         }
 
         // Update per-button visibility: hide when scrolled out of viewport.
@@ -890,8 +926,8 @@ public class EZMinerConfigGui extends GuiScreen {
         tfSudokuCooldown = field(fx, contentRowScreenY(9), String.valueOf(Config.sudokuProbeCooldownSeconds));
         tfServerMaxPreviewRadius = field(fx, contentRowScreenY(10), String.valueOf(Config.serverMaxPreviewBigRadius));
         tfServerMaxPreviewLimit = field(fx, contentRowScreenY(11), String.valueOf(Config.serverMaxPreviewBlockLimit));
-        tfChainIdleTimeout = field(fx, contentRowScreenY(18), String.valueOf(Config.chainIdleTimeoutSeconds));
-        tfChainIdleCountdown = field(fx, contentRowScreenY(19), String.valueOf(Config.chainIdleCountdownSeconds));
+        tfChainIdleTimeout = field(fx, contentRowScreenY(20), String.valueOf(Config.chainIdleTimeoutSeconds));
+        tfChainIdleCountdown = field(fx, contentRowScreenY(21), String.valueOf(Config.chainIdleCountdownSeconds));
     }
 
     private GuiTextField field(int x, int y, String initialText) {
@@ -984,8 +1020,10 @@ public class EZMinerConfigGui extends GuiScreen {
         drawButtonRowLabel(lx, contentRowScreenY(15), lc, "ezminer.config.enableCachedChain");
         drawButtonRowLabel(lx, contentRowScreenY(16), lc, "ezminer.config.suppressHodgepodgeWarnings");
         drawButtonRowLabel(lx, contentRowScreenY(17), lc, "ezminer.config.enableChainChunkLoading");
-        drawRow(lx, contentRowScreenY(18), lc, "ezminer.config.chainIdleTimeoutSeconds", tfChainIdleTimeout);
-        drawRow(lx, contentRowScreenY(19), lc, "ezminer.config.chainIdleCountdownSeconds", tfChainIdleCountdown);
+        drawButtonRowLabel(lx, contentRowScreenY(18), lc, "ezminer.config.useChunkCachedHarvest");
+        drawButtonRowLabel(lx, contentRowScreenY(19), lc, "ezminer.config.crazyMode");
+        drawRow(lx, contentRowScreenY(20), lc, "ezminer.config.chainIdleTimeoutSeconds", tfChainIdleTimeout);
+        drawRow(lx, contentRowScreenY(21), lc, "ezminer.config.chainIdleCountdownSeconds", tfChainIdleCountdown);
 
     }
 
@@ -1057,7 +1095,9 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_SERVER_USE_PREVIEW
                 || btn.id == BTN_SERVER_ENABLE_CACHED_CHAIN
                 || btn.id == BTN_SERVER_SUPPRESS_HODGEPODGE_WARNINGS
-                || btn.id == BTN_SERVER_ENABLE_CHAIN_CHUNK_LOADING;
+                || btn.id == BTN_SERVER_ENABLE_CHAIN_CHUNK_LOADING
+                || btn.id == BTN_SERVER_USE_CHUNK_CACHED_HARVEST
+                || btn.id == BTN_SERVER_CRAZY_MODE;
             boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;
 
             if (isClientContent || isClientAction) {
@@ -1117,6 +1157,8 @@ public class EZMinerConfigGui extends GuiScreen {
                 parseI(tfSearchWorkerThreads, Config.searchWorkerThreads, 0),
                 Config.suppressHodgepodgeWarnings,
                 Config.enableChainChunkLoading,
+                Config.useChunkCachedHarvest,
+                Config.crazyMode,
                 parseI(tfChainIdleTimeout, Config.chainIdleTimeoutSeconds, -1),
                 parseI(tfChainIdleCountdown, Config.chainIdleCountdownSeconds, -1)));
     }

@@ -16,14 +16,6 @@ import com.czqwq.EZMiner.network.PacketMinerConfig;
 import com.czqwq.EZMiner.network.PacketReloadClientConfig;
 import com.czqwq.EZMiner.network.PacketServerConfig;
 
-/**
- * Root {@code /EZMiner} command with two sub-commands:
- * <ul>
- * <li>{@code reloadConfig} – hot-reloads the config file (OP only).</li>
- * <li>{@code active_mode <0|1>} – switches the chain-key activation mode
- * (any player; change is persisted to the config file).</li>
- * </ul>
- */
 public class ReloadConfigCommand extends CommandBase {
 
     @Override

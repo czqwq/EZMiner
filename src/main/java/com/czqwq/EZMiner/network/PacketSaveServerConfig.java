@@ -40,6 +40,8 @@ public class PacketSaveServerConfig implements IMessage {
     public int searchWorkerThreads;
     public boolean suppressHodgepodgeWarnings;
     public boolean enableChainChunkLoading;
+    public boolean useChunkCachedHarvest;
+    public boolean crazyMode;
     public int chainIdleTimeoutSeconds;
     public int chainIdleCountdownSeconds;
 
@@ -50,7 +52,7 @@ public class PacketSaveServerConfig implements IMessage {
         boolean serverUsePreview, int serverMaxPreviewBigRadius, int serverMaxPreviewBlockLimit,
         double minesweeperProbeCooldownSeconds, double sudokuProbeCooldownSeconds, boolean enableCachedChain,
         int searchWorkerThreads, boolean suppressHodgepodgeWarnings, boolean enableChainChunkLoading,
-        int chainIdleTimeoutSeconds, int chainIdleCountdownSeconds) {
+        boolean useChunkCachedHarvest, boolean crazyMode, int chainIdleTimeoutSeconds, int chainIdleCountdownSeconds) {
         this.bigRadius = bigRadius;
         this.blockLimit = blockLimit;
         this.smallRadius = smallRadius;
@@ -69,6 +71,8 @@ public class PacketSaveServerConfig implements IMessage {
         this.searchWorkerThreads = searchWorkerThreads;
         this.suppressHodgepodgeWarnings = suppressHodgepodgeWarnings;
         this.enableChainChunkLoading = enableChainChunkLoading;
+        this.useChunkCachedHarvest = useChunkCachedHarvest;
+        this.crazyMode = crazyMode;
         this.chainIdleTimeoutSeconds = chainIdleTimeoutSeconds;
         this.chainIdleCountdownSeconds = chainIdleCountdownSeconds;
     }
@@ -93,6 +97,8 @@ public class PacketSaveServerConfig implements IMessage {
         searchWorkerThreads = buf.readInt();
         suppressHodgepodgeWarnings = buf.readBoolean();
         enableChainChunkLoading = buf.readBoolean();
+        useChunkCachedHarvest = buf.readBoolean();
+        crazyMode = buf.readBoolean();
         chainIdleTimeoutSeconds = buf.readInt();
         chainIdleCountdownSeconds = buf.readInt();
     }
@@ -117,6 +123,8 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeInt(searchWorkerThreads);
         buf.writeBoolean(suppressHodgepodgeWarnings);
         buf.writeBoolean(enableChainChunkLoading);
+        buf.writeBoolean(useChunkCachedHarvest);
+        buf.writeBoolean(crazyMode);
         buf.writeInt(chainIdleTimeoutSeconds);
         buf.writeInt(chainIdleCountdownSeconds);
     }
@@ -134,8 +142,8 @@ public class PacketSaveServerConfig implements IMessage {
             Config.blockLimit = Math.max(0, msg.blockLimit);
             Config.smallRadius = Math.max(0, msg.smallRadius);
             Config.tunnelWidth = Math.max(0, msg.tunnelWidth);
-            Config.breakPerTick = Math.max(1, Math.min(64, msg.breakPerTick));
-            Config.cachedBreakPerTick = Math.max(1, Math.min(64, msg.cachedBreakPerTick));
+            Config.breakPerTick = Math.max(1, Math.min(512, msg.breakPerTick));
+            Config.cachedBreakPerTick = Math.max(1, Math.min(1024, msg.cachedBreakPerTick));
             Config.dropImmediately = msg.dropImmediately;
             Config.addExhaustion = msg.addExhaustion;
             Config.dropToPlayer = msg.dropToPlayer;
@@ -148,6 +156,8 @@ public class PacketSaveServerConfig implements IMessage {
             Config.searchWorkerThreads = Math.max(0, Math.min(8, msg.searchWorkerThreads));
             Config.suppressHodgepodgeWarnings = msg.suppressHodgepodgeWarnings;
             Config.enableChainChunkLoading = msg.enableChainChunkLoading;
+            Config.useChunkCachedHarvest = msg.useChunkCachedHarvest;
+            Config.crazyMode = msg.crazyMode;
             Config.chainIdleTimeoutSeconds = msg.chainIdleTimeoutSeconds <= 0 ? -1
                 : Math.max(1, msg.chainIdleTimeoutSeconds);
             Config.chainIdleCountdownSeconds = msg.chainIdleCountdownSeconds <= 0 ? -1
