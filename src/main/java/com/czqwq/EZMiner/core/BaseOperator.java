@@ -98,7 +98,7 @@ public class BaseOperator {
             return;
         }
 
-        // For cached tasks, feed positions on-demand instead of pre-loading the
+        // For cached tasks, feed positions on-demand instead of preloading the
         // entire list into the queue. This keeps memory pressure low and allows
         // cancellation to take effect within one tick.
         // Crazy mode: ignore per-tick limit with a 4096 safety cap to prevent freezes
@@ -115,7 +115,7 @@ public class BaseOperator {
             cached.feedTo(canBreakPositions, Config.crazyMode ? 4096 : perTick);
         }
 
-        // ── Chunk pre-loading (server thread) ──
+        // ── Chunk preloading (server thread) ──
         // Loads 1 chunk/tick from disk only — never triggers terrain generation.
         // The founder runs before operatorTask (pre-tick), so chunks loaded here
         // become available on the NEXT tick for the founder to scan.
@@ -140,8 +140,7 @@ public class BaseOperator {
                 }
                 int countdownSec = Config.chainIdleCountdownSeconds - (int) ((now - countdownStartTime) / 1000);
                 if (countdownSec <= 0) {
-                    int totalTimeout = Math.max(0, Config.chainIdleTimeoutSeconds)
-                        + Math.max(0, Config.chainIdleCountdownSeconds);
+                    int totalTimeout = Config.chainIdleTimeoutSeconds + Config.chainIdleCountdownSeconds;
                     MessageUtils.serverSendPlayerMessage(
                         new ChatComponentTranslation("ezminer.message.chain.idle_cancel", totalTimeout),
                         manager.playerUUID);
