@@ -23,7 +23,12 @@ import cpw.mods.fml.common.event.FMLServerStartedEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import cpw.mods.fml.common.event.FMLServerStoppingEvent;
 
-@Mod(modid = EZMiner.MODID, version = Tags.VERSION, name = "EZMiner", acceptedMinecraftVersions = "[1.7.10]")
+@Mod(
+    modid = EZMiner.MODID,
+    version = Tags.VERSION,
+    name = "EZMiner",
+    acceptedMinecraftVersions = "[1.7.10]",
+    acceptableRemoteVersions = "*")
 public class EZMiner {
 
     public static final String MODID = "EZMiner";
