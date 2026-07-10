@@ -16,6 +16,7 @@ import com.czqwq.EZMiner.network.PacketMinerConfig;
 import com.czqwq.EZMiner.network.PacketReloadClientConfig;
 import com.czqwq.EZMiner.network.PacketServerConfig;
 
+@SuppressWarnings("unchecked")
 public class ReloadConfigCommand extends CommandBase {
 
     @Override
@@ -35,7 +36,6 @@ public class ReloadConfigCommand extends CommandBase {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List addTabCompletionOptions(ICommandSender sender, String[] args) {
         if (args.length == 1) {
             return getListOfStringsMatchingLastWord(args, "reloadConfig", "reloadClientConfig", "active_mode", "hud");
