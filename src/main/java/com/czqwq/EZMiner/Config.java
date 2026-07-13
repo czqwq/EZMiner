@@ -690,7 +690,10 @@ public class Config {
 
     /** Writes all current server-side config values to the server config file. */
     public static void saveServerConfig() {
-        if (serverConfiguration == null) return;
+        if (serverConfiguration == null) {
+            EZMiner.LOG.warn("saveServerConfig skipped: serverConfiguration is null");
+            return;
+        }
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "bigRadius", 8)
             .set(bigRadius);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "blockLimit", 1024)

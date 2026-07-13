@@ -939,10 +939,28 @@ public class EZMinerConfigGui extends GuiScreen {
 
     private void initServerFields() {
         int fx = guiLeft + FIELD_X;
-        tfServerBigRadius = field(fx, contentRowScreenY(0), String.valueOf(Config.bigRadius));
-        tfServerBlockLimit = field(fx, contentRowScreenY(1), String.valueOf(Config.blockLimit));
-        tfServerSmallRadius = field(fx, contentRowScreenY(2), String.valueOf(Config.smallRadius));
-        tfServerTunnelWidth = field(fx, contentRowScreenY(3), String.valueOf(Config.tunnelWidth));
+        // Use runtime-synced server values for display, not the client's local Config.* fields.
+        // In multiplayer the client's Config.bigRadius/blockLimit/etc. are loaded from the client's
+        // local copy of the server config file and are NEVER updated after a GUI save — the server
+        // writes to ITS file and syncs these limits back via PacketServerConfig, which stores them
+        // in runtimeServerMax* fields. Reading from runtimeServerMax* ensures the GUI always shows
+        // the actual server-side value.
+        tfServerBigRadius = field(
+            fx,
+            contentRowScreenY(0),
+            String.valueOf(serverValueForDisplay(Config.runtimeServerMaxBigRadius, Config.bigRadius)));
+        tfServerBlockLimit = field(
+            fx,
+            contentRowScreenY(1),
+            String.valueOf(serverValueForDisplay(Config.runtimeServerMaxBlockLimit, Config.blockLimit)));
+        tfServerSmallRadius = field(
+            fx,
+            contentRowScreenY(2),
+            String.valueOf(serverValueForDisplay(Config.runtimeServerMaxSmallRadius, Config.smallRadius)));
+        tfServerTunnelWidth = field(
+            fx,
+            contentRowScreenY(3),
+            String.valueOf(serverValueForDisplay(Config.runtimeServerMaxTunnelWidth, Config.tunnelWidth)));
         tfBreakPerTick = field(fx, contentRowScreenY(4), String.valueOf(Config.breakPerTick));
         tfCachedBreakPerTick = field(fx, contentRowScreenY(5), String.valueOf(Config.cachedBreakPerTick));
         tfSearchWorkerThreads = field(fx, contentRowScreenY(6), String.valueOf(Config.searchWorkerThreads));
@@ -1168,10 +1186,19 @@ public class EZMinerConfigGui extends GuiScreen {
     private void applyAndSaveServerConfig() {
         EZMiner.network.network.sendToServer(
             new PacketSaveServerConfig(
-                parseI(tfServerBigRadius, Config.bigRadius, 0),
-                parseI(tfServerBlockLimit, Config.blockLimit, 0),
-                parseI(tfServerSmallRadius, Config.smallRadius, 0),
-                parseI(tfServerTunnelWidth, Config.tunnelWidth, 0),
+                parseI(tfServerBigRadius, serverValueForDisplay(Config.runtimeServerMaxBigRadius, Config.bigRadius), 0),
+                parseI(
+                    tfServerBlockLimit,
+                    serverValueForDisplay(Config.runtimeServerMaxBlockLimit, Config.blockLimit),
+                    0),
+                parseI(
+                    tfServerSmallRadius,
+                    serverValueForDisplay(Config.runtimeServerMaxSmallRadius, Config.smallRadius),
+                    0),
+                parseI(
+                    tfServerTunnelWidth,
+                    serverValueForDisplay(Config.runtimeServerMaxTunnelWidth, Config.tunnelWidth),
+                    0),
                 parseI(tfBreakPerTick, Config.breakPerTick, 1),
                 parseI(tfCachedBreakPerTick, Config.cachedBreakPerTick, 1),
                 Config.dropImmediately,
@@ -1232,6 +1259,16 @@ public class EZMinerConfigGui extends GuiScreen {
         } catch (NumberFormatException e) {
             return fallback;
         }
+    }
+
+    /**
+     * Returns the effective server-side value for display in the GUI server tab.
+     * If the runtime-synced limit is still at its default sentinel ({@link Integer#MAX_VALUE}),
+     * the client-local Config value is used as a fallback (e.g. before the first sync or in
+     * single-player where both values match anyway).
+     */
+    private static int serverValueForDisplay(int runtimeValue, int localFallback) {
+        return runtimeValue == Integer.MAX_VALUE ? localFallback : runtimeValue;
     }
 
     private static String boolLabel(String key, boolean value) {
