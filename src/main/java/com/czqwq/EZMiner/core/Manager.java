@@ -16,6 +16,7 @@ import org.joml.Vector3i;
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.chain.execution.ChainDropCollector;
+import com.czqwq.EZMiner.chain.execution.CooldownTracker;
 import com.czqwq.EZMiner.chain.execution.MinesweeperModeHandler;
 import com.czqwq.EZMiner.chain.execution.SudokuModeHandler;
 import com.czqwq.EZMiner.chain.planning.ChainPreCalcCache;
@@ -109,6 +110,8 @@ public class Manager {
         if (isInOperate() || !isKeyPressed()) return;
         if (isSpecialMinesweeperMode()) return;
         if (isSpecialCropMode()) return;
+        // Cooldown check: prevent starting a new chain while cooldown is active
+        if (CooldownTracker.isOnCooldown((EntityPlayerMP) event.getPlayer())) return;
         // For cached chain modes, try to use the pre-calculated cache first.
         if (isCachedChainMode()) {
             Vector3i pos = new Vector3i(event.x, event.y, event.z);
@@ -129,6 +132,8 @@ public class Manager {
         if (!isSamePlayer(event.entityPlayer)) return;
         if (isInOperate() || !isKeyPressed()) return;
         if (!isSpecialCropMode()) return;
+        // Cooldown check: prevent starting a new crop chain while cooldown is active
+        if (CooldownTracker.isOnCooldown((EntityPlayerMP) event.entityPlayer)) return;
         if (!CropFounder.isMatureCrop(event.entityPlayer.worldObj, event.x, event.y, event.z)) return;
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.entityPlayer);
         // Explicitly consume the interaction so vanilla/sibling handlers do not

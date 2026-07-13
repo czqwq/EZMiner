@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentTranslation;
@@ -20,6 +21,7 @@ import com.czqwq.EZMiner.chain.execution.ChainExecutor;
 import com.czqwq.EZMiner.chain.execution.ChainHarvestExhaustionStrategy;
 import com.czqwq.EZMiner.chain.execution.ChunkCachedHarvester;
 import com.czqwq.EZMiner.chain.execution.ChunkPreloader;
+import com.czqwq.EZMiner.chain.execution.CooldownTracker;
 import com.czqwq.EZMiner.chain.execution.CropHarvestActionExecutor;
 import com.czqwq.EZMiner.chain.execution.VisualProspectingBridge;
 import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
@@ -223,6 +225,11 @@ public class BaseOperator {
     }
 
     public void unRegistry() {
+        // Record cooldown timestamp when the chain completes (not on emergency stop).
+        // Creative players are handled inside CooldownTracker.recordUse.
+        if (operatorCount > 0) {
+            CooldownTracker.recordUse(playerMP);
+        }
         long ms = System.currentTimeMillis() - startTime;
         if (manager.pConfig.useChainDoneMessage) {
             MessageUtils.serverSendPlayerMessage(
@@ -282,6 +289,18 @@ public class BaseOperator {
         }
         try {
             if (!shouldHarvest(pos)) return true;
+            // Stop-on-unbreakable: if the player's tool cannot harvest this block,
+            // cancel the entire chain immediately instead of silently skipping it.
+            if (Config.stopOnUnbreakable && playerMP.worldObj != null) {
+                Block block = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
+                if (block != null && !block.isAir(playerMP.worldObj, pos.x, pos.y, pos.z)) {
+                    int meta = playerMP.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
+                    if (!block.canHarvestBlock(playerMP, meta)) {
+                        stopRequested = true;
+                        return false;
+                    }
+                }
+            }
             vpBridge.notifyOreDiscovery(playerMP, pos, vpNotifiedChunks);
             ChainActionExecutor executor = manager.isSpecialCropMode() ? cropHarvestActionExecutor
                 : harvestActionExecutor;
@@ -312,6 +331,18 @@ public class BaseOperator {
             }
             try {
                 if (!shouldHarvest(pos)) continue;
+                // Stop-on-unbreakable: if the player's tool cannot harvest this block,
+                // cancel the entire chain immediately instead of silently skipping it.
+                if (Config.stopOnUnbreakable && playerMP.worldObj != null) {
+                    Block block = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
+                    if (block != null && !block.isAir(playerMP.worldObj, pos.x, pos.y, pos.z)) {
+                        int meta = playerMP.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
+                        if (!block.canHarvestBlock(playerMP, meta)) {
+                            stopRequested = true;
+                            break;
+                        }
+                    }
+                }
                 vpBridge.notifyOreDiscovery(playerMP, pos, vpNotifiedChunks);
                 boolean ok = harvestActionExecutor.execute(pos, playerMP);
                 if (!ok) continue;
@@ -353,6 +384,19 @@ public class BaseOperator {
             }
             try {
                 if (!shouldHarvest(pos)) continue;
+
+                // Stop-on-unbreakable: if the player's tool cannot harvest this block,
+                // cancel the entire chain immediately instead of silently skipping it.
+                if (Config.stopOnUnbreakable && playerMP.worldObj != null) {
+                    Block block = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
+                    if (block != null && !block.isAir(playerMP.worldObj, pos.x, pos.y, pos.z)) {
+                        int meta = playerMP.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
+                        if (!block.canHarvestBlock(playerMP, meta)) {
+                            stopRequested = true;
+                            break;
+                        }
+                    }
+                }
 
                 vpBridge.notifyOreDiscovery(playerMP, pos, vpNotifiedChunks);
 

@@ -77,6 +77,20 @@ public class Config {
      * when the chain key is held in Special / Sudoku mode. Minimum: 0.1 s (2 ticks).
      */
     public static double sudokuProbeCooldownSeconds = 5.0;
+    /**
+     * When true, encountering a block that the player's current tool cannot harvest
+     * will immediately stop the entire chain operation (instead of silently skipping
+     * it). This prevents accidental destruction of blocks that require a higher-tier
+     * tool. Default: false (skip unharvestable blocks).
+     */
+    public static boolean stopOnUnbreakable = false;
+    /**
+     * Cooldown in ticks between successive uses of the chain mining feature.
+     * 0 = no cooldown (default). 20 ticks = 1 second.
+     * When non-zero, the player cannot start a new chain until the cooldown expires.
+     * Creative-mode players are exempt from the cooldown.
+     */
+    public static int chainCooldownTicks = 0;
 
     /**
      * Number of background worker threads used for parallel block search during chain
@@ -406,6 +420,23 @@ public class Config {
                 0.1,
                 3600.0)
             .getDouble();
+        stopOnUnbreakable = serverConfiguration.getBoolean(
+            "stopOnUnbreakable",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "When true, encountering a block that cannot be harvested with the current tool "
+                + "will immediately stop the entire chain operation instead of silently skipping it. "
+                + "Default: false.");
+        chainCooldownTicks = serverConfiguration.getInt(
+            "chainCooldownTicks",
+            Configuration.CATEGORY_GENERAL,
+            0,
+            0,
+            Integer.MAX_VALUE,
+            "Cooldown in ticks between successive uses of the chain mining feature. "
+                + "0 = no cooldown. 20 ticks = 1 second. "
+                + "Creative-mode players are exempt from the cooldown. "
+                + "Default: 0.");
         enableUnlimitedOreFortune = serverConfiguration.getBoolean(
             "enableUnlimitedOreFortune",
             Configuration.CATEGORY_GENERAL,
@@ -704,6 +735,10 @@ public class Config {
             .set(minesweeperProbeCooldownSeconds);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "sudokuProbeCooldownSeconds", 5.0)
             .set(sudokuProbeCooldownSeconds);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "stopOnUnbreakable", false)
+            .set(stopOnUnbreakable);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "chainCooldownTicks", 0)
+            .set(chainCooldownTicks);
         serverConfiguration.save();
     }
 

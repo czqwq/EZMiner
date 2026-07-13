@@ -44,6 +44,8 @@ public class PacketSaveServerConfig implements IMessage {
     public boolean crazyMode;
     public int chainIdleTimeoutSeconds;
     public int chainIdleCountdownSeconds;
+    public boolean stopOnUnbreakable;
+    public int chainCooldownTicks;
 
     public PacketSaveServerConfig() {}
 
@@ -52,7 +54,8 @@ public class PacketSaveServerConfig implements IMessage {
         boolean serverUsePreview, int serverMaxPreviewBigRadius, int serverMaxPreviewBlockLimit,
         double minesweeperProbeCooldownSeconds, double sudokuProbeCooldownSeconds, boolean enableCachedChain,
         int searchWorkerThreads, boolean suppressHodgepodgeWarnings, boolean enableChainChunkLoading,
-        boolean useChunkCachedHarvest, boolean crazyMode, int chainIdleTimeoutSeconds, int chainIdleCountdownSeconds) {
+        boolean useChunkCachedHarvest, boolean crazyMode, int chainIdleTimeoutSeconds, int chainIdleCountdownSeconds,
+        boolean stopOnUnbreakable, int chainCooldownTicks) {
         this.bigRadius = bigRadius;
         this.blockLimit = blockLimit;
         this.smallRadius = smallRadius;
@@ -75,6 +78,8 @@ public class PacketSaveServerConfig implements IMessage {
         this.crazyMode = crazyMode;
         this.chainIdleTimeoutSeconds = chainIdleTimeoutSeconds;
         this.chainIdleCountdownSeconds = chainIdleCountdownSeconds;
+        this.stopOnUnbreakable = stopOnUnbreakable;
+        this.chainCooldownTicks = chainCooldownTicks;
     }
 
     @Override
@@ -101,6 +106,8 @@ public class PacketSaveServerConfig implements IMessage {
         crazyMode = buf.readBoolean();
         chainIdleTimeoutSeconds = buf.readInt();
         chainIdleCountdownSeconds = buf.readInt();
+        stopOnUnbreakable = buf.readBoolean();
+        chainCooldownTicks = buf.readInt();
     }
 
     @Override
@@ -127,6 +134,8 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeBoolean(crazyMode);
         buf.writeInt(chainIdleTimeoutSeconds);
         buf.writeInt(chainIdleCountdownSeconds);
+        buf.writeBoolean(stopOnUnbreakable);
+        buf.writeInt(chainCooldownTicks);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -162,6 +171,8 @@ public class PacketSaveServerConfig implements IMessage {
                 : Math.max(1, msg.chainIdleTimeoutSeconds);
             Config.chainIdleCountdownSeconds = msg.chainIdleCountdownSeconds <= 0 ? -1
                 : Math.max(1, msg.chainIdleCountdownSeconds);
+            Config.stopOnUnbreakable = msg.stopOnUnbreakable;
+            Config.chainCooldownTicks = Math.max(0, msg.chainCooldownTicks);
 
             // Persist to disk
             Config.saveServerConfig();

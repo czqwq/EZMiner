@@ -57,6 +57,8 @@ ezminer.config.useChunkCachedHarvest=Chunk-Cached Harvest (EXP)\nWrite blocks di
 ezminer.config.crazyMode=Crazy Mode\nOverride per-tick speed to 4096 block\n⚠ May cause server lag on very large veins
 ezminer.config.chainIdleTimeoutSeconds=Idle Timeout (s)
 ezminer.config.chainIdleCountdownSeconds=Idle Countdown (s)
+ezminer.config.stopOnUnbreakable=Stop On Unbreakable\nON: stop chain if block cannot be harvested\nOFF: skip unharvestable blocks (default)
+ezminer.config.chainCooldownTicks=Chain Cooldown (ticks)\n0 = no cooldown\n20 ticks = 1 second
 ezminer.config.minesweeperCooldown=Minesweeper Cooldown (s)
 ezminer.config.sudokuCooldown=Sudoku Cooldown (s)
 ezminer.config.serverPreviewRadius=Server Max Preview Radius

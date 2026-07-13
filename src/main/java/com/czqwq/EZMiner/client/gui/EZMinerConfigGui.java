@@ -53,6 +53,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_SERVER_ENABLE_CHAIN_CHUNK_LOADING = 21;
     private static final int BTN_SERVER_USE_CHUNK_CACHED_HARVEST = 22;
     private static final int BTN_SERVER_CRAZY_MODE = 23;
+    private static final int BTN_SERVER_STOP_ON_UNBREAKABLE = 24;
 
     // ── Layout constants ──────────────────────────────────────────────────────
     private static final int GUI_W = 290;
@@ -122,6 +123,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiTextField tfServerMaxPreviewLimit;
     private GuiTextField tfChainIdleTimeout;
     private GuiTextField tfChainIdleCountdown;
+    private GuiTextField tfChainCooldownTicks;
 
     // ── Toggle button references ──────────────────────────────────────────────
     private GuiButton btnUsePreview;
@@ -141,6 +143,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnServerEnableChainChunkLoading;
     private GuiButton btnServerUseChunkCachedHarvest;
     private GuiButton btnServerCrazyMode;
+    private GuiButton btnServerStopOnUnbreakable;
 
     // ── GuiScreen overrides ───────────────────────────────────────────────────
 
@@ -346,6 +349,14 @@ public class EZMinerConfigGui extends GuiScreen {
                 boolValue(Config.crazyMode));
             buttonList.add(btnServerCrazyMode);
 
+            btnServerStopOnUnbreakable = newOptionButton(
+                BTN_SERVER_STOP_ON_UNBREAKABLE,
+                23,
+                "ezminer.config.stopOnUnbreakable",
+                boolLabel("ezminer.config.stopOnUnbreakable", Config.stopOnUnbreakable),
+                boolValue(Config.stopOnUnbreakable));
+            buttonList.add(btnServerStopOnUnbreakable);
+
             // Fixed: server action buttons
             buttonList.add(
                 new GuiButton(
@@ -547,6 +558,12 @@ public class EZMinerConfigGui extends GuiScreen {
                 Config.crazyMode = !Config.crazyMode;
                 btnServerCrazyMode.displayString = boolDisplayText("ezminer.config.crazyMode", Config.crazyMode);
                 break;
+            case BTN_SERVER_STOP_ON_UNBREAKABLE:
+                Config.stopOnUnbreakable = !Config.stopOnUnbreakable;
+                btnServerStopOnUnbreakable.displayString = boolDisplayText(
+                    "ezminer.config.stopOnUnbreakable",
+                    Config.stopOnUnbreakable);
+                break;
 
             case BTN_SERVER_RELOAD:
                 EZMiner.network.network.sendToServer(new PacketReloadServerConfig());
@@ -587,6 +604,7 @@ public class EZMinerConfigGui extends GuiScreen {
             tfServerMaxPreviewLimit.mouseClicked(x, y, mouseButton);
             tfChainIdleTimeout.mouseClicked(x, y, mouseButton);
             tfChainIdleCountdown.mouseClicked(x, y, mouseButton);
+            tfChainCooldownTicks.mouseClicked(x, y, mouseButton);
         }
     }
 
@@ -618,6 +636,7 @@ public class EZMinerConfigGui extends GuiScreen {
             tfServerMaxPreviewLimit.textboxKeyTyped(typedChar, keyCode);
             tfChainIdleTimeout.textboxKeyTyped(typedChar, keyCode);
             tfChainIdleCountdown.textboxKeyTyped(typedChar, keyCode);
+            tfChainCooldownTicks.textboxKeyTyped(typedChar, keyCode);
         }
     }
 
@@ -730,6 +749,10 @@ public class EZMinerConfigGui extends GuiScreen {
                     return "ezminer.config.chainIdleTimeoutSeconds";
                 case 21:
                     return "ezminer.config.chainIdleCountdownSeconds";
+                case 22:
+                    return "ezminer.config.chainCooldownTicks";
+                case 23:
+                    return "ezminer.config.stopOnUnbreakable";
                 default:
                     return null;
             }
@@ -820,7 +843,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
     /** Recalculates totalContentH based on active tab row count and multi-line labels. */
     private void recalcTotalContentH() {
-        int rows = (activeTab == TAB_CLIENT) ? MAX_CONTENT_ROWS : 22;
+        int rows = (activeTab == TAB_CLIENT) ? MAX_CONTENT_ROWS : 24;
         int total = TOP_PAD;
         for (int i = 0; i < rows; i++) {
             total += getRowHeight(i);
@@ -874,6 +897,7 @@ public class EZMinerConfigGui extends GuiScreen {
             tfServerMaxPreviewLimit.yPosition = getControlY(11);
             tfChainIdleTimeout.yPosition = getControlY(20);
             tfChainIdleCountdown.yPosition = getControlY(21);
+            tfChainCooldownTicks.yPosition = getControlY(22);
 
             setScrolledButtonY(BTN_SERVER_DROP_TO_PLAYER, getControlY(12));
             setScrolledButtonY(BTN_SERVER_DROP_IMMEDIATELY, getControlY(13));
@@ -883,6 +907,7 @@ public class EZMinerConfigGui extends GuiScreen {
             setScrolledButtonY(BTN_SERVER_ENABLE_CHAIN_CHUNK_LOADING, getControlY(17));
             setScrolledButtonY(BTN_SERVER_USE_CHUNK_CACHED_HARVEST, getControlY(18));
             setScrolledButtonY(BTN_SERVER_CRAZY_MODE, getControlY(19));
+            setScrolledButtonY(BTN_SERVER_STOP_ON_UNBREAKABLE, getControlY(23));
         }
 
         // Update per-button visibility: hide when scrolled out of viewport.
@@ -928,6 +953,7 @@ public class EZMinerConfigGui extends GuiScreen {
         tfServerMaxPreviewLimit = field(fx, contentRowScreenY(11), String.valueOf(Config.serverMaxPreviewBlockLimit));
         tfChainIdleTimeout = field(fx, contentRowScreenY(20), String.valueOf(Config.chainIdleTimeoutSeconds));
         tfChainIdleCountdown = field(fx, contentRowScreenY(21), String.valueOf(Config.chainIdleCountdownSeconds));
+        tfChainCooldownTicks = field(fx, contentRowScreenY(22), String.valueOf(Config.chainCooldownTicks));
     }
 
     private GuiTextField field(int x, int y, String initialText) {
@@ -1024,6 +1050,8 @@ public class EZMinerConfigGui extends GuiScreen {
         drawButtonRowLabel(lx, contentRowScreenY(19), lc, "ezminer.config.crazyMode");
         drawRow(lx, contentRowScreenY(20), lc, "ezminer.config.chainIdleTimeoutSeconds", tfChainIdleTimeout);
         drawRow(lx, contentRowScreenY(21), lc, "ezminer.config.chainIdleCountdownSeconds", tfChainIdleCountdown);
+        drawRow(lx, contentRowScreenY(22), lc, "ezminer.config.chainCooldownTicks", tfChainCooldownTicks);
+        drawButtonRowLabel(lx, contentRowScreenY(23), lc, "ezminer.config.stopOnUnbreakable");
 
     }
 
@@ -1097,7 +1125,8 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_SERVER_SUPPRESS_HODGEPODGE_WARNINGS
                 || btn.id == BTN_SERVER_ENABLE_CHAIN_CHUNK_LOADING
                 || btn.id == BTN_SERVER_USE_CHUNK_CACHED_HARVEST
-                || btn.id == BTN_SERVER_CRAZY_MODE;
+                || btn.id == BTN_SERVER_CRAZY_MODE
+                || btn.id == BTN_SERVER_STOP_ON_UNBREAKABLE;
             boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;
 
             if (isClientContent || isClientAction) {
@@ -1160,7 +1189,9 @@ public class EZMinerConfigGui extends GuiScreen {
                 Config.useChunkCachedHarvest,
                 Config.crazyMode,
                 parseI(tfChainIdleTimeout, Config.chainIdleTimeoutSeconds, -1),
-                parseI(tfChainIdleCountdown, Config.chainIdleCountdownSeconds, -1)));
+                parseI(tfChainIdleCountdown, Config.chainIdleCountdownSeconds, -1),
+                Config.stopOnUnbreakable,
+                parseI(tfChainCooldownTicks, Config.chainCooldownTicks, 0)));
     }
 
     // ── GL scissor helper ─────────────────────────────────────────────────────

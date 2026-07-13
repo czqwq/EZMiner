@@ -6,6 +6,7 @@ import java.util.UUID;
 import net.minecraft.entity.player.EntityPlayerMP;
 
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.execution.CooldownTracker;
 import com.czqwq.EZMiner.core.Manager;
 
 /**
@@ -19,6 +20,7 @@ public class ChainLifecycleService {
 
     public void onPlayerLogout(UUID playerUUID, Map<UUID, Manager> managers) {
         EZMiner.chainStateService.onPlayerLogout(playerUUID);
+        CooldownTracker.clear(playerUUID);
         Manager mgr = managers.remove(playerUUID);
         if (mgr != null) {
             stopRuntime(mgr);
