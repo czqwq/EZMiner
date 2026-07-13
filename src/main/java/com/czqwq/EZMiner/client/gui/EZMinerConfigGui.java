@@ -54,6 +54,8 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_SERVER_USE_CHUNK_CACHED_HARVEST = 22;
     private static final int BTN_SERVER_CRAZY_MODE = 23;
     private static final int BTN_SERVER_STOP_ON_UNBREAKABLE = 24;
+    private static final int BTN_SERVER_XP_DROP_MODE = 25;
+    private static final int BTN_SERVER_MERGE_XP_ORBS = 26;
 
     // ── Layout constants ──────────────────────────────────────────────────────
     private static final int GUI_W = 290;
@@ -144,6 +146,8 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnServerUseChunkCachedHarvest;
     private GuiButton btnServerCrazyMode;
     private GuiButton btnServerStopOnUnbreakable;
+    private GuiButton btnServerXPDropMode;
+    private GuiButton btnServerMergeXPOrbs;
 
     // ── GuiScreen overrides ───────────────────────────────────────────────────
 
@@ -357,6 +361,22 @@ public class EZMinerConfigGui extends GuiScreen {
                 boolValue(Config.stopOnUnbreakable));
             buttonList.add(btnServerStopOnUnbreakable);
 
+            btnServerXPDropMode = newOptionButton(
+                BTN_SERVER_XP_DROP_MODE,
+                24,
+                "ezminer.config.xpDropMode",
+                xpDropModeLabel(),
+                xpDropModeValue());
+            buttonList.add(btnServerXPDropMode);
+
+            btnServerMergeXPOrbs = newOptionButton(
+                BTN_SERVER_MERGE_XP_ORBS,
+                25,
+                "ezminer.config.mergeXPOrbs",
+                boolLabel("ezminer.config.mergeXPOrbs", Config.mergeXPOrbs),
+                boolValue(Config.mergeXPOrbs));
+            buttonList.add(btnServerMergeXPOrbs);
+
             // Fixed: server action buttons
             buttonList.add(
                 new GuiButton(
@@ -564,6 +584,14 @@ public class EZMinerConfigGui extends GuiScreen {
                     "ezminer.config.stopOnUnbreakable",
                     Config.stopOnUnbreakable);
                 break;
+            case BTN_SERVER_XP_DROP_MODE:
+                Config.xpDropMode = 1 - Config.xpDropMode;
+                btnServerXPDropMode.displayString = xpDropModeDisplayText();
+                break;
+            case BTN_SERVER_MERGE_XP_ORBS:
+                Config.mergeXPOrbs = !Config.mergeXPOrbs;
+                btnServerMergeXPOrbs.displayString = boolDisplayText("ezminer.config.mergeXPOrbs", Config.mergeXPOrbs);
+                break;
 
             case BTN_SERVER_RELOAD:
                 EZMiner.network.network.sendToServer(new PacketReloadServerConfig());
@@ -753,6 +781,10 @@ public class EZMinerConfigGui extends GuiScreen {
                     return "ezminer.config.chainCooldownTicks";
                 case 23:
                     return "ezminer.config.stopOnUnbreakable";
+                case 24:
+                    return "ezminer.config.xpDropMode";
+                case 25:
+                    return "ezminer.config.mergeXPOrbs";
                 default:
                     return null;
             }
@@ -843,7 +875,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
     /** Recalculates totalContentH based on active tab row count and multi-line labels. */
     private void recalcTotalContentH() {
-        int rows = (activeTab == TAB_CLIENT) ? MAX_CONTENT_ROWS : 24;
+        int rows = (activeTab == TAB_CLIENT) ? MAX_CONTENT_ROWS : 26;
         int total = TOP_PAD;
         for (int i = 0; i < rows; i++) {
             total += getRowHeight(i);
@@ -908,6 +940,8 @@ public class EZMinerConfigGui extends GuiScreen {
             setScrolledButtonY(BTN_SERVER_USE_CHUNK_CACHED_HARVEST, getControlY(18));
             setScrolledButtonY(BTN_SERVER_CRAZY_MODE, getControlY(19));
             setScrolledButtonY(BTN_SERVER_STOP_ON_UNBREAKABLE, getControlY(23));
+            setScrolledButtonY(BTN_SERVER_XP_DROP_MODE, getControlY(24));
+            setScrolledButtonY(BTN_SERVER_MERGE_XP_ORBS, getControlY(25));
         }
 
         // Update per-button visibility: hide when scrolled out of viewport.
@@ -1070,6 +1104,8 @@ public class EZMinerConfigGui extends GuiScreen {
         drawRow(lx, contentRowScreenY(21), lc, "ezminer.config.chainIdleCountdownSeconds", tfChainIdleCountdown);
         drawRow(lx, contentRowScreenY(22), lc, "ezminer.config.chainCooldownTicks", tfChainCooldownTicks);
         drawButtonRowLabel(lx, contentRowScreenY(23), lc, "ezminer.config.stopOnUnbreakable");
+        drawButtonRowLabel(lx, contentRowScreenY(24), lc, "ezminer.config.xpDropMode");
+        drawButtonRowLabel(lx, contentRowScreenY(25), lc, "ezminer.config.mergeXPOrbs");
 
     }
 
@@ -1144,7 +1180,9 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_SERVER_ENABLE_CHAIN_CHUNK_LOADING
                 || btn.id == BTN_SERVER_USE_CHUNK_CACHED_HARVEST
                 || btn.id == BTN_SERVER_CRAZY_MODE
-                || btn.id == BTN_SERVER_STOP_ON_UNBREAKABLE;
+                || btn.id == BTN_SERVER_STOP_ON_UNBREAKABLE
+                || btn.id == BTN_SERVER_XP_DROP_MODE
+                || btn.id == BTN_SERVER_MERGE_XP_ORBS;
             boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;
 
             if (isClientContent || isClientAction) {
@@ -1218,7 +1256,9 @@ public class EZMinerConfigGui extends GuiScreen {
                 parseI(tfChainIdleTimeout, Config.chainIdleTimeoutSeconds, -1),
                 parseI(tfChainIdleCountdown, Config.chainIdleCountdownSeconds, -1),
                 Config.stopOnUnbreakable,
-                parseI(tfChainCooldownTicks, Config.chainCooldownTicks, 0)));
+                parseI(tfChainCooldownTicks, Config.chainCooldownTicks, 0),
+                Config.xpDropMode,
+                Config.mergeXPOrbs));
     }
 
     // ── GL scissor helper ─────────────────────────────────────────────────────
@@ -1296,6 +1336,21 @@ public class EZMinerConfigGui extends GuiScreen {
         String style = Config.renderStyle == 0 ? I18n.format("ezminer.config.renderStyle.native")
             : I18n.format("ezminer.config.renderStyle.modern");
         return firstLine(I18n.format("ezminer.config.renderStyle")) + ": §e" + style + "§r";
+    }
+
+    private String xpDropModeLabel() {
+        return firstLine(I18n.format("ezminer.config.xpDropMode")) + ": "
+            + (Config.xpDropMode == 0 ? I18n.format("ezminer.config.xpDropMode.immediate")
+                : I18n.format("ezminer.config.xpDropMode.delayed"));
+    }
+
+    private String xpDropModeValue() {
+        return Config.xpDropMode == 0 ? I18n.format("ezminer.config.xpDropMode.immediate")
+            : I18n.format("ezminer.config.xpDropMode.delayed");
+    }
+
+    private String xpDropModeDisplayText() {
+        return isMultiLineLabel("ezminer.config.xpDropMode") ? xpDropModeValue() : xpDropModeLabel();
     }
 
     private static String smartToolSwitchActivationModeLabel() {

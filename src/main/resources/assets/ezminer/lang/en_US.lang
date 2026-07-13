@@ -128,3 +128,8 @@ ezminer.hud.time.millisecond=ms
 
 ezminer.smartToolSwitch.tempDisabled=§7[EZMiner] Smart Tool Switch suppressed§7 — Shift+click air to resume§r
 ezminer.smartToolSwitch.tempReEnabled=§a[EZMiner] Smart Tool Switch resumed§r
+
+ezminer.config.xpDropMode=XP Drop Mode\nImmediate: XP orbs drop per block\nDelayed: only dropped when chain ends
+ezminer.config.xpDropMode.immediate=Immediate
+ezminer.config.xpDropMode.delayed=Delayed
+ezminer.config.mergeXPOrbs=Merge XP Orbs\nON: merge all XP into one large orb at chain end\nOFF: spawn individual per-block orbs\nOnly applies when XP Drop Mode is Delayed

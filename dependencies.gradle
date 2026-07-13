@@ -28,6 +28,7 @@ dependencies {
     runtimeOnlyNonPublishable rfg.deobf(files("libs/extrautilities-1.2.12.jar"))
     runtimeOnlyNonPublishable(gtnhDev("StructureLib"))
     runtimeOnlyNonPublishable(gtnhDev("ServerUtilities"))
+    runtimeOnlyNonPublishable(gtnhDev("TinkersConstruct"))
     runtimeOnlyNonPublishable(gtnhDev("BlockRenderer6343")) { transitive = false }
 
     compileOnly('com.github.GTNewHorizons:CropsNH:2.0.54:dev') { transitive = false }

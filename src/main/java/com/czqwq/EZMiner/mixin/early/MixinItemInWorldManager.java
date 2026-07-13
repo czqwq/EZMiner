@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 
+import com.czqwq.EZMiner.chain.execution.XPDropHandler;
 import com.czqwq.EZMiner.mixin.interfaces.IEZMinerItemInWorldManager;
 
 /**
@@ -82,8 +83,13 @@ public abstract class MixinItemInWorldManager implements IEZMinerItemInWorldMana
 
         // ── XP ──
         if (removed) {
-            int exp = preFiredEvent != null ? preFiredEvent.getExpToDrop() : 0;
-            block.dropXpOnBlockBreak(theWorld, x, y, z, exp);
+            int exp;
+            if (preFiredEvent != null) {
+                exp = preFiredEvent.getExpToDrop();
+            } else {
+                exp = XPDropHandler.computeBlockXP(block, theWorld, meta, thisPlayerMP);
+            }
+            XPDropHandler.handlePreComputedXP(theWorld, block, x, y, z, exp, thisPlayerMP);
         }
 
         return removed;

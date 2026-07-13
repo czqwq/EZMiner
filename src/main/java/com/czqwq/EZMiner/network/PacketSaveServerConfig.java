@@ -46,6 +46,8 @@ public class PacketSaveServerConfig implements IMessage {
     public int chainIdleCountdownSeconds;
     public boolean stopOnUnbreakable;
     public int chainCooldownTicks;
+    public int xpDropMode;
+    public boolean mergeXPOrbs;
 
     public PacketSaveServerConfig() {}
 
@@ -55,7 +57,7 @@ public class PacketSaveServerConfig implements IMessage {
         double minesweeperProbeCooldownSeconds, double sudokuProbeCooldownSeconds, boolean enableCachedChain,
         int searchWorkerThreads, boolean suppressHodgepodgeWarnings, boolean enableChainChunkLoading,
         boolean useChunkCachedHarvest, boolean crazyMode, int chainIdleTimeoutSeconds, int chainIdleCountdownSeconds,
-        boolean stopOnUnbreakable, int chainCooldownTicks) {
+        boolean stopOnUnbreakable, int chainCooldownTicks, int xpDropMode, boolean mergeXPOrbs) {
         this.bigRadius = bigRadius;
         this.blockLimit = blockLimit;
         this.smallRadius = smallRadius;
@@ -80,6 +82,46 @@ public class PacketSaveServerConfig implements IMessage {
         this.chainIdleCountdownSeconds = chainIdleCountdownSeconds;
         this.stopOnUnbreakable = stopOnUnbreakable;
         this.chainCooldownTicks = chainCooldownTicks;
+        this.xpDropMode = xpDropMode;
+        this.mergeXPOrbs = mergeXPOrbs;
+    }
+
+    // Keep the old constructor for binary compatibility (not used but prevents
+    // NoSuchMethodError if any external caller was compiled against the old signature).
+    public PacketSaveServerConfig(int bigRadius, int blockLimit, int smallRadius, int tunnelWidth, int breakPerTick,
+        int cachedBreakPerTick, boolean dropImmediately, double addExhaustion, boolean dropToPlayer,
+        boolean serverUsePreview, int serverMaxPreviewBigRadius, int serverMaxPreviewBlockLimit,
+        double minesweeperProbeCooldownSeconds, double sudokuProbeCooldownSeconds, boolean enableCachedChain,
+        int searchWorkerThreads, boolean suppressHodgepodgeWarnings, boolean enableChainChunkLoading,
+        boolean useChunkCachedHarvest, boolean crazyMode, int chainIdleTimeoutSeconds, int chainIdleCountdownSeconds,
+        boolean stopOnUnbreakable, int chainCooldownTicks) {
+        this(
+            bigRadius,
+            blockLimit,
+            smallRadius,
+            tunnelWidth,
+            breakPerTick,
+            cachedBreakPerTick,
+            dropImmediately,
+            addExhaustion,
+            dropToPlayer,
+            serverUsePreview,
+            serverMaxPreviewBigRadius,
+            serverMaxPreviewBlockLimit,
+            minesweeperProbeCooldownSeconds,
+            sudokuProbeCooldownSeconds,
+            enableCachedChain,
+            searchWorkerThreads,
+            suppressHodgepodgeWarnings,
+            enableChainChunkLoading,
+            useChunkCachedHarvest,
+            crazyMode,
+            chainIdleTimeoutSeconds,
+            chainIdleCountdownSeconds,
+            stopOnUnbreakable,
+            chainCooldownTicks,
+            1,
+            true);
     }
 
     @Override
@@ -108,6 +150,8 @@ public class PacketSaveServerConfig implements IMessage {
         chainIdleCountdownSeconds = buf.readInt();
         stopOnUnbreakable = buf.readBoolean();
         chainCooldownTicks = buf.readInt();
+        xpDropMode = buf.readInt();
+        mergeXPOrbs = buf.readBoolean();
     }
 
     @Override
@@ -136,6 +180,8 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeInt(chainIdleCountdownSeconds);
         buf.writeBoolean(stopOnUnbreakable);
         buf.writeInt(chainCooldownTicks);
+        buf.writeInt(xpDropMode);
+        buf.writeBoolean(mergeXPOrbs);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -173,6 +219,8 @@ public class PacketSaveServerConfig implements IMessage {
                 : Math.max(1, msg.chainIdleCountdownSeconds);
             Config.stopOnUnbreakable = msg.stopOnUnbreakable;
             Config.chainCooldownTicks = Math.max(0, msg.chainCooldownTicks);
+            Config.xpDropMode = Math.max(0, Math.min(1, msg.xpDropMode));
+            Config.mergeXPOrbs = msg.mergeXPOrbs;
 
             // Persist to disk
             Config.saveServerConfig();

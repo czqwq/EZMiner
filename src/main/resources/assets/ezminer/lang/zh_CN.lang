@@ -128,3 +128,8 @@ ezminer.hud.time.millisecond=毫秒
 
 ezminer.smartToolSwitch.tempDisabled=§7[EZMiner] 智能工具切换已暂时禁用§7 — Shift+左键空气可恢复§r
 ezminer.smartToolSwitch.tempReEnabled=§a[EZMiner] 智能工具切换已恢复§r
+
+ezminer.config.xpDropMode=经验掉落模式\n立即: 每个方块破坏时立即掉落经验\n延迟: 在连锁结束时统一掉落
+ezminer.config.xpDropMode.immediate=立即
+ezminer.config.xpDropMode.delayed=延迟
+ezminer.config.mergeXPOrbs=合并经验球\n开: 连锁结束时所有经验合并为一个大经验球\n关: 连锁结束时掉落每个方块的独立经验球\n仅在经验掉落模式为"延迟"时生效

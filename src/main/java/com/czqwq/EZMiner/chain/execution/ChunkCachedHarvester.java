@@ -144,7 +144,7 @@ public class ChunkCachedHarvester {
 
         // ── XP ──
         if (removed) {
-            block.dropXpOnBlockBreak(world, x, y, z, 0);
+            XPDropHandler.handleBlockXP(world, block, meta, x, y, z, player);
         }
 
         if (removed) {

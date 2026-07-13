@@ -44,6 +44,19 @@ public class Config {
     public static boolean crazyMode = false;
     /** Spawn drops immediately per-block instead of batching at chain end (avoids lag spike). */
     public static boolean dropImmediately = false;
+    /**
+     * XP drop mode for chain mining.
+     * 0 = Immediate — XP orbs spawn per-block as vanilla does.
+     * 1 = Delayed — XP is accumulated and spawned when the chain ends (default).
+     */
+    public static int xpDropMode = 1;
+    /**
+     * When {@code true} (default) and {@link #xpDropMode} is 1 (delayed), all
+     * accumulated XP is merged into a single large XP orb when the chain ends.
+     * When {@code false}, individual per-block XP orbs are spawned at the end.
+     * This option has no effect when {@link #xpDropMode} is 0 (immediate).
+     */
+    public static boolean mergeXPOrbs = true;
     /** Enable cached chain sub-modes (2/3). WIP experimental feature — enable at own risk. */
     public static boolean enableCachedChain = false;
     /**
@@ -324,6 +337,22 @@ public class Config {
             "When true, drops are spawned immediately after each block harvest during a "
                 + "chain, instead of being batched and flushed at the end. "
                 + "Eliminates the end-of-chain lag spike on large veins.");
+        xpDropMode = serverConfiguration.getInt(
+            "xpDropMode",
+            Configuration.CATEGORY_GENERAL,
+            1,
+            0,
+            1,
+            "XP drop mode for chain-mined blocks. " + "0 = Immediate (XP orbs spawn per-block as vanilla does). "
+                + "1 = Delayed (XP is collected and spawned when the chain ends, default).");
+        mergeXPOrbs = serverConfiguration.getBoolean(
+            "mergeXPOrbs",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "When true (default) and xpDropMode is 1 (delayed), all accumulated XP is "
+                + "merged into a single large XP orb when the chain ends. "
+                + "When false, individual per-block XP orbs are spawned. "
+                + "Has no effect when xpDropMode is 0 (immediate).");
         enableCachedChain = serverConfiguration.getBoolean(
             "enableCachedChain",
             Configuration.CATEGORY_GENERAL,
@@ -710,6 +739,10 @@ public class Config {
             .set(crazyMode);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "dropImmediately", false)
             .set(dropImmediately);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "xpDropMode", 1)
+            .set(xpDropMode);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "mergeXPOrbs", true)
+            .set(mergeXPOrbs);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableCachedChain", false)
             .set(enableCachedChain);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "searchWorkerThreads", 3)

@@ -19,6 +19,7 @@ import com.czqwq.EZMiner.chain.execution.ChainDropCollector;
 import com.czqwq.EZMiner.chain.execution.CooldownTracker;
 import com.czqwq.EZMiner.chain.execution.MinesweeperModeHandler;
 import com.czqwq.EZMiner.chain.execution.SudokuModeHandler;
+import com.czqwq.EZMiner.chain.execution.XPDropHandler;
 import com.czqwq.EZMiner.chain.planning.ChainPreCalcCache;
 import com.czqwq.EZMiner.chain.planning.ChainPreCalcCache.CachedEntry;
 import com.czqwq.EZMiner.chain.planning.ChainPreCalcEngine;
@@ -199,9 +200,12 @@ public class Manager {
     }
 
     public void flushDrops() {
-        if (dropCollector.isEmpty()) return;
+        boolean hasItems = !dropCollector.isEmpty();
+        boolean hasXP = XPDropHandler.hasAccumulatedXP(player);
+        if (!hasItems && !hasXP) return;
         if (player == null || player.worldObj == null) {
             dropCollector.clear();
+            XPDropHandler.clear(player);
             return;
         }
         // dropToPlayer=true → spawn at the player's current feet position (default)
@@ -216,12 +220,18 @@ public class Manager {
             spawnY = originPos.y + 0.5;
             spawnZ = originPos.z + 0.5;
         }
-        dropCollector.flush(player.worldObj, spawnX, spawnY, spawnZ);
+        if (hasItems) {
+            dropCollector.flush(player.worldObj, spawnX, spawnY, spawnZ);
+        }
+        if (hasXP) {
+            XPDropHandler.flush(player.worldObj, player, spawnX, spawnY, spawnZ, Config.mergeXPOrbs);
+        }
     }
 
     /** Clears all accumulated drops from the drop collector. */
     public void clearDrops() {
         dropCollector.clear();
+        XPDropHandler.clear(player);
     }
 
     // ===== Lifecycle =====
@@ -253,6 +263,7 @@ public class Manager {
         state.runtimeState.lastErrorCode = "";
         minesweeperHandler.reset();
         sudokuHandler.reset();
+        XPDropHandler.clear(player);
         EZMiner.chainStateService.markSessionStop(playerUUID);
         activeSession = null;
     }
