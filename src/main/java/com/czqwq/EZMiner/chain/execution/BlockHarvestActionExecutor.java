@@ -10,6 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import net.minecraftforge.event.world.BlockEvent;
 
 import org.joml.Vector3i;
 
@@ -58,11 +59,12 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
             return player.theItemInWorldManager.tryHarvestBlock(x, y, z);
         }
 
-        // Fast path: skip BreakEvent, playAuxSFX, excess getBlock calls, and
-        // neighbor notifications (setBlock flag=2 instead of flag=3).
+        BlockEvent.BreakEvent event = FastHarvestPrecheck.run(world, player, x, y, z);
+        if (event == null) return false;
+
         IEZMinerItemInWorldManager fastMgr = (IEZMinerItemInWorldManager) player.theItemInWorldManager;
         boolean canHarvest = block.canHarvestBlock(player, meta);
-        return fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, null);
+        return fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, event);
     }
 
     /**
@@ -112,6 +114,9 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
                     continue;
                 }
 
+                BlockEvent.BreakEvent event = FastHarvestPrecheck.run(world, player, x, y, z);
+                if (event == null) continue;
+
                 boolean canHarvest = block.canHarvestBlock(player, meta);
 
                 // ── Tool damage (survival only) ──
@@ -146,7 +151,7 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
 
                 // ── XP ──
                 if (removed) {
-                    XPDropHandler.handleBlockXP(world, block, meta, x, y, z, player);
+                    XPDropHandler.handlePreComputedXP(world, block, x, y, z, event.getExpToDrop(), player);
                 }
 
                 if (removed) {
@@ -176,8 +181,11 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
             return player.theItemInWorldManager.tryHarvestBlock(x, y, z);
         }
 
+        BlockEvent.BreakEvent event = FastHarvestPrecheck.run(world, player, x, y, z);
+        if (event == null) return false;
+
         IEZMinerItemInWorldManager fastMgr = (IEZMinerItemInWorldManager) player.theItemInWorldManager;
         boolean canHarvest = block.canHarvestBlock(player, meta);
-        return fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, null);
+        return fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, event);
     }
 }

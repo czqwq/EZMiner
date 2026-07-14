@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import net.minecraftforge.event.world.BlockEvent;
 
 import org.joml.Vector3i;
 
@@ -108,6 +109,9 @@ public class ChunkCachedHarvester {
             return ok;
         }
 
+        BlockEvent.BreakEvent event = FastHarvestPrecheck.run(world, player, x, y, z);
+        if (event == null) return false;
+
         boolean canHarvest = block.canHarvestBlock(player, meta);
         boolean isCreative = player.capabilities.isCreativeMode;
 
@@ -144,7 +148,7 @@ public class ChunkCachedHarvester {
 
         // ── XP ──
         if (removed) {
-            XPDropHandler.handleBlockXP(world, block, meta, x, y, z, player);
+            XPDropHandler.handlePreComputedXP(world, block, x, y, z, event.getExpToDrop(), player);
         }
 
         if (removed) {

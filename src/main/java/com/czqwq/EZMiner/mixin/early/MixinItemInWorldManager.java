@@ -16,15 +16,15 @@ import com.czqwq.EZMiner.chain.execution.XPDropHandler;
 import com.czqwq.EZMiner.mixin.interfaces.IEZMinerItemInWorldManager;
 
 /**
- * Adds a fast-harvest path to {@code ItemInWorldManager} that skips per-block
- * {@code BreakEvent}, sound/particle packets, excess world queries, and neighbor
- * notifications during chain mining.
+ * Adds a fast-harvest path to {@code ItemInWorldManager} that skips sound/particle
+ * packets, excess world queries, and neighbor notifications during chain mining.
+ * Callers fire the Forge {@code BreakEvent} first and pass it into this method so
+ * addon semantics and event-provided XP are retained.
  * <p>
- * Hodgepodge compatibility: this mixin targets {@code ItemInWorldManager} which
- * has no Hodgepodge mixins. The skipped {@code ForgeHooks.onBlockBreakEvent}
- * path means Hodgepodge's TE-description batcher (which hooks that method) is
- * also skipped — this is intentional because non-TE blocks do not need
- * description packets.
+ * Hodgepodge compatibility: this mixin targets {@code ItemInWorldManager}, which
+ * has no Hodgepodge mixins. Callers invoke {@code ForgeHooks.onBlockBreakEvent}
+ * before entering this method, so Hodgepodge hooks and other Forge listeners still
+ * observe the canonical break event. Tile-entity blocks remain on the vanilla path.
  */
 @Mixin(ItemInWorldManager.class)
 public abstract class MixinItemInWorldManager implements IEZMinerItemInWorldManager {
@@ -39,15 +39,15 @@ public abstract class MixinItemInWorldManager implements IEZMinerItemInWorldMana
     public abstract boolean isCreative();
 
     /**
-     * Fast block harvest without per-block event firing, sound effects, or neighbor
-     * notifications.
+     * Fast block harvest after the caller has fired the per-block Forge event.
+     * Omits vanilla sound effects and neighbor notifications.
      *
      * @see IEZMinerItemInWorldManager#ezminer$tryHarvestBlockFast(int, int, int, boolean, BlockEvent.BreakEvent)
      */
     @Unique
     @Override
     public boolean ezminer$tryHarvestBlockFast(int x, int y, int z, boolean canHarvest,
-        BlockEvent.BreakEvent preFiredEvent) {
+        BlockEvent.BreakEvent breakEvent) {
         // ── Tool damage (only in survival) ──
         if (!isCreative()) {
             ItemStack stack = thisPlayerMP.getCurrentEquippedItem();
@@ -83,13 +83,7 @@ public abstract class MixinItemInWorldManager implements IEZMinerItemInWorldMana
 
         // ── XP ──
         if (removed) {
-            int exp;
-            if (preFiredEvent != null) {
-                exp = preFiredEvent.getExpToDrop();
-            } else {
-                exp = XPDropHandler.computeBlockXP(block, theWorld, meta, thisPlayerMP);
-            }
-            XPDropHandler.handlePreComputedXP(theWorld, block, x, y, z, exp, thisPlayerMP);
+            XPDropHandler.handlePreComputedXP(theWorld, block, x, y, z, breakEvent.getExpToDrop(), thisPlayerMP);
         }
 
         return removed;
