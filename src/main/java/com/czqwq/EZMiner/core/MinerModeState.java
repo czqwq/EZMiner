@@ -27,6 +27,7 @@ import com.czqwq.EZMiner.Config;
  * 0 = Minesweeper (扫雷模式)
  * 1 = Crop harvest (一键收作物)
  * 2 = Sudoku assistant (数独助手)
+ * 3 = Block swap (方块交换)
  */
 public class MinerModeState {
 
@@ -52,6 +53,7 @@ public class MinerModeState {
     public static final String[] SPECIAL_MODES = { "ezminer.mode.special.minesweeper", // 0
         "ezminer.mode.special.crop", // 1
         "ezminer.mode.special.sudoku", // 2
+        "ezminer.mode.special.blockSwap", // 3
     };
 
     public int mainMode = 1; // default: chain mode
@@ -153,17 +155,26 @@ public class MinerModeState {
     }
 
     // ===== Special sub-mode =====
+    private int visibleSpecialModeCount() {
+        return Config.enableBlockSwapMode ? SPECIAL_MODES.length : 3; // minesweeper(0), crop(1), sudoku(2)
+    }
+
     public String nextSpecialMode() {
-        specialMode = (specialMode + 1) % SPECIAL_MODES.length;
+        int cnt = visibleSpecialModeCount();
+        specialMode = (specialMode + 1) % cnt;
+        if (!Config.enableBlockSwapMode && specialMode >= 3) specialMode = 0;
         return currentSpecialMode();
     }
 
     public String previousSpecialMode() {
-        specialMode = (specialMode - 1 + SPECIAL_MODES.length) % SPECIAL_MODES.length;
+        int cnt = visibleSpecialModeCount();
+        specialMode = (specialMode - 1 + cnt) % cnt;
+        if (!Config.enableBlockSwapMode && specialMode >= 3) specialMode = 0;
         return currentSpecialMode();
     }
 
     public String currentSpecialMode() {
+        if (!Config.enableBlockSwapMode && specialMode >= 3) specialMode = 0;
         return SPECIAL_MODES[specialMode];
     }
 }

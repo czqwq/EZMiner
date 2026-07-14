@@ -92,4 +92,11 @@ public class ClientStateContainer {
     public volatile int cachedPreviewDimension = 0;
     /** Monotonically increasing counter bumped when cached positions are updated. */
     public volatile int cachedPreviewVersion = 0;
+
+    // ── Block swap result state ────────────────────────────────────────────
+
+    /** Number of blocks swapped in the most recent block-swap operation. */
+    public volatile int blockSwapResultCount = 0;
+    /** Timestamp (epoch ms) of the most recent block-swap result packet. */
+    public volatile long blockSwapResultTimestamp = 0L;
 }

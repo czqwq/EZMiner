@@ -57,6 +57,15 @@ public class Config {
      * This option has no effect when {@link #xpDropMode} is 0 (immediate).
      */
     public static boolean mergeXPOrbs = true;
+    // ===== Block Swap settings =====
+    /** Master switch for block swap mode. When false, the mode is hidden from the list. */
+    public static boolean enableBlockSwapMode = false;
+    /** Server-side max block swap radius (blocks). */
+    public static int blockSwapRadius = 8;
+    /** Server-side max blocks that can be swapped in a single operation. */
+    public static int blockSwapLimit = 1024;
+    /** Server-side adjacency detection radius for block swap. */
+    public static int blockSwapAdjacencyRadius = 2;
     /** Enable cached chain sub-modes (2/3). WIP experimental feature — enable at own risk. */
     public static boolean enableCachedChain = false;
     /**
@@ -174,6 +183,12 @@ public class Config {
     public static int clientSmallRadius = 2;
     /** Client preferred tunnel width (capped by server at runtime). */
     public static int clientTunnelWidth = 1;
+    /** Client preferred block swap radius (capped by server at runtime). */
+    public static int clientBlockSwapRadius = 8;
+    /** Client preferred block swap limit (capped by server at runtime). */
+    public static int clientBlockSwapLimit = 1024;
+    /** Client preferred block swap adjacency radius (capped by server at runtime). */
+    public static int clientBlockSwapAdjacencyRadius = 2;
     /**
      * Maximum search radius used by the client-side preview renderer.
      * Independent of the server's {@code bigRadius}: the preview can use a smaller value
@@ -190,6 +205,9 @@ public class Config {
     public static int runtimeServerMaxBlockLimit = Integer.MAX_VALUE;
     public static int runtimeServerMaxSmallRadius = Integer.MAX_VALUE;
     public static int runtimeServerMaxTunnelWidth = Integer.MAX_VALUE;
+    public static int runtimeServerMaxBlockSwapRadius = Integer.MAX_VALUE;
+    public static int runtimeServerMaxBlockSwapLimit = Integer.MAX_VALUE;
+    public static int runtimeServerMaxBlockSwapAdjacencyRadius = Integer.MAX_VALUE;
     public static int runtimeServerMaxPreviewBigRadius = Integer.MAX_VALUE;
     public static int runtimeServerMaxPreviewBlockLimit = Integer.MAX_VALUE;
     public static boolean runtimeServerUsePreview = true;
@@ -258,6 +276,9 @@ public class Config {
                 runtimeServerMaxBlockLimit = blockLimit;
                 runtimeServerMaxSmallRadius = smallRadius;
                 runtimeServerMaxTunnelWidth = tunnelWidth;
+                runtimeServerMaxBlockSwapRadius = blockSwapRadius;
+                runtimeServerMaxBlockSwapLimit = blockSwapLimit;
+                runtimeServerMaxBlockSwapAdjacencyRadius = blockSwapAdjacencyRadius;
                 runtimeServerMaxPreviewBigRadius = serverMaxPreviewBigRadius;
                 runtimeServerMaxPreviewBlockLimit = serverMaxPreviewBlockLimit;
                 runtimeServerUsePreview = serverUsePreview;
@@ -353,6 +374,34 @@ public class Config {
                 + "merged into a single large XP orb when the chain ends. "
                 + "When false, individual per-block XP orbs are spawned. "
                 + "Has no effect when xpDropMode is 0 (immediate).");
+        enableBlockSwapMode = serverConfiguration.getBoolean(
+            "enableBlockSwapMode",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "Master switch for the Block Swap special sub-mode. "
+                + "When false (default), the mode is hidden from the list.");
+        blockSwapRadius = serverConfiguration.getInt(
+            "blockSwapRadius",
+            Configuration.CATEGORY_GENERAL,
+            8,
+            0,
+            Integer.MAX_VALUE,
+            "Maximum radius for block swap mode. Controls how far from the target block " + "the search expands.");
+        blockSwapLimit = serverConfiguration.getInt(
+            "blockSwapLimit",
+            Configuration.CATEGORY_GENERAL,
+            1024,
+            0,
+            Integer.MAX_VALUE,
+            "Maximum number of blocks that can be swapped in a single block-swap operation.");
+        blockSwapAdjacencyRadius = serverConfiguration.getInt(
+            "blockSwapAdjacencyRadius",
+            Configuration.CATEGORY_GENERAL,
+            2,
+            0,
+            Integer.MAX_VALUE,
+            "Adjacency detection radius for block swap mode. Controls how far apart two "
+                + "matching blocks can be and still be considered connected.");
         enableCachedChain = serverConfiguration.getBoolean(
             "enableCachedChain",
             Configuration.CATEGORY_GENERAL,
@@ -513,11 +562,15 @@ public class Config {
 
     public static void applyServerRuntimeLimits(int maxBigRadius, int maxBlockLimit, int maxSmallRadius,
         int maxTunnelWidth, int maxPreviewBigRadius, int maxPreviewBlockLimit, boolean allowPreview,
-        int syncedBreakPerTick) {
+        int syncedBreakPerTick, int maxBlockSwapRadius, int maxBlockSwapLimit, int maxBlockSwapAdjacencyRadius,
+        boolean syncedEnableBlockSwapMode) {
         runtimeServerMaxBigRadius = Math.max(0, maxBigRadius);
         runtimeServerMaxBlockLimit = Math.max(0, maxBlockLimit);
         runtimeServerMaxSmallRadius = Math.max(0, maxSmallRadius);
         runtimeServerMaxTunnelWidth = Math.max(0, maxTunnelWidth);
+        runtimeServerMaxBlockSwapRadius = Math.max(0, maxBlockSwapRadius);
+        runtimeServerMaxBlockSwapLimit = Math.max(0, maxBlockSwapLimit);
+        runtimeServerMaxBlockSwapAdjacencyRadius = Math.max(0, maxBlockSwapAdjacencyRadius);
         runtimeServerMaxPreviewBigRadius = Math.max(0, maxPreviewBigRadius);
         runtimeServerMaxPreviewBlockLimit = Math.max(0, maxPreviewBlockLimit);
         runtimeServerUsePreview = allowPreview;
@@ -526,6 +579,7 @@ public class Config {
         serverMaxPreviewBigRadius = Math.max(0, maxPreviewBigRadius);
         serverMaxPreviewBlockLimit = Math.max(0, maxPreviewBlockLimit);
         serverUsePreview = allowPreview;
+        enableBlockSwapMode = syncedEnableBlockSwapMode;
         clampClientMiningToServerCaps();
         clampClientPreviewToServerCaps();
     }
@@ -597,6 +651,10 @@ public class Config {
         clientBlockLimit = Math.max(0, Math.min(clientBlockLimit, runtimeServerMaxBlockLimit));
         clientSmallRadius = Math.max(0, Math.min(clientSmallRadius, runtimeServerMaxSmallRadius));
         clientTunnelWidth = Math.max(0, Math.min(clientTunnelWidth, runtimeServerMaxTunnelWidth));
+        clientBlockSwapRadius = Math.max(0, Math.min(clientBlockSwapRadius, runtimeServerMaxBlockSwapRadius));
+        clientBlockSwapLimit = Math.max(0, Math.min(clientBlockSwapLimit, runtimeServerMaxBlockSwapLimit));
+        clientBlockSwapAdjacencyRadius = Math
+            .max(0, Math.min(clientBlockSwapAdjacencyRadius, runtimeServerMaxBlockSwapAdjacencyRadius));
     }
 
     public static void clampClientPreviewToServerCaps() {
@@ -662,6 +720,27 @@ public class Config {
             Integer.MAX_VALUE,
             "Maximum number of blocks shown in the client-side block-outline preview. "
                 + "Effective value is clamped by server max preview block limit.");
+        clientBlockSwapRadius = clientConfiguration.getInt(
+            "clientBlockSwapRadius",
+            CLIENT_CATEGORY,
+            8,
+            0,
+            Integer.MAX_VALUE,
+            "Client preferred block swap radius. Effective value is clamped by server max.");
+        clientBlockSwapLimit = clientConfiguration.getInt(
+            "clientBlockSwapLimit",
+            CLIENT_CATEGORY,
+            1024,
+            0,
+            Integer.MAX_VALUE,
+            "Client preferred block swap limit. Effective value is clamped by server max.");
+        clientBlockSwapAdjacencyRadius = clientConfiguration.getInt(
+            "clientBlockSwapAdjacencyRadius",
+            CLIENT_CATEGORY,
+            2,
+            0,
+            Integer.MAX_VALUE,
+            "Client preferred block swap adjacency radius. Effective value is clamped by server max.");
         hudPosX = clientConfiguration.getInt(
             "hudPosX",
             CLIENT_CATEGORY,
@@ -745,6 +824,14 @@ public class Config {
             .set(mergeXPOrbs);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableCachedChain", false)
             .set(enableCachedChain);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableBlockSwapMode", false)
+            .set(enableBlockSwapMode);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "blockSwapRadius", 8)
+            .set(blockSwapRadius);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "blockSwapLimit", 1024)
+            .set(blockSwapLimit);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "blockSwapAdjacencyRadius", 2)
+            .set(blockSwapAdjacencyRadius);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "searchWorkerThreads", 3)
             .set(searchWorkerThreads);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "suppressHodgepodgeWarnings", true)
@@ -797,6 +884,12 @@ public class Config {
             .set(previewBigRadius);
         clientConfiguration.get(CLIENT_CATEGORY, "previewBlockLimit", 256)
             .set(previewBlockLimit);
+        clientConfiguration.get(CLIENT_CATEGORY, "clientBlockSwapRadius", 8)
+            .set(clientBlockSwapRadius);
+        clientConfiguration.get(CLIENT_CATEGORY, "clientBlockSwapLimit", 1024)
+            .set(clientBlockSwapLimit);
+        clientConfiguration.get(CLIENT_CATEGORY, "clientBlockSwapAdjacencyRadius", 2)
+            .set(clientBlockSwapAdjacencyRadius);
         clientConfiguration.get(CLIENT_CATEGORY, "chainActivationMode", 0)
             .set(chainActivationMode);
         clientConfiguration.get(CLIENT_CATEGORY, "suppressIngameInfoHud", false)

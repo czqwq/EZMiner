@@ -48,6 +48,8 @@ public class PacketKeyState implements IMessage {
                         mgr.resendMinesweeperMarks(player);
                     } else if (mgr.isSpecialSudokuMode()) {
                         mgr.resendSudokuFills(player);
+                    } else if (mgr.isBlockSwapMode()) {
+                        // Block swap mode: no persisted state to resend on key press
                     }
                 }
             }

@@ -5,6 +5,7 @@ import java.util.UUID;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
@@ -15,6 +16,7 @@ import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.execution.BlockSwapModeHandler;
 import com.czqwq.EZMiner.chain.execution.ChainDropCollector;
 import com.czqwq.EZMiner.chain.execution.CooldownTracker;
 import com.czqwq.EZMiner.chain.execution.MinesweeperModeHandler;
@@ -80,6 +82,7 @@ public class Manager {
     private final ChainDropCollector dropCollector = new ChainDropCollector();
     private final MinesweeperModeHandler minesweeperHandler = new MinesweeperModeHandler();
     private final SudokuModeHandler sudokuHandler = new SudokuModeHandler();
+    private final BlockSwapModeHandler blockSwapHandler = new BlockSwapModeHandler();
 
     // ── Pre-calculation engine for cached chain sub-modes ──
     //
@@ -111,6 +114,7 @@ public class Manager {
         if (isInOperate() || !isKeyPressed()) return;
         if (isSpecialMinesweeperMode()) return;
         if (isSpecialCropMode()) return;
+        if (isBlockSwapMode()) return;
         // Cooldown check: prevent starting a new chain while cooldown is active
         if (CooldownTracker.isOnCooldown((EntityPlayerMP) event.getPlayer())) return;
         // For cached chain modes, try to use the pre-calculated cache first.
@@ -139,6 +143,56 @@ public class Manager {
         startChain(new Vector3i(event.x, event.y, event.z), (EntityPlayerMP) event.entityPlayer);
         // Explicitly consume the interaction so vanilla/sibling handlers do not
         // perform a second single-crop right-click harvest.
+        event.useBlock = Result.DENY;
+        event.useItem = Result.DENY;
+        event.setCanceled(true);
+    }
+
+    // ── Block swap debounce ──
+    private long lastBlockSwapEncodedPos = Long.MIN_VALUE;
+    private long lastBlockSwapTimeMs = 0L;
+
+    private static long encodeSwapPos(int x, int y, int z) {
+        return ((long) x << 40) | ((long) z << 8) | (long) (y & 0xFF);
+    }
+
+    // Block swap mode: right-click triggers block replacement.
+    // Does NOT require the chain key to be held — the mode itself is the activation
+    // signal. The player right-clicks while in this sub-mode to swap blocks.
+    @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
+    public void onBlockSwapRightClick(PlayerInteractEvent event) {
+        if (isInOperate() || !isKeyPressed()) return;
+        if (!isBlockSwapMode()) return;
+
+        final Vector3i targetPos;
+        if (event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) {
+            if (!isSamePlayer(event.entityPlayer)) return;
+            targetPos = new Vector3i(event.x, event.y, event.z);
+        } else if (event.action == PlayerInteractEvent.Action.RIGHT_CLICK_AIR) {
+            if (!isSamePlayer(event.entityPlayer)) return;
+            if (event.entityPlayer.worldObj == null) return;
+            EntityPlayerMP ep = (EntityPlayerMP) event.entityPlayer;
+            MovingObjectPosition mop = ep.rayTrace(5.0D, 1.0F);
+            if (mop == null || mop.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) return;
+            targetPos = new Vector3i(mop.blockX, mop.blockY, mop.blockZ);
+        } else {
+            return;
+        }
+
+        // Debounce: skip if same position swapped within 150ms
+        long now = System.currentTimeMillis();
+        long encoded = encodeSwapPos(targetPos.x, targetPos.y, targetPos.z);
+        if (encoded == lastBlockSwapEncodedPos && now - lastBlockSwapTimeMs < 150) return;
+        lastBlockSwapEncodedPos = encoded;
+        lastBlockSwapTimeMs = now;
+
+        setInOperate(true);
+        try {
+            blockSwapHandler.handleSwap((EntityPlayerMP) event.entityPlayer, targetPos);
+        } finally {
+            flushDrops();
+            setInOperate(false);
+        }
         event.useBlock = Result.DENY;
         event.useItem = Result.DENY;
         event.setCanceled(true);
@@ -263,6 +317,7 @@ public class Manager {
         state.runtimeState.lastErrorCode = "";
         minesweeperHandler.reset();
         sudokuHandler.reset();
+        blockSwapHandler.reset();
         XPDropHandler.clear(player);
         EZMiner.chainStateService.markSessionStop(playerUUID);
         activeSession = null;
@@ -311,6 +366,10 @@ public class Manager {
 
     public boolean isSpecialSudokuMode() {
         return minerModeState.mainMode == 2 && minerModeState.specialMode == 2;
+    }
+
+    public boolean isBlockSwapMode() {
+        return Config.enableBlockSwapMode && minerModeState.mainMode == 2 && minerModeState.specialMode == 3;
     }
 
     // ── Cached chain sub-mode helpers ──

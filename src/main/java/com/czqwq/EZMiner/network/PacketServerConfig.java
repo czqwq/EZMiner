@@ -25,13 +25,18 @@ public class PacketServerConfig implements IMessage {
     public int maxPreviewBlockLimit;
     public boolean allowPreview;
     public int breakPerTick;
+    public int maxBlockSwapRadius;
+    public int maxBlockSwapLimit;
+    public int maxBlockSwapAdjacencyRadius;
+    public boolean enableBlockSwapMode;
     /** Whether the receiving client has OP permission on this server. Used to show/hide server config tab in GUI. */
     public boolean isOp;
 
     public PacketServerConfig() {}
 
     public PacketServerConfig(int maxBigRadius, int maxBlockLimit, int maxSmallRadius, int maxTunnelWidth,
-        int maxPreviewBigRadius, int maxPreviewBlockLimit, boolean allowPreview, int breakPerTick, boolean isOp) {
+        int maxPreviewBigRadius, int maxPreviewBlockLimit, boolean allowPreview, int breakPerTick, boolean isOp,
+        int maxBlockSwapRadius, int maxBlockSwapLimit, int maxBlockSwapAdjacencyRadius, boolean enableBlockSwapMode) {
         this.maxBigRadius = maxBigRadius;
         this.maxBlockLimit = maxBlockLimit;
         this.maxSmallRadius = maxSmallRadius;
@@ -41,6 +46,10 @@ public class PacketServerConfig implements IMessage {
         this.allowPreview = allowPreview;
         this.breakPerTick = breakPerTick;
         this.isOp = isOp;
+        this.maxBlockSwapRadius = maxBlockSwapRadius;
+        this.maxBlockSwapLimit = maxBlockSwapLimit;
+        this.maxBlockSwapAdjacencyRadius = maxBlockSwapAdjacencyRadius;
+        this.enableBlockSwapMode = enableBlockSwapMode;
     }
 
     @Override
@@ -54,6 +63,10 @@ public class PacketServerConfig implements IMessage {
         allowPreview = buf.readBoolean();
         breakPerTick = buf.readInt();
         isOp = buf.readBoolean();
+        maxBlockSwapRadius = buf.readInt();
+        maxBlockSwapLimit = buf.readInt();
+        maxBlockSwapAdjacencyRadius = buf.readInt();
+        enableBlockSwapMode = buf.readBoolean();
     }
 
     @Override
@@ -67,6 +80,10 @@ public class PacketServerConfig implements IMessage {
         buf.writeBoolean(allowPreview);
         buf.writeInt(breakPerTick);
         buf.writeBoolean(isOp);
+        buf.writeInt(maxBlockSwapRadius);
+        buf.writeInt(maxBlockSwapLimit);
+        buf.writeInt(maxBlockSwapAdjacencyRadius);
+        buf.writeBoolean(enableBlockSwapMode);
     }
 
     /**
@@ -83,7 +100,11 @@ public class PacketServerConfig implements IMessage {
             Config.serverMaxPreviewBlockLimit,
             Config.serverUsePreview,
             Config.breakPerTick,
-            player.canCommandSenderUseCommand(2, "EZMiner"));
+            player.canCommandSenderUseCommand(2, "EZMiner"),
+            Config.blockSwapRadius,
+            Config.blockSwapLimit,
+            Config.blockSwapAdjacencyRadius,
+            Config.enableBlockSwapMode);
     }
 
     public static class Handler implements IMessageHandler<PacketServerConfig, IMessage> {
@@ -99,7 +120,11 @@ public class PacketServerConfig implements IMessage {
                     msg.maxPreviewBigRadius,
                     msg.maxPreviewBlockLimit,
                     msg.allowPreview,
-                    msg.breakPerTick);
+                    msg.breakPerTick,
+                    msg.maxBlockSwapRadius,
+                    msg.maxBlockSwapLimit,
+                    msg.maxBlockSwapAdjacencyRadius,
+                    msg.enableBlockSwapMode);
                 com.czqwq.EZMiner.EZMiner.clientIsOp = msg.isOp;
             }
             return null;

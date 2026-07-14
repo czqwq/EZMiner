@@ -132,4 +132,15 @@ ezminer.smartToolSwitch.tempReEnabled=§a[EZMiner] 智能工具切换已恢复§
 ezminer.config.xpDropMode=经验掉落模式\n立即: 每个方块破坏时立即掉落经验\n延迟: 在连锁结束时统一掉落
 ezminer.config.xpDropMode.immediate=立即
 ezminer.config.xpDropMode.delayed=延迟
-ezminer.config.mergeXPOrbs=合并经验球\n开: 连锁结束时所有经验合并为一个大经验球\n关: 连锁结束时掉落每个方块的独立经验球\n仅在经验掉落模式为"延迟"时生效
+ezminer.config.mergeXPOrbs=合并经验球\n开: 连锁结束时掉落大经验球\n关: 连锁结束时独立掉落\n仅在经验掉落模式为"延迟"时生效
+
+ezminer.mode.special.blockSwap=特殊: 方块交换
+ezminer.gui.section.blockSwap=方块交换
+ezminer.config.blockSwapRadius=交换搜索半径
+ezminer.config.blockSwapLimit=最大交换方块数
+ezminer.config.blockSwapAdjacencyRadius=交换邻接检测半径
+ezminer.config.enableBlockSwapMode=启用方块交换模式\n开: 在特殊模式列表中显示方块交换\n关: 从列表中隐藏（默认）
+ezminer.message.blockSwap.done=EZMiner: 方块交换完成 — %s 个方块已替换
+ezminer.message.blockSwap.noItems=EZMiner: 背包中没有可用的替换方块！
+ezminer.message.blockSwap.noItemInHand=EZMiner: 请手持要替换的方块！
+ezminer.message.blockSwap.notABlock=EZMiner: 手中的物品不是可放置的方块！

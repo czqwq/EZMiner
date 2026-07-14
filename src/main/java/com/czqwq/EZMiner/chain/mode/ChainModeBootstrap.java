@@ -19,6 +19,8 @@ public class ChainModeBootstrap {
         modeRegistry.register(
             new ChainModeDefinition(ChainMode.SPECIAL, "ezminer.mode.special")
                 .addSubMode(new ChainSubModeDefinition("special_minesweeper", "ezminer.mode.special.minesweeper"))
-                .addSubMode(new ChainSubModeDefinition("special_crop", "ezminer.mode.special.crop")));
+                .addSubMode(new ChainSubModeDefinition("special_crop", "ezminer.mode.special.crop"))
+                .addSubMode(new ChainSubModeDefinition("special_sudoku", "ezminer.mode.special.sudoku"))
+                .addSubMode(new ChainSubModeDefinition("special_block_swap", "ezminer.mode.special.blockSwap")));
     }
 }
