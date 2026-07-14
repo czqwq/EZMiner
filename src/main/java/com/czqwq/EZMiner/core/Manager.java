@@ -156,9 +156,9 @@ public class Manager {
         return ((long) x << 40) | ((long) z << 8) | (long) (y & 0xFF);
     }
 
-    // Block swap mode: right-click triggers block replacement.
-    // Does NOT require the chain key to be held — the mode itself is the activation
-    // signal. The player right-clicks while in this sub-mode to swap blocks.
+    // The Deepsuck say it "Does NOT require the chain key to be held"
+    // I said it "bull shit" — unless we use non-held mode in config,we need press chain key anytime
+    // signal. The player right-clicks while in this sub-mode to swap blocks
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public void onBlockSwapRightClick(PlayerInteractEvent event) {
         if (isInOperate() || !isKeyPressed()) return;
