@@ -52,6 +52,7 @@ public class PacketSaveServerConfig implements IMessage {
     public int blockSwapLimit;
     public int blockSwapAdjacencyRadius;
     public boolean enableBlockSwapMode;
+    public boolean fireBreakEvent;
 
     public PacketSaveServerConfig() {}
 
@@ -62,7 +63,8 @@ public class PacketSaveServerConfig implements IMessage {
         int searchWorkerThreads, boolean suppressHodgepodgeWarnings, boolean enableChainChunkLoading,
         boolean useChunkCachedHarvest, boolean crazyMode, int chainIdleTimeoutSeconds, int chainIdleCountdownSeconds,
         boolean stopOnUnbreakable, int chainCooldownTicks, int xpDropMode, boolean mergeXPOrbs, int blockSwapRadius,
-        int blockSwapLimit, int blockSwapAdjacencyRadius, boolean enableBlockSwapMode) {
+        int blockSwapLimit, int blockSwapAdjacencyRadius, boolean enableBlockSwapMode,
+        boolean fireBreakEvent) {
         this.bigRadius = bigRadius;
         this.blockLimit = blockLimit;
         this.smallRadius = smallRadius;
@@ -93,6 +95,7 @@ public class PacketSaveServerConfig implements IMessage {
         this.blockSwapLimit = blockSwapLimit;
         this.blockSwapAdjacencyRadius = blockSwapAdjacencyRadius;
         this.enableBlockSwapMode = enableBlockSwapMode;
+        this.fireBreakEvent = fireBreakEvent;
     }
 
     // Keep the old constructor for binary compatibility (not used but prevents
@@ -169,6 +172,7 @@ public class PacketSaveServerConfig implements IMessage {
         blockSwapLimit = buf.readInt();
         blockSwapAdjacencyRadius = buf.readInt();
         enableBlockSwapMode = buf.readBoolean();
+        fireBreakEvent = buf.readBoolean();
     }
 
     @Override
@@ -203,6 +207,7 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeInt(blockSwapLimit);
         buf.writeInt(blockSwapAdjacencyRadius);
         buf.writeBoolean(enableBlockSwapMode);
+        buf.writeBoolean(fireBreakEvent);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -246,6 +251,7 @@ public class PacketSaveServerConfig implements IMessage {
             Config.blockSwapLimit = Math.max(0, msg.blockSwapLimit);
             Config.blockSwapAdjacencyRadius = Math.max(0, msg.blockSwapAdjacencyRadius);
             Config.enableBlockSwapMode = msg.enableBlockSwapMode;
+            Config.fireBreakEvent = msg.fireBreakEvent;
 
             // Persist to disk
             Config.saveServerConfig();

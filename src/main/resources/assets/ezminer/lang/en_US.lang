@@ -144,3 +144,4 @@ ezminer.message.blockSwap.done=EZMiner: Block swap complete — %s blocks replac
 ezminer.message.blockSwap.noItems=EZMiner: No replacement blocks available in inventory!
 ezminer.message.blockSwap.noItemInHand=EZMiner: Hold a block to use as replacement!
 ezminer.message.blockSwap.notABlock=EZMiner: The held item is not a placeable block!
+ezminer.config.fireBreakEvent=Fire Break Events\nON: fire Forge BreakEvent per chained block\n(protection-mod compat, small per-block cost)\nOFF: fast paths skip the event (default)

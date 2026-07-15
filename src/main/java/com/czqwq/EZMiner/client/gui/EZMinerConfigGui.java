@@ -57,6 +57,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_SERVER_XP_DROP_MODE = 25;
     private static final int BTN_SERVER_MERGE_XP_ORBS = 26;
     private static final int BTN_SERVER_ENABLE_BLOCK_SWAP = 27;
+    private static final int BTN_SERVER_FIRE_BREAK_EVENT = 28;
 
     // ── Layout constants ──────────────────────────────────────────────────────
     private static final int GUI_W = 290;
@@ -70,7 +71,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int CONTENT_START_Y = 42;
     private static final int MAX_CONTENT_ROWS = 18; // Client tab row count
     /** Server tab row count (has more fields than client tab). */
-    private static final int SERVER_CONTENT_ROWS = 30;
+    private static final int SERVER_CONTENT_ROWS = 31;
     private static final int ROW_H = 20;
     /** Extra vertical spacing added between lines when a label contains \n. */
     private static final int EXTRA_LINE_SPACING = 2;
@@ -158,6 +159,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnServerXPDropMode;
     private GuiButton btnServerMergeXPOrbs;
     private GuiButton btnServerEnableBlockSwap;
+    private GuiButton btnServerFireBreakEvent;
 
     // ── GuiScreen overrides ───────────────────────────────────────────────────
 
@@ -386,6 +388,14 @@ public class EZMinerConfigGui extends GuiScreen {
                 boolLabel("ezminer.config.mergeXPOrbs", Config.mergeXPOrbs),
                 boolValue(Config.mergeXPOrbs));
             buttonList.add(btnServerMergeXPOrbs);
+
+            btnServerFireBreakEvent = newOptionButton(
+                BTN_SERVER_FIRE_BREAK_EVENT,
+                26,
+                "ezminer.config.fireBreakEvent",
+                boolLabel("ezminer.config.fireBreakEvent", Config.fireBreakEvent),
+                boolValue(Config.fireBreakEvent));
+            buttonList.add(btnServerFireBreakEvent);
 
             btnServerEnableBlockSwap = newOptionButton(
                 BTN_SERVER_ENABLE_BLOCK_SWAP,
@@ -616,6 +626,12 @@ public class EZMinerConfigGui extends GuiScreen {
                     "ezminer.config.enableBlockSwapMode",
                     Config.enableBlockSwapMode);
                 break;
+            case BTN_SERVER_FIRE_BREAK_EVENT:
+                Config.fireBreakEvent = !Config.fireBreakEvent;
+                btnServerFireBreakEvent.displayString = boolDisplayText(
+                    "ezminer.config.fireBreakEvent",
+                    Config.fireBreakEvent);
+                break;
 
             case BTN_SERVER_RELOAD:
                 EZMiner.network.network.sendToServer(new PacketReloadServerConfig());
@@ -828,12 +844,14 @@ public class EZMinerConfigGui extends GuiScreen {
                 case 25:
                     return "ezminer.config.mergeXPOrbs";
                 case 26:
-                    return "ezminer.config.blockSwapRadius";
+                    return "ezminer.config.fireBreakEvent";
                 case 27:
-                    return "ezminer.config.blockSwapLimit";
+                    return "ezminer.config.blockSwapRadius";
                 case 28:
-                    return "ezminer.config.blockSwapAdjacencyRadius";
+                    return "ezminer.config.blockSwapLimit";
                 case 29:
+                    return "ezminer.config.blockSwapAdjacencyRadius";
+                case 30:
                     return "ezminer.config.enableBlockSwapMode";
                 default:
                     return null;
@@ -898,7 +916,7 @@ public class EZMinerConfigGui extends GuiScreen {
             return index == 3 || index == 5 || index == 12 || index == 14; // after Mining, after Preview, before Smart
                                                                            // Tool Switch, after Smart Tool Switch
         }
-        return index == 9 || index == 11 || index == 25; // after Mining, after Preview
+        return index == 9 || index == 11 || index == 26; // after Mining, after Preview, after Options
     }
 
     /** Content height of a row excluding any section gap. */
@@ -998,10 +1016,12 @@ public class EZMinerConfigGui extends GuiScreen {
             setScrolledButtonY(BTN_SERVER_XP_DROP_MODE, getControlY(24));
             setScrolledButtonY(BTN_SERVER_MERGE_XP_ORBS, getControlY(25));
 
-            tfServerBlockSwapRadius.yPosition = getControlY(26);
-            tfServerBlockSwapLimit.yPosition = getControlY(27);
-            tfServerBlockSwapAdjacencyRadius.yPosition = getControlY(28);
-            setScrolledButtonY(BTN_SERVER_ENABLE_BLOCK_SWAP, getControlY(29));
+            setScrolledButtonY(BTN_SERVER_FIRE_BREAK_EVENT, getControlY(26));
+
+            tfServerBlockSwapRadius.yPosition = getControlY(27);
+            tfServerBlockSwapLimit.yPosition = getControlY(28);
+            tfServerBlockSwapAdjacencyRadius.yPosition = getControlY(29);
+            setScrolledButtonY(BTN_SERVER_ENABLE_BLOCK_SWAP, getControlY(30));
         }
 
         // Update per-button visibility: hide when scrolled out of viewport.
@@ -1072,11 +1092,11 @@ public class EZMinerConfigGui extends GuiScreen {
         tfChainIdleTimeout = field(fx, contentRowScreenY(20), String.valueOf(Config.chainIdleTimeoutSeconds));
         tfChainIdleCountdown = field(fx, contentRowScreenY(21), String.valueOf(Config.chainIdleCountdownSeconds));
         tfChainCooldownTicks = field(fx, contentRowScreenY(22), String.valueOf(Config.chainCooldownTicks));
-        tfServerBlockSwapRadius = field(fx, contentRowScreenY(26), String.valueOf(Config.blockSwapRadius));
-        tfServerBlockSwapLimit = field(fx, contentRowScreenY(27), String.valueOf(Config.blockSwapLimit));
+        tfServerBlockSwapRadius = field(fx, contentRowScreenY(27), String.valueOf(Config.blockSwapRadius));
+        tfServerBlockSwapLimit = field(fx, contentRowScreenY(28), String.valueOf(Config.blockSwapLimit));
         tfServerBlockSwapAdjacencyRadius = field(
             fx,
-            contentRowScreenY(28),
+            contentRowScreenY(29),
             String.valueOf(Config.blockSwapAdjacencyRadius));
     }
 
@@ -1189,18 +1209,19 @@ public class EZMinerConfigGui extends GuiScreen {
         drawButtonRowLabel(lx, contentRowScreenY(23), lc, "ezminer.config.stopOnUnbreakable");
         drawButtonRowLabel(lx, contentRowScreenY(24), lc, "ezminer.config.xpDropMode");
         drawButtonRowLabel(lx, contentRowScreenY(25), lc, "ezminer.config.mergeXPOrbs");
+        drawButtonRowLabel(lx, contentRowScreenY(26), lc, "ezminer.config.fireBreakEvent");
 
         // Block Swap section
-        drawSectionHeader(lx, contentRowScreenY(25) + getContentRowHeight(25) + 4, "ezminer.gui.section.blockSwap");
-        drawRow(lx, contentRowScreenY(26), lc, "ezminer.config.blockSwapRadius", tfServerBlockSwapRadius);
-        drawRow(lx, contentRowScreenY(27), lc, "ezminer.config.blockSwapLimit", tfServerBlockSwapLimit);
+        drawSectionHeader(lx, contentRowScreenY(26) + getContentRowHeight(26) + 4, "ezminer.gui.section.blockSwap");
+        drawRow(lx, contentRowScreenY(27), lc, "ezminer.config.blockSwapRadius", tfServerBlockSwapRadius);
+        drawRow(lx, contentRowScreenY(28), lc, "ezminer.config.blockSwapLimit", tfServerBlockSwapLimit);
         drawRow(
             lx,
-            contentRowScreenY(28),
+            contentRowScreenY(29),
             lc,
             "ezminer.config.blockSwapAdjacencyRadius",
             tfServerBlockSwapAdjacencyRadius);
-        drawButtonRowLabel(lx, contentRowScreenY(29), lc, "ezminer.config.enableBlockSwapMode");
+        drawButtonRowLabel(lx, contentRowScreenY(30), lc, "ezminer.config.enableBlockSwapMode");
 
     }
 
@@ -1278,7 +1299,8 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_SERVER_STOP_ON_UNBREAKABLE
                 || btn.id == BTN_SERVER_XP_DROP_MODE
                 || btn.id == BTN_SERVER_MERGE_XP_ORBS
-                || btn.id == BTN_SERVER_ENABLE_BLOCK_SWAP;
+                || btn.id == BTN_SERVER_ENABLE_BLOCK_SWAP
+                || btn.id == BTN_SERVER_FIRE_BREAK_EVENT;
             boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;
 
             if (isClientContent || isClientAction) {
@@ -1361,6 +1383,7 @@ public class EZMinerConfigGui extends GuiScreen {
                 parseI(tfChainCooldownTicks, Config.chainCooldownTicks, 0),
                 Config.xpDropMode,
                 Config.mergeXPOrbs,
+                Config.fireBreakEvent,
                 parseI(tfServerBlockSwapRadius, Config.blockSwapRadius, 0),
                 parseI(tfServerBlockSwapLimit, Config.blockSwapLimit, 0),
                 parseI(tfServerBlockSwapAdjacencyRadius, Config.blockSwapAdjacencyRadius, 0),

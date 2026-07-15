@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 
 import com.czqwq.EZMiner.chain.execution.XPDropHandler;
+import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 import com.czqwq.EZMiner.mixin.interfaces.IEZMinerItemInWorldManager;
 
 /**
@@ -48,6 +49,13 @@ public abstract class MixinItemInWorldManager implements IEZMinerItemInWorldMana
     @Override
     public boolean ezminer$tryHarvestBlockFast(int x, int y, int z, boolean canHarvest,
         BlockEvent.BreakEvent preFiredEvent) {
+        // ── TiC compat: fire ActiveToolMod.beforeBlockBreak (IguanaTweaks tool XP,
+        // autosmelt, …) like vanilla tryHarvestBlock does via onBlockStartBreak.
+        // true = a hook consumed the block itself — skip our own harvest steps. ──
+        if (TinkersConstructLevelingBridge.fireBeforeBlockBreak(thisPlayerMP, x, y, z)) {
+            return true;
+        }
+
         // ── Tool damage (only in survival) ──
         if (!isCreative()) {
             ItemStack stack = thisPlayerMP.getCurrentEquippedItem();
