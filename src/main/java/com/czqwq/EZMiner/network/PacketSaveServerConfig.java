@@ -48,6 +48,7 @@ public class PacketSaveServerConfig implements IMessage {
     public int chainCooldownTicks;
     public int xpDropMode;
     public boolean mergeXPOrbs;
+    public boolean fireBreakEvent;
 
     public PacketSaveServerConfig() {}
 
@@ -57,7 +58,8 @@ public class PacketSaveServerConfig implements IMessage {
         double minesweeperProbeCooldownSeconds, double sudokuProbeCooldownSeconds, boolean enableCachedChain,
         int searchWorkerThreads, boolean suppressHodgepodgeWarnings, boolean enableChainChunkLoading,
         boolean useChunkCachedHarvest, boolean crazyMode, int chainIdleTimeoutSeconds, int chainIdleCountdownSeconds,
-        boolean stopOnUnbreakable, int chainCooldownTicks, int xpDropMode, boolean mergeXPOrbs) {
+        boolean stopOnUnbreakable, int chainCooldownTicks, int xpDropMode, boolean mergeXPOrbs,
+        boolean fireBreakEvent) {
         this.bigRadius = bigRadius;
         this.blockLimit = blockLimit;
         this.smallRadius = smallRadius;
@@ -84,6 +86,7 @@ public class PacketSaveServerConfig implements IMessage {
         this.chainCooldownTicks = chainCooldownTicks;
         this.xpDropMode = xpDropMode;
         this.mergeXPOrbs = mergeXPOrbs;
+        this.fireBreakEvent = fireBreakEvent;
     }
 
     // Keep the old constructor for binary compatibility (not used but prevents
@@ -121,7 +124,8 @@ public class PacketSaveServerConfig implements IMessage {
             stopOnUnbreakable,
             chainCooldownTicks,
             1,
-            true);
+            true,
+            false);
     }
 
     @Override
@@ -152,6 +156,7 @@ public class PacketSaveServerConfig implements IMessage {
         chainCooldownTicks = buf.readInt();
         xpDropMode = buf.readInt();
         mergeXPOrbs = buf.readBoolean();
+        fireBreakEvent = buf.readBoolean();
     }
 
     @Override
@@ -182,6 +187,7 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeInt(chainCooldownTicks);
         buf.writeInt(xpDropMode);
         buf.writeBoolean(mergeXPOrbs);
+        buf.writeBoolean(fireBreakEvent);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -221,6 +227,7 @@ public class PacketSaveServerConfig implements IMessage {
             Config.chainCooldownTicks = Math.max(0, msg.chainCooldownTicks);
             Config.xpDropMode = Math.max(0, Math.min(1, msg.xpDropMode));
             Config.mergeXPOrbs = msg.mergeXPOrbs;
+            Config.fireBreakEvent = msg.fireBreakEvent;
 
             // Persist to disk
             Config.saveServerConfig();

@@ -98,6 +98,14 @@ public class Config {
      */
     public static boolean stopOnUnbreakable = false;
     /**
+     * When true, EZMiner's fast harvest paths fire the per-block Forge
+     * {@code BlockEvent.BreakEvent} for every chained block (honouring cancellation
+     * and forwarding the event-modified XP value), restoring compatibility with
+     * protection/claim mods and BreakEvent listeners at a small per-block cost.
+     * Default: false (fast paths skip the event, as originally designed).
+     */
+    public static boolean fireBreakEvent = false;
+    /**
      * Cooldown in ticks between successive uses of the chain mining feature.
      * 0 = no cooldown (default). 20 ticks = 1 second.
      * When non-zero, the player cannot start a new chain until the cooldown expires.
@@ -456,6 +464,14 @@ public class Config {
             "When true, encountering a block that cannot be harvested with the current tool "
                 + "will immediately stop the entire chain operation instead of silently skipping it. "
                 + "Default: false.");
+        fireBreakEvent = serverConfiguration.getBoolean(
+            "fireBreakEvent",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "When true, the fast harvest paths fire the per-block Forge BlockEvent.BreakEvent for "
+                + "every chained block, honouring cancellation and event-modified XP. Enables "
+                + "compatibility with protection/claim mods at a small per-block performance cost. "
+                + "Default: false.");
         chainCooldownTicks = serverConfiguration.getInt(
             "chainCooldownTicks",
             Configuration.CATEGORY_GENERAL,
@@ -773,6 +789,8 @@ public class Config {
             .set(sudokuProbeCooldownSeconds);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "stopOnUnbreakable", false)
             .set(stopOnUnbreakable);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "fireBreakEvent", false)
+            .set(fireBreakEvent);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "chainCooldownTicks", 0)
             .set(chainCooldownTicks);
         serverConfiguration.save();
