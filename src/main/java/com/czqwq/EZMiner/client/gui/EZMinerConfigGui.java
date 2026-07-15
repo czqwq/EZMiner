@@ -1383,11 +1383,11 @@ public class EZMinerConfigGui extends GuiScreen {
                 parseI(tfChainCooldownTicks, Config.chainCooldownTicks, 0),
                 Config.xpDropMode,
                 Config.mergeXPOrbs,
-                Config.fireBreakEvent,
                 parseI(tfServerBlockSwapRadius, Config.blockSwapRadius, 0),
                 parseI(tfServerBlockSwapLimit, Config.blockSwapLimit, 0),
                 parseI(tfServerBlockSwapAdjacencyRadius, Config.blockSwapAdjacencyRadius, 0),
-                Config.enableBlockSwapMode));
+                Config.enableBlockSwapMode,
+                Config.fireBreakEvent));
     }
 
     // ── GL scissor helper ─────────────────────────────────────────────────────

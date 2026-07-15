@@ -16,6 +16,8 @@ import net.minecraft.world.World;
 import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
+import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.network.PacketBlockSwapResult;
 import com.czqwq.EZMiner.compat.GT5BlockSwapCompat;
 import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
 import com.czqwq.EZMiner.utils.MessageUtils;
@@ -140,6 +142,7 @@ public class BlockSwapModeHandler {
         player.inventoryContainer.detectAndSendChanges();
 
         if (swapped > 0) {
+            EZMiner.network.network.sendTo(new PacketBlockSwapResult(swapped), player);
             MessageUtils.serverSendPlayerMessage(
                 new ChatComponentTranslation("ezminer.message.blockSwap.done", swapped),
                 player.getUniqueID());
@@ -187,17 +190,24 @@ public class BlockSwapModeHandler {
 
                             long key = encode(cx, cy, cz);
                             if (seen.contains(key)) continue;
-                            seen.add(key);
 
                             if (!world.blockExists(cx, cy, cz)) continue;
                             Block block = world.getBlock(cx, cy, cz);
                             if (block == null) continue;
 
                             if (!DeterminingIdentical
-                                .identical(targetBlock, targetMeta, null, new Vector3i(cx, cy, cz), player)) continue;
+                                .identical(targetBlock, targetMeta, null, new Vector3i(cx, cy, cz), player)) {
+                                // Non-matching: never eligible, skip forever.
+                                seen.add(key);
+                                continue;
+                            }
 
-                            // Accept only if within adjacencyRadius of an existing result
+                            // Matching but not yet within adjacency range: do NOT mark as
+                            // seen yet so the do-while rescan can retry this position after
+                            // other same-shell positions are added to results.
+                            // (Fixes V-shaped / intra-shell connectivity chaining.)
                             if (isWithinRadius(cx, cy, cz, results, adjacencyRadius)) {
+                                seen.add(key);
                                 results.add(new Vector3i(cx, cy, cz));
                                 shellChanged = true;
                             }

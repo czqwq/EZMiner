@@ -63,8 +63,7 @@ public class PacketSaveServerConfig implements IMessage {
         int searchWorkerThreads, boolean suppressHodgepodgeWarnings, boolean enableChainChunkLoading,
         boolean useChunkCachedHarvest, boolean crazyMode, int chainIdleTimeoutSeconds, int chainIdleCountdownSeconds,
         boolean stopOnUnbreakable, int chainCooldownTicks, int xpDropMode, boolean mergeXPOrbs, int blockSwapRadius,
-        int blockSwapLimit, int blockSwapAdjacencyRadius, boolean enableBlockSwapMode,
-        boolean fireBreakEvent) {
+        int blockSwapLimit, int blockSwapAdjacencyRadius, boolean enableBlockSwapMode, boolean fireBreakEvent) {
         this.bigRadius = bigRadius;
         this.blockLimit = blockLimit;
         this.smallRadius = smallRadius;
@@ -137,6 +136,7 @@ public class PacketSaveServerConfig implements IMessage {
             8,
             1024,
             2,
+            false,
             false);
     }
 
