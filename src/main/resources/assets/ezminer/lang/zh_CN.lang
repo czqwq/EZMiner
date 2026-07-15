@@ -138,7 +138,6 @@ ezminer.mode.special.blockSwap=特殊: 方块交换
 ezminer.gui.section.blockSwap=方块交换
 ezminer.config.blockSwapRadius=交换搜索半径
 ezminer.config.blockSwapLimit=最大交换方块数
-ezminer.config.blockSwapAdjacencyRadius=交换邻接检测半径
 ezminer.config.enableBlockSwapMode=启用方块交换模式\n开: 在特殊模式列表中显示方块交换\n关: 从列表中隐藏（默认）
 ezminer.message.blockSwap.done=EZMiner: 方块交换完成 — %s 个方块已替换
 ezminer.message.blockSwap.noItems=EZMiner: 背包中没有可用的替换方块！

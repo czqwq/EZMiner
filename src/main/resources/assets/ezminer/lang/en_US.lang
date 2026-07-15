@@ -138,7 +138,6 @@ ezminer.mode.special.blockSwap=Special: Block Swap
 ezminer.gui.section.blockSwap=Block Swap
 ezminer.config.blockSwapRadius=Block Swap Radius
 ezminer.config.blockSwapLimit=Block Swap Max Blocks
-ezminer.config.blockSwapAdjacencyRadius=Block Swap Adjacency Radius
 ezminer.config.enableBlockSwapMode=Enable Block Swap Mode\nON: show Block Swap in special modes\nOFF: hide from list (default)
 ezminer.message.blockSwap.done=EZMiner: Block swap complete — %s blocks replaced
 ezminer.message.blockSwap.noItems=EZMiner: No replacement blocks available in inventory!

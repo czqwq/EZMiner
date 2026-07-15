@@ -187,6 +187,7 @@ public class Manager {
         lastBlockSwapEncodedPos = encoded;
         lastBlockSwapTimeMs = now;
 
+        originPos = targetPos;
         setInOperate(true);
         try {
             blockSwapHandler.handleSwap((EntityPlayerMP) event.entityPlayer, targetPos);
