@@ -161,6 +161,7 @@ public class Manager {
     // signal. The player right-clicks while in this sub-mode to swap blocks
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public void onBlockSwapRightClick(PlayerInteractEvent event) {
+        if (!isSamePlayer(event.entityPlayer)) return;
         if (isInOperate() || !isKeyPressed()) return;
         if (!isBlockSwapMode()) return;
         // Cooldown check: prevent starting a new block swap while cooldown is active
@@ -168,10 +169,8 @@ public class Manager {
 
         final Vector3i targetPos;
         if (event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) {
-            if (!isSamePlayer(event.entityPlayer)) return;
             targetPos = new Vector3i(event.x, event.y, event.z);
         } else if (event.action == PlayerInteractEvent.Action.RIGHT_CLICK_AIR) {
-            if (!isSamePlayer(event.entityPlayer)) return;
             if (event.entityPlayer.worldObj == null) return;
             EntityPlayerMP ep = (EntityPlayerMP) event.entityPlayer;
             MovingObjectPosition mop = ep.rayTrace(5.0D, 1.0F);

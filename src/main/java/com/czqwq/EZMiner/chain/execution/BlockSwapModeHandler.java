@@ -60,9 +60,8 @@ public class BlockSwapModeHandler {
         final boolean replacementIsGT = GT5BlockSwapCompat.isGTBlock(replacementBlock);
         final int replacementItemDamage = heldStack.getItemDamage();
 
-        // ── BFS: find all matching blocks within configured radius ──
+        // ── Find all matching blocks within configured radius ──
         int maxRadius = Config.blockSwapRadius;
-        int adjacencyRadius = Config.blockSwapAdjacencyRadius;
         int maxBlocks = Math.min(Config.blockSwapLimit, countAvailableItems(player, heldStack));
 
         if (maxBlocks <= 0) {
@@ -82,19 +81,11 @@ public class BlockSwapModeHandler {
                 .getCableMetaTileId(world.getTileEntity(targetPos.x, targetPos.y, targetPos.z));
             matched = bfsSearchCable(world, targetPos, targetMetaId, maxRadius, maxBlocks);
         } else {
-            matched = bfsSearch(
-                world,
-                targetPos,
-                targetBlock,
-                targetMeta,
-                maxRadius,
-                adjacencyRadius,
-                maxBlocks,
-                player);
+            matched = findAllMatching(world, targetPos, targetBlock, targetMeta, maxRadius, maxBlocks, player);
         }
         if (matched.isEmpty()) return;
 
-        // ── Sort by Chebyshev distance from origin → center-out replacement ──
+        // ── Sort by Chebyshev distance from origin → center-out spherical replacement ──
         matched.sort((a, b) -> {
             int da = Math
                 .max(Math.max(Math.abs(a.x - targetPos.x), Math.abs(a.y - targetPos.y)), Math.abs(a.z - targetPos.z));
@@ -156,78 +147,50 @@ public class BlockSwapModeHandler {
     /** Reset handler state (no-op for now — swap is one-shot with no persisted state). */
     public void reset() {}
 
-    // ===== Internal BFS =====
+    // ===== Block search: find ALL matching blocks within radius, center-out =====
 
-    private static List<Vector3i> bfsSearch(World world, Vector3i origin, Block targetBlock, int targetMeta,
-        int maxRadius, int adjacencyRadius, int maxBlocks, EntityPlayerMP player) {
+    /**
+     * Collects every block within Chebyshev distance {@code maxRadius} of {@code origin}
+     * whose type + metadata match {@code targetBlock}/{@code targetMeta}.
+     * No connectivity or adjacency constraint — matching blocks separated by air or
+     * non-matching blocks are still found. Results are naturally ordered by increasing
+     * Chebyshev shell (0, 1, 2, …).
+     */
+    private static List<Vector3i> findAllMatching(World world, Vector3i origin, Block targetBlock, int targetMeta,
+        int maxRadius, int maxBlocks, EntityPlayerMP player) {
         List<Vector3i> results = new ArrayList<>();
-        HashSet<Long> seen = new HashSet<>();
 
-        // ── Seed with origin if it matches ──
+        // Seed: origin must match the target type
         if (!world.blockExists(origin.x, origin.y, origin.z)) return results;
         Block originBlock = world.getBlock(origin.x, origin.y, origin.z);
         if (originBlock == null) return results;
         if (!DeterminingIdentical.identical(targetBlock, targetMeta, null, origin, player)) return results;
-
         results.add(origin);
-        seen.add(encode(origin.x, origin.y, origin.z));
 
-        // ── Scan shells from inside out ──
+        // Scan shells from inside out — every matching block within maxRadius
         for (int r = 1; r <= maxRadius && results.size() < maxBlocks; r++) {
-            // Re-scan the current shell until no new matches are discovered
-            // (handles intra-shell adjacency chains).
-            boolean shellChanged;
-            do {
-                shellChanged = false;
-                for (int dx = -r; dx <= r; dx++) {
-                    int cx = origin.x + dx;
-                    for (int dy = -r; dy <= r; dy++) {
-                        int cy = origin.y + dy;
-                        for (int dz = -r; dz <= r; dz++) {
-                            int cz = origin.z + dz;
-                            if (Math.max(Math.max(Math.abs(dx), Math.abs(dy)), Math.abs(dz)) != r) continue;
-                            if (results.size() >= maxBlocks) break;
+            for (int dx = -r; dx <= r; dx++) {
+                int cx = origin.x + dx;
+                for (int dy = -r; dy <= r; dy++) {
+                    int cy = origin.y + dy;
+                    for (int dz = -r; dz <= r; dz++) {
+                        int cz = origin.z + dz;
+                        if (Math.max(Math.max(Math.abs(dx), Math.abs(dy)), Math.abs(dz)) != r) continue;
+                        if (results.size() >= maxBlocks) return results;
 
-                            long key = encode(cx, cy, cz);
-                            if (seen.contains(key)) continue;
+                        if (!world.blockExists(cx, cy, cz)) continue;
+                        Block block = world.getBlock(cx, cy, cz);
+                        if (block == null) continue;
 
-                            if (!world.blockExists(cx, cy, cz)) continue;
-                            Block block = world.getBlock(cx, cy, cz);
-                            if (block == null) continue;
-
-                            if (!DeterminingIdentical
-                                .identical(targetBlock, targetMeta, null, new Vector3i(cx, cy, cz), player)) {
-                                // Non-matching: never eligible, skip forever.
-                                seen.add(key);
-                                continue;
-                            }
-
-                            // Matching but not yet within adjacency range: do NOT mark as
-                            // seen yet so the do-while rescan can retry this position after
-                            // other same-shell positions are added to results.
-                            // (Fixes V-shaped / intra-shell connectivity chaining.)
-                            if (isWithinRadius(cx, cy, cz, results, adjacencyRadius)) {
-                                seen.add(key);
-                                results.add(new Vector3i(cx, cy, cz));
-                                shellChanged = true;
-                            }
+                        if (DeterminingIdentical
+                            .identical(targetBlock, targetMeta, null, new Vector3i(cx, cy, cz), player)) {
+                            results.add(new Vector3i(cx, cy, cz));
                         }
                     }
                 }
-            } while (shellChanged && results.size() < maxBlocks);
-        }
-        return results;
-    }
-
-    /** True if (x,y,z) is within Chebyshev distance {@code radius} of any element in {@code list}. */
-    private static boolean isWithinRadius(int x, int y, int z, List<Vector3i> list, int radius) {
-        for (int i = 0, n = list.size(); i < n; i++) {
-            Vector3i v = list.get(i);
-            if (Math.max(Math.max(Math.abs(x - v.x), Math.abs(y - v.y)), Math.abs(z - v.z)) <= radius) {
-                return true;
             }
         }
-        return false;
+        return results;
     }
 
     /**
