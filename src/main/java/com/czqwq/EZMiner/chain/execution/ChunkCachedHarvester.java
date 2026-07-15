@@ -7,8 +7,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import net.minecraftforge.event.world.BlockEvent;
 
 import org.joml.Vector3i;
+
+import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 
 /**
  * Stateful per-tick-batch chunk-cached block harvester.
@@ -108,6 +111,18 @@ public class ChunkCachedHarvester {
             return ok;
         }
 
+        // ── Optional per-block Forge BreakEvent (Config.fireBreakEvent) ──
+        BlockEvent.BreakEvent breakEvent = ChainBreakEventHelper.fireIfEnabled(world, player, x, y, z);
+        if (breakEvent != null && breakEvent.isCanceled()) return false;
+
+        // ── TiC compat: fire ActiveToolMod.beforeBlockBreak (IguanaTweaks tool XP,
+        // autosmelt, …) like vanilla onBlockStartBreak would. A true return means a
+        // hook consumed the block itself (autosmelt: set to air + smelted drop +
+        // tool damage) — mirror vanilla and skip our own harvest steps. ──
+        if (TinkersConstructLevelingBridge.fireBeforeBlockBreak(player, x, y, z)) {
+            return true;
+        }
+
         boolean canHarvest = block.canHarvestBlock(player, meta);
         boolean isCreative = player.capabilities.isCreativeMode;
 
@@ -144,7 +159,11 @@ public class ChunkCachedHarvester {
 
         // ── XP ──
         if (removed) {
-            XPDropHandler.handleBlockXP(world, block, meta, x, y, z, player);
+            if (breakEvent != null) {
+                XPDropHandler.handlePreComputedXP(world, block, x, y, z, breakEvent.getExpToDrop(), player);
+            } else {
+                XPDropHandler.handleBlockXP(world, block, meta, x, y, z, player);
+            }
         }
 
         if (removed) {

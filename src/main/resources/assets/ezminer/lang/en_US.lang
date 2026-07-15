@@ -133,3 +133,4 @@ ezminer.config.xpDropMode=XP Drop Mode\nImmediate: XP orbs drop per block\nDelay
 ezminer.config.xpDropMode.immediate=Immediate
 ezminer.config.xpDropMode.delayed=Delayed
 ezminer.config.mergeXPOrbs=Merge XP Orbs\nON: merge all XP into one large orb at chain end\nOFF: spawn individual per-block orbs\nOnly applies when XP Drop Mode is Delayed
+ezminer.config.fireBreakEvent=Fire Break Events\nON: fire Forge BreakEvent per chained block\n(protection-mod compat, small per-block cost)\nOFF: fast paths skip the event (default)

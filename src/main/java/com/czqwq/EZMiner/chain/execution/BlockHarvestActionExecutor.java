@@ -10,9 +10,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import net.minecraftforge.event.world.BlockEvent;
 
 import org.joml.Vector3i;
 
+import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 import com.czqwq.EZMiner.mixin.interfaces.IEZMinerItemInWorldManager;
 
 /**
@@ -58,11 +60,15 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
             return player.theItemInWorldManager.tryHarvestBlock(x, y, z);
         }
 
-        // Fast path: skip BreakEvent, playAuxSFX, excess getBlock calls, and
-        // neighbor notifications (setBlock flag=2 instead of flag=3).
+        // Fast path: skip playAuxSFX, excess getBlock calls, and neighbor
+        // notifications (setBlock flag=2 instead of flag=3). The per-block
+        // BreakEvent fires only when Config.fireBreakEvent is enabled.
+        BlockEvent.BreakEvent event = ChainBreakEventHelper.fireIfEnabled(world, player, x, y, z);
+        if (event != null && event.isCanceled()) return false;
+
         IEZMinerItemInWorldManager fastMgr = (IEZMinerItemInWorldManager) player.theItemInWorldManager;
         boolean canHarvest = block.canHarvestBlock(player, meta);
-        return fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, null);
+        return fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, event);
     }
 
     /**
@@ -112,6 +118,18 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
                     continue;
                 }
 
+                // ── Optional per-block Forge BreakEvent (Config.fireBreakEvent) ──
+                BlockEvent.BreakEvent breakEvent = ChainBreakEventHelper.fireIfEnabled(world, player, x, y, z);
+                if (breakEvent != null && breakEvent.isCanceled()) continue;
+
+                // ── TiC compat: fire ActiveToolMod.beforeBlockBreak (IguanaTweaks tool
+                // XP, autosmelt, …). true = a hook consumed the block itself — mirror
+                // vanilla and skip our own harvest steps. ──
+                if (TinkersConstructLevelingBridge.fireBeforeBlockBreak(player, x, y, z)) {
+                    harvested++;
+                    continue;
+                }
+
                 boolean canHarvest = block.canHarvestBlock(player, meta);
 
                 // ── Tool damage (survival only) ──
@@ -146,7 +164,11 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
 
                 // ── XP ──
                 if (removed) {
-                    XPDropHandler.handleBlockXP(world, block, meta, x, y, z, player);
+                    if (breakEvent != null) {
+                        XPDropHandler.handlePreComputedXP(world, block, x, y, z, breakEvent.getExpToDrop(), player);
+                    } else {
+                        XPDropHandler.handleBlockXP(world, block, meta, x, y, z, player);
+                    }
                 }
 
                 if (removed) {
@@ -178,6 +200,10 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
 
         IEZMinerItemInWorldManager fastMgr = (IEZMinerItemInWorldManager) player.theItemInWorldManager;
         boolean canHarvest = block.canHarvestBlock(player, meta);
-        return fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, null);
+
+        BlockEvent.BreakEvent event = ChainBreakEventHelper.fireIfEnabled(world, player, x, y, z);
+        if (event != null && event.isCanceled()) return false;
+
+        return fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, event);
     }
 }

@@ -56,6 +56,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_SERVER_STOP_ON_UNBREAKABLE = 24;
     private static final int BTN_SERVER_XP_DROP_MODE = 25;
     private static final int BTN_SERVER_MERGE_XP_ORBS = 26;
+    private static final int BTN_SERVER_FIRE_BREAK_EVENT = 27;
 
     // ── Layout constants ──────────────────────────────────────────────────────
     private static final int GUI_W = 290;
@@ -148,6 +149,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnServerStopOnUnbreakable;
     private GuiButton btnServerXPDropMode;
     private GuiButton btnServerMergeXPOrbs;
+    private GuiButton btnServerFireBreakEvent;
 
     // ── GuiScreen overrides ───────────────────────────────────────────────────
 
@@ -377,6 +379,14 @@ public class EZMinerConfigGui extends GuiScreen {
                 boolValue(Config.mergeXPOrbs));
             buttonList.add(btnServerMergeXPOrbs);
 
+            btnServerFireBreakEvent = newOptionButton(
+                BTN_SERVER_FIRE_BREAK_EVENT,
+                26,
+                "ezminer.config.fireBreakEvent",
+                boolLabel("ezminer.config.fireBreakEvent", Config.fireBreakEvent),
+                boolValue(Config.fireBreakEvent));
+            buttonList.add(btnServerFireBreakEvent);
+
             // Fixed: server action buttons
             buttonList.add(
                 new GuiButton(
@@ -592,6 +602,12 @@ public class EZMinerConfigGui extends GuiScreen {
                 Config.mergeXPOrbs = !Config.mergeXPOrbs;
                 btnServerMergeXPOrbs.displayString = boolDisplayText("ezminer.config.mergeXPOrbs", Config.mergeXPOrbs);
                 break;
+            case BTN_SERVER_FIRE_BREAK_EVENT:
+                Config.fireBreakEvent = !Config.fireBreakEvent;
+                btnServerFireBreakEvent.displayString = boolDisplayText(
+                    "ezminer.config.fireBreakEvent",
+                    Config.fireBreakEvent);
+                break;
 
             case BTN_SERVER_RELOAD:
                 EZMiner.network.network.sendToServer(new PacketReloadServerConfig());
@@ -785,6 +801,8 @@ public class EZMinerConfigGui extends GuiScreen {
                     return "ezminer.config.xpDropMode";
                 case 25:
                     return "ezminer.config.mergeXPOrbs";
+                case 26:
+                    return "ezminer.config.fireBreakEvent";
                 default:
                     return null;
             }
@@ -875,7 +893,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
     /** Recalculates totalContentH based on active tab row count and multi-line labels. */
     private void recalcTotalContentH() {
-        int rows = (activeTab == TAB_CLIENT) ? MAX_CONTENT_ROWS : 26;
+        int rows = (activeTab == TAB_CLIENT) ? MAX_CONTENT_ROWS : 27;
         int total = TOP_PAD;
         for (int i = 0; i < rows; i++) {
             total += getRowHeight(i);
@@ -942,6 +960,7 @@ public class EZMinerConfigGui extends GuiScreen {
             setScrolledButtonY(BTN_SERVER_STOP_ON_UNBREAKABLE, getControlY(23));
             setScrolledButtonY(BTN_SERVER_XP_DROP_MODE, getControlY(24));
             setScrolledButtonY(BTN_SERVER_MERGE_XP_ORBS, getControlY(25));
+            setScrolledButtonY(BTN_SERVER_FIRE_BREAK_EVENT, getControlY(26));
         }
 
         // Update per-button visibility: hide when scrolled out of viewport.
@@ -1106,6 +1125,7 @@ public class EZMinerConfigGui extends GuiScreen {
         drawButtonRowLabel(lx, contentRowScreenY(23), lc, "ezminer.config.stopOnUnbreakable");
         drawButtonRowLabel(lx, contentRowScreenY(24), lc, "ezminer.config.xpDropMode");
         drawButtonRowLabel(lx, contentRowScreenY(25), lc, "ezminer.config.mergeXPOrbs");
+        drawButtonRowLabel(lx, contentRowScreenY(26), lc, "ezminer.config.fireBreakEvent");
 
     }
 
@@ -1182,7 +1202,8 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_SERVER_CRAZY_MODE
                 || btn.id == BTN_SERVER_STOP_ON_UNBREAKABLE
                 || btn.id == BTN_SERVER_XP_DROP_MODE
-                || btn.id == BTN_SERVER_MERGE_XP_ORBS;
+                || btn.id == BTN_SERVER_MERGE_XP_ORBS
+                || btn.id == BTN_SERVER_FIRE_BREAK_EVENT;
             boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;
 
             if (isClientContent || isClientAction) {
@@ -1258,7 +1279,8 @@ public class EZMinerConfigGui extends GuiScreen {
                 Config.stopOnUnbreakable,
                 parseI(tfChainCooldownTicks, Config.chainCooldownTicks, 0),
                 Config.xpDropMode,
-                Config.mergeXPOrbs));
+                Config.mergeXPOrbs,
+                Config.fireBreakEvent));
     }
 
     // ── GL scissor helper ─────────────────────────────────────────────────────
