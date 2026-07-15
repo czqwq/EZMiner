@@ -39,10 +39,12 @@ public class GT5BlockSwapCompat {
     // ── Cached reflection handles ──
     private static Class<?> gregTechAPIClass;
     private static Class<?> commonBaseMetaTileEntityClass;
+    private static Class<?> baseMetaPipeEntityClass;
     private static Field sBlockMachinesField;
     private static Field metaTileEntitiesField;
     private static Field baseMetaPipeMConnectionsField;
     private static Field metaPipeMConnectionsField;
+    private static Field coverableTileEntityMIdField;
 
     /** Call once during mod init or lazily on first use. */
     public static void checkCompatibility() {
@@ -58,12 +60,16 @@ public class GT5BlockSwapCompat {
             metaTileEntitiesField = gregTechAPIClass.getField("METATILEENTITIES");
 
             // BaseMetaPipeEntity.mConnections (public byte)
-            Class<?> baseMetaPipeClass = Class.forName("gregtech.api.metatileentity.BaseMetaPipeEntity");
-            baseMetaPipeMConnectionsField = baseMetaPipeClass.getField("mConnections");
+            baseMetaPipeEntityClass = Class.forName("gregtech.api.metatileentity.BaseMetaPipeEntity");
+            baseMetaPipeMConnectionsField = baseMetaPipeEntityClass.getField("mConnections");
 
             // MetaPipeEntity.mConnections (public byte) — separate field, must also sync
             Class<?> metaPipeClass = Class.forName("gregtech.api.metatileentity.MetaPipeEntity");
             metaPipeMConnectionsField = metaPipeClass.getField("mConnections");
+
+            // CoverableTileEntity.mID (public short) — meta-tile-entity type identifier
+            Class<?> coverableTileEntityClass = Class.forName("gregtech.api.metatileentity.CoverableTileEntity");
+            coverableTileEntityMIdField = coverableTileEntityClass.getField("mID");
 
             available = true;
         } catch (Exception e) {
@@ -81,25 +87,14 @@ public class GT5BlockSwapCompat {
     /** True if {@code te} is a GT cable/pipe (BaseMetaPipeEntity). */
     public static boolean isCable(TileEntity te) {
         if (te == null || !isAvailable()) return false;
-        try {
-            return Class.forName("gregtech.api.metatileentity.BaseMetaPipeEntity")
-                .isInstance(te);
-        } catch (Exception e) {
-            return false;
-        }
+        return baseMetaPipeEntityClass.isInstance(te);
     }
 
     /** Returns the meta-tile-entity ID (material+voltage+insulation key) of a GT cable. */
     public static int getCableMetaTileId(TileEntity te) {
         if (!isCable(te)) return -1;
         try {
-            // CoverableTileEntity.mID (public short) → read via "BaseMetaPipeEntity extends
-            // CommonBaseMetaTileEntity extends CoverableTileEntity"
-            return te.getClass()
-                .getSuperclass() // CommonBaseMetaTileEntity
-                .getSuperclass() // CoverableTileEntity
-                .getDeclaredField("mID")
-                .getShort(te) & 0xFFFF;
+            return coverableTileEntityMIdField.getShort(te) & 0xFFFF;
         } catch (Exception e) {
             return -1;
         }
@@ -206,11 +201,9 @@ public class GT5BlockSwapCompat {
      */
     public static int saveConnections(TileEntity te) {
         if (te == null || !isAvailable()) return -1;
+        if (!baseMetaPipeEntityClass.isInstance(te)) return -1;
         try {
-            if (baseMetaPipeMConnectionsField.getDeclaringClass()
-                .isInstance(te)) {
-                return baseMetaPipeMConnectionsField.getByte(te) & 0xFF;
-            }
+            return baseMetaPipeMConnectionsField.getByte(te) & 0xFF;
         } catch (Exception ignored) {}
         return -1;
     }
@@ -222,20 +215,17 @@ public class GT5BlockSwapCompat {
     public static void restoreConnections(World world, int x, int y, int z, int savedConnections) {
         if (savedConnections < 0 || !isAvailable()) return;
         TileEntity te = world.getTileEntity(x, y, z);
-        if (te == null) return;
+        if (te == null || !baseMetaPipeEntityClass.isInstance(te)) return;
         try {
-            if (baseMetaPipeMConnectionsField.getDeclaringClass()
-                .isInstance(te)) {
-                byte val = (byte) savedConnections;
-                baseMetaPipeMConnectionsField.setByte(te, val);
-                // Also sync to MetaPipeEntity (the logic object)
-                Object metaPipe = te.getClass()
-                    .getMethod("getMetaTileEntity")
-                    .invoke(te);
-                if (metaPipe != null && metaPipeMConnectionsField.getDeclaringClass()
-                    .isInstance(metaPipe)) {
-                    metaPipeMConnectionsField.setByte(metaPipe, val);
-                }
+            byte val = (byte) savedConnections;
+            baseMetaPipeMConnectionsField.setByte(te, val);
+            // Also sync to MetaPipeEntity (the logic object)
+            Object metaPipe = te.getClass()
+                .getMethod("getMetaTileEntity")
+                .invoke(te);
+            if (metaPipe != null && metaPipeMConnectionsField.getDeclaringClass()
+                .isInstance(metaPipe)) {
+                metaPipeMConnectionsField.setByte(metaPipe, val);
             }
         } catch (Exception e) {
             EZMiner.LOG.debug("GT5BlockSwapCompat: connection restore failed — {}", e.getMessage());

@@ -163,6 +163,8 @@ public class Manager {
     public void onBlockSwapRightClick(PlayerInteractEvent event) {
         if (isInOperate() || !isKeyPressed()) return;
         if (!isBlockSwapMode()) return;
+        // Cooldown check: prevent starting a new block swap while cooldown is active
+        if (CooldownTracker.isOnCooldown((EntityPlayerMP) event.entityPlayer)) return;
 
         final Vector3i targetPos;
         if (event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) {
