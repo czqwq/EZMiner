@@ -48,6 +48,9 @@ public class PacketSaveServerConfig implements IMessage {
     public int chainCooldownTicks;
     public int xpDropMode;
     public boolean mergeXPOrbs;
+    public int blockSwapRadius;
+    public int blockSwapLimit;
+    public boolean enableBlockSwapMode;
     public boolean fireBreakEvent;
 
     public PacketSaveServerConfig() {}
@@ -58,8 +61,8 @@ public class PacketSaveServerConfig implements IMessage {
         double minesweeperProbeCooldownSeconds, double sudokuProbeCooldownSeconds, boolean enableCachedChain,
         int searchWorkerThreads, boolean suppressHodgepodgeWarnings, boolean enableChainChunkLoading,
         boolean useChunkCachedHarvest, boolean crazyMode, int chainIdleTimeoutSeconds, int chainIdleCountdownSeconds,
-        boolean stopOnUnbreakable, int chainCooldownTicks, int xpDropMode, boolean mergeXPOrbs,
-        boolean fireBreakEvent) {
+        boolean stopOnUnbreakable, int chainCooldownTicks, int xpDropMode, boolean mergeXPOrbs, int blockSwapRadius,
+        int blockSwapLimit, boolean enableBlockSwapMode, boolean fireBreakEvent) {
         this.bigRadius = bigRadius;
         this.blockLimit = blockLimit;
         this.smallRadius = smallRadius;
@@ -86,6 +89,9 @@ public class PacketSaveServerConfig implements IMessage {
         this.chainCooldownTicks = chainCooldownTicks;
         this.xpDropMode = xpDropMode;
         this.mergeXPOrbs = mergeXPOrbs;
+        this.blockSwapRadius = blockSwapRadius;
+        this.blockSwapLimit = blockSwapLimit;
+        this.enableBlockSwapMode = enableBlockSwapMode;
         this.fireBreakEvent = fireBreakEvent;
     }
 
@@ -125,6 +131,9 @@ public class PacketSaveServerConfig implements IMessage {
             chainCooldownTicks,
             1,
             true,
+            8,
+            1024,
+            false,
             false);
     }
 
@@ -156,6 +165,9 @@ public class PacketSaveServerConfig implements IMessage {
         chainCooldownTicks = buf.readInt();
         xpDropMode = buf.readInt();
         mergeXPOrbs = buf.readBoolean();
+        blockSwapRadius = buf.readInt();
+        blockSwapLimit = buf.readInt();
+        enableBlockSwapMode = buf.readBoolean();
         fireBreakEvent = buf.readBoolean();
     }
 
@@ -187,6 +199,9 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeInt(chainCooldownTicks);
         buf.writeInt(xpDropMode);
         buf.writeBoolean(mergeXPOrbs);
+        buf.writeInt(blockSwapRadius);
+        buf.writeInt(blockSwapLimit);
+        buf.writeBoolean(enableBlockSwapMode);
         buf.writeBoolean(fireBreakEvent);
     }
 
@@ -227,6 +242,9 @@ public class PacketSaveServerConfig implements IMessage {
             Config.chainCooldownTicks = Math.max(0, msg.chainCooldownTicks);
             Config.xpDropMode = Math.max(0, Math.min(1, msg.xpDropMode));
             Config.mergeXPOrbs = msg.mergeXPOrbs;
+            Config.blockSwapRadius = Math.max(0, msg.blockSwapRadius);
+            Config.blockSwapLimit = Math.max(0, msg.blockSwapLimit);
+            Config.enableBlockSwapMode = msg.enableBlockSwapMode;
             Config.fireBreakEvent = msg.fireBreakEvent;
 
             // Persist to disk

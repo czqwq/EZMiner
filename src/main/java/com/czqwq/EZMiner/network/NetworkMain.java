@@ -1,5 +1,7 @@
 package com.czqwq.EZMiner.network;
 
+import com.czqwq.EZMiner.chain.network.PacketBlockSwapClear;
+import com.czqwq.EZMiner.chain.network.PacketBlockSwapResult;
 import com.czqwq.EZMiner.chain.network.PacketCachedBlockSync;
 import com.czqwq.EZMiner.chain.network.PacketChainModeSwitch;
 import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
@@ -69,5 +71,11 @@ public class NetworkMain {
             PacketRequestClientReload.class,
             packetId++,
             Side.SERVER);
+        // Block swap result: server → client
+        network
+            .registerMessage(PacketBlockSwapResult.Handler.class, PacketBlockSwapResult.class, packetId++, Side.CLIENT);
+        // Block swap clear: server → client
+        network
+            .registerMessage(PacketBlockSwapClear.Handler.class, PacketBlockSwapClear.class, packetId++, Side.CLIENT);
     }
 }

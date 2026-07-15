@@ -133,4 +133,14 @@ ezminer.config.xpDropMode=XP Drop Mode\nImmediate: XP orbs drop per block\nDelay
 ezminer.config.xpDropMode.immediate=Immediate
 ezminer.config.xpDropMode.delayed=Delayed
 ezminer.config.mergeXPOrbs=Merge XP Orbs\nON: merge all XP into one large orb at chain end\nOFF: spawn individual per-block orbs\nOnly applies when XP Drop Mode is Delayed
+
+ezminer.mode.special.blockSwap=Special: Block Swap
+ezminer.gui.section.blockSwap=Block Swap
+ezminer.config.blockSwapRadius=Block Swap Radius
+ezminer.config.blockSwapLimit=Block Swap Max Blocks
+ezminer.config.enableBlockSwapMode=Enable Block Swap Mode\nON: show Block Swap in special modes\nOFF: hide from list (default)
+ezminer.message.blockSwap.done=EZMiner: Block swap complete — %s blocks replaced
+ezminer.message.blockSwap.noItems=EZMiner: No replacement blocks available in inventory!
+ezminer.message.blockSwap.noItemInHand=EZMiner: Hold a block to use as replacement!
+ezminer.message.blockSwap.notABlock=EZMiner: The held item is not a placeable block!
 ezminer.config.fireBreakEvent=Fire Break Events\nON: fire Forge BreakEvent per chained block\n(protection-mod compat, small per-block cost)\nOFF: fast paths skip the event (default)

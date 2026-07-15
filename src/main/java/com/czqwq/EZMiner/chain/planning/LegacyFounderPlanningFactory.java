@@ -42,6 +42,10 @@ public class LegacyFounderPlanningFactory {
             if (modeState.specialMode == 1) {
                 return new CropFounder(center, results, player, config);
             }
+            // Block swap mode: use chain founder for client preview
+            if (modeState.specialMode == 3) {
+                return new ChainPositionFounder(center, results, player, config);
+            }
             return new NoOpPositionFounder(center, results, player, config);
         }
         switch (modeState.blastMode) {
