@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.MathHelper;
+import net.minecraft.util.ResourceLocation;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -13,6 +14,7 @@ import org.lwjgl.opengl.GL11;
 
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.client.gui.sync.ClientCapSyncTarget;
 import com.czqwq.EZMiner.network.PacketMinerConfig;
 import com.czqwq.EZMiner.network.PacketReloadServerConfig;
 import com.czqwq.EZMiner.network.PacketSaveServerConfig;
@@ -58,6 +60,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_SERVER_MERGE_XP_ORBS = 26;
     private static final int BTN_SERVER_ENABLE_BLOCK_SWAP = 27;
     private static final int BTN_SERVER_FIRE_BREAK_EVENT = 28;
+    private static final int BTN_CLIENT_SYNC_BASE = 100;
 
     // ── Layout constants ──────────────────────────────────────────────────────
     private static final int GUI_W = 290;
@@ -82,6 +85,19 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int ACTION_STRIP_H = 48;
     private static final int MIN_VIEWPORT_H = ROW_H * 3;
     private static final int SCROLLBAR_W = 4;
+    /** Gap between a numeric text field and its sync-to-server-max icon button. */
+    private static final int SYNC_BTN_GAP = 4;
+    /** Sync button size; matches {@link #FIELD_H} so the icon aligns with the field. */
+    private static final int SYNC_BTN_SIZE = FIELD_H;
+    /**
+     * X (relative to guiLeft) of the sync buttons. Right edge lands at
+     * {@code 266 + 14 = 280}, safely left of the scrollbar track at
+     * {@code GUI_W - SCROLLBAR_W - 2 = 284} and inside the panel.
+     */
+    private static final int SYNC_BTN_X = FIELD_X + FIELD_W + SYNC_BTN_GAP;
+
+    /** MC 1.7.10 lowercases ResourceLocation domain — must match assets/ezminer/. */
+    private static final ResourceLocation SYNC_ICON = new ResourceLocation("ezminer", "textures/icons/reset.png");
 
     // ── Adaptive layout (computed in initGui) ─────────────────────────────────
     /** Actual panel height for the current screen. */
@@ -278,6 +294,18 @@ public class EZMinerConfigGui extends GuiScreen {
             smartToolSwitchActivationModeLabel(),
             smartToolSwitchActivationModeValue());
         buttonList.add(btnSmartToolSwitchActivationMode);
+
+        // ── Scrollable: per-field sync-to-server-max icon buttons (client tab) ─
+        for (ClientCapSyncTarget target : ClientCapSyncTarget.values()) {
+            buttonList.add(
+                new TexturedButton(
+                    BTN_CLIENT_SYNC_BASE + target.ordinal(),
+                    guiLeft + SYNC_BTN_X,
+                    contentRowScreenY(target.row()),
+                    SYNC_BTN_SIZE,
+                    SYNC_BTN_SIZE,
+                    SYNC_ICON).setTooltip(I18n.format("ezminer.gui.syncToServerMax")));
+        }
 
         // ── Fixed: client action buttons ──────────────────────────────────────
         buttonList.add(
@@ -481,6 +509,21 @@ public class EZMinerConfigGui extends GuiScreen {
 
         // Draw fixed buttons and everything else (outside scissor)
         super.drawScreen(mouseX, mouseY, partialTicks);
+
+        // Hover tooltips for icon buttons — drawn last so they overlay the panel.
+        drawButtonTooltips(mouseX, mouseY);
+    }
+
+    /** Renders the tooltip of the hovered icon button, if any. */
+    private void drawButtonTooltips(int mouseX, int mouseY) {
+        for (Object obj : buttonList) {
+            if (!(obj instanceof TexturedButton)) continue;
+            TexturedButton btn = (TexturedButton) obj;
+            if (btn.getTooltip() != null && btn.isHovered(mouseX, mouseY)) {
+                GuiTooltipRenderer.render(mc.fontRenderer, btn.getTooltip(), mouseX, mouseY, width, height);
+                return;
+            }
+        }
     }
 
     @Override
@@ -639,6 +682,9 @@ public class EZMinerConfigGui extends GuiScreen {
                 break;
 
             default:
+                if (isClientSyncButton(button.id)) {
+                    onClientSyncClicked(ClientCapSyncTarget.values()[button.id - BTN_CLIENT_SYNC_BASE]);
+                }
                 break;
         }
     }
@@ -976,6 +1022,11 @@ public class EZMinerConfigGui extends GuiScreen {
 
             tfClientBlockSwapRadius.yPosition = getControlY(15);
             tfClientBlockSwapLimit.yPosition = getControlY(16);
+
+            // Keep each sync button glued to its text field's row.
+            for (ClientCapSyncTarget target : ClientCapSyncTarget.values()) {
+                setScrolledButtonY(BTN_CLIENT_SYNC_BASE + target.ordinal(), getControlY(target.row()));
+            }
         } else if (EZMiner.clientIsOp) {
             tfServerBigRadius.yPosition = getControlY(0);
             tfServerBlockLimit.yPosition = getControlY(1);
@@ -1271,6 +1322,14 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_SERVER_FIRE_BREAK_EVENT;
             boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;
 
+            if (isClientSyncButton(btn.id)) {
+                // Buttons are drawn outside the scissor region, so require the
+                // full icon inside the viewport to avoid spilling over the
+                // header/footer of the panel.
+                btn.visible = (activeTab == TAB_CLIENT) && isFullyInViewport(btn.yPosition);
+                continue;
+            }
+
             if (isClientContent || isClientAction) {
                 btn.visible = (activeTab == TAB_CLIENT);
                 // Also hide if scrolled out of the viewport
@@ -1292,7 +1351,53 @@ public class EZMinerConfigGui extends GuiScreen {
         return y + FIELD_H > viewportTop && y < viewportBottom;
     }
 
+    /** Returns true if a control of height {@link #FIELD_H} at screen-Y {@code y} is entirely inside the viewport. */
+    private boolean isFullyInViewport(int y) {
+        return y >= viewportTop && y + FIELD_H <= viewportBottom;
+    }
+
+    /** Returns true if {@code id} belongs to a client-tab sync-to-server-max button. */
+    private static boolean isClientSyncButton(int id) {
+        return id >= BTN_CLIENT_SYNC_BASE && id < BTN_CLIENT_SYNC_BASE + ClientCapSyncTarget.values().length;
+    }
+
     // ── Config I/O ────────────────────────────────────────────────────────────
+
+    /**
+     * Handles a click on a per-field sync button: fills the corresponding text
+     * field with the server maximum. Nothing is persisted here — the player
+     * confirms the value with the regular Apply/Save buttons.
+     */
+    private void onClientSyncClicked(ClientCapSyncTarget target) {
+        GuiTextField field = clientFieldFor(target);
+        if (field != null) {
+            field.setText(String.valueOf(target.serverMax()));
+        }
+    }
+
+    /** Text field on the client tab that displays {@code target}'s value. */
+    private GuiTextField clientFieldFor(ClientCapSyncTarget target) {
+        switch (target) {
+            case BIG_RADIUS:
+                return tfClientBigRadius;
+            case BLOCK_LIMIT:
+                return tfClientBlockLimit;
+            case SMALL_RADIUS:
+                return tfClientSmallRadius;
+            case TUNNEL_WIDTH:
+                return tfClientTunnelWidth;
+            case PREVIEW_BIG_RADIUS:
+                return tfPreviewBigRadius;
+            case PREVIEW_BLOCK_LIMIT:
+                return tfPreviewBlockLimit;
+            case BLOCK_SWAP_RADIUS:
+                return tfClientBlockSwapRadius;
+            case BLOCK_SWAP_LIMIT:
+                return tfClientBlockSwapLimit;
+            default:
+                return null;
+        }
+    }
 
     private void applyAndSaveClientConfig() {
         Config.clientBigRadius = parseI(tfClientBigRadius, Config.clientBigRadius, 0);
