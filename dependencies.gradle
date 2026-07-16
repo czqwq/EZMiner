@@ -1,7 +1,7 @@
 
 elytraModpackVersion {
     // 在这配置的gtnh版本 用于自动拉取依赖版本
-    gtnhVersion = "2.9.0-beta-1"
+    gtnhVersion = "2.9.0-beta-2"
     // 是否不缓存拉取的依赖清单文件
     manifestNoCache = false
     // 是否自动为输出的jar添加 `gtnhVersion` 后缀
@@ -11,7 +11,7 @@ elytraModpackVersion {
 dependencies {
     implementation('org.joml:joml:1.10.8')
     implementation(gtnhDev("GT5-Unofficial"))
-    implementation('com.github.GTNewHorizons:LootGames:2.2.13:dev')
+    implementation('com.github.GTNewHorizons:LootGames:2.2.14:dev')
     runtimeOnlyNonPublishable(gtnhDev("Avaritia"))
     runtimeOnlyNonPublishable(gtnhDev("neiaddons"))
     runtimeOnlyNonPublishable('com.github.GTNewHorizons:Binnie:2.5.16:dev')
@@ -32,8 +32,8 @@ dependencies {
     runtimeOnlyNonPublishable(gtnhDev("TinkersConstruct"))
     runtimeOnlyNonPublishable(gtnhDev("BlockRenderer6343")) { transitive = false }
 
-    compileOnly('com.github.GTNewHorizons:CropsNH:2.0.54:dev') { transitive = false }
-    compileOnly('com.github.GTNewHorizons:Natura:2.8.19:dev') { transitive = false }
+    compileOnly('com.github.GTNewHorizons:CropsNH:2.0.99:dev') { transitive = false }
+    compileOnly('com.github.GTNewHorizons:Natura:2.8.20:dev') { transitive = false }
     // Compile-time only for the TiC leveling bridge (ActiveToolMod hooks);
     // runtime presence is optional and guarded by Loader.isModLoaded.
     compileOnly(gtnhDev("TinkersConstruct")) { transitive = false }
