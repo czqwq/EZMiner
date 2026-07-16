@@ -23,6 +23,9 @@ public class TexturedButton extends GuiButton {
 
     private final ResourceLocation texture;
 
+    /** Optional hover tooltip text; {@code null} = no tooltip. */
+    private String tooltip;
+
     /**
      * @param id      unique button ID (same as {@link GuiButton})
      * @param x       screen X position
@@ -36,13 +39,30 @@ public class TexturedButton extends GuiButton {
         this.texture = texture;
     }
 
+    /** Sets the hover tooltip text (already localised). Returns {@code this} for chaining. */
+    public TexturedButton setTooltip(String tooltip) {
+        this.tooltip = tooltip;
+        return this;
+    }
+
+    /** The hover tooltip text, or {@code null} when none is set. */
+    public String getTooltip() {
+        return tooltip;
+    }
+
+    /** True when this button is visible and the mouse is over it. */
+    public boolean isHovered(int mouseX, int mouseY) {
+        return visible && mouseX >= xPosition
+            && mouseY >= yPosition
+            && mouseX < xPosition + width
+            && mouseY < yPosition + height;
+    }
+
     @Override
     public void drawButton(Minecraft mc, int mouseX, int mouseY) {
         if (!visible) return;
 
-        boolean hovered = mouseX >= xPosition && mouseY >= yPosition
-            && mouseX < xPosition + width
-            && mouseY < yPosition + height;
+        boolean hovered = isHovered(mouseX, mouseY);
 
         // Draw the settings icon (full button area, no padding) -----------------
         mc.getTextureManager()

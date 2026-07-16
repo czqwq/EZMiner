@@ -78,6 +78,7 @@ ezminer.gui.saveAndExit=§aSave & Exit§r
 ezminer.gui.reload.server=§6Reload Server Config§r
 ezminer.gui.save=§aSave & Apply§r
 ezminer.gui.inventory_button=§b[EZMiner]§r §fSettings
+ezminer.gui.syncToServerMax=Sync this value to the server maximum
 
 ezminer.command.nopermission=§cYou need OP permission to reload the config.
 ezminer.command.reloadconfig.success=EZMiner config reloaded successfully.

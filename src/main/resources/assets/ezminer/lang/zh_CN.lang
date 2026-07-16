@@ -78,6 +78,7 @@ ezminer.gui.saveAndExit=§a保存并退出§r
 ezminer.gui.reload.server=§6重载服务端配置§r
 ezminer.gui.save=§a保存并应用§r
 ezminer.gui.inventory_button=§b[EZMiner]§r §f设置
+ezminer.gui.syncToServerMax=将当前值同步为服务器最大值
 
 ezminer.command.nopermission=§c你没有OP权限，无法重新加载配置。
 ezminer.command.reloadconfig.success=EZMiner 配置已重新加载。
