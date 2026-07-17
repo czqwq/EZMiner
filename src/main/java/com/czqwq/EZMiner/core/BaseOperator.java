@@ -27,6 +27,7 @@ import com.czqwq.EZMiner.chain.execution.VisualProspectingBridge;
 import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
 import com.czqwq.EZMiner.chain.planning.CachedPositionsPlanningTask;
 import com.czqwq.EZMiner.chain.planning.ChainPlanningTask;
+import com.czqwq.EZMiner.chain.planning.SearchEventBus;
 import com.czqwq.EZMiner.compat.TinkersConstructCompat;
 import com.czqwq.EZMiner.core.crop.CropAdapterRegistry;
 import com.czqwq.EZMiner.utils.MessageUtils;
@@ -46,6 +47,11 @@ public class BaseOperator {
     public final Manager manager;
     public ChainPlanningTask planningTask;
     public final LinkedBlockingQueue<Vector3i> canBreakPositions = new LinkedBlockingQueue<>();
+    /**
+     * Optional generation-gated event bus for founder→operator decoupling.
+     * Non-null only when {@link Config#useSearchEventBus} is true.
+     */
+    public final SearchEventBus searchEventBus;
 
     private long startTime;
     private int operatorCount = 0;
@@ -77,8 +83,14 @@ public class BaseOperator {
     public BaseOperator(Vector3i pos, Manager manager) {
         this.playerMP = manager.player;
         this.manager = manager;
+        // Create generation-gated event bus for founder→operator decoupling (opt-in)
+        this.searchEventBus = Config.useSearchEventBus ? new SearchEventBus() : null;
         this.planningTask = EZMiner.chainPlanningRuntimeFactory
             .createTaskForMode(manager.minerModeState, pos, canBreakPositions, playerMP, manager.pConfig);
+        // Wire the event bus to the founder if enabled
+        if (searchEventBus != null) {
+            planningTask.setEventBus(searchEventBus, searchEventBus.getGeneration());
+        }
     }
 
     /** Factory using pre-calculated positions instead of a background founder. */
@@ -115,6 +127,14 @@ public class BaseOperator {
         if (planningTask instanceof CachedPositionsPlanningTask) {
             CachedPositionsPlanningTask cached = (CachedPositionsPlanningTask) planningTask;
             cached.feedTo(canBreakPositions, Config.crazyMode ? 4096 : perTick);
+        }
+
+        // ── Drain event bus into operator queue ──
+        // When the generation-gated event bus is enabled, founder threads publish
+        // to the bus (lock-free), and we drain it here into the main operator queue
+        // that the harvest loops poll from.
+        if (searchEventBus != null) {
+            searchEventBus.drainTo(canBreakPositions, perTick);
         }
 
         // ── Chunk preloading (server thread) ──
@@ -252,8 +272,15 @@ public class BaseOperator {
 
     /** Emergency stop on player logout — no chat messages or drop delivery. */
     public void stopImmediately() {
+        // Increment generation first — all in-flight founder publishes are dropped.
+        if (searchEventBus != null) {
+            searchEventBus.incrementGeneration();
+        }
         planningTask.interrupt();
         canBreakPositions.clear();
+        if (searchEventBus != null) {
+            searchEventBus.clear();
+        }
         try {
             FMLCommonHandler.instance()
                 .bus()

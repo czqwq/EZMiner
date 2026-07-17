@@ -129,6 +129,50 @@ public class Config {
     public static int searchWorkerThreads = 3;
 
     /**
+     * Work units per yield cycle for background search threads. After processing this
+     * many positions, the search thread voluntarily calls {@code waitUntil()} to check
+     * whether the tick has ended — if so, it parks until the next tick starts.
+     * <p>
+     * Lower values yield more frequently (smoother server TPS but slower searches).
+     * Higher values finish searches faster but may cause TPS dips on large veins.
+     * Set to 0 to disable budget-based yielding entirely (search threads only yield
+     * at explicit tick boundaries). Range: 0–4096. Default: 0 (disabled).
+     */
+    public static int searchBudgetPerYield = 0;
+
+    /**
+     * When true, chain-mode BFS uses two lock-free queues (currentFrontier + nextFrontier)
+     * instead of a single PriorityQueue — O(1) poll vs O(log n). The wave-front order
+     * differs slightly from distance-ordered expansion but the total block count is
+     * identical. Default: false (use PriorityQueue for backward compatibility).
+     */
+    public static boolean useDualFrontierBfs = false;
+
+    /**
+     * When true, the position bus between founder and operator uses a lock-free
+     * {@code ConcurrentLinkedQueue} with generation-based stale-event rejection
+     * instead of the default {@code LinkedBlockingQueue}. Decouples the founder
+     * and operator modules for cleaner cancellation. Default: false.
+     */
+    public static boolean useSearchEventBus = false;
+
+    /**
+     * When true, visited-position tracking uses a primitive {@code long[]}-backed
+     * open-addressing hash set instead of {@code ConcurrentHashMap.newKeySet()}.
+     * Avoids Long boxing overhead and improves cache locality for large searches.
+     * Default: false (use ConcurrentHashMap for compatibility).
+     */
+    public static boolean usePrimitiveVisitedSet = false;
+
+    /**
+     * When true, chain-mode BFS uses a resumable state-machine traverser that saves
+     * exact (currentNode, neighborIndex) state across yield boundaries. When false,
+     * the legacy {@code ChainPositionFounder} thread-based BFS is used.
+     * Default: false (use legacy founder threads).
+     */
+    public static boolean useResumableTraverser = false;
+
+    /**
      * Suppress Hodgepodge off-thread-read warnings for EZMiner background threads.
      * When true, threads named "EZMiner-*" will not log warnings when reading the
      * chunk map from off-thread (the snapshot still serves data safely).
@@ -436,6 +480,40 @@ public class Config {
             "Number of background worker threads for parallel block search. "
                 + "Higher values scan large radii faster. 0 disables multi-threading. "
                 + "Default: 3. Max: 8.");
+        searchBudgetPerYield = serverConfiguration.getInt(
+            "searchBudgetPerYield",
+            Configuration.CATEGORY_GENERAL,
+            0,
+            0,
+            4096,
+            "Work units per yield cycle for background search threads. "
+                + "After this many checks the search thread yields to check tick boundaries. "
+                + "0 = disabled (yield only at explicit tick boundaries). "
+                + "Lower values = smoother TPS but slower searches. Default: 0.");
+        useDualFrontierBfs = serverConfiguration.getBoolean(
+            "useDualFrontierBfs",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "When true, chain-mode BFS uses two lock-free queues instead of a PriorityQueue "
+                + "for O(1) frontier operations. Default: false.");
+        useSearchEventBus = serverConfiguration.getBoolean(
+            "useSearchEventBus",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "When true, uses a lock-free ConcurrentLinkedQueue with generation-based "
+                + "cancellation between founder and operator. Default: false.");
+        usePrimitiveVisitedSet = serverConfiguration.getBoolean(
+            "usePrimitiveVisitedSet",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "When true, visited-set tracking uses a primitive long[]-backed hash set "
+                + "instead of ConcurrentHashMap to avoid Long boxing. Default: false.");
+        useResumableTraverser = serverConfiguration.getBoolean(
+            "useResumableTraverser",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "When true, chain-mode BFS uses a resumable state-machine traverser "
+                + "instead of legacy founder threads. Default: false.");
         addExhaustion = serverConfiguration
             .get(
                 Configuration.CATEGORY_GENERAL,
@@ -823,6 +901,16 @@ public class Config {
             .set(blockSwapLimit);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "searchWorkerThreads", 3)
             .set(searchWorkerThreads);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "searchBudgetPerYield", 0)
+            .set(searchBudgetPerYield);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "useDualFrontierBfs", false)
+            .set(useDualFrontierBfs);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "useSearchEventBus", false)
+            .set(useSearchEventBus);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "usePrimitiveVisitedSet", false)
+            .set(usePrimitiveVisitedSet);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "useResumableTraverser", false)
+            .set(useResumableTraverser);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "suppressHodgepodgeWarnings", true)
             .set(suppressHodgepodgeWarnings);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "useChunkCachedHarvest", false)
