@@ -52,6 +52,11 @@ public class PacketSaveServerConfig implements IMessage {
     public int blockSwapLimit;
     public boolean enableBlockSwapMode;
     public boolean fireBreakEvent;
+    // Performance settings — assigned via public fields at the GUI call site instead of
+    // growing the positional constructor further (adjacent booleans swap silently).
+    public int searchBudgetPerYield;
+    public boolean useDualFrontierBfs;
+    public boolean usePrimitiveVisitedSet;
 
     public PacketSaveServerConfig() {}
 
@@ -169,6 +174,9 @@ public class PacketSaveServerConfig implements IMessage {
         blockSwapLimit = buf.readInt();
         enableBlockSwapMode = buf.readBoolean();
         fireBreakEvent = buf.readBoolean();
+        searchBudgetPerYield = buf.readInt();
+        useDualFrontierBfs = buf.readBoolean();
+        usePrimitiveVisitedSet = buf.readBoolean();
     }
 
     @Override
@@ -203,6 +211,9 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeInt(blockSwapLimit);
         buf.writeBoolean(enableBlockSwapMode);
         buf.writeBoolean(fireBreakEvent);
+        buf.writeInt(searchBudgetPerYield);
+        buf.writeBoolean(useDualFrontierBfs);
+        buf.writeBoolean(usePrimitiveVisitedSet);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -246,6 +257,9 @@ public class PacketSaveServerConfig implements IMessage {
             Config.blockSwapLimit = Math.max(0, msg.blockSwapLimit);
             Config.enableBlockSwapMode = msg.enableBlockSwapMode;
             Config.fireBreakEvent = msg.fireBreakEvent;
+            Config.searchBudgetPerYield = Math.max(0, Math.min(4096, msg.searchBudgetPerYield));
+            Config.useDualFrontierBfs = msg.useDualFrontierBfs;
+            Config.usePrimitiveVisitedSet = msg.usePrimitiveVisitedSet;
 
             // Persist to disk
             Config.saveServerConfig();

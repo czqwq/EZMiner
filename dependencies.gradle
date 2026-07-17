@@ -32,6 +32,9 @@ dependencies {
     runtimeOnlyNonPublishable(gtnhDev("TinkersConstruct"))
     runtimeOnlyNonPublishable(gtnhDev("BlockRenderer6343")) { transitive = false }
 
+    // fastutil is on the runtime classpath in GTNH (FalsePatternLib loader jars; GT5U uses it
+    // in main code) — declared compileOnly here only for compile-time visibility.
+    compileOnly('it.unimi.dsi:fastutil:8.5.18')
     compileOnly('com.github.GTNewHorizons:CropsNH:2.0.99:dev') { transitive = false }
     compileOnly('com.github.GTNewHorizons:Natura:2.8.20:dev') { transitive = false }
     // Compile-time only for the TiC leveling bridge (ActiveToolMod hooks);

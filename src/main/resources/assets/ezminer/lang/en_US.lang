@@ -145,3 +145,8 @@ ezminer.message.blockSwap.noItems=EZMiner: No replacement blocks available in in
 ezminer.message.blockSwap.noItemInHand=EZMiner: Hold a block to use as replacement!
 ezminer.message.blockSwap.notABlock=EZMiner: The held item is not a placeable block!
 ezminer.config.fireBreakEvent=Fire Break Events\nON: fire Forge BreakEvent per chained block\n(protection-mod compat, small per-block cost)\nOFF: fast paths skip the event (default)
+
+ezminer.gui.section.performance=Performance
+ezminer.config.searchBudgetPerYield=Search Check Cadence\n0 = check every position (safest, default)\nN = check tick-end/cancel every N positions\nHigher = slightly faster search, coarser reaction
+ezminer.config.useDualFrontierBfs=Dual-Frontier BFS\nON: O(1) queue polls instead of PriorityQueue\nOFF: distance-ordered PriorityQueue (compatible)
+ezminer.config.usePrimitiveVisitedSet=Primitive Visited Set\nON: fastutil long hash set, avoids Long boxing\nOFF: ConcurrentHashMap (compatible)

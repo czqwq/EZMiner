@@ -28,6 +28,11 @@ public class PacketServerConfig implements IMessage {
     public int maxBlockSwapRadius;
     public int maxBlockSwapLimit;
     public boolean enableBlockSwapMode;
+    // Performance settings shown/edited in the OP server-settings GUI tab. Synced so the
+    // GUI reflects the server's actual values instead of the client's local config file.
+    public int searchBudgetPerYield;
+    public boolean useDualFrontierBfs;
+    public boolean usePrimitiveVisitedSet;
     /** Whether the receiving client has OP permission on this server. Used to show/hide server config tab in GUI. */
     public boolean isOp;
 
@@ -64,6 +69,9 @@ public class PacketServerConfig implements IMessage {
         maxBlockSwapRadius = buf.readInt();
         maxBlockSwapLimit = buf.readInt();
         enableBlockSwapMode = buf.readBoolean();
+        searchBudgetPerYield = buf.readInt();
+        useDualFrontierBfs = buf.readBoolean();
+        usePrimitiveVisitedSet = buf.readBoolean();
     }
 
     @Override
@@ -80,6 +88,9 @@ public class PacketServerConfig implements IMessage {
         buf.writeInt(maxBlockSwapRadius);
         buf.writeInt(maxBlockSwapLimit);
         buf.writeBoolean(enableBlockSwapMode);
+        buf.writeInt(searchBudgetPerYield);
+        buf.writeBoolean(useDualFrontierBfs);
+        buf.writeBoolean(usePrimitiveVisitedSet);
     }
 
     /**
@@ -87,7 +98,7 @@ public class PacketServerConfig implements IMessage {
      * Use this factory instead of the full constructor to avoid duplicating the OP check at each call site.
      */
     public static PacketServerConfig buildForPlayer(net.minecraft.entity.player.EntityPlayerMP player) {
-        return new PacketServerConfig(
+        PacketServerConfig packet = new PacketServerConfig(
             Config.bigRadius,
             Config.blockLimit,
             Config.smallRadius,
@@ -100,6 +111,10 @@ public class PacketServerConfig implements IMessage {
             Config.blockSwapRadius,
             Config.blockSwapLimit,
             Config.enableBlockSwapMode);
+        packet.searchBudgetPerYield = Config.searchBudgetPerYield;
+        packet.useDualFrontierBfs = Config.useDualFrontierBfs;
+        packet.usePrimitiveVisitedSet = Config.usePrimitiveVisitedSet;
+        return packet;
     }
 
     public static class Handler implements IMessageHandler<PacketServerConfig, IMessage> {
@@ -119,6 +134,10 @@ public class PacketServerConfig implements IMessage {
                     msg.maxBlockSwapRadius,
                     msg.maxBlockSwapLimit,
                     msg.enableBlockSwapMode);
+                Config.applyServerRuntimePerformance(
+                    msg.searchBudgetPerYield,
+                    msg.useDualFrontierBfs,
+                    msg.usePrimitiveVisitedSet);
                 com.czqwq.EZMiner.EZMiner.clientIsOp = msg.isOp;
             }
             return null;

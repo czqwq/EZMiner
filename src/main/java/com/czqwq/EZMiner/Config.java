@@ -129,6 +129,33 @@ public class Config {
     public static int searchWorkerThreads = 3;
 
     /**
+     * Pause/interrupt check cadence for background search threads. The search thread
+     * calls {@code waitUntil()} after this many processed positions — parking until the
+     * next tick starts when the tick has ended, and noticing chain cancellation.
+     * <p>
+     * 0 = check on every position (safest; legacy behavior). Higher values check less
+     * often — searches run slightly faster but react to tick end / cancellation more
+     * coarsely. Range: 0–4096. Default: 0.
+     */
+    public static int searchBudgetPerYield = 0;
+
+    /**
+     * When true, chain-mode BFS uses two plain queues (currentFrontier + nextFrontier)
+     * instead of a single PriorityQueue — O(1) poll vs O(log n). The wave-front order
+     * differs from distance-ordered expansion; when a vein exceeds blockLimit, which
+     * blocks get selected may differ. Default: false (use PriorityQueue).
+     */
+    public static boolean useDualFrontierBfs = false;
+
+    /**
+     * When true, visited-position tracking uses fastutil's primitive
+     * {@code LongOpenHashSet} (behind a synchronized wrapper) instead of
+     * {@code ConcurrentHashMap.newKeySet()}. Avoids Long boxing overhead for large
+     * searches. Default: false (use ConcurrentHashMap for compatibility).
+     */
+    public static boolean usePrimitiveVisitedSet = false;
+
+    /**
      * Suppress Hodgepodge off-thread-read warnings for EZMiner background threads.
      * When true, threads named "EZMiner-*" will not log warnings when reading the
      * chunk map from off-thread (the snapshot still serves data safely).
@@ -436,6 +463,28 @@ public class Config {
             "Number of background worker threads for parallel block search. "
                 + "Higher values scan large radii faster. 0 disables multi-threading. "
                 + "Default: 3. Max: 8.");
+        searchBudgetPerYield = serverConfiguration.getInt(
+            "searchBudgetPerYield",
+            Configuration.CATEGORY_GENERAL,
+            0,
+            0,
+            4096,
+            "Pause/interrupt check cadence for background search threads. "
+                + "The search thread checks tick boundaries and cancellation after this many positions. "
+                + "0 = check on every position (safest; legacy behavior). "
+                + "Higher values = slightly faster searches, coarser reaction. Default: 0.");
+        useDualFrontierBfs = serverConfiguration.getBoolean(
+            "useDualFrontierBfs",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "When true, chain-mode BFS uses two plain queues instead of a PriorityQueue "
+                + "for O(1) frontier operations. Default: false.");
+        usePrimitiveVisitedSet = serverConfiguration.getBoolean(
+            "usePrimitiveVisitedSet",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "When true, visited-set tracking uses fastutil's primitive long hash set "
+                + "instead of ConcurrentHashMap to avoid Long boxing. Default: false.");
         addExhaustion = serverConfiguration
             .get(
                 Configuration.CATEGORY_GENERAL,
@@ -582,6 +631,19 @@ public class Config {
         enableBlockSwapMode = syncedEnableBlockSwapMode;
         clampClientMiningToServerCaps();
         clampClientPreviewToServerCaps();
+    }
+
+    /**
+     * Applies server-synced performance settings on the client so the OP
+     * server-settings GUI shows and saves the server's actual values (same
+     * pattern as {@code enableBlockSwapMode}/{@code breakPerTick} in
+     * {@link #applyServerRuntimeLimits}).
+     */
+    public static void applyServerRuntimePerformance(int syncedSearchBudgetPerYield, boolean syncedUseDualFrontierBfs,
+        boolean syncedUsePrimitiveVisitedSet) {
+        searchBudgetPerYield = Math.max(0, Math.min(4096, syncedSearchBudgetPerYield));
+        useDualFrontierBfs = syncedUseDualFrontierBfs;
+        usePrimitiveVisitedSet = syncedUsePrimitiveVisitedSet;
     }
 
     /**
@@ -823,6 +885,12 @@ public class Config {
             .set(blockSwapLimit);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "searchWorkerThreads", 3)
             .set(searchWorkerThreads);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "searchBudgetPerYield", 0)
+            .set(searchBudgetPerYield);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "useDualFrontierBfs", false)
+            .set(useDualFrontierBfs);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "usePrimitiveVisitedSet", false)
+            .set(usePrimitiveVisitedSet);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "suppressHodgepodgeWarnings", true)
             .set(suppressHodgepodgeWarnings);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "useChunkCachedHarvest", false)

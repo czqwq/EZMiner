@@ -20,6 +20,10 @@ import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.thread.Pauseable;
 import com.czqwq.EZMiner.thread.SearchWorkerPool;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
+
 /**
  * Shell-expansion block finder. Scans concentric cubes from radius 1 to bigRadius,
  * collecting non-air/liquid/bedrock blocks harvestable by the player.
@@ -40,8 +44,20 @@ public class BasePositionFounder extends Pauseable {
     /** External queue consumed by the operator. */
     public LinkedBlockingQueue<Vector3i> positions;
 
-    /** Dedup set using compact long keys from {@link #encodePos} — lock-free for multi-threaded search. */
-    protected final Set<Long> visitedPositions = ConcurrentHashMap.newKeySet(256);
+    /**
+     * Dedup set using compact long keys from {@link #encodePos} — lock-free for multi-threaded search.
+     * Exactly one of {@link #visitedPositions}/{@link #visitedPrimitive} is non-null; both are private
+     * so that every access (including subclass worker lambdas) goes through
+     * {@link #markVisited}/{@link #isVisited}/{@link #clearVisited}.
+     */
+    private final Set<Long> visitedPositions;
+
+    /**
+     * Optional primitive visited set for reduced GC pressure (opt-in via
+     * {@link Config#usePrimitiveVisitedSet}). Backed by fastutil's {@code LongOpenHashSet}
+     * behind a synchronized wrapper so multi-threaded workers can share it.
+     */
+    private final LongSet visitedPrimitive;
 
     /** Number of positions added so far. Atomic for multi-threaded workers. */
     public final AtomicInteger curCount = new AtomicInteger(0);
@@ -61,6 +77,18 @@ public class BasePositionFounder extends Pauseable {
         MinerConfig minerConfig) {
         setName("EZMiner-BlastSearch");
         DeterminingIdentical.checkCompatibility();
+
+        // Select visited-set implementation: primitive long[]-backed set (opt-in)
+        // avoids Long boxing overhead for large searches.
+        if (Config.usePrimitiveVisitedSet) {
+            // Cap the initial table size — blockLimit may be huge; the set grows as needed.
+            visitedPrimitive = LongSets
+                .synchronize(new LongOpenHashSet(Math.max(16, Math.min(minerConfig.blockLimit, 1 << 16))));
+            visitedPositions = null;
+        } else {
+            visitedPrimitive = null;
+            visitedPositions = ConcurrentHashMap.newKeySet(256);
+        }
 
         this.center = center;
         this.player = player;
@@ -93,6 +121,9 @@ public class BasePositionFounder extends Pauseable {
         cachedPlayerFloorZ = (int) Math.floor(player.posZ);
 
         addResult(center);
+
+        // Cooperative pause/interrupt cadence (0 = check on every position, N = every N positions).
+        setWorkBudget(Config.searchBudgetPerYield);
     }
 
     @Override
@@ -123,22 +154,73 @@ public class BasePositionFounder extends Pauseable {
             int xMin = center.x - curRadius, xMax = center.x + curRadius;
             int yMin = center.y - curRadius, yMax = center.y + curRadius;
             int zMin = center.z - curRadius, zMax = center.z + curRadius;
-            for (int x = xMin; x <= xMax; x++) {
-                for (int y = yMin; y <= yMax; y++) {
-                    for (int z = zMin; z <= zMax; z++) {
-                        if (x != xMin && x != xMax && y != yMin && y != yMax && z != zMin && z != zMax) continue;
-                        if (isVisited(x, y, z)) continue;
-                        Vector3i pos = new Vector3i(x, y, z);
-                        if (checkCanAdd(pos)) addResult(pos);
-                        if (curCount.get() >= minerConfig.blockLimit) return;
-                        waitUntil();
-                        if (Thread.currentThread()
-                            .isInterrupted()) return;
-                    }
-                }
-            }
+            scanShellFaces(xMin, xMax, yMin, yMax, zMin, zMax);
+            if (curCount.get() >= minerConfig.blockLimit) return;
+            waitUntil();
+            if (Thread.currentThread()
+                .isInterrupted()) return;
             curRadius++;
         }
+    }
+
+    /**
+     * Iterates the 6 faces of the cube defined by [xMin..xMax]×[yMin..yMax]×[zMin..zMax]
+     * using explicit face loops — O(R²) instead of the naive O(R³) cubic scan.
+     * Edges between faces are excluded to avoid duplicate processing.
+     */
+    private void scanShellFaces(int xMin, int xMax, int yMin, int yMax, int zMin, int zMax) {
+        // Face x=xMin and x=xMax: full yz-plane (includes all edges)
+        for (int y = yMin; y <= yMax; y++) {
+            for (int z = zMin; z <= zMax; z++) {
+                if (tryProcessShellPos(xMin, y, z)) return;
+            }
+        }
+        for (int y = yMin; y <= yMax; y++) {
+            for (int z = zMin; z <= zMax; z++) {
+                if (tryProcessShellPos(xMax, y, z)) return;
+            }
+        }
+        // Face y=yMin and y=yMax: exclude the x-edge faces already covered above,
+        // but keep the FULL z range so the four y/z edge lines are covered exactly
+        // once (by the y-faces).
+        int xMinInner = xMin + 1, xMaxInner = xMax - 1;
+        if (xMinInner <= xMaxInner) {
+            for (int x = xMinInner; x <= xMaxInner; x++) {
+                for (int z = zMin; z <= zMax; z++) {
+                    if (tryProcessShellPos(x, yMin, z)) return;
+                }
+            }
+            for (int x = xMinInner; x <= xMaxInner; x++) {
+                for (int z = zMin; z <= zMax; z++) {
+                    if (tryProcessShellPos(x, yMax, z)) return;
+                }
+            }
+        }
+        // Face z=zMin and z=zMax: exclude x and y edges already covered above
+        int yMinInner = yMin + 1, yMaxInner = yMax - 1;
+        if (xMinInner <= xMaxInner && yMinInner <= yMaxInner) {
+            for (int x = xMinInner; x <= xMaxInner; x++) {
+                for (int y = yMinInner; y <= yMaxInner; y++) {
+                    if (tryProcessShellPos(x, y, zMin)) return;
+                }
+            }
+            for (int x = xMinInner; x <= xMaxInner; x++) {
+                for (int y = yMinInner; y <= yMaxInner; y++) {
+                    if (tryProcessShellPos(x, y, zMax)) return;
+                }
+            }
+        }
+    }
+
+    /** Process a single shell position. Returns true if the search should stop (limit reached or interrupted). */
+    private boolean tryProcessShellPos(int x, int y, int z) {
+        if (curCount.get() >= minerConfig.blockLimit) return true;
+        // Cooperative pause/interrupt check (founder thread only; no-op on workers).
+        if (!consumeBudget()) return true;
+        if (isVisited(x, y, z)) return false;
+        Vector3i pos = new Vector3i(x, y, z);
+        if (checkCanAdd(pos)) addResult(pos);
+        return curCount.get() >= minerConfig.blockLimit;
     }
 
     // ── Multi-threaded shell-expansion ────────────────────────────────────────
@@ -181,21 +263,53 @@ public class BasePositionFounder extends Pauseable {
 
     /**
      * Scans a subset of the shell for the given X-range. Called by worker threads.
-     * Reuses the existing {@link #checkCanAdd} / {@link #addResult} pipeline —
-     * the {@code addResult} method is already thread-safe (atomic visited-set add,
-     * non-blocking queue offer).
+     * Uses explicit face iteration — O(stripWidth × R) instead of O(stripWidth × R²).
      */
     private void scanShellStrip(int sx, int ex, int xMin, int xMax, int yMin, int yMax, int zMin, int zMax) {
-        for (int x = sx; x <= ex; x++) {
+        // Face x=xMin: full yz-plane, only if this strip covers xMin
+        if (sx <= xMin && xMin <= ex) {
             for (int y = yMin; y <= yMax; y++) {
                 for (int z = zMin; z <= zMax; z++) {
-                    if (curCount.get() >= minerConfig.blockLimit) return;
-                    if (x != xMin && x != xMax && y != yMin && y != yMax && z != zMin && z != zMax) continue;
-                    // Fast visited check (no Vector3i allocation) before world reads.
-                    if (isVisited(x, y, z)) continue;
-                    Vector3i pos = new Vector3i(x, y, z);
-                    if (checkCanAdd(pos)) addResult(pos);
-                    if (curCount.get() >= minerConfig.blockLimit) return;
+                    if (tryProcessShellPos(xMin, y, z)) return;
+                }
+            }
+        }
+        // Face x=xMax: full yz-plane, only if this strip covers xMax
+        if (sx <= xMax && xMax <= ex) {
+            for (int y = yMin; y <= yMax; y++) {
+                for (int z = zMin; z <= zMax; z++) {
+                    if (tryProcessShellPos(xMax, y, z)) return;
+                }
+            }
+        }
+        // Inner x-range for y and z faces (excluding x-edge faces already covered)
+        int xMinInner = Math.max(sx, xMin + 1);
+        int xMaxInner = Math.min(ex, xMax - 1);
+        int yMinInner = yMin + 1, yMaxInner = yMax - 1;
+        // Face y=yMin and y=yMax: exclude x edges, keep the FULL z range so the
+        // four y/z edge lines are covered exactly once (by the y-faces).
+        if (xMinInner <= xMaxInner) {
+            for (int x = xMinInner; x <= xMaxInner; x++) {
+                for (int z = zMin; z <= zMax; z++) {
+                    if (tryProcessShellPos(x, yMin, z)) return;
+                }
+            }
+            for (int x = xMinInner; x <= xMaxInner; x++) {
+                for (int z = zMin; z <= zMax; z++) {
+                    if (tryProcessShellPos(x, yMax, z)) return;
+                }
+            }
+        }
+        // Face z=zMin and z=zMax: exclude x and y edges
+        if (xMinInner <= xMaxInner && yMinInner <= yMaxInner) {
+            for (int x = xMinInner; x <= xMaxInner; x++) {
+                for (int y = yMinInner; y <= yMaxInner; y++) {
+                    if (tryProcessShellPos(x, y, zMin)) return;
+                }
+            }
+            for (int x = xMinInner; x <= xMaxInner; x++) {
+                for (int y = yMinInner; y <= yMaxInner; y++) {
+                    if (tryProcessShellPos(x, y, zMax)) return;
                 }
             }
         }
@@ -230,15 +344,34 @@ public class BasePositionFounder extends Pauseable {
     }
 
     public void addResult(Vector3i pos) {
-        long key = encodePos(pos.x, pos.y, pos.z);
-        if (!visitedPositions.add(key)) return; // already visited
+        if (!markVisited(encodePos(pos.x, pos.y, pos.z))) return; // already visited
         positions.offer(pos);
         curCount.incrementAndGet();
     }
 
+    /**
+     * Atomically marks a position key as visited. The single entry point for
+     * visited-set writes — worker lambdas must use this instead of touching the
+     * underlying sets directly (exactly one of which exists, see the field docs).
+     *
+     * @return true if the key was newly added, false if already visited
+     */
+    protected boolean markVisited(long key) {
+        if (visitedPrimitive != null) return visitedPrimitive.add(key);
+        return visitedPositions.add(key);
+    }
+
     /** Check visited set using compact long key — call BEFORE allocating a Vector3i. */
     protected boolean isVisited(int x, int y, int z) {
-        return visitedPositions.contains(encodePos(x, y, z));
+        long key = encodePos(x, y, z);
+        if (visitedPrimitive != null) return visitedPrimitive.contains(key);
+        return visitedPositions.contains(key);
+    }
+
+    /** Clears the visited set (whichever implementation is active). */
+    protected void clearVisited() {
+        if (visitedPrimitive != null) visitedPrimitive.clear();
+        else visitedPositions.clear();
     }
 
     /**
