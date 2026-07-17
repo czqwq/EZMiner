@@ -16,11 +16,13 @@ import org.apache.logging.log4j.Logger;
 import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
-import com.czqwq.EZMiner.chain.planning.SearchEventBus;
 import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.thread.Pauseable;
 import com.czqwq.EZMiner.thread.SearchWorkerPool;
-import com.czqwq.EZMiner.utils.LongOpenHashSet;
+
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 
 /**
  * Shell-expansion block finder. Scans concentric cubes from radius 1 to bigRadius,
@@ -42,23 +44,20 @@ public class BasePositionFounder extends Pauseable {
     /** External queue consumed by the operator. */
     public LinkedBlockingQueue<Vector3i> positions;
 
-    /** Dedup set using compact long keys from {@link #encodePos} — lock-free for multi-threaded search. */
-    protected final Set<Long> visitedPositions;
+    /**
+     * Dedup set using compact long keys from {@link #encodePos} — lock-free for multi-threaded search.
+     * Exactly one of {@link #visitedPositions}/{@link #visitedPrimitive} is non-null; both are private
+     * so that every access (including subclass worker lambdas) goes through
+     * {@link #markVisited}/{@link #isVisited}/{@link #clearVisited}.
+     */
+    private final Set<Long> visitedPositions;
 
     /**
-     * Optional primitive visited set for reduced GC pressure. Non-null only when
-     * {@link Config#usePrimitiveVisitedSet} is true. Has its own thread safety
-     * via {@code ReadWriteLock} — not guarded by visitedPositions.
+     * Optional primitive visited set for reduced GC pressure (opt-in via
+     * {@link Config#usePrimitiveVisitedSet}). Backed by fastutil's {@code LongOpenHashSet}
+     * behind a synchronized wrapper so multi-threaded workers can share it.
      */
-    protected final LongOpenHashSet visitedPrimitive;
-
-    /**
-     * Optional event bus for generation-gated publishing. When non-null,
-     * {@link #addResult} publishes through the bus with generation check.
-     */
-    protected SearchEventBus eventBus = null;
-    /** Snapshot of the bus generation at the time this founder was created. */
-    protected int busGeneration = 0;
+    private final LongSet visitedPrimitive;
 
     /** Number of positions added so far. Atomic for multi-threaded workers. */
     public final AtomicInteger curCount = new AtomicInteger(0);
@@ -82,7 +81,9 @@ public class BasePositionFounder extends Pauseable {
         // Select visited-set implementation: primitive long[]-backed set (opt-in)
         // avoids Long boxing overhead for large searches.
         if (Config.usePrimitiveVisitedSet) {
-            visitedPrimitive = new LongOpenHashSet(minerConfig.blockLimit);
+            // Cap the initial table size — blockLimit may be huge; the set grows as needed.
+            visitedPrimitive = LongSets
+                .synchronize(new LongOpenHashSet(Math.max(16, Math.min(minerConfig.blockLimit, 1 << 16))));
             visitedPositions = null;
         } else {
             visitedPrimitive = null;
@@ -121,7 +122,7 @@ public class BasePositionFounder extends Pauseable {
 
         addResult(center);
 
-        // Set cooperative yielding budget from config (0 = disabled by default).
+        // Cooperative pause/interrupt cadence (0 = check on every position, N = every N positions).
         setWorkBudget(Config.searchBudgetPerYield);
     }
 
@@ -179,17 +180,18 @@ public class BasePositionFounder extends Pauseable {
                 if (tryProcessShellPos(xMax, y, z)) return;
             }
         }
-        // Face y=yMin and y=yMax: exclude x-edges already covered above
+        // Face y=yMin and y=yMax: exclude the x-edge faces already covered above,
+        // but keep the FULL z range so the four y/z edge lines are covered exactly
+        // once (by the y-faces).
         int xMinInner = xMin + 1, xMaxInner = xMax - 1;
-        int zMinInner = zMin + 1, zMaxInner = zMax - 1;
-        if (xMinInner <= xMaxInner && zMinInner <= zMaxInner) {
+        if (xMinInner <= xMaxInner) {
             for (int x = xMinInner; x <= xMaxInner; x++) {
-                for (int z = zMinInner; z <= zMaxInner; z++) {
+                for (int z = zMin; z <= zMax; z++) {
                     if (tryProcessShellPos(x, yMin, z)) return;
                 }
             }
             for (int x = xMinInner; x <= xMaxInner; x++) {
-                for (int z = zMinInner; z <= zMaxInner; z++) {
+                for (int z = zMin; z <= zMax; z++) {
                     if (tryProcessShellPos(x, yMax, z)) return;
                 }
             }
@@ -210,10 +212,11 @@ public class BasePositionFounder extends Pauseable {
         }
     }
 
-    /** Process a single shell position. Returns true if the search should stop (limit reached). */
+    /** Process a single shell position. Returns true if the search should stop (limit reached or interrupted). */
     private boolean tryProcessShellPos(int x, int y, int z) {
         if (curCount.get() >= minerConfig.blockLimit) return true;
-        if (!consumeBudget()) return true; // yield if budget exhausted or interrupted
+        // Cooperative pause/interrupt check (founder thread only; no-op on workers).
+        if (!consumeBudget()) return true;
         if (isVisited(x, y, z)) return false;
         Vector3i pos = new Vector3i(x, y, z);
         if (checkCanAdd(pos)) addResult(pos);
@@ -282,17 +285,17 @@ public class BasePositionFounder extends Pauseable {
         // Inner x-range for y and z faces (excluding x-edge faces already covered)
         int xMinInner = Math.max(sx, xMin + 1);
         int xMaxInner = Math.min(ex, xMax - 1);
-        int zMinInner = zMin + 1, zMaxInner = zMax - 1;
         int yMinInner = yMin + 1, yMaxInner = yMax - 1;
-        // Face y=yMin and y=yMax: exclude x and z edges
-        if (xMinInner <= xMaxInner && zMinInner <= zMaxInner) {
+        // Face y=yMin and y=yMax: exclude x edges, keep the FULL z range so the
+        // four y/z edge lines are covered exactly once (by the y-faces).
+        if (xMinInner <= xMaxInner) {
             for (int x = xMinInner; x <= xMaxInner; x++) {
-                for (int z = zMinInner; z <= zMaxInner; z++) {
+                for (int z = zMin; z <= zMax; z++) {
                     if (tryProcessShellPos(x, yMin, z)) return;
                 }
             }
             for (int x = xMinInner; x <= xMaxInner; x++) {
-                for (int z = zMinInner; z <= zMaxInner; z++) {
+                for (int z = zMin; z <= zMax; z++) {
                     if (tryProcessShellPos(x, yMax, z)) return;
                 }
             }
@@ -341,33 +344,34 @@ public class BasePositionFounder extends Pauseable {
     }
 
     public void addResult(Vector3i pos) {
-        long key = encodePos(pos.x, pos.y, pos.z);
-        if (visitedPrimitive != null) {
-            if (!visitedPrimitive.add(key)) return; // already visited
-        } else {
-            if (!visitedPositions.add(key)) return; // already visited
-        }
-        if (eventBus != null) {
-            if (!eventBus.publish(pos, busGeneration)) return; // generation mismatch — chain cancelled
-        } else {
-            positions.offer(pos);
-        }
+        if (!markVisited(encodePos(pos.x, pos.y, pos.z))) return; // already visited
+        positions.offer(pos);
         curCount.incrementAndGet();
     }
 
-    /** Sets the event bus for decoupled founder→operator communication. */
-    public void setEventBus(SearchEventBus bus, int generation) {
-        this.eventBus = bus;
-        this.busGeneration = generation;
+    /**
+     * Atomically marks a position key as visited. The single entry point for
+     * visited-set writes — worker lambdas must use this instead of touching the
+     * underlying sets directly (exactly one of which exists, see the field docs).
+     *
+     * @return true if the key was newly added, false if already visited
+     */
+    protected boolean markVisited(long key) {
+        if (visitedPrimitive != null) return visitedPrimitive.add(key);
+        return visitedPositions.add(key);
     }
 
     /** Check visited set using compact long key — call BEFORE allocating a Vector3i. */
     protected boolean isVisited(int x, int y, int z) {
         long key = encodePos(x, y, z);
-        if (visitedPrimitive != null) {
-            return visitedPrimitive.contains(key);
-        }
+        if (visitedPrimitive != null) return visitedPrimitive.contains(key);
         return visitedPositions.contains(key);
+    }
+
+    /** Clears the visited set (whichever implementation is active). */
+    protected void clearVisited() {
+        if (visitedPrimitive != null) visitedPrimitive.clear();
+        else visitedPositions.clear();
     }
 
     /**

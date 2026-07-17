@@ -60,10 +60,8 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_SERVER_MERGE_XP_ORBS = 26;
     private static final int BTN_SERVER_ENABLE_BLOCK_SWAP = 27;
     private static final int BTN_SERVER_FIRE_BREAK_EVENT = 28;
-    private static final int BTN_SERVER_SEARCH_BUDGET_PER_YIELD = 29;
-    private static final int BTN_SERVER_USE_DUAL_FRONTIER_BFS = 30;
-    private static final int BTN_SERVER_USE_SEARCH_EVENT_BUS = 31;
-    private static final int BTN_SERVER_USE_PRIMITIVE_VISITED_SET = 32;
+    private static final int BTN_SERVER_USE_DUAL_FRONTIER_BFS = 29;
+    private static final int BTN_SERVER_USE_PRIMITIVE_VISITED_SET = 30;
     private static final int BTN_CLIENT_SYNC_BASE = 100;
 
     // ── Layout constants ──────────────────────────────────────────────────────
@@ -78,7 +76,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int CONTENT_START_Y = 42;
     private static final int MAX_CONTENT_ROWS = 17; // Client tab row count
     /** Server tab row count (has more fields than client tab). */
-    private static final int SERVER_CONTENT_ROWS = 34;
+    private static final int SERVER_CONTENT_ROWS = 33;
     private static final int ROW_H = 20;
     /** Extra vertical spacing added between lines when a label contains \n. */
     private static final int EXTRA_LINE_SPACING = 2;
@@ -180,7 +178,6 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnServerEnableBlockSwap;
     private GuiButton btnServerFireBreakEvent;
     private GuiButton btnServerUseDualFrontierBfs;
-    private GuiButton btnServerUseSearchEventBus;
     private GuiButton btnServerUsePrimitiveVisitedSet;
 
     // ── GuiScreen overrides ───────────────────────────────────────────────────
@@ -439,7 +436,7 @@ public class EZMinerConfigGui extends GuiScreen {
                 boolValue(Config.enableBlockSwapMode));
             buttonList.add(btnServerEnableBlockSwap);
 
-            // Performance section
+            // Performance section (values synced from the server via PacketServerConfig)
             btnServerUseDualFrontierBfs = newOptionButton(
                 BTN_SERVER_USE_DUAL_FRONTIER_BFS,
                 31,
@@ -448,17 +445,9 @@ public class EZMinerConfigGui extends GuiScreen {
                 boolValue(Config.useDualFrontierBfs));
             buttonList.add(btnServerUseDualFrontierBfs);
 
-            btnServerUseSearchEventBus = newOptionButton(
-                BTN_SERVER_USE_SEARCH_EVENT_BUS,
-                32,
-                "ezminer.config.useSearchEventBus",
-                boolLabel("ezminer.config.useSearchEventBus", Config.useSearchEventBus),
-                boolValue(Config.useSearchEventBus));
-            buttonList.add(btnServerUseSearchEventBus);
-
             btnServerUsePrimitiveVisitedSet = newOptionButton(
                 BTN_SERVER_USE_PRIMITIVE_VISITED_SET,
-                33,
+                32,
                 "ezminer.config.usePrimitiveVisitedSet",
                 boolLabel("ezminer.config.usePrimitiveVisitedSet", Config.usePrimitiveVisitedSet),
                 boolValue(Config.usePrimitiveVisitedSet));
@@ -713,12 +702,6 @@ public class EZMinerConfigGui extends GuiScreen {
                     "ezminer.config.useDualFrontierBfs",
                     Config.useDualFrontierBfs);
                 break;
-            case BTN_SERVER_USE_SEARCH_EVENT_BUS:
-                Config.useSearchEventBus = !Config.useSearchEventBus;
-                btnServerUseSearchEventBus.displayString = boolDisplayText(
-                    "ezminer.config.useSearchEventBus",
-                    Config.useSearchEventBus);
-                break;
             case BTN_SERVER_USE_PRIMITIVE_VISITED_SET:
                 Config.usePrimitiveVisitedSet = !Config.usePrimitiveVisitedSet;
                 btnServerUsePrimitiveVisitedSet.displayString = boolDisplayText(
@@ -948,8 +931,6 @@ public class EZMinerConfigGui extends GuiScreen {
                 case 31:
                     return "ezminer.config.useDualFrontierBfs";
                 case 32:
-                    return "ezminer.config.useSearchEventBus";
-                case 33:
                     return "ezminer.config.usePrimitiveVisitedSet";
                 default:
                     return null;
@@ -1126,8 +1107,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             tfSearchBudgetPerYield.yPosition = getControlY(30);
             setScrolledButtonY(BTN_SERVER_USE_DUAL_FRONTIER_BFS, getControlY(31));
-            setScrolledButtonY(BTN_SERVER_USE_SEARCH_EVENT_BUS, getControlY(32));
-            setScrolledButtonY(BTN_SERVER_USE_PRIMITIVE_VISITED_SET, getControlY(33));
+            setScrolledButtonY(BTN_SERVER_USE_PRIMITIVE_VISITED_SET, getControlY(32));
         }
 
         // Update per-button visibility: hide when scrolled out of viewport.
@@ -1315,8 +1295,7 @@ public class EZMinerConfigGui extends GuiScreen {
         drawSectionHeader(lx, contentRowScreenY(29) + getContentRowHeight(29) + 4, "ezminer.gui.section.performance");
         drawRow(lx, contentRowScreenY(30), lc, "ezminer.config.searchBudgetPerYield", tfSearchBudgetPerYield);
         drawButtonRowLabel(lx, contentRowScreenY(31), lc, "ezminer.config.useDualFrontierBfs");
-        drawButtonRowLabel(lx, contentRowScreenY(32), lc, "ezminer.config.useSearchEventBus");
-        drawButtonRowLabel(lx, contentRowScreenY(33), lc, "ezminer.config.usePrimitiveVisitedSet");
+        drawButtonRowLabel(lx, contentRowScreenY(32), lc, "ezminer.config.usePrimitiveVisitedSet");
 
     }
 
@@ -1397,7 +1376,6 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_SERVER_ENABLE_BLOCK_SWAP
                 || btn.id == BTN_SERVER_FIRE_BREAK_EVENT
                 || btn.id == BTN_SERVER_USE_DUAL_FRONTIER_BFS
-                || btn.id == BTN_SERVER_USE_SEARCH_EVENT_BUS
                 || btn.id == BTN_SERVER_USE_PRIMITIVE_VISITED_SET;
             boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;
 
@@ -1494,51 +1472,50 @@ public class EZMinerConfigGui extends GuiScreen {
     }
 
     private void applyAndSaveServerConfig() {
-        EZMiner.network.network.sendToServer(
-            new PacketSaveServerConfig(
-                parseI(tfServerBigRadius, serverValueForDisplay(Config.runtimeServerMaxBigRadius, Config.bigRadius), 0),
-                parseI(
-                    tfServerBlockLimit,
-                    serverValueForDisplay(Config.runtimeServerMaxBlockLimit, Config.blockLimit),
-                    0),
-                parseI(
-                    tfServerSmallRadius,
-                    serverValueForDisplay(Config.runtimeServerMaxSmallRadius, Config.smallRadius),
-                    0),
-                parseI(
-                    tfServerTunnelWidth,
-                    serverValueForDisplay(Config.runtimeServerMaxTunnelWidth, Config.tunnelWidth),
-                    0),
-                parseI(tfBreakPerTick, Config.breakPerTick, 1),
-                parseI(tfCachedBreakPerTick, Config.cachedBreakPerTick, 1),
-                Config.dropImmediately,
-                parseD(tfAddExhaustion, Config.addExhaustion),
-                Config.dropToPlayer,
-                Config.serverUsePreview,
-                parseI(tfServerMaxPreviewRadius, Config.serverMaxPreviewBigRadius, 0),
-                parseI(tfServerMaxPreviewLimit, Config.serverMaxPreviewBlockLimit, 0),
-                parseD(tfMinesweeperCooldown, Config.minesweeperProbeCooldownSeconds),
-                parseD(tfSudokuCooldown, Config.sudokuProbeCooldownSeconds),
-                Config.enableCachedChain,
-                parseI(tfSearchWorkerThreads, Config.searchWorkerThreads, 0),
-                Config.suppressHodgepodgeWarnings,
-                Config.enableChainChunkLoading,
-                Config.useChunkCachedHarvest,
-                Config.crazyMode,
-                parseI(tfChainIdleTimeout, Config.chainIdleTimeoutSeconds, -1),
-                parseI(tfChainIdleCountdown, Config.chainIdleCountdownSeconds, -1),
-                Config.stopOnUnbreakable,
-                parseI(tfChainCooldownTicks, Config.chainCooldownTicks, 0),
-                Config.xpDropMode,
-                Config.mergeXPOrbs,
-                parseI(tfServerBlockSwapRadius, Config.blockSwapRadius, 0),
-                parseI(tfServerBlockSwapLimit, Config.blockSwapLimit, 0),
-                Config.enableBlockSwapMode,
-                Config.fireBreakEvent,
-                parseI(tfSearchBudgetPerYield, Config.searchBudgetPerYield, 0),
-                Config.useDualFrontierBfs,
-                Config.useSearchEventBus,
-                Config.usePrimitiveVisitedSet));
+        PacketSaveServerConfig packet = new PacketSaveServerConfig(
+            parseI(tfServerBigRadius, serverValueForDisplay(Config.runtimeServerMaxBigRadius, Config.bigRadius), 0),
+            parseI(tfServerBlockLimit, serverValueForDisplay(Config.runtimeServerMaxBlockLimit, Config.blockLimit), 0),
+            parseI(
+                tfServerSmallRadius,
+                serverValueForDisplay(Config.runtimeServerMaxSmallRadius, Config.smallRadius),
+                0),
+            parseI(
+                tfServerTunnelWidth,
+                serverValueForDisplay(Config.runtimeServerMaxTunnelWidth, Config.tunnelWidth),
+                0),
+            parseI(tfBreakPerTick, Config.breakPerTick, 1),
+            parseI(tfCachedBreakPerTick, Config.cachedBreakPerTick, 1),
+            Config.dropImmediately,
+            parseD(tfAddExhaustion, Config.addExhaustion),
+            Config.dropToPlayer,
+            Config.serverUsePreview,
+            parseI(tfServerMaxPreviewRadius, Config.serverMaxPreviewBigRadius, 0),
+            parseI(tfServerMaxPreviewLimit, Config.serverMaxPreviewBlockLimit, 0),
+            parseD(tfMinesweeperCooldown, Config.minesweeperProbeCooldownSeconds),
+            parseD(tfSudokuCooldown, Config.sudokuProbeCooldownSeconds),
+            Config.enableCachedChain,
+            parseI(tfSearchWorkerThreads, Config.searchWorkerThreads, 0),
+            Config.suppressHodgepodgeWarnings,
+            Config.enableChainChunkLoading,
+            Config.useChunkCachedHarvest,
+            Config.crazyMode,
+            parseI(tfChainIdleTimeout, Config.chainIdleTimeoutSeconds, -1),
+            parseI(tfChainIdleCountdown, Config.chainIdleCountdownSeconds, -1),
+            Config.stopOnUnbreakable,
+            parseI(tfChainCooldownTicks, Config.chainCooldownTicks, 0),
+            Config.xpDropMode,
+            Config.mergeXPOrbs,
+            parseI(tfServerBlockSwapRadius, Config.blockSwapRadius, 0),
+            parseI(tfServerBlockSwapLimit, Config.blockSwapLimit, 0),
+            Config.enableBlockSwapMode,
+            Config.fireBreakEvent);
+        // Performance settings ride along as named fields (values are synced from the
+        // server via PacketServerConfig, so this round-trips the server's own values
+        // unless the OP changed them in this GUI session).
+        packet.searchBudgetPerYield = parseI(tfSearchBudgetPerYield, Config.searchBudgetPerYield, 0);
+        packet.useDualFrontierBfs = Config.useDualFrontierBfs;
+        packet.usePrimitiveVisitedSet = Config.usePrimitiveVisitedSet;
+        EZMiner.network.network.sendToServer(packet);
     }
 
     // ── GL scissor helper ─────────────────────────────────────────────────────

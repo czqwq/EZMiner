@@ -1,5 +1,6 @@
 package com.czqwq.EZMiner.core.founder;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -74,13 +75,14 @@ public class ChainPositionFounder extends BasePositionFounder {
     }
 
     /**
-     * Dual-frontier BFS: two lock-free queues ({@code currentFrontier} + {@code nextFrontier})
+     * Dual-frontier BFS: two plain queues ({@code currentFrontier} + {@code nextFrontier})
      * replace the PriorityQueue for O(1) poll instead of O(log n). Wave-front order
      * differs slightly from distance-ordered expansion but total block count is identical.
      */
     private void doSingleThreadedSearchDualFrontier() {
-        Queue<Vector3i> currentFrontier = new ConcurrentLinkedQueue<>();
-        Queue<Vector3i> nextFrontier = new ConcurrentLinkedQueue<>();
+        // Single-threaded: ArrayDeque avoids ConcurrentLinkedQueue's per-offer node allocation.
+        Queue<Vector3i> currentFrontier = new ArrayDeque<>();
+        Queue<Vector3i> nextFrontier = new ArrayDeque<>();
         currentFrontier.add(center);
 
         while (curCount.get() < minerConfig.blockLimit) {
@@ -166,8 +168,8 @@ public class ChainPositionFounder extends BasePositionFounder {
                 tasks.add(() -> {
                     for (Vector3i c : slice) {
                         if (curCount.get() >= minerConfig.blockLimit) break;
-                        long key = encodePos(c.x, c.y, c.z);
-                        if (!visitedPositions.add(key)) continue;
+                        // markVisited handles both visited-set implementations (never NPEs).
+                        if (!markVisited(encodePos(c.x, c.y, c.z))) continue;
                         if (checkCanAddAfterVisited(c)) {
                             curCount.incrementAndGet();
                             positions.offer(c);
@@ -241,8 +243,8 @@ public class ChainPositionFounder extends BasePositionFounder {
                 tasks.add(() -> {
                     for (Vector3i c : slice) {
                         if (curCount.get() >= minerConfig.blockLimit) break;
-                        long key = encodePos(c.x, c.y, c.z);
-                        if (!visitedPositions.add(key)) continue;
+                        // markVisited handles both visited-set implementations (never NPEs).
+                        if (!markVisited(encodePos(c.x, c.y, c.z))) continue;
                         if (checkCanAddAfterVisited(c)) {
                             curCount.incrementAndGet();
                             positions.offer(c);

@@ -17,12 +17,13 @@ public class Pauseable extends Thread {
     public int errorCount = 0;
 
     /**
-     * Work budget per yield cycle. 0 or negative = disabled (no budget cap).
-     * When positive, each {@link #consumeBudget()} call decrements a counter;
-     * when the counter reaches zero the thread yields via {@link #waitUntil()}
-     * and the counter resets.
+     * Work budget per yield cycle. 0 or negative = check on every call (legacy
+     * per-position behavior). When positive, each {@link #consumeBudget()} call
+     * decrements a counter; the pause/interrupt check runs only when the counter
+     * reaches zero, then the counter resets.
      */
     protected volatile int workBudget = 0;
+    /** Only ever touched by the founder thread itself (see {@link #consumeBudget()}). */
     private int budgetRemaining = 0;
 
     public Pauseable() {
@@ -30,8 +31,8 @@ public class Pauseable extends Thread {
     }
 
     /**
-     * Sets the per-yield work budget. 0 or negative disables budget-based yielding.
-     * Call this before starting the thread.
+     * Sets the per-yield work budget. 0 or negative = pause/interrupt check on
+     * every {@link #consumeBudget()} call. Call this before starting the thread.
      */
     public void setWorkBudget(int budget) {
         this.workBudget = Math.max(0, budget);
@@ -39,20 +40,30 @@ public class Pauseable extends Thread {
     }
 
     /**
-     * Consumes one unit of the work budget. When the budget is exhausted the
-     * thread calls {@link #waitUntil()} (which parks if paused) and resets.
+     * Consumes one unit of the work budget and performs the cooperative
+     * pause/interrupt check. With {@code workBudget <= 0} (the default) the check
+     * runs on every call — the legacy per-position {@code waitUntil()} contract
+     * that keeps world reads inside the server-tick window and makes
+     * {@code interrupt()} take effect promptly. With a positive budget the check
+     * runs every {@code workBudget} calls.
+     *
+     * <p>
+     * Founder-thread only: calls from {@code SearchWorkerPool} workers return
+     * {@code true} immediately. Workers are bounded by {@code invokeAll} batch
+     * boundaries and must never park on the founder's pause flag — the pool is
+     * shared by all players, and {@code budgetRemaining} is deliberately not
+     * thread-safe.
+     * </p>
      *
      * @return true if work should continue, false if the thread was interrupted
      */
     public boolean consumeBudget() {
-        if (workBudget <= 0) return true;
-        if (--budgetRemaining <= 0) {
-            budgetRemaining = workBudget;
-            waitUntil();
-            if (Thread.currentThread()
-                .isInterrupted()) return false;
-        }
-        return true;
+        if (Thread.currentThread() != this) return true; // worker threads: no budget, no pause
+        if (workBudget > 0 && --budgetRemaining > 0) return true;
+        budgetRemaining = workBudget;
+        waitUntil();
+        return !Thread.currentThread()
+            .isInterrupted();
     }
 
     public void pause() {
@@ -91,8 +102,13 @@ public class Pauseable extends Thread {
 
     @Override
     public void run() {
-        run1();
-        stopped.set(true);
+        try {
+            run1();
+        } finally {
+            // Always mark stopped, even if run1 throws — otherwise isStopped()
+            // stays false forever and the operator waits on a dead founder.
+            stopped.set(true);
+        }
     }
 
     public void run1() {}

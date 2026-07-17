@@ -31,9 +31,4 @@ public class LegacyFounderPlanningTask implements ChainPlanningTask {
     public boolean isStopped() {
         return founder.stopped.get();
     }
-
-    @Override
-    public void setEventBus(SearchEventBus bus, int generation) {
-        founder.setEventBus(bus, generation);
-    }
 }

@@ -14,12 +14,4 @@ public interface ChainPlanningTask {
     void interrupt();
 
     boolean isStopped();
-
-    /**
-     * Sets the generation-gated event bus for founder→operator decoupling.
-     * Default implementation is a no-op; override in tasks that wrap a founder.
-     */
-    default void setEventBus(SearchEventBus bus, int generation) {
-        // no-op for tasks without a founder
-    }
 }

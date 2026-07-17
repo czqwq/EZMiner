@@ -52,9 +52,10 @@ public class PacketSaveServerConfig implements IMessage {
     public int blockSwapLimit;
     public boolean enableBlockSwapMode;
     public boolean fireBreakEvent;
+    // Performance settings — assigned via public fields at the GUI call site instead of
+    // growing the positional constructor further (adjacent booleans swap silently).
     public int searchBudgetPerYield;
     public boolean useDualFrontierBfs;
-    public boolean useSearchEventBus;
     public boolean usePrimitiveVisitedSet;
 
     public PacketSaveServerConfig() {}
@@ -66,8 +67,7 @@ public class PacketSaveServerConfig implements IMessage {
         int searchWorkerThreads, boolean suppressHodgepodgeWarnings, boolean enableChainChunkLoading,
         boolean useChunkCachedHarvest, boolean crazyMode, int chainIdleTimeoutSeconds, int chainIdleCountdownSeconds,
         boolean stopOnUnbreakable, int chainCooldownTicks, int xpDropMode, boolean mergeXPOrbs, int blockSwapRadius,
-        int blockSwapLimit, boolean enableBlockSwapMode, boolean fireBreakEvent, int searchBudgetPerYield,
-        boolean useDualFrontierBfs, boolean useSearchEventBus, boolean usePrimitiveVisitedSet) {
+        int blockSwapLimit, boolean enableBlockSwapMode, boolean fireBreakEvent) {
         this.bigRadius = bigRadius;
         this.blockLimit = blockLimit;
         this.smallRadius = smallRadius;
@@ -98,10 +98,6 @@ public class PacketSaveServerConfig implements IMessage {
         this.blockSwapLimit = blockSwapLimit;
         this.enableBlockSwapMode = enableBlockSwapMode;
         this.fireBreakEvent = fireBreakEvent;
-        this.searchBudgetPerYield = searchBudgetPerYield;
-        this.useDualFrontierBfs = useDualFrontierBfs;
-        this.useSearchEventBus = useSearchEventBus;
-        this.usePrimitiveVisitedSet = usePrimitiveVisitedSet;
     }
 
     // Keep the old constructor for binary compatibility (not used but prevents
@@ -143,10 +139,6 @@ public class PacketSaveServerConfig implements IMessage {
             8,
             1024,
             false,
-            false,
-            0,
-            false,
-            false,
             false);
     }
 
@@ -184,7 +176,6 @@ public class PacketSaveServerConfig implements IMessage {
         fireBreakEvent = buf.readBoolean();
         searchBudgetPerYield = buf.readInt();
         useDualFrontierBfs = buf.readBoolean();
-        useSearchEventBus = buf.readBoolean();
         usePrimitiveVisitedSet = buf.readBoolean();
     }
 
@@ -222,7 +213,6 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeBoolean(fireBreakEvent);
         buf.writeInt(searchBudgetPerYield);
         buf.writeBoolean(useDualFrontierBfs);
-        buf.writeBoolean(useSearchEventBus);
         buf.writeBoolean(usePrimitiveVisitedSet);
     }
 
@@ -269,7 +259,6 @@ public class PacketSaveServerConfig implements IMessage {
             Config.fireBreakEvent = msg.fireBreakEvent;
             Config.searchBudgetPerYield = Math.max(0, Math.min(4096, msg.searchBudgetPerYield));
             Config.useDualFrontierBfs = msg.useDualFrontierBfs;
-            Config.useSearchEventBus = msg.useSearchEventBus;
             Config.usePrimitiveVisitedSet = msg.usePrimitiveVisitedSet;
 
             // Persist to disk
