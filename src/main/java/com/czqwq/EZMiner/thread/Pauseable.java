@@ -58,7 +58,15 @@ public class Pauseable extends Thread {
      * @return true if work should continue, false if the thread was interrupted
      */
     public boolean consumeBudget() {
-        if (Thread.currentThread() != this) return true; // worker threads: no budget, no pause
+        if (Thread.currentThread() != this) {
+            // Worker threads: no budget, no parking — but check the pause flag
+            // so that tick-end pause() can stop in-flight invokeAll batches early.
+            // This is a read-only check on an AtomicBoolean; no park, no lock.
+            // Without this, workers inside an invokeAll batch (up to an entire
+            // shell layer or 8×124 neighbours) cannot be interrupted until the
+            // batch completes, potentially reading the world after the tick ends.
+            return !paused.get();
+        }
         if (workBudget > 0 && --budgetRemaining > 0) return true;
         budgetRemaining = workBudget;
         waitUntil();

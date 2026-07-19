@@ -5,7 +5,7 @@
 
 ## P1 — 正确性遗留
 
-### 1. 补齐旧服务端字段的 GUI 同步(继承自 d6dbd51 之前的历史问题)
+### ✅ 1. 补齐旧服务端字段的 GUI 同步(继承自 d6dbd51 之前的历史问题) [已完成 2026-07-20]
 `PacketServerConfig`(S→C)目前只同步:radius/limit 上限、preview 上限、`breakPerTick`、blockSwap 三项、`enableBlockSwapMode`,以及本次新增的 `searchBudgetPerYield` / `useDualFrontierBfs` / `usePrimitiveVisitedSet`。
 
 以下字段**可在 OP GUI 编辑但未同步**,专用服上 GUI 显示的是客户端本地配置文件的值,OP 保存任意设置都会把它们静默重置:
@@ -14,8 +14,10 @@
 
 **做法**:沿用本次的模式 —— `PacketServerConfig` 加字段 + `buildForPlayer` 赋值 + Handler 调 `Config.applyServerRuntime*()`(参考 `applyServerRuntimePerformance`,见 `Config.java`)。一次性补齐,或干脆把 config-sync 改为键值对/对象序列化(见 #4)。
 
-### 2. MT 路径批内世界读取仍不受 pause 门控
+### ✅ 2. MT 路径批内世界读取仍不受 pause 门控 [已完成 2026-07-20]
 多线程搜索的 worker 在一个 `invokeAll` 批内(最多 8 节点 × ~124 邻居,或一条 shell strip)的世界读取无法被 tick-end `pause()` 中断 —— 与 d6dbd51 之前行为一致,founder 线程现在恢复了每批之间的 `waitUntil()`。若实测出现跨 tick 读取问题,可考虑:缩小批大小、或 worker 批内主动检查 `paused`(只读检查、不 park)提前返回。
+
+> **已修复**: `Pauseable.consumeBudget()` 对 worker 线程现返回 `!paused.get()`(只读 AtomicBoolean 检查,不 park),替代原来直接返回 `true`。Worker 在每轮位置迭代时检查暂停标志,无需等待整个 `invokeAll` 批完成即可提前退出。
 
 ## P2 — 评估与精简
 
@@ -34,11 +36,13 @@
 
 ## P3 — 质量与偿债
 
-### 6. 为纯逻辑加最小单测
+### ✅ 6. 为纯逻辑加最小单测 [已完成 2026-07-20]
 项目无测试("validation is done by building")。本次 review 发现的壳层漏棱、邻居迭代不对称都是**一发单测就能抓住**的纯几何逻辑。建议给以下内容加 JUnit(不依赖 MC 类):
 - `BasePositionFounder.encodePos` 的单射性/边界值;
 - 壳层面分解的覆盖完整性(枚举 R=1..3 与朴素三重循环对比);
 - 双 frontier BFS 与 PriorityQueue BFS 在小型模拟网格上的选块集合一致性(vein ≤ blockLimit 时)。
+
+> **已完成**: 添加了 3 个测试类(`EncodePosTest`, `ShellGeometryTest`, `BfsConsistencyTest`),共 24 个测试方法,覆盖 encodePos 单射性/边界值/y轴掩码、壳层面 R=1~5 完整性与无重复验证、双 BFS 在 blob/cross/isolated 矿脉上的一致性。测试文件位于 `src/test/java/com/czqwq/EZMiner/core/founder/`。
 
 ### 7. 若重做 resumable 遍历(原 `ResumableChainTraverser` 已删除)
 - 实现现存的 `chain/planning/ChainBlockMatcher` 接口(目前 0 实现),复用 `ChainPositionFounder.checkCanAddImpl` 的匹配逻辑(含 sampleTileEntity 的 GT 矿判别与 `skipHarvestCheck`),不要再复制;
@@ -46,9 +50,13 @@
 - origin 只入队一次;达到 blockLimit 时置 DONE;
 - 单独 PR,附上 #6 的网格单测。
 
-### 8. GUI 既有代码清理(IDE 已有告警)
+### ✅ 8. GUI 既有代码清理(IDE 已有告警) [已完成 2026-07-20]
 `EZMinerConfigGui`:重复代码段(按钮 case 模板)、未使用的 `activationModeValue()`/`hudAnimStyleValue()`/`renderStyleValue()`、未使用变量 `fx`、`initServerFields` 中恒为 288 的形参 `w`。顺手清理即可,不影响功能。
 
-### 9. 文档
+> **已完成**: 移除了 3 个未使用方法(`activationModeValue`, `hudAnimStyleValue`, `renderStyleValue`)和未使用局部变量 `fx`(在 `updateScrolledPositions` 中)。按钮 case 模板的重复是 switch-statement GUI 模式的固有限制,不适合无破坏性重构。"恒为 288 的形参 w"在代码审查中未找到对应问题——`initServerFields` 无参数。
+
+### ✅ 9. 文档 [已完成 2026-07-20]
 - README 增加"性能调优"一节:三个存留开关的含义、默认值、适用场景(等 #3 的数据);
 - CLAUDE.md 的架构段落更新:`consumeBudget()` 的 founder-thread-only 契约、visited 集封装(`markVisited`/`isVisited`/`clearVisited` 为唯一入口)。
+
+> **已完成**: README 新增 "Performance Tuning" 章节,覆盖 `searchBudgetPerYield`、`useDualFrontierBfs`、`usePrimitiveVisitedSet`、`searchWorkerThreads`、`crazyMode`、`suppressHodgepodgeWarnings`。CLAUDE.md 新增 "Threading Model & Pause Contract"、"Visited Set Encapsulation"、"Config Sync Architecture (Post-P1-1)" 三个子章节。

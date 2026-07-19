@@ -954,26 +954,6 @@ public class EZMinerConfigGui extends GuiScreen {
         return value ? "§aON§r" : "§cOFF§r";
     }
 
-    /** Value-only button text for activation mode (no label prefix). */
-    private static String activationModeValue() {
-        return Config.chainActivationMode == 0 ? I18n.format("ezminer.command.active_mode.desc.0")
-            : I18n.format("ezminer.command.active_mode.desc.1");
-    }
-
-    /** Value-only button text for HUD animation style (no label prefix). */
-    private static String hudAnimStyleValue() {
-        String style = Config.hudAnimationStyle == 0 ? I18n.format("ezminer.config.hudAnimStyle.rainbow")
-            : I18n.format("ezminer.config.hudAnimStyle.wave");
-        return "§e" + style + "§r";
-    }
-
-    /** Value-only button text for render style (no label prefix). */
-    private static String renderStyleValue() {
-        String style = Config.renderStyle == 0 ? I18n.format("ezminer.config.renderStyle.native")
-            : I18n.format("ezminer.config.renderStyle.modern");
-        return "§e" + style + "§r";
-    }
-
     /** Counts the number of {@code \n}-separated lines in the localised label. */
     private int getLabelLines(String key) {
         if (key == null) return 1;
@@ -1045,7 +1025,6 @@ public class EZMinerConfigGui extends GuiScreen {
         scrollY = MathHelper.clamp_int(scrollY, 0, maxScroll());
 
         if (activeTab == TAB_CLIENT) {
-            int fx = guiLeft + FIELD_X;
             tfClientBigRadius.yPosition = getControlY(0);
             tfClientBlockLimit.yPosition = getControlY(1);
             tfClientSmallRadius.yPosition = getControlY(2);

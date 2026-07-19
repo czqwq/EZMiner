@@ -647,6 +647,41 @@ public class Config {
     }
 
     /**
+     * Applies server-synced general config values on the client (P1-1 fix).
+     * Mirrors the server's actual runtime values into the client's {@code Config}
+     * static fields so the OP GUI displays correct values instead of the
+     * client's local config file defaults.
+     */
+    public static void applyServerRuntimeConfig(int syncedCachedBreakPerTick, boolean syncedDropImmediately,
+        double syncedAddExhaustion, boolean syncedDropToPlayer, double syncedMinesweeperCooldown,
+        double syncedSudokuCooldown, boolean syncedEnableCachedChain, int syncedSearchWorkerThreads,
+        boolean syncedSuppressHodgepodgeWarnings, boolean syncedEnableChainChunkLoading,
+        boolean syncedUseChunkCachedHarvest, boolean syncedCrazyMode, int syncedChainIdleTimeoutSeconds,
+        int syncedChainIdleCountdownSeconds, boolean syncedStopOnUnbreakable, int syncedChainCooldownTicks,
+        int syncedXpDropMode, boolean syncedMergeXPOrbs, boolean syncedFireBreakEvent) {
+        cachedBreakPerTick = Math.max(1, Math.min(1024, syncedCachedBreakPerTick));
+        dropImmediately = syncedDropImmediately;
+        addExhaustion = syncedAddExhaustion;
+        dropToPlayer = syncedDropToPlayer;
+        minesweeperProbeCooldownSeconds = Math.max(0.1, syncedMinesweeperCooldown);
+        sudokuProbeCooldownSeconds = Math.max(0.1, syncedSudokuCooldown);
+        enableCachedChain = syncedEnableCachedChain;
+        searchWorkerThreads = Math.max(0, Math.min(8, syncedSearchWorkerThreads));
+        suppressHodgepodgeWarnings = syncedSuppressHodgepodgeWarnings;
+        enableChainChunkLoading = syncedEnableChainChunkLoading;
+        useChunkCachedHarvest = syncedUseChunkCachedHarvest;
+        crazyMode = syncedCrazyMode;
+        chainIdleTimeoutSeconds = syncedChainIdleTimeoutSeconds <= 0 ? -1 : Math.max(1, syncedChainIdleTimeoutSeconds);
+        chainIdleCountdownSeconds = syncedChainIdleCountdownSeconds <= 0 ? -1
+            : Math.max(1, syncedChainIdleCountdownSeconds);
+        stopOnUnbreakable = syncedStopOnUnbreakable;
+        chainCooldownTicks = Math.max(0, syncedChainCooldownTicks);
+        xpDropMode = Math.max(0, Math.min(1, syncedXpDropMode));
+        mergeXPOrbs = syncedMergeXPOrbs;
+        fireBreakEvent = syncedFireBreakEvent;
+    }
+
+    /**
      * Updates {@link #chainActivationMode} in memory and writes only that value
      * back to the config file immediately, without touching any other entries.
      *
