@@ -1,223 +1,221 @@
 # EZMiner
 
-> 🌐 [English README](README_en.md)
+> 🌐 [中文文档](README_zh.md)
 
-一个专为 **GregTech: New Horizons (GTNH)** 设计的高性能连锁采矿模组，适用于 Minecraft 1.7.10。按住一个键即可批量挖掘，松开即停。
-
----
-
-## 快速上手
-
-1. 准星对准要挖的方块
-2. 按住 **`` ` ``**（波浪号/反引号，可改键）——方块边框高亮出现
-3. 继续按住——方块被连锁挖掘
-4. 松开按键——立即停止
-5. 滚动滚轮切换当前模式的子模式
-6. 按 `V` 切换主模式（爆破 → 连锁 → 特殊）
+A high-performance chain-mining mod designed for **GregTech: New Horizons (GTNH)**, running on Minecraft 1.7.10. Hold a key to mine in bulk — release to stop instantly.
 
 ---
 
-## 三大主模式
+## Quick Start
 
-### 爆破模式
-
-以目标方块为中心，在半径范围内批量挖掘。共 **7 种子模式**，用滚轮切换：
-
-| 子模式 | 用途 |
-|--------|------|
-| 无差别爆破 | 范围内所有方块全部挖掉 |
-| 同类筛选 | 只挖与目标方块**完全相同**的方块 |
-| 隧道爆破 | 沿玩家朝向挖出指定宽度的隧道 |
-| 矿石爆破 | 只挖矿石类方块 |
-| 爆破伐木 | 只挖原木类方块（批量砍树） |
-| 反向连锁 | 挖掉范围内**除了**目标方块以外的所有方块 |
-| GT矿脉精准 | 只挖 GT 大型矿脉矿石，跳过地表小块矿石（贫瘠矿） |
-
-### 连锁模式
-
-从目标方块出发，**自动搜索相邻的同类型方块**并连锁挖掘。共 **2 种子模式**：
-
-| 子模式 | 用途 |
-|--------|------|
-| 基础连锁 | 方块 ID 和 meta 完全一致才算相邻 |
-| 模糊模式 | 方块 ID 相同即可，忽略 meta 差异（如不同颜色的羊毛一起挖） |
-
-### 特殊模式
-
-不进行常规挖掘，而是提供辅助功能。共 **3 种子模式**：
-
-| 子模式 | 用途 |
-|--------|------|
-| 扫雷模式 | 自动探测并标记 [LootGames](https://github.com/GTNewHorizons/LootGames) 扫雷游戏中的地雷位置 |
-| 一键收作物 | 右键触发，自动收割范围内所有成熟作物（支持原版、IC2、CropsNH、Natura） |
-| 数独助手 | 自动填入 [LootGames](https://github.com/GTNewHorizons/LootGames) 数独游戏的正确答案 |
+1. Aim at the block you want to mine
+2. Hold **`` ` ``** (grave / backtick, rebindable) — block outlines appear
+3. Keep holding — blocks are chained and mined
+4. Release the key — mining stops immediately
+5. Scroll the mouse wheel to switch sub-modes
+6. Press `V` to cycle main modes (Blast → Chain → Special)
 
 ---
 
-## 操作方式
+## Three Main Modes
 
-### 按键
+### Blast Mode
 
-| 操作 | 默认键 | 说明 |
-|------|--------|------|
-| 激活连锁 | `` ` `` | 按住时启动连锁，松开时停止 |
-| 切换主模式 | `V` | 在爆破 → 连锁 → 特殊之间循环 |
-| 切换子模式 | 鼠标滚轮 | 按住连锁键时生效；也可用上下方向键 |
-| 打开配置 | 物品栏界面 | 物品栏左侧有 `[EZMiner] 设置` 按钮 |
+Mines all blocks within a configurable radius around the target. **7 sub-modes**, switchable with the mouse wheel:
 
-### 激活方式
+| Sub-mode | Description |
+|----------|-------------|
+| All Blocks | Mines every harvestable block in the radius |
+| Same Type | Mines only blocks that match the targeted block exactly |
+| Tunnel | Digs a straight tunnel in the direction you are facing |
+| Ore Only | Mines only ore blocks |
+| Logging | Mines only log blocks (bulk tree removal) |
+| Inverse Chain | Mines everything in the radius **except** the targeted block type |
+| GT Vein Ore | Mines only GT large-vein ore blocks, skipping scattered surface deposits |
 
-在配置 GUI 中可切换两种激活模式：
+### Chain Mode
 
-- **按住激活**（默认）：按住连锁键 = 挖掘中，松开 = 停止
-- **点击切换**：按一下开始，再按一下停止（无需持续按住）
+Starting from the target block, automatically finds and mines all **connected blocks of the same type**. **2 sub-modes**:
 
-### 滚轮保护
+| Sub-mode | Description |
+|----------|-------------|
+| Basic | Blocks must match both ID and metadata to be chained |
+| Fuzzy | Blocks only need to match ID — metadata is ignored (e.g. all wool colours together) |
 
-按住连锁键时，**鼠标滚轮默认被锁定**不再切换物品栏快捷栏，专门用于切换子模式。可在配置中关闭此行为。
+### Special Mode
+
+Non-mining utility functions. **3 sub-modes**:
+
+| Sub-mode | Description |
+|----------|-------------|
+| Minesweeper | Automatically detects and flags mines in [LootGames](https://github.com/GTNewHorizons/LootGames) minesweeper puzzles |
+| Crop Harvest | Right-click to harvest all mature crops in range (supports Vanilla, IC2, CropsNH, Natura) |
+| Sudoku Assistant | Automatically fills correct answers in [LootGames](https://github.com/GTNewHorizons/LootGames) Sudoku puzzles |
 
 ---
 
-## 方块预览
+## Controls
 
-按住连锁键并对准方块时，会**实时高亮显示将被连锁的所有方块**的边框：
+### Key Bindings
 
-- 预览穿透遮挡——被遮住的方块也能看到轮廓
-- 仅渲染视距范围内的方块，保证流畅
-- 两种渲染风格可切换：**原生**（简洁线框）和 **现代**（可见边实心 + 遮挡边半透明）
-- 可在配置中关闭
+| Action | Default | Description |
+|--------|---------|-------------|
+| Activate Chain | `` ` `` | Hold to mine, release to stop |
+| Switch Main Mode | `V` | Cycle Blast → Chain → Special |
+| Switch Sub-mode | Mouse Wheel | Active while chain key is held; arrow keys also work |
+| Open Config | Inventory Screen | Click the `[EZMiner] Settings` button on the left side of your inventory |
+
+### Activation Mode
+
+Two activation behaviours, configurable in the settings GUI:
+
+- **Hold** (default): chain is active while the key is pressed
+- **Toggle**: press once to start, press again to stop
+
+### Scroll Lock
+
+While the chain key is held, the **mouse wheel is locked** from switching hotbar slots and is dedicated to cycling sub-modes. This can be disabled in the config.
 
 ---
 
-## HUD 信息
+## Block Preview
 
-按住连锁键时屏幕左上角显示实时信息：
+While the chain key is held and you are aiming at a block, all blocks that would be included in the chain are **highlighted with glowing outlines**:
+
+- Outlines are visible through walls — buried veins are fully visible
+- Only blocks within render distance are shown to keep performance smooth
+- Two render styles: **Native** (clean single-pass wireframe) and **Modern** (solid visible edges + translucent hidden edges)
+- Can be turned off in the config
+
+---
+
+## HUD Display
+
+While the chain key is held, real-time info appears in the top-left corner:
 
 ```
-[EZMiner] ■ 连锁已启用
-  ○─ 爆破模式
-  └─ 同类筛选
-  └─ 已连锁方块: 128
+[EZMiner] ■ Chain Active
+  ○─ Blast Mode
+  └─ Same Type
+  └─ Chained Blocks: 128
 ```
 
-- 连锁键松开时 HUD 自动消失
-- HUD 位置可通过指令 `/EZMiner hud pos <x> <y>` 自定义
-- 标题动画可选 **彩虹弹跳** 或 **波浪高亮**
+- HUD hides automatically when the key is released
+- Position can be set with `/EZMiner hud pos <x> <y>`
+- Title animation can be set to **Rainbow Bounce** or **Wave Highlight**
 
 ---
 
-## 掉落物处理
+## Drop Handling
 
-连锁过程中所有掉落物会被**收集并暂存**，待连锁全部完成后一次性投放到玩家脚下，避免瞬间大量实体造成卡顿。也可以改为投放在首个开采位置。
+All drops generated during a chain are **collected and held back**, then delivered in a single batch at the player's feet once the operation finishes — no entity-spam lag spikes.
 
-物品堆叠严格遵守最大堆叠数限制。
-
----
-
-## 配置
-
-EZMiner 的配置分客户端和服务端两部分：
-
-### 在游戏中配置
-
-按 `E` 打开物品栏，点击左侧的 `[EZMiner] 设置` 按钮即可打开配置 GUI：
-
-- **客户端设置**标签：预览、显示、按键模式、HUD 动画等个人偏好
-- **服务端设置**标签（OP 可见）：半径、方块上限、消耗、预览限制等服务器规则
-
-所有数字选项可直接输入数值，开关选项点击切换 ON/OFF。
-
-### 配置文件位置
-
-| 文件 | 路径 | 说明 |
-|------|------|------|
-| 客户端配置 | `config/EZMiner/EZMiner.cfg` | 玩家个人设置 |
-| 服务端配置 | `EZMiner/EZMiner_Server.cfg` | 服务器规则（单人存档在 `.minecraft/EZMiner/`） |
-
-### 常用配置项
-
-#### 服务端（管理员设定，客户端实际值不会超过此上限）
-
-| 配置项 | 默认值 | 说明 |
-|--------|--------|------|
-| 最大半径 | 8 | 单次连锁/爆破的最大范围（格） |
-| 最大方块数 | 1024 | 单次操作最多挖掘多少个方块 |
-| 邻接半径 | 2 | 连锁模式中多少格内的同类方块算"相邻" |
-| 隧道宽度 | 1 | 隧道爆破的半宽（0=1格宽, 1=3格宽） |
-| 每Tick破坏数 | 16 | 每游戏刻最多破坏的方块数（最高64，越低对TPS影响越小） |
-| 饥饿消耗 | 0.025 | 每挖一个方块消耗的饥饿值 |
-| 掉落位置 | 玩家脚下 | 掉落物出现在玩家脚下还是开采原点 |
-| 扫雷冷却 | 5秒 | 特殊/扫雷模式连续探测的间隔 |
-| 数独冷却 | 5秒 | 特殊/数独模式连续填数的间隔 |
-
-#### 客户端（个人偏好）
-
-| 配置项 | 默认值 | 说明 |
-|--------|--------|------|
-| 方块预览 | 开 | 是否显示连锁范围的高亮边框 |
-| 完成提示 | 开 | 连锁结束后是否在聊天栏显示统计 |
-| 按键模式 | 按住 | 按住=按住激活，切换=点击切换 |
-| 滚轮锁定 | 开 | 按住连锁键时禁止滚轮切物品栏 |
-| 隐藏IGI HUD | 关 | 激活EZMiner时临时隐藏InGame Info XML的HUD |
-| HUD动画 | 彩虹弹跳 | 标题动画风格 |
-| 渲染风格 | 原生 | 预览边框的渲染方式 |
+Stack sizes always respect each item's maximum stack limit.
 
 ---
 
-## 指令
+## Configuration
 
-所有指令以 `/EZMiner` 开头：
+EZMiner's configuration is split into client and server parts:
 
-| 指令 | 权限 | 说明 |
-|------|------|------|
-| `reloadConfig` | OP | 从磁盘重载服务端配置，自动同步所有在线玩家 |
-| `reloadClientConfig` | 所有人 | 从磁盘重载本地客户端配置 |
-| `active_mode <0\|1>` | 所有人 | 设置连锁键激活方式（0=按住，1=切换） |
-| `hud pos <x> <y>` | 所有人 | 设置 HUD 在屏幕上的像素位置 |
+### In-Game Config GUI
+
+Press `E` to open your inventory, then click the `[EZMiner] Settings` button on the left:
+
+- **Client Settings** tab: preview, display, key mode, HUD animation, etc.
+- **Server Settings** tab (OP only): radius, block limits, costs, preview caps, etc.
+
+Numeric fields accept direct input; toggle options switch ON/OFF with a click.
+
+### Config File Locations
+
+| File | Path | Description |
+|------|------|-------------|
+| Client Config | `config/EZMiner/EZMiner.cfg` | Per-player preferences |
+| Server Config | `EZMiner/EZMiner_Server.cfg` | Server rules (single-player: `.minecraft/EZMiner/`) |
+
+### Common Server Options (OP only)
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| Max Radius | 8 | Maximum range for chain/blast operations (blocks) |
+| Max Blocks | 1024 | Maximum blocks per operation |
+| Adjacency Radius | 2 | Range in which same-type blocks count as "connected" in chain mode |
+| Tunnel Width | 1 | Half-width for tunnel blast (0 = 1 wide, 1 = 3 wide) |
+| Blocks Per Tick | 16 | Maximum blocks broken per game tick (max 64; lower = less TPS impact) |
+| Food Cost | 0.025 | Hunger exhaustion per block mined |
+| Drop Location | Player feet | Where batched drops appear — at the player or at the origin block |
+| Minesweeper Cooldown | 5 s | Delay between auto-flag operations in Minesweeper mode |
+| Sudoku Cooldown | 5 s | Delay between auto-fill operations in Sudoku mode |
+
+### Common Client Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| Block Preview | ON | Show highlighted outlines of chained blocks |
+| Completion Message | ON | Show chat summary after each chain operation |
+| Key Mode | Hold | Hold = hold-to-activate, Toggle = click-to-toggle |
+| Scroll Lock | ON | Block hotbar scroll while chain key is held |
+| Hide IGI HUD | OFF | Temporarily hide InGame Info XML HUD while EZMiner is active |
+| HUD Animation | Rainbow Bounce | Title animation style |
+| Render Style | Native | Preview outline rendering style |
 
 ---
 
-## 模组集成
+## Commands
+
+All commands start with `/EZMiner`:
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `reloadConfig` | OP | Reload server config from disk, syncs to all online players |
+| `reloadClientConfig` | Anyone | Reload local client config from disk |
+| `active_mode <0\|1>` | Anyone | Set chain key behaviour (0 = Hold, 1 = Toggle) |
+| `hud pos <x> <y>` | Anyone | Set HUD pixel position on screen |
+
+---
+
+## Mod Integration
 
 ### Visual Prospecting
 
-安装 [Visual Prospecting](https://github.com/GTNewHorizons/VisualProspecting) 后，EZMiner 在挖掘 GT 矿石时会**自动将矿脉信息同步到地图标注**，无需手动右键每个矿石。所有挖掘模式均支持。
+When [Visual Prospecting](https://github.com/GTNewHorizons/VisualProspecting) is installed, EZMiner **automatically records ore-vein data to the map overlay** as it mines GT ore blocks — no need to manually right-click each ore. Works across all mining modes.
 
 ### LootGames
 
-安装 [LootGames](https://github.com/GTNewHorizons/LootGames) 后可使用特殊模式中的**扫雷助手**和**数独助手**，自动完成小游戏。
+With [LootGames](https://github.com/GTNewHorizons/LootGames) installed, the Special mode's **Minesweeper** and **Sudoku** assistants can automatically solve puzzles for you.
 
 ### InGame Info XML
 
-安装后在激活 EZMiner 时可选择**自动隐藏 IGI HUD**，避免两个 HUD 重叠。
+When installed, EZMiner can optionally **auto-hide the IGI HUD** while its own HUD is visible to prevent overlap.
 
 ---
 
-## 时运破上限（Mixin 功能，默认关闭）
+## Fortune Cap Override (Mixin — disabled by default)
 
-GT 原版矿石只响应时运 III 及以下的附魔。EZMiner 可解除此限制：
+By default, GT and BartWorks ores only respond to Fortune III and below. EZMiner can lift this cap:
 
-- 启用后，时运 V、时运 X 等高等级附魔对 GT/BartWorks 矿石也生效
-- 可设置最高时运等级上限（最高 255）
-- 可选择玩家放置的矿石是否也享受时运加成
+- When enabled, Fortune V, X, and higher enchantment levels work on GT/BW ores
+- A configurable max Fortune level (up to 255)
+- Option to treat player-placed ores as natural for Fortune bonuses
 
-> ⚠️ 此功能通过 Mixin 在游戏启动时注入，**修改后必须重启游戏**，无法通过 `/EZMiner reloadConfig` 热重载。
-
----
-
-## 安全机制
-
-- 工具耐久低于 1 时自动停止，防止工具损坏
-- 每挖方块扣除对应饥饿值，防止变相无限采矿
-- 不挖掘玩家脚下方块，防止悬空坠落
-- 不响应假人（FakePlayer）操作
-- 玩家下线时立即终止所有连锁
-- 完整的错误日志，方便问题排查
+> ⚠️ This feature is injected via Mixin at game startup. **Changes require a full game restart** and cannot be applied through `/EZMiner reloadConfig`.
 
 ---
 
-## 兼容性
+## Safety Features
+
+- Stops automatically before the tool would break (durability < 1)
+- Hunger is consumed per block to prevent infinite free mining
+- Never mines the block directly under the player's feet
+- Ignores FakePlayer interactions to prevent exploits
+- Immediately halts all operations when a player logs out
+- Full error logging for easy troubleshooting
+
+---
+
+## Compatibility
 
 - Minecraft **1.7.10**
 - Forge **10.13.4.1614+**
-- 专为 GregTech: New Horizons (GTNH) 整合包优化
+- Optimised for GregTech: New Horizons (GTNH) modpack
