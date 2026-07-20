@@ -452,33 +452,6 @@ public class SmartToolSwitchHandler {
         cycleIndex = -1;
     }
 
-    // ── Tool break handoff (called from PacketToolBreakHandoff) ─────────────────
-
-    /** Singleton reference set in registry(). */
-    private static SmartToolSwitchHandler activeInstance;
-
-    /** Returns the active singleton instance, or null. */
-    public static SmartToolSwitchHandler getActiveInstance() {
-        return activeInstance;
-    }
-
-    /**
-     * Called by the client when the server signals that the current tool is about
-     * to break. Switches to the next best available tool, skipping the current one.
-     */
-    public void performToolBreakHandoff(EntityPlayer player) {
-        if (suitableSlots.size() < 2) return; // No alternatives
-        int currentSlot = player.inventory.currentItem;
-        // Find the next best tool that is not the current slot
-        for (int slot : suitableSlots) {
-            if (slot != currentSlot && player.inventory.mainInventory[slot] != null) {
-                player.inventory.currentItem = slot;
-                cycleIndex = suitableSlots.indexOf(slot);
-                return;
-            }
-        }
-    }
-
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     @SubscribeEvent
@@ -490,7 +463,6 @@ public class SmartToolSwitchHandler {
     }
 
     public void registry() {
-        activeInstance = this;
         ClientRegistry.registerKeyBinding(KEY_SMART_TOOL_SWITCH);
         FMLCommonHandler.instance()
             .bus()
