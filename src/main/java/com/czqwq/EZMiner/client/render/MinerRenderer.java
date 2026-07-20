@@ -33,7 +33,7 @@ import cpw.mods.fml.relauncher.SideOnly;
  * Uses {@link RenderWorldLastEvent} (fired once per frame after all world geometry) and
  * fixed-function OpenGL — no custom shaders are required. The coordinate system is shifted by
  * {@code -RenderManager.renderPos} so block positions stored in world space map directly onto
- * the rendered scene, matching Qz-Miner's approach which works on all supported OpenGL versions.
+ * the rendered scene using fixed-function OpenGL which works on all supported versions.
  *
  * <p>
  * Preview lifecycle:

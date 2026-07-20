@@ -27,8 +27,10 @@ import com.czqwq.EZMiner.chain.execution.VisualProspectingBridge;
 import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
 import com.czqwq.EZMiner.chain.planning.CachedPositionsPlanningTask;
 import com.czqwq.EZMiner.chain.planning.ChainPlanningTask;
+import com.czqwq.EZMiner.chain.watchdog.ChainWatchdog;
 import com.czqwq.EZMiner.compat.TinkersConstructCompat;
 import com.czqwq.EZMiner.core.crop.CropAdapterRegistry;
+import com.czqwq.EZMiner.network.PacketToolBreakHandoff;
 import com.czqwq.EZMiner.utils.MessageUtils;
 import com.czqwq.EZMiner.utils.TimeFormatUtils;
 
@@ -50,6 +52,12 @@ public class BaseOperator {
     private long startTime;
     private int operatorCount = 0;
     private boolean stopRequested = false;
+    /**
+     * Server tick when the last tool-break handoff request was sent to the client.
+     * 0 = no handoff in progress. The operator waits up to
+     * {@link Config#toolBreakHandoffTimeoutTicks} ticks for the client to switch.
+     */
+    private long toolBreakHandoffTick = 0;
     /** Timestamp of the most recent successful block harvest. Initialized to startTime in registry(). */
     private long lastHarvestedTime = 0;
     /**
@@ -158,9 +166,42 @@ public class BaseOperator {
             }
         }
 
+        // ── Tick-based watchdog: force-cancel stuck chains regardless of wall-clock time ──
+        if (Config.enableChainWatchdog && ChainWatchdog.hasTimedOut(manager.playerUUID)) {
+            MessageUtils.serverSendPlayerMessage(
+                new ChatComponentTranslation("ezminer.message.chain.watchdog_timeout"),
+                manager.playerUUID);
+            unRegistry();
+            return;
+        }
+
         if (canBreakPositions.isEmpty()) {
             if (planningTask.isStopped()) unRegistry();
             return;
+        }
+
+        // Tool break handoff: skip harvesting while waiting for the client to switch tools.
+        // canOperate() returns true during the wait, but we shouldn't use the dying tool.
+        if (toolBreakHandoffTick != 0 && getServerTick() - toolBreakHandoffTick >= 1) {
+            // After the first tick (the detection tick), pause harvesting.
+            // The client needs server ticks to sync the inventory change.
+            if (!canOperate() || !isPlayerOnline()) {
+                unRegistry();
+                return;
+            }
+            // Re-check: has the tool changed? If so, resume.
+            ItemStack item = playerMP.getCurrentEquippedItem();
+            if (item != null && item.isItemStackDamageable()) {
+                boolean stillBad;
+                if (TinkersConstructCompat.isTiCTool(item)) {
+                    stillBad = !TinkersConstructCompat.canContinueMining(item);
+                } else {
+                    stillBad = (item.getMaxDamage() - item.getItemDamage()) <= 1;
+                }
+                if (stillBad) return; // Still waiting, skip this tick
+            }
+            // Tool has been switched — resume
+            toolBreakHandoffTick = 0;
         }
 
         if (!canOperate() || !isPlayerOnline()) {
@@ -201,12 +242,54 @@ public class BaseOperator {
             .getFoodLevel() <= 0) return false;
         ItemStack item = playerMP.getCurrentEquippedItem();
         if (item != null && item.isItemStackDamageable()) {
+            boolean toolGood;
             if (TinkersConstructCompat.isTiCTool(item)) {
-                return TinkersConstructCompat.canContinueMining(item);
+                toolGood = TinkersConstructCompat.canContinueMining(item);
+            } else {
+                toolGood = (item.getMaxDamage() - item.getItemDamage()) > 1;
             }
-            return (item.getMaxDamage() - item.getItemDamage()) > 1;
+            if (!toolGood) {
+                // Tool is about to break — try handoff before cancelling
+                return tryToolBreakHandoff();
+            }
         }
+        // Tool is still good — reset handoff state
+        toolBreakHandoffTick = 0;
         return true;
+    }
+
+    /**
+     * Attempts a tool-break handoff: sends a signal to the client to switch tools,
+     * then waits up to {@link Config#toolBreakHandoffTimeoutTicks} ticks.
+     *
+     * @return true if the handoff may have succeeded (tool switched), false if timeout
+     */
+    private boolean tryToolBreakHandoff() {
+        if (!Config.enableToolBreakHandoff) return false;
+        long serverTick = getServerTick();
+        if (toolBreakHandoffTick == 0) {
+            // First detection — send handoff request to client
+            EZMiner.network.network.sendTo(new PacketToolBreakHandoff(), playerMP);
+            toolBreakHandoffTick = serverTick;
+            return true; // Keep going this tick, let the client react
+        }
+        // Check if the client had enough time to switch
+        long elapsed = serverTick - toolBreakHandoffTick;
+        if (elapsed < Config.toolBreakHandoffTimeoutTicks) {
+            return true; // Still waiting — keep the chain alive
+        }
+        // Timeout — handoff failed, cancel the chain
+        return false;
+    }
+
+    private static long getServerTick() {
+        try {
+            return cpw.mods.fml.common.FMLCommonHandler.instance()
+                .getMinecraftServerInstance()
+                .getTickCounter();
+        } catch (Exception e) {
+            return System.currentTimeMillis() / 50;
+        }
     }
 
     public void registry() {
@@ -214,6 +297,8 @@ public class BaseOperator {
         lastHarvestedTime = startTime;
         countdownStartTime = 0;
         lastCountdownSecond = -1;
+        toolBreakHandoffTick = 0;
+        ChainWatchdog.markChainStarted(manager.playerUUID);
         // Init chunk preloader (no chunks loaded yet — loading happens in tick())
         if (Config.enableChainChunkLoading && manager.originPos != null) {
             chunkPreloader.init(playerMP.worldObj, manager.originPos, manager.pConfig.bigRadius);
@@ -259,7 +344,7 @@ public class BaseOperator {
                 .bus()
                 .unregister(this);
         } catch (Exception ignored) {}
-        cleanupOperatorState();
+        cleanupOperatorState(); // also removes watchdog tracking
     }
 
     private void cleanupOperatorState() {
@@ -267,6 +352,7 @@ public class BaseOperator {
         chunkPreloader.reset();
         EZMiner.chainStateService.markSessionStop(manager.playerUUID);
         manager.activeSession = null;
+        ChainWatchdog.remove(manager.playerUUID);
     }
 
     private boolean shouldHarvest(Vector3i pos) {
@@ -275,11 +361,12 @@ public class BaseOperator {
         return CropAdapterRegistry.isMatureCrop(playerMP.worldObj, pos.x, pos.y, pos.z);
     }
 
-    /** Record that a block was harvested (resets idle countdown). */
+    /** Record that a block was harvested (resets idle countdown and watchdog). */
     private void markHarvested() {
         lastHarvestedTime = System.currentTimeMillis();
         countdownStartTime = 0;
         lastCountdownSecond = -1;
+        ChainWatchdog.recordProgress(manager.playerUUID);
     }
 
     private boolean processCandidate(Vector3i pos) {

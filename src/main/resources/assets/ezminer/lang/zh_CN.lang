@@ -98,6 +98,7 @@ ezminer.command.hud.pos.set=EZMiner: HUD位置已设置为 x=%s, y=%s。
 ezminer.message.chain.done=EZMiner: 连锁完成；方块数=%s；耗时=%s
 ezminer.message.chain.idle_countdown=EZMiner: 没有找到新方块，%s秒后自动取消...
 ezminer.message.chain.idle_cancel=EZMiner: 已自动取消 — 空闲超过%s秒
+ezminer.message.chain.watchdog_timeout=EZMiner: 连锁看门狗超时 — 已强制取消。区块是否已卸载？
 ezminer.message.chain.error=EZMiner: 挖掘方块 %s 时出错：%s
 ezminer.message.special.minesweeper.marked=EZMiner: 已标记雷点 -> (%s, %s, %s), 距离=%s格
 ezminer.message.special.sudoku.filled=EZMiner: 数独单元格 (%s, %s) 已填入 %s
@@ -150,3 +151,11 @@ ezminer.gui.section.performance=性能调优
 ezminer.config.searchBudgetPerYield=搜索检查间隔\n0 = 每个方块检查一次（最安全，默认）\nN = 每 N 个方块检查一次 tick 边界/取消\n更高 = 搜索略快，但暂停/取消响应更粗
 ezminer.config.useDualFrontierBfs=双队列BFS\n开: O(1)队列出队代替PriorityQueue\n关: 距离有序的PriorityQueue（兼容模式）
 ezminer.config.usePrimitiveVisitedSet=原生long访问集\n开: fastutil原生long哈希集，避免Long装箱\n关: ConcurrentHashMap（兼容模式）
+
+ezminer.gui.section.stability=稳定性
+ezminer.config.enableChainWatchdog=连锁看门狗\n开: 基于tick的超时检测，防止连锁卡死\n关: 仅依赖挂钟空闲超时
+ezminer.config.enableDropFallbackChain=掉落回退链\n开: 玩家区块卸载时尝试重生点/世界出生点\n关: 区块卸载时丢弃掉落物
+ezminer.config.enableMainThreadGuard=主线程守卫\n开: 非主线程处理数据包时记录警告\n关: 不检查线程（旧行为）
+ezminer.config.enableBudgetDeadline=预算截止时间 (实验)\n开: 搜索线程在截止时间后让步\n关: 仅在显式暂停信号时让步
+ezminer.config.enableConfigValidation=配置校验\n开: 验证配置并在有问题时警告\n关: 跳过验证（旧行为）
+ezminer.config.enableSafeReflection=安全反射\n开: 带LinkageError防护的兼容反射\n关: 原生反射（旧行为）

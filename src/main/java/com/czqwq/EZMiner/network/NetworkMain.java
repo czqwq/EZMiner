@@ -77,5 +77,11 @@ public class NetworkMain {
         // Block swap clear: server → client
         network
             .registerMessage(PacketBlockSwapClear.Handler.class, PacketBlockSwapClear.class, packetId++, Side.CLIENT);
+        // Tool break handoff: server → client
+        network.registerMessage(
+            PacketToolBreakHandoff.Handler.class,
+            PacketToolBreakHandoff.class,
+            packetId++,
+            Side.CLIENT);
     }
 }

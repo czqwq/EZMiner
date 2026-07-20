@@ -164,11 +164,54 @@ public class SmartToolSwitchHandler {
         // Current slot is NOT suitable → switch to the best one
         cycleIndex = 0;
         int bestSlot = suitableSlots.get(0);
+        // If the best tool is in the main inventory (not hotbar), swap it into
+        // the least-important hotbar slot first.
+        if (bestSlot >= InventoryPlayer.getHotbarSize()) {
+            bestSlot = swapIntoHotbar(player, bestSlot);
+        }
+        if (bestSlot < 0) return;
         configureToolboxIfNeeded(player, bestSlot, block, meta);
         player.inventory.currentItem = bestSlot;
         lastBlockX = mop.blockX;
         lastBlockY = mop.blockY;
         lastBlockZ = mop.blockZ;
+    }
+
+    /**
+     * Swaps the item in {@code inventorySlot} (9-35) into the least-important
+     * hotbar slot, returning that hotbar slot index. Returns -1 if no swap target
+     * found.
+     */
+    private int swapIntoHotbar(EntityPlayer player, int inventorySlot) {
+        ItemStack src = player.inventory.mainInventory[inventorySlot];
+        if (src == null) return -1;
+        int targetHotbar = findLeastImportantHotbarSlot(player);
+        if (targetHotbar < 0) return -1;
+        // Swap items
+        ItemStack tmp = player.inventory.mainInventory[targetHotbar];
+        player.inventory.mainInventory[targetHotbar] = src;
+        player.inventory.mainInventory[inventorySlot] = tmp;
+        return targetHotbar;
+    }
+
+    /** Finds the least-important hotbar slot (empty or lowest-priority tool). */
+    private int findLeastImportantHotbarSlot(EntityPlayer player) {
+        int hotbarSize = InventoryPlayer.getHotbarSize();
+        // First: any empty hotbar slot
+        for (int i = 0; i < hotbarSize; i++) {
+            if (player.inventory.mainInventory[i] == null) return i;
+        }
+        // Second: hotbar slot with the lowest-ranked tool (by current suitableSlots order)
+        // suitableSlots is sorted best-first, so the last one in the hotbar is the worst
+        for (int i = suitableSlots.size() - 1; i >= 0; i--) {
+            int slot = suitableSlots.get(i);
+            if (slot < hotbarSize) return slot;
+        }
+        // Fallback: any hotbar slot that's not in suitableSlots
+        for (int i = 0; i < hotbarSize; i++) {
+            if (!suitableSlots.contains(i)) return i;
+        }
+        return -1;
     }
 
     private void clearBlockTracking() {
@@ -244,8 +287,14 @@ public class SmartToolSwitchHandler {
         int requiredLevel = block.getHarvestLevel(meta);
         boolean shearBlock = needsShears(block);
 
+        // Parse preferred tools list (lazy, cached)
+        String[] prefs = parsePreferredTools();
+
+        int scanEnd = Config.smartToolSwitchFullInventory ? player.inventory.mainInventory.length
+            : InventoryPlayer.getHotbarSize();
+
         List<int[]> scored = new ArrayList<>(); // [slot, score]
-        for (int i = 0; i < InventoryPlayer.getHotbarSize(); i++) {
+        for (int i = 0; i < scanEnd; i++) {
             ItemStack stack = player.inventory.mainInventory[i];
             if (stack == null) continue;
 
@@ -281,16 +330,73 @@ public class SmartToolSwitchHandler {
                     }
                 }
             }
-            if (ok) scored.add(new int[] { i, score });
+            if (!ok) continue;
+
+            // #4: Preferred tools boost — higher index = higher preference decay
+            int prefBoost = getPreferenceBoost(stack, prefs);
+            // #1: Durability-aware scoring — durabilityPercent as tiebreaker
+            int durabilityBonus = Config.smartToolSwitchDurabilityScore ? getDurabilityPercent(stack) : 0;
+
+            // Composite score: harvestLevel * 1000 + prefBoost * 100 + durabilityBonus
+            // prefBoost is inverted: 0 = highest pref (prefs.length), N = lowest pref
+            int maxPref = Math.max(1, prefs.length);
+            int effectiveScore = score * 1000 + (maxPref - prefBoost) * 100 + durabilityBonus;
+            scored.add(new int[] { i, effectiveScore });
         }
 
-        // Sort by score descending, then slot ascending
+        // Sort by effective score descending, then slot ascending
         Collections.sort(
             scored,
             Comparator.<int[]>comparingInt(a -> -a[1])
                 .thenComparingInt(a -> a[0]));
         suitableSlots.clear();
         for (int[] s : scored) suitableSlots.add(s[0]);
+    }
+
+    // ── Durability helpers ──────────────────────────────────────────────────────
+
+    /** Returns 0-100 durability percent for scoring tiebreaker. */
+    private static int getDurabilityPercent(ItemStack stack) {
+        if (stack == null) return 0;
+        // Unbreakable items (GT electric tools, some TiC tools) — full score
+        if (!stack.isItemStackDamageable()) return 100;
+        int max = stack.getMaxDamage();
+        if (max <= 0) return 100;
+        int damage = stack.getItemDamage();
+        return Math.max(0, (max - damage) * 100 / max);
+    }
+
+    // ── Preferred-tools helpers ─────────────────────────────────────────────────
+
+    /** Lazy-parsed cache of preferred tool registry names. */
+    private String[] cachedPrefs;
+    private String cachedPrefsRaw;
+
+    private String[] parsePreferredTools() {
+        String raw = Config.preferredTools;
+        if (raw == null) raw = "";
+        if (raw.equals(cachedPrefsRaw) && cachedPrefs != null) return cachedPrefs;
+        cachedPrefsRaw = raw;
+        if (raw.isEmpty()) {
+            cachedPrefs = new String[0];
+        } else {
+            cachedPrefs = raw.split(",");
+            for (int i = 0; i < cachedPrefs.length; i++) cachedPrefs[i] = cachedPrefs[i].trim();
+        }
+        return cachedPrefs;
+    }
+
+    /** Returns preference ranking: 0 = highest priority (first in list), prefs.length = no match. */
+    private int getPreferenceBoost(ItemStack stack, String[] prefs) {
+        if (stack == null || prefs.length == 0) return prefs.length;
+        Item item = stack.getItem();
+        if (item == null) return prefs.length;
+        String registryName = Item.itemRegistry.getNameForObject(item);
+        if (registryName == null) return prefs.length;
+        for (int i = 0; i < prefs.length; i++) {
+            if (registryName.equals(prefs[i])) return i;
+        }
+        return prefs.length;
     }
 
     // ── Shears ────────────────────────────────────────────────────────────────
@@ -346,6 +452,33 @@ public class SmartToolSwitchHandler {
         cycleIndex = -1;
     }
 
+    // ── Tool break handoff (called from PacketToolBreakHandoff) ─────────────────
+
+    /** Singleton reference set in registry(). */
+    private static SmartToolSwitchHandler activeInstance;
+
+    /** Returns the active singleton instance, or null. */
+    public static SmartToolSwitchHandler getActiveInstance() {
+        return activeInstance;
+    }
+
+    /**
+     * Called by the client when the server signals that the current tool is about
+     * to break. Switches to the next best available tool, skipping the current one.
+     */
+    public void performToolBreakHandoff(EntityPlayer player) {
+        if (suitableSlots.size() < 2) return; // No alternatives
+        int currentSlot = player.inventory.currentItem;
+        // Find the next best tool that is not the current slot
+        for (int slot : suitableSlots) {
+            if (slot != currentSlot && player.inventory.mainInventory[slot] != null) {
+                player.inventory.currentItem = slot;
+                cycleIndex = suitableSlots.indexOf(slot);
+                return;
+            }
+        }
+    }
+
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     @SubscribeEvent
@@ -357,6 +490,7 @@ public class SmartToolSwitchHandler {
     }
 
     public void registry() {
+        activeInstance = this;
         ClientRegistry.registerKeyBinding(KEY_SMART_TOOL_SWITCH);
         FMLCommonHandler.instance()
             .bus()

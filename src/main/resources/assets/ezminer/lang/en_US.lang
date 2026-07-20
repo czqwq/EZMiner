@@ -98,6 +98,7 @@ ezminer.command.hud.pos.set=EZMiner: HUD position set to x=%s, y=%s.
 ezminer.message.chain.done=EZMiner: chain done; blocks=%s; time=%s
 ezminer.message.chain.idle_countdown=EZMiner: No new blocks found. Auto-cancelling in %ss...
 ezminer.message.chain.idle_cancel=EZMiner: Auto-cancelled — idle for %s s
+ezminer.message.chain.watchdog_timeout=EZMiner: Chain watchdog timeout — force cancelled. Is the chunk unloaded?
 ezminer.message.chain.error=EZMiner: Error while harvesting block at %s: %s
 ezminer.message.special.minesweeper.marked=EZMiner: Mine flagged at (%s, %s, %s), distance=%s blocks
 ezminer.message.special.sudoku.filled=EZMiner: Sudoku cell (%s, %s) filled with %s
@@ -150,3 +151,11 @@ ezminer.gui.section.performance=Performance
 ezminer.config.searchBudgetPerYield=Search Check Cadence\n0 = check every position (safest, default)\nN = check tick-end/cancel every N positions\nHigher = slightly faster search, coarser reaction
 ezminer.config.useDualFrontierBfs=Dual-Frontier BFS\nON: O(1) queue polls instead of PriorityQueue\nOFF: distance-ordered PriorityQueue (compatible)
 ezminer.config.usePrimitiveVisitedSet=Primitive Visited Set\nON: fastutil long hash set, avoids Long boxing\nOFF: ConcurrentHashMap (compatible)
+
+ezminer.gui.section.stability=Stability
+ezminer.config.enableChainWatchdog=Chain Watchdog\nON: tick-based timeout for stuck chains\nOFF: rely on wall-clock idle timeout only
+ezminer.config.enableDropFallbackChain=Drop Fallback Chain\nON: try respawn/world spawn if player chunk unloaded\nOFF: drops lost if chunk unloaded
+ezminer.config.enableMainThreadGuard=Main Thread Guard\nON: log warning if packets handled off-thread\nOFF: no thread checks (legacy)
+ezminer.config.enableBudgetDeadline=Budget Deadline (EXP)\nON: search threads yield on deadline\nOFF: only yield on explicit pause signal
+ezminer.config.enableConfigValidation=Config Validation\nON: validate and warn on config issues\nOFF: skip validation (legacy)
+ezminer.config.enableSafeReflection=Safe Reflection\nON: LinkageError-guarded compat reflection\nOFF: raw reflection (legacy)

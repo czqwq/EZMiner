@@ -5,6 +5,7 @@ import java.util.UUID;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.ChunkCoordinates;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
@@ -277,11 +278,68 @@ public class Manager {
             spawnZ = originPos.z + 0.5;
         }
         if (hasItems) {
-            dropCollector.flush(player.worldObj, spawnX, spawnY, spawnZ);
+            if (!Config.enableDropFallbackChain) {
+                dropCollector.flush(player.worldObj, spawnX, spawnY, spawnZ);
+            } else {
+                flushDropsWithFallback(spawnX, spawnY, spawnZ);
+            }
         }
         if (hasXP) {
             XPDropHandler.flush(player.worldObj, player, spawnX, spawnY, spawnZ, Config.mergeXPOrbs);
         }
+    }
+
+    /**
+     * Attempts to flush drops at the primary position, then falls back through
+     * respawn point → world spawn → discard with warning.
+     */
+    private void flushDropsWithFallback(double x, double y, double z) {
+        // Level 1: primary position
+        if (dropCollector.tryFlush(player.worldObj, x, y, z)) return;
+
+        // Level 2: player respawn / bed location
+        ChunkCoordinates fallback = getFallbackSpawn();
+        if (fallback != null
+            && dropCollector.tryFlush(player.worldObj, fallback.posX + 0.5, fallback.posY + 0.5, fallback.posZ + 0.5)) {
+            return;
+        }
+
+        // Level 3: world spawn
+        ChunkCoordinates worldSpawn = player.worldObj.getSpawnPoint();
+        if (worldSpawn != null && dropCollector
+            .tryFlush(player.worldObj, worldSpawn.posX + 0.5, worldSpawn.posY + 0.5, worldSpawn.posZ + 0.5)) {
+            return;
+        }
+
+        // Level 4: discard with warning
+        int count = dropCollector.pendingCount();
+        if (count > 0) {
+            EZMiner.LOG.warn(
+                "Drop fallback chain exhausted for player {} — discarding {} drop stacks. "
+                    + "Primary chunk may be unloaded.",
+                playerUUID,
+                count);
+            dropCollector.clear();
+        }
+    }
+
+    /**
+     * Resolves the player's respawn point (bed location), returning {@code null}
+     * if no bed is set or the bed is obstructed.
+     */
+    private ChunkCoordinates getFallbackSpawn() {
+        try {
+            ChunkCoordinates bed = player.getBedLocation(player.dimension);
+            if (bed != null) {
+                // verifyRespawnCoordinates checks if the bed area is valid (not obstructed).
+                ChunkCoordinates verified = EntityPlayer.verifyRespawnCoordinates(
+                    (net.minecraft.world.WorldServer) player.worldObj,
+                    bed,
+                    player.isSpawnForced(player.dimension));
+                if (verified != null) return verified;
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 
     /** Clears all accumulated drops from the drop collector. */

@@ -9,6 +9,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
+import com.czqwq.EZMiner.utils.SafeReflection;
+
 /**
  * Reflection bridge for GregTech 5 Unofficial tool compatibility.
  * <p>
@@ -63,45 +65,67 @@ public class GT5ToolCompat {
         if (initialized) return;
         initialized = true;
         try {
-            classMetaGeneratedTool = Class.forName("gregtech.api.items.MetaGeneratedTool");
-            classItemGTToolbox = Class.forName("gregtech.common.items.ItemGTToolbox");
-            classIToolStats = Class.forName("gregtech.api.interfaces.IToolStats");
-            classToolboxPickBlockDecider = Class.forName("gregtech.common.items.toolbox.ToolboxPickBlockDecider");
-            classToolboxItemStackHandler = Class.forName("gregtech.common.items.toolbox.ToolboxItemStackHandler");
-            classPickResults = Class.forName("gregtech.common.items.toolbox.pickblock.PickResults");
+            // Resolve all GT classes via SafeReflection (LinkageError-guarded when enabled).
+            classMetaGeneratedTool = SafeReflection.forName("gregtech.api.items.MetaGeneratedTool");
+            classItemGTToolbox = SafeReflection.forName("gregtech.common.items.ItemGTToolbox");
+            classIToolStats = SafeReflection.forName("gregtech.api.interfaces.IToolStats");
+            classToolboxPickBlockDecider = SafeReflection
+                .forName("gregtech.common.items.toolbox.ToolboxPickBlockDecider");
+            classToolboxItemStackHandler = SafeReflection
+                .forName("gregtech.common.items.toolbox.ToolboxItemStackHandler");
+            classPickResults = SafeReflection.forName("gregtech.common.items.toolbox.pickblock.PickResults");
 
-            mGetToolStats = classMetaGeneratedTool.getMethod("getToolStats", ItemStack.class);
-            mGetToolCombatDamage = classMetaGeneratedTool.getMethod("getToolCombatDamage", ItemStack.class);
-            mIsMinableBlock = classIToolStats.getMethod("isMinableBlock", Block.class, int.class);
-            mGetBaseQuality = classIToolStats.getMethod("getBaseQuality");
-            mGetSuggestedTool = classToolboxPickBlockDecider.getMethod("getSuggestedTool", EntityPlayer.class);
+            // All classes must resolve for GT compat to be considered loaded.
+            if (classMetaGeneratedTool == null || classItemGTToolbox == null
+                || classIToolStats == null
+                || classToolboxPickBlockDecider == null
+                || classToolboxItemStackHandler == null
+                || classPickResults == null) {
+                gtLoaded = false;
+                return;
+            }
 
+            mGetToolStats = SafeReflection.getMethod(classMetaGeneratedTool, "getToolStats", ItemStack.class);
+            mGetToolCombatDamage = SafeReflection
+                .getMethod(classMetaGeneratedTool, "getToolCombatDamage", ItemStack.class);
+            mIsMinableBlock = SafeReflection.getMethod(classIToolStats, "isMinableBlock", Block.class, int.class);
+            mGetBaseQuality = SafeReflection.getMethod(classIToolStats, "getBaseQuality");
+            mGetSuggestedTool = SafeReflection
+                .getMethod(classToolboxPickBlockDecider, "getSuggestedTool", EntityPlayer.class);
+
+            // PickResults: find suggestedTools() and forceDeselect() by name + arity.
             for (Method m : classPickResults.getMethods()) {
                 if (m.getName()
                     .equals("suggestedTools") && m.getParameterTypes().length == 0) {
                     mPickResultsSuggestedTools = m;
+                    mPickResultsSuggestedTools.setAccessible(true);
                 } else if (m.getName()
                     .equals("forceDeselect") && m.getParameterTypes().length == 0) {
                         mPickResultsForceDeselect = m;
+                        mPickResultsForceDeselect.setAccessible(true);
                     }
             }
-            for (Method m : classToolboxItemStackHandler.getMethods()) {
-                if (m.getName()
-                    .equals("getStackInSlot") && m.getParameterTypes().length == 1
-                    && m.getParameterTypes()[0] == int.class) {
-                    mToolboxItemStackHandlerGetStackInSlot = m;
-                    break;
-                }
+            // ToolboxItemStackHandler: find getStackInSlot(int)
+            mToolboxItemStackHandlerGetStackInSlot = SafeReflection
+                .getMethod(classToolboxItemStackHandler, "getStackInSlot", int.class);
+            // sendChangeToolPacket is private static
+            mSendChangeToolPacket = SafeReflection
+                .getDeclaredMethod(classItemGTToolbox, "sendChangeToolPacket", int.class, int.class);
+
+            // All required methods must resolve.
+            if (mGetToolStats == null || mGetToolCombatDamage == null
+                || mIsMinableBlock == null
+                || mGetBaseQuality == null
+                || mGetSuggestedTool == null
+                || mToolboxItemStackHandlerGetStackInSlot == null
+                || mSendChangeToolPacket == null) {
+                gtLoaded = false;
+                return;
             }
 
-            // sendChangeToolPacket is private static — use getDeclaredMethod + setAccessible
-            mSendChangeToolPacket = classItemGTToolbox.getDeclaredMethod("sendChangeToolPacket", int.class, int.class);
-            mSendChangeToolPacket.setAccessible(true);
-
             gtLoaded = true;
-        } catch (ClassNotFoundException ignored) {
-            gtLoaded = false;
-        } catch (NoSuchMethodException e) {
+        } catch (Exception e) {
+            // Catch-all for unexpected errors (e.g. SecurityException from setAccessible).
             gtLoaded = false;
             e.printStackTrace();
         }

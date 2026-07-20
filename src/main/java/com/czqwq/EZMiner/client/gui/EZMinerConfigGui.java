@@ -62,6 +62,12 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_SERVER_FIRE_BREAK_EVENT = 28;
     private static final int BTN_SERVER_USE_DUAL_FRONTIER_BFS = 29;
     private static final int BTN_SERVER_USE_PRIMITIVE_VISITED_SET = 30;
+    private static final int BTN_SERVER_ENABLE_CHAIN_WATCHDOG = 31;
+    private static final int BTN_SERVER_ENABLE_DROP_FALLBACK_CHAIN = 32;
+    private static final int BTN_SERVER_ENABLE_MAIN_THREAD_GUARD = 33;
+    private static final int BTN_SERVER_ENABLE_BUDGET_DEADLINE = 34;
+    private static final int BTN_SERVER_ENABLE_CONFIG_VALIDATION = 35;
+    private static final int BTN_SERVER_ENABLE_SAFE_REFLECTION = 36;
     private static final int BTN_CLIENT_SYNC_BASE = 100;
 
     // ── Layout constants ──────────────────────────────────────────────────────
@@ -76,7 +82,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int CONTENT_START_Y = 42;
     private static final int MAX_CONTENT_ROWS = 17; // Client tab row count
     /** Server tab row count (has more fields than client tab). */
-    private static final int SERVER_CONTENT_ROWS = 33;
+    private static final int SERVER_CONTENT_ROWS = 39;
     private static final int ROW_H = 20;
     /** Extra vertical spacing added between lines when a label contains \n. */
     private static final int EXTRA_LINE_SPACING = 2;
@@ -179,6 +185,12 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnServerFireBreakEvent;
     private GuiButton btnServerUseDualFrontierBfs;
     private GuiButton btnServerUsePrimitiveVisitedSet;
+    private GuiButton btnServerEnableChainWatchdog;
+    private GuiButton btnServerEnableDropFallbackChain;
+    private GuiButton btnServerEnableMainThreadGuard;
+    private GuiButton btnServerEnableBudgetDeadline;
+    private GuiButton btnServerEnableConfigValidation;
+    private GuiButton btnServerEnableSafeReflection;
 
     // ── GuiScreen overrides ───────────────────────────────────────────────────
 
@@ -453,6 +465,55 @@ public class EZMinerConfigGui extends GuiScreen {
                 boolValue(Config.usePrimitiveVisitedSet));
             buttonList.add(btnServerUsePrimitiveVisitedSet);
 
+            // Stability section
+            btnServerEnableChainWatchdog = newOptionButton(
+                BTN_SERVER_ENABLE_CHAIN_WATCHDOG,
+                33,
+                "ezminer.config.enableChainWatchdog",
+                boolLabel("ezminer.config.enableChainWatchdog", Config.enableChainWatchdog),
+                boolValue(Config.enableChainWatchdog));
+            buttonList.add(btnServerEnableChainWatchdog);
+
+            btnServerEnableDropFallbackChain = newOptionButton(
+                BTN_SERVER_ENABLE_DROP_FALLBACK_CHAIN,
+                34,
+                "ezminer.config.enableDropFallbackChain",
+                boolLabel("ezminer.config.enableDropFallbackChain", Config.enableDropFallbackChain),
+                boolValue(Config.enableDropFallbackChain));
+            buttonList.add(btnServerEnableDropFallbackChain);
+
+            btnServerEnableMainThreadGuard = newOptionButton(
+                BTN_SERVER_ENABLE_MAIN_THREAD_GUARD,
+                35,
+                "ezminer.config.enableMainThreadGuard",
+                boolLabel("ezminer.config.enableMainThreadGuard", Config.enableMainThreadGuard),
+                boolValue(Config.enableMainThreadGuard));
+            buttonList.add(btnServerEnableMainThreadGuard);
+
+            btnServerEnableBudgetDeadline = newOptionButton(
+                BTN_SERVER_ENABLE_BUDGET_DEADLINE,
+                36,
+                "ezminer.config.enableBudgetDeadline",
+                boolLabel("ezminer.config.enableBudgetDeadline", Config.enableBudgetDeadline),
+                boolValue(Config.enableBudgetDeadline));
+            buttonList.add(btnServerEnableBudgetDeadline);
+
+            btnServerEnableConfigValidation = newOptionButton(
+                BTN_SERVER_ENABLE_CONFIG_VALIDATION,
+                37,
+                "ezminer.config.enableConfigValidation",
+                boolLabel("ezminer.config.enableConfigValidation", Config.enableConfigValidation),
+                boolValue(Config.enableConfigValidation));
+            buttonList.add(btnServerEnableConfigValidation);
+
+            btnServerEnableSafeReflection = newOptionButton(
+                BTN_SERVER_ENABLE_SAFE_REFLECTION,
+                38,
+                "ezminer.config.enableSafeReflection",
+                boolLabel("ezminer.config.enableSafeReflection", Config.enableSafeReflection),
+                boolValue(Config.enableSafeReflection));
+            buttonList.add(btnServerEnableSafeReflection);
+
             // Fixed: server action buttons
             buttonList.add(
                 new GuiButton(
@@ -707,6 +768,42 @@ public class EZMinerConfigGui extends GuiScreen {
                 btnServerUsePrimitiveVisitedSet.displayString = boolDisplayText(
                     "ezminer.config.usePrimitiveVisitedSet",
                     Config.usePrimitiveVisitedSet);
+                break;
+            case BTN_SERVER_ENABLE_CHAIN_WATCHDOG:
+                Config.enableChainWatchdog = !Config.enableChainWatchdog;
+                btnServerEnableChainWatchdog.displayString = boolDisplayText(
+                    "ezminer.config.enableChainWatchdog",
+                    Config.enableChainWatchdog);
+                break;
+            case BTN_SERVER_ENABLE_DROP_FALLBACK_CHAIN:
+                Config.enableDropFallbackChain = !Config.enableDropFallbackChain;
+                btnServerEnableDropFallbackChain.displayString = boolDisplayText(
+                    "ezminer.config.enableDropFallbackChain",
+                    Config.enableDropFallbackChain);
+                break;
+            case BTN_SERVER_ENABLE_MAIN_THREAD_GUARD:
+                Config.enableMainThreadGuard = !Config.enableMainThreadGuard;
+                btnServerEnableMainThreadGuard.displayString = boolDisplayText(
+                    "ezminer.config.enableMainThreadGuard",
+                    Config.enableMainThreadGuard);
+                break;
+            case BTN_SERVER_ENABLE_BUDGET_DEADLINE:
+                Config.enableBudgetDeadline = !Config.enableBudgetDeadline;
+                btnServerEnableBudgetDeadline.displayString = boolDisplayText(
+                    "ezminer.config.enableBudgetDeadline",
+                    Config.enableBudgetDeadline);
+                break;
+            case BTN_SERVER_ENABLE_CONFIG_VALIDATION:
+                Config.enableConfigValidation = !Config.enableConfigValidation;
+                btnServerEnableConfigValidation.displayString = boolDisplayText(
+                    "ezminer.config.enableConfigValidation",
+                    Config.enableConfigValidation);
+                break;
+            case BTN_SERVER_ENABLE_SAFE_REFLECTION:
+                Config.enableSafeReflection = !Config.enableSafeReflection;
+                btnServerEnableSafeReflection.displayString = boolDisplayText(
+                    "ezminer.config.enableSafeReflection",
+                    Config.enableSafeReflection);
                 break;
 
             case BTN_SERVER_RELOAD:
@@ -1087,6 +1184,12 @@ public class EZMinerConfigGui extends GuiScreen {
             tfSearchBudgetPerYield.yPosition = getControlY(30);
             setScrolledButtonY(BTN_SERVER_USE_DUAL_FRONTIER_BFS, getControlY(31));
             setScrolledButtonY(BTN_SERVER_USE_PRIMITIVE_VISITED_SET, getControlY(32));
+            setScrolledButtonY(BTN_SERVER_ENABLE_CHAIN_WATCHDOG, getControlY(33));
+            setScrolledButtonY(BTN_SERVER_ENABLE_DROP_FALLBACK_CHAIN, getControlY(34));
+            setScrolledButtonY(BTN_SERVER_ENABLE_MAIN_THREAD_GUARD, getControlY(35));
+            setScrolledButtonY(BTN_SERVER_ENABLE_BUDGET_DEADLINE, getControlY(36));
+            setScrolledButtonY(BTN_SERVER_ENABLE_CONFIG_VALIDATION, getControlY(37));
+            setScrolledButtonY(BTN_SERVER_ENABLE_SAFE_REFLECTION, getControlY(38));
         }
 
         // Update per-button visibility: hide when scrolled out of viewport.
@@ -1276,6 +1379,15 @@ public class EZMinerConfigGui extends GuiScreen {
         drawButtonRowLabel(lx, contentRowScreenY(31), lc, "ezminer.config.useDualFrontierBfs");
         drawButtonRowLabel(lx, contentRowScreenY(32), lc, "ezminer.config.usePrimitiveVisitedSet");
 
+        // Stability section
+        drawSectionHeader(lx, contentRowScreenY(32) + getContentRowHeight(32) + 4, "ezminer.gui.section.stability");
+        drawButtonRowLabel(lx, contentRowScreenY(33), lc, "ezminer.config.enableChainWatchdog");
+        drawButtonRowLabel(lx, contentRowScreenY(34), lc, "ezminer.config.enableDropFallbackChain");
+        drawButtonRowLabel(lx, contentRowScreenY(35), lc, "ezminer.config.enableMainThreadGuard");
+        drawButtonRowLabel(lx, contentRowScreenY(36), lc, "ezminer.config.enableBudgetDeadline");
+        drawButtonRowLabel(lx, contentRowScreenY(37), lc, "ezminer.config.enableConfigValidation");
+        drawButtonRowLabel(lx, contentRowScreenY(38), lc, "ezminer.config.enableSafeReflection");
+
     }
 
     private void drawRow(int labelX, int y, int color, String labelKey, GuiTextField field) {
@@ -1355,7 +1467,13 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_SERVER_ENABLE_BLOCK_SWAP
                 || btn.id == BTN_SERVER_FIRE_BREAK_EVENT
                 || btn.id == BTN_SERVER_USE_DUAL_FRONTIER_BFS
-                || btn.id == BTN_SERVER_USE_PRIMITIVE_VISITED_SET;
+                || btn.id == BTN_SERVER_USE_PRIMITIVE_VISITED_SET
+                || btn.id == BTN_SERVER_ENABLE_CHAIN_WATCHDOG
+                || btn.id == BTN_SERVER_ENABLE_DROP_FALLBACK_CHAIN
+                || btn.id == BTN_SERVER_ENABLE_MAIN_THREAD_GUARD
+                || btn.id == BTN_SERVER_ENABLE_BUDGET_DEADLINE
+                || btn.id == BTN_SERVER_ENABLE_CONFIG_VALIDATION
+                || btn.id == BTN_SERVER_ENABLE_SAFE_REFLECTION;
             boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;
 
             if (isClientSyncButton(btn.id)) {
@@ -1494,6 +1612,14 @@ public class EZMinerConfigGui extends GuiScreen {
         packet.searchBudgetPerYield = parseI(tfSearchBudgetPerYield, Config.searchBudgetPerYield, 0);
         packet.useDualFrontierBfs = Config.useDualFrontierBfs;
         packet.usePrimitiveVisitedSet = Config.usePrimitiveVisitedSet;
+        // Stability settings
+        packet.enableChainWatchdog = Config.enableChainWatchdog;
+        packet.enableDropFallbackChain = Config.enableDropFallbackChain;
+        packet.enableMainThreadGuard = Config.enableMainThreadGuard;
+        packet.enableBudgetDeadline = Config.enableBudgetDeadline;
+        packet.enableConfigValidation = Config.enableConfigValidation;
+        packet.enableSafeReflection = Config.enableSafeReflection;
+        packet.chainWatchdogTimeoutTicks = Config.chainWatchdogTimeoutTicks;
         EZMiner.network.network.sendToServer(packet);
     }
 

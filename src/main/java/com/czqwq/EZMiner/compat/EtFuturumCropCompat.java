@@ -21,7 +21,7 @@ import com.czqwq.EZMiner.core.crop.ICropAdapter;
  * </p>
  *
  * <p>
- * Ported from QZMiner {@code EtFuturumCropCompatAdapter}.
+ * Et Futurum Requiem crop compatibility adapter.
  * </p>
  */
 public class EtFuturumCropCompat implements ICropAdapter {
