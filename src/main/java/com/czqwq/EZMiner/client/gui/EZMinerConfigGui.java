@@ -1029,6 +1029,18 @@ public class EZMinerConfigGui extends GuiScreen {
                     return "ezminer.config.useDualFrontierBfs";
                 case 32:
                     return "ezminer.config.usePrimitiveVisitedSet";
+                case 33:
+                    return "ezminer.config.enableChainWatchdog";
+                case 34:
+                    return "ezminer.config.enableDropFallbackChain";
+                case 35:
+                    return "ezminer.config.enableMainThreadGuard";
+                case 36:
+                    return "ezminer.config.enableBudgetDeadline";
+                case 37:
+                    return "ezminer.config.enableConfigValidation";
+                case 38:
+                    return "ezminer.config.enableSafeReflection";
                 default:
                     return null;
             }
@@ -1072,7 +1084,9 @@ public class EZMinerConfigGui extends GuiScreen {
             return index == 3 || index == 5 || index == 12 || index == 14; // after Mining, after Preview, before Smart
                                                                            // Tool Switch, after Smart Tool Switch
         }
-        return index == 9 || index == 11 || index == 26 || index == 29; // after Mining, Preview, Options, Block Swap
+        return index == 9 || index == 11 || index == 26 || index == 29 || index == 32; // after Mining, Preview,
+                                                                                       // Options, Block Swap,
+                                                                                       // Performance
     }
 
     /** Content height of a row excluding any section gap. */
