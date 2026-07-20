@@ -9,8 +9,6 @@ import com.czqwq.EZMiner.client.SmartToolSwitchHandler;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -31,11 +29,14 @@ public class PacketToolBreakHandoff implements IMessage {
         // No payload.
     }
 
-    @SideOnly(Side.CLIENT)
     public static class Handler implements IMessageHandler<PacketToolBreakHandoff, IMessage> {
 
         @Override
         public IMessage onMessage(PacketToolBreakHandoff msg, MessageContext ctx) {
+            // This handler is only ever invoked on the client because the packet is
+            // registered with Side.CLIENT. The side check here is defensive — the
+            // handler class must be loadable on both sides because NetworkMain.registry()
+            // references Handler.class during preInit (which runs on both client and server).
             if (!ctx.side.isClient()) return null;
             if (!Config.smartToolSwitchEnabled || !Config.enableToolBreakHandoff) return null;
 
@@ -43,7 +44,6 @@ public class PacketToolBreakHandoff implements IMessage {
             if (mc.thePlayer == null) return null;
             EntityPlayer player = mc.thePlayer;
 
-            // Find the next best tool different from the current one
             SmartToolSwitchHandler handler = SmartToolSwitchHandler.getActiveInstance();
             if (handler == null) return null;
 
