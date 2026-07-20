@@ -203,6 +203,49 @@ By default, GT and BartWorks ores only respond to Fortune III and below. EZMiner
 
 ---
 
+## Performance Tuning
+
+These server-side options control the trade-off between search speed and CPU/memory usage. All are configurable via the OP-only **Server Settings** tab in the in-game GUI or directly in `EZMiner/EZMiner_Server.cfg`.
+
+### `searchBudgetPerYield` (default: 0)
+
+Controls how often the background search thread checks for tick boundaries and cancellation. The search thread calls a cooperative yield check after processing this many positions — pausing until the next tick starts when the current tick has ended, and noticing chain cancellation promptly.
+
+- **0** — check on every position (safest, legacy behaviour)
+- **N > 0** — check every N positions (searches run slightly faster but react to tick end / cancellation more coarsely)
+
+Range: 0–4096. Most users should leave this at 0 unless profiling shows the yield check overhead is meaningful.
+
+### `useDualFrontierBfs` (default: false)
+
+When enabled, chain-mode BFS uses two plain queues (current wave + next wave) instead of a single `PriorityQueue` ordered by distance from origin. This gives O(1) frontier operations instead of O(log n).
+
+**Trade-off:** The wave-front expansion order differs from distance-ordered expansion. When a vein exceeds `blockLimit`, the set of blocks selected may differ between the two algorithms — both are valid subsets but they are not identical. If you rely on distance-prioritised selection (closest blocks mined first), keep this disabled.
+
+> ⚠️ No profiling data is yet available for this flag. Test with [Spark](https://spark.lucko.me/) on your typical vein sizes before enabling in production.
+
+### `usePrimitiveVisitedSet` (default: false)
+
+When enabled, the visited-position tracking set uses fastutil's primitive `LongOpenHashSet` (behind a synchronised wrapper) instead of `ConcurrentHashMap.newKeySet()`. This avoids `Long` boxing overhead during large searches, potentially reducing GC pressure.
+
+**Trade-off:** The synchronised wrapper has higher contention under heavy multi-threaded use than `ConcurrentHashMap`'s lock-free design. The primitive set's initial capacity is capped at 65,536 (it grows as needed).
+
+> ⚠️ No profiling data is yet available for this flag. Test with Spark before enabling in production.
+
+### `searchWorkerThreads` (default: 3)
+
+Number of background worker threads for parallel block search during chain/blast operations. Higher values scan large radii faster but consume more CPU. Set to 0 to disable multi-threaded search entirely (falls back to single-thread). Range: 0–8.
+
+### `crazyMode` (default: false)
+
+Removes the per-tick block break limit so chains complete as fast as possible. A built-in safety cap still prevents server freezes. ⚠ May cause significant lag on extremely large veins.
+
+### `suppressHodgepodgeWarnings` (default: true)
+
+Suppresses Hodgepodge's off-thread chunk-read warnings for EZMiner background threads (named `EZMiner-*`). The chunk-map snapshot still serves data safely from worker threads. Applied via Log4j2 filter at mod init — survives config reload without restart.
+
+---
+
 ## Safety Features
 
 - Stops automatically before the tool would break (durability < 1)

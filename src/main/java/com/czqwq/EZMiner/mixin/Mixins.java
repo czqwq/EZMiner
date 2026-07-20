@@ -109,6 +109,22 @@ public enum Mixins {
             classPredicate = classPredicate.and(mixinClass -> condition);
             return this;
         }
+
+        /**
+         * Adds a bytecode-shape condition: the mixin is only applied when the target
+         * class (by internal name) contains a method matching {@code methodName} and
+         * {@code descriptor}. Requires {@link Config#enableMixinCapabilityGates} to be
+         * {@code true}; when disabled, the condition always passes.
+         *
+         * @param targetClass internal class name (e.g. {@code "gregtech/common/ores/GTOreAdapter"})
+         * @param methodName  method name
+         * @param descriptor  JVM method descriptor
+         */
+        MixinClass addBytecodeCondition(String targetClass, String methodName, String descriptor) {
+            classPredicate = classPredicate
+                .and(mixinClass -> MixinCapabilityPlugin.targetHasMethod(targetClass, methodName, descriptor));
+            return this;
+        }
     }
 
     enum Phase {

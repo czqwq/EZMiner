@@ -5,6 +5,7 @@ import java.io.File;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
 
+import com.czqwq.EZMiner.config.ConfigValidator;
 import com.czqwq.EZMiner.core.MinerConfig;
 
 import cpw.mods.fml.client.event.ConfigChangedEvent;
@@ -151,9 +152,72 @@ public class Config {
      * When true, visited-position tracking uses fastutil's primitive
      * {@code LongOpenHashSet} (behind a synchronized wrapper) instead of
      * {@code ConcurrentHashMap.newKeySet()}. Avoids Long boxing overhead for large
-     * searches. Default: false (use ConcurrentHashMap for compatibility).
+     * searches. Default: true (use primitive set for reduced GC pressure).
      */
-    public static boolean usePrimitiveVisitedSet = false;
+    public static boolean usePrimitiveVisitedSet = true;
+
+    // ===== Stability & reliability features =====
+
+    /** When true (default), validates config values after load and logs warnings for issues. */
+    public static boolean enableConfigValidation = true;
+
+    /**
+     * When true (default), compat reflection calls use safe wrappers that catch
+     * {@code LinkageError} and avoid triggering static initialisers on class load.
+     * When false, raw {@code Class.forName()} is used (legacy behavior).
+     */
+    public static boolean enableSafeReflection = true;
+
+    /**
+     * When true (default), mixins are only applied when the target class bytecode
+     * shape matches expectations — preventing crashes on GTNH version mismatches.
+     * Requires a game restart to take effect (mixin plugin is loaded at startup).
+     */
+    public static boolean enableMixinCapabilityGates = true;
+
+    /**
+     * When true (default), network packet handlers verify they are running on the
+     * main thread and defer execution if called from a netty IO thread.
+     */
+    public static boolean enableMainThreadGuard = true;
+
+    /**
+     * When true (default), a tick-based watchdog monitors chain operations and
+     * force-resets the state if no progress is made within
+     * {@link #chainWatchdogTimeoutTicks} ticks.
+     */
+    public static boolean enableChainWatchdog = true;
+
+    /**
+     * Number of server ticks without any block harvested before the watchdog
+     * force-cancels a chain operation. 100 ticks = 5 seconds at 20 TPS.
+     * Only used when {@link #enableChainWatchdog} is true.
+     */
+    public static int chainWatchdogTimeoutTicks = 100;
+
+    /**
+     * When true (default), if drops cannot be spawned at the player's position
+     * (e.g. chunk unloaded), the drop collector tries fallback positions:
+     * respawn point → world spawn → discard with warning.
+     */
+    public static boolean enableDropFallbackChain = true;
+
+    /**
+     * When true, background search threads respect a deadline timestamp and yield
+     * at tick boundaries even if {@code unPause()} is never called (defense against
+     * founder-thread hangs). Default: false (experimental — may affect search
+     * throughput).
+     */
+    public static boolean enableBudgetDeadline = false;
+
+    /**
+     * When true (default), the server signals the client to switch tools when the
+     * current tool is about to break during chain mining, instead of cancelling.
+     */
+    public static boolean enableToolBreakHandoff = true;
+
+    /** Max ticks the server waits for the client to switch tools (default: 5). */
+    public static int toolBreakHandoffTimeoutTicks = 5;
 
     /**
      * Suppress Hodgepodge off-thread-read warnings for EZMiner background threads.
@@ -265,6 +329,29 @@ public class Config {
     /** Smart Tool Switch mode: 0 = Hold, 1 = Toggle (default). */
     public static int smartToolSwitchActivationMode = 1;
 
+    // ===== Smart Tool Switch advanced settings =====
+
+    /**
+     * When true (default), tool scoring factors remaining durability so tools
+     * with more remaining uses rank higher than identical-but-worn tools.
+     */
+    public static boolean smartToolSwitchDurabilityScore = true;
+
+    /**
+     * When true, the smart tool switch scans all 36 inventory slots instead of
+     * only the 9-slot hotbar. Tools in the main inventory are swapped into the
+     * hotbar automatically. Default: false.
+     */
+    public static boolean smartToolSwitchFullInventory = false;
+
+    /**
+     * Comma-separated list of preferred tool item registry names. When multiple
+     * tools have equal harvest levels, those matching earlier entries are preferred.
+     * Example: {@code "minecraft:diamond_pickaxe, IC2:itemToolDiamondDrill"}.
+     * Leave empty to use harvest-level-only ranking (default).
+     */
+    public static String preferredTools = "";
+
     private static final String BLOCK_SCROLL_ON_CHAIN_KEY_COMMENT = "When true, mouse-wheel scrolling is blocked from changing the inventory hotbar slot while the chain key is held, so that scrolling is reserved for switching EZMiner sub-modes.";
 
     private static final String SMART_TOOL_SWITCH_ENABLED_COMMENT = "Master switch for Smart Tool Switching. When false, the feature is completely disabled.";
@@ -323,6 +410,9 @@ public class Config {
             if (clientConfiguration.hasChanged()) {
                 clientConfiguration.save();
             }
+        }
+        if (enableConfigValidation) {
+            ConfigValidator.validate();
         }
     }
 
@@ -482,9 +572,68 @@ public class Config {
         usePrimitiveVisitedSet = serverConfiguration.getBoolean(
             "usePrimitiveVisitedSet",
             Configuration.CATEGORY_GENERAL,
-            false,
+            true,
             "When true, visited-set tracking uses fastutil's primitive long hash set "
-                + "instead of ConcurrentHashMap to avoid Long boxing. Default: false.");
+                + "instead of ConcurrentHashMap to avoid Long boxing. Default: true.");
+        enableConfigValidation = serverConfiguration.getBoolean(
+            "enableConfigValidation",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "When true (default), validates config values after load and logs warnings for issues.");
+        enableSafeReflection = serverConfiguration.getBoolean(
+            "enableSafeReflection",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "When true (default), compat reflection uses safe wrappers with LinkageError guards.");
+        enableMixinCapabilityGates = serverConfiguration.getBoolean(
+            "enableMixinCapabilityGates",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "When true (default), mixins are only applied when target class bytecode matches expectations. "
+                + "Requires game restart to take effect.");
+        enableMainThreadGuard = serverConfiguration.getBoolean(
+            "enableMainThreadGuard",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "When true (default), network packet handlers verify main-thread execution.");
+        enableChainWatchdog = serverConfiguration.getBoolean(
+            "enableChainWatchdog",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "When true (default), a tick-based watchdog force-cancels stuck chain operations.");
+        chainWatchdogTimeoutTicks = serverConfiguration.getInt(
+            "chainWatchdogTimeoutTicks",
+            Configuration.CATEGORY_GENERAL,
+            100,
+            20,
+            1200,
+            "Ticks without progress before watchdog fires. 100 = 5 seconds at 20 TPS. "
+                + "Only used when enableChainWatchdog is true.");
+        enableDropFallbackChain = serverConfiguration.getBoolean(
+            "enableDropFallbackChain",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "When true (default), drop flush tries fallback positions (respawn → world spawn) "
+                + "if the player's chunk is unloaded.");
+        enableBudgetDeadline = serverConfiguration.getBoolean(
+            "enableBudgetDeadline",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "EXPERIMENTAL — When true, search threads respect a deadline timestamp for tick-boundary "
+                + "yielding. Default: false.");
+        enableToolBreakHandoff = serverConfiguration.getBoolean(
+            "enableToolBreakHandoff",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "When true (default), the server signals the client to switch tools when the current "
+                + "tool is about to break during chain mining.");
+        toolBreakHandoffTimeoutTicks = serverConfiguration.getInt(
+            "toolBreakHandoffTimeoutTicks",
+            Configuration.CATEGORY_GENERAL,
+            5,
+            1,
+            40,
+            "Max ticks the server waits for the client to switch tools (default: 5 = 0.25s).");
         addExhaustion = serverConfiguration
             .get(
                 Configuration.CATEGORY_GENERAL,
@@ -644,6 +793,41 @@ public class Config {
         searchBudgetPerYield = Math.max(0, Math.min(4096, syncedSearchBudgetPerYield));
         useDualFrontierBfs = syncedUseDualFrontierBfs;
         usePrimitiveVisitedSet = syncedUsePrimitiveVisitedSet;
+    }
+
+    /**
+     * Applies server-synced general config values on the client (P1-1 fix).
+     * Mirrors the server's actual runtime values into the client's {@code Config}
+     * static fields so the OP GUI displays correct values instead of the
+     * client's local config file defaults.
+     */
+    public static void applyServerRuntimeConfig(int syncedCachedBreakPerTick, boolean syncedDropImmediately,
+        double syncedAddExhaustion, boolean syncedDropToPlayer, double syncedMinesweeperCooldown,
+        double syncedSudokuCooldown, boolean syncedEnableCachedChain, int syncedSearchWorkerThreads,
+        boolean syncedSuppressHodgepodgeWarnings, boolean syncedEnableChainChunkLoading,
+        boolean syncedUseChunkCachedHarvest, boolean syncedCrazyMode, int syncedChainIdleTimeoutSeconds,
+        int syncedChainIdleCountdownSeconds, boolean syncedStopOnUnbreakable, int syncedChainCooldownTicks,
+        int syncedXpDropMode, boolean syncedMergeXPOrbs, boolean syncedFireBreakEvent) {
+        cachedBreakPerTick = Math.max(1, Math.min(1024, syncedCachedBreakPerTick));
+        dropImmediately = syncedDropImmediately;
+        addExhaustion = syncedAddExhaustion;
+        dropToPlayer = syncedDropToPlayer;
+        minesweeperProbeCooldownSeconds = Math.max(0.1, syncedMinesweeperCooldown);
+        sudokuProbeCooldownSeconds = Math.max(0.1, syncedSudokuCooldown);
+        enableCachedChain = syncedEnableCachedChain;
+        searchWorkerThreads = Math.max(0, Math.min(8, syncedSearchWorkerThreads));
+        suppressHodgepodgeWarnings = syncedSuppressHodgepodgeWarnings;
+        enableChainChunkLoading = syncedEnableChainChunkLoading;
+        useChunkCachedHarvest = syncedUseChunkCachedHarvest;
+        crazyMode = syncedCrazyMode;
+        chainIdleTimeoutSeconds = syncedChainIdleTimeoutSeconds <= 0 ? -1 : Math.max(1, syncedChainIdleTimeoutSeconds);
+        chainIdleCountdownSeconds = syncedChainIdleCountdownSeconds <= 0 ? -1
+            : Math.max(1, syncedChainIdleCountdownSeconds);
+        stopOnUnbreakable = syncedStopOnUnbreakable;
+        chainCooldownTicks = Math.max(0, syncedChainCooldownTicks);
+        xpDropMode = Math.max(0, Math.min(1, syncedXpDropMode));
+        mergeXPOrbs = syncedMergeXPOrbs;
+        fireBreakEvent = syncedFireBreakEvent;
     }
 
     /**
@@ -826,6 +1010,21 @@ public class Config {
             0,
             1,
             SMART_TOOL_SWITCH_ACTIVATION_MODE_COMMENT);
+        smartToolSwitchDurabilityScore = clientConfiguration.getBoolean(
+            "smartToolSwitchDurabilityScore",
+            CLIENT_CATEGORY,
+            true,
+            "When true (default), tools with more remaining durability are preferred.");
+        smartToolSwitchFullInventory = clientConfiguration.getBoolean(
+            "smartToolSwitchFullInventory",
+            CLIENT_CATEGORY,
+            false,
+            "When true, the smart tool switch scans all 36 inventory slots instead of only the hotbar.");
+        preferredTools = clientConfiguration.getString(
+            "preferredTools",
+            CLIENT_CATEGORY,
+            "",
+            "Comma-separated tool registry names in preferred order (e.g. minecraft:diamond_pickaxe).");
     }
 
     public static void setLegacyServerPreviewCaps(int maxBigRadius, int maxBlockLimit) {
@@ -889,8 +1088,28 @@ public class Config {
             .set(searchBudgetPerYield);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "useDualFrontierBfs", false)
             .set(useDualFrontierBfs);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "usePrimitiveVisitedSet", false)
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "usePrimitiveVisitedSet", true)
             .set(usePrimitiveVisitedSet);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableConfigValidation", true)
+            .set(enableConfigValidation);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableSafeReflection", true)
+            .set(enableSafeReflection);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableMixinCapabilityGates", true)
+            .set(enableMixinCapabilityGates);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableMainThreadGuard", true)
+            .set(enableMainThreadGuard);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableChainWatchdog", true)
+            .set(enableChainWatchdog);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "chainWatchdogTimeoutTicks", 100)
+            .set(chainWatchdogTimeoutTicks);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableDropFallbackChain", true)
+            .set(enableDropFallbackChain);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableBudgetDeadline", false)
+            .set(enableBudgetDeadline);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableToolBreakHandoff", true)
+            .set(enableToolBreakHandoff);
+        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "toolBreakHandoffTimeoutTicks", 5)
+            .set(toolBreakHandoffTimeoutTicks);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "suppressHodgepodgeWarnings", true)
             .set(suppressHodgepodgeWarnings);
         serverConfiguration.get(Configuration.CATEGORY_GENERAL, "useChunkCachedHarvest", false)
@@ -961,6 +1180,12 @@ public class Config {
             .set(smartToolSwitchEnabled);
         clientConfiguration.get(CLIENT_CATEGORY, "smartToolSwitchActivationMode", 1)
             .set(smartToolSwitchActivationMode);
+        clientConfiguration.get(CLIENT_CATEGORY, "smartToolSwitchDurabilityScore", true)
+            .set(smartToolSwitchDurabilityScore);
+        clientConfiguration.get(CLIENT_CATEGORY, "smartToolSwitchFullInventory", false)
+            .set(smartToolSwitchFullInventory);
+        clientConfiguration.get(CLIENT_CATEGORY, "preferredTools", "")
+            .set(preferredTools);
         clientConfiguration.save();
     }
 }

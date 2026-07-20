@@ -151,6 +151,11 @@ public class BasePositionFounder extends Pauseable {
         int curRadius = 1;
         while (curCount.get() < minerConfig.blockLimit && curRadius <= minerConfig.bigRadius) {
             if (player == null || player.isDead || player.worldObj == null) return;
+            // Set a deadline so waitUntil() yields even without an explicit unpark
+            // (safety net against lost tick-boundary signals).
+            if (Config.enableBudgetDeadline) {
+                setDeadlineNanos(System.nanoTime() + 50_000_000L); // 50 ms from now
+            }
             int xMin = center.x - curRadius, xMax = center.x + curRadius;
             int yMin = center.y - curRadius, yMax = center.y + curRadius;
             int zMin = center.z - curRadius, zMax = center.z + curRadius;
@@ -231,6 +236,10 @@ public class BasePositionFounder extends Pauseable {
         int curRadius = 1;
         while (curCount.get() < minerConfig.blockLimit && curRadius <= minerConfig.bigRadius) {
             if (player == null || player.isDead || player.worldObj == null) return;
+            // Set a deadline so waitUntil() yields even without an explicit unpark.
+            if (Config.enableBudgetDeadline) {
+                setDeadlineNanos(System.nanoTime() + 50_000_000L); // 50 ms from now
+            }
             final int xMin = center.x - curRadius, xMax = center.x + curRadius;
             final int yMin = center.y - curRadius, yMax = center.y + curRadius;
             final int zMin = center.z - curRadius, zMax = center.z + curRadius;

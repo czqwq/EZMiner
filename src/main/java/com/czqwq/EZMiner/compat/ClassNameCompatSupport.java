@@ -11,8 +11,7 @@ package com.czqwq.EZMiner.compat;
  * </p>
  *
  * <p>
- * Ported from QZMiner {@code ClassNameCompatSupport} and used by EFR ore/crop
- * compatibility adapters.
+ * Used by EFR ore/crop compatibility adapters.
  * </p>
  */
 public final class ClassNameCompatSupport {

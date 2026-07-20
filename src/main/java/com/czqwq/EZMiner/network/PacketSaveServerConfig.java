@@ -57,6 +57,14 @@ public class PacketSaveServerConfig implements IMessage {
     public int searchBudgetPerYield;
     public boolean useDualFrontierBfs;
     public boolean usePrimitiveVisitedSet;
+    // Stability settings
+    public boolean enableChainWatchdog;
+    public boolean enableDropFallbackChain;
+    public boolean enableMainThreadGuard;
+    public boolean enableBudgetDeadline;
+    public boolean enableConfigValidation;
+    public boolean enableSafeReflection;
+    public int chainWatchdogTimeoutTicks;
 
     public PacketSaveServerConfig() {}
 
@@ -177,6 +185,13 @@ public class PacketSaveServerConfig implements IMessage {
         searchBudgetPerYield = buf.readInt();
         useDualFrontierBfs = buf.readBoolean();
         usePrimitiveVisitedSet = buf.readBoolean();
+        enableChainWatchdog = buf.readBoolean();
+        enableDropFallbackChain = buf.readBoolean();
+        enableMainThreadGuard = buf.readBoolean();
+        enableBudgetDeadline = buf.readBoolean();
+        enableConfigValidation = buf.readBoolean();
+        enableSafeReflection = buf.readBoolean();
+        chainWatchdogTimeoutTicks = buf.readInt();
     }
 
     @Override
@@ -214,6 +229,13 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeInt(searchBudgetPerYield);
         buf.writeBoolean(useDualFrontierBfs);
         buf.writeBoolean(usePrimitiveVisitedSet);
+        buf.writeBoolean(enableChainWatchdog);
+        buf.writeBoolean(enableDropFallbackChain);
+        buf.writeBoolean(enableMainThreadGuard);
+        buf.writeBoolean(enableBudgetDeadline);
+        buf.writeBoolean(enableConfigValidation);
+        buf.writeBoolean(enableSafeReflection);
+        buf.writeInt(chainWatchdogTimeoutTicks);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -260,6 +282,13 @@ public class PacketSaveServerConfig implements IMessage {
             Config.searchBudgetPerYield = Math.max(0, Math.min(4096, msg.searchBudgetPerYield));
             Config.useDualFrontierBfs = msg.useDualFrontierBfs;
             Config.usePrimitiveVisitedSet = msg.usePrimitiveVisitedSet;
+            Config.enableChainWatchdog = msg.enableChainWatchdog;
+            Config.enableDropFallbackChain = msg.enableDropFallbackChain;
+            Config.enableMainThreadGuard = msg.enableMainThreadGuard;
+            Config.enableBudgetDeadline = msg.enableBudgetDeadline;
+            Config.enableConfigValidation = msg.enableConfigValidation;
+            Config.enableSafeReflection = msg.enableSafeReflection;
+            Config.chainWatchdogTimeoutTicks = Math.max(20, Math.min(1200, msg.chainWatchdogTimeoutTicks));
 
             // Persist to disk
             Config.saveServerConfig();

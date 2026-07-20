@@ -3,6 +3,7 @@ package com.czqwq.EZMiner.thread;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
+import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 
 /**
@@ -25,6 +26,15 @@ public class Pauseable extends Thread {
     protected volatile int workBudget = 0;
     /** Only ever touched by the founder thread itself (see {@link #consumeBudget()}). */
     private int budgetRemaining = 0;
+
+    /**
+     * Absolute nanosecond deadline for cooperative yield.
+     * When {@link Config#enableBudgetDeadline} is {@code true} and this deadline
+     * is exceeded, {@link #waitUntil()} returns even if the thread hasn't been
+     * unpaused — providing a safety net against lost unpark signals.
+     * Default: {@link Long#MAX_VALUE} (never expires).
+     */
+    private volatile long deadlineNanos = Long.MAX_VALUE;
 
     public Pauseable() {
         super("EZMiner-Pauseable");
@@ -58,7 +68,15 @@ public class Pauseable extends Thread {
      * @return true if work should continue, false if the thread was interrupted
      */
     public boolean consumeBudget() {
-        if (Thread.currentThread() != this) return true; // worker threads: no budget, no pause
+        if (Thread.currentThread() != this) {
+            // Worker threads: no budget, no parking — but check the pause flag
+            // so that tick-end pause() can stop in-flight invokeAll batches early.
+            // This is a read-only check on an AtomicBoolean; no park, no lock.
+            // Without this, workers inside an invokeAll batch (up to an entire
+            // shell layer or 8×124 neighbours) cannot be interrupted until the
+            // batch completes, potentially reading the world after the tick ends.
+            return !paused.get();
+        }
         if (workBudget > 0 && --budgetRemaining > 0) return true;
         budgetRemaining = workBudget;
         waitUntil();
@@ -91,12 +109,30 @@ public class Pauseable extends Thread {
         LockSupport.unpark(this); // immediate wake from parkNanos in waitUntil()
     }
 
+    /**
+     * Sets an absolute nanosecond deadline after which {@link #waitUntil()} will return
+     * even if the thread hasn't been explicitly unpaused. This is a safety net against
+     * lost unpark signals — when {@link Config#enableBudgetDeadline} is {@code false}
+     * (default), the deadline is never set and this has no effect.
+     *
+     * @param nanos absolute deadline in nanoseconds ({@link System#nanoTime()} units)
+     */
+    public void setDeadlineNanos(long nanos) {
+        if (Config.enableBudgetDeadline) {
+            this.deadlineNanos = nanos;
+        }
+    }
+
     /** Block while paused. Uses parkNanos to yield CPU instead of busy-spinning. */
     public void waitUntil() {
         while (paused.get()) {
             if (Thread.currentThread()
                 .isInterrupted()) return;
-            LockSupport.parkNanos(1_000_000); // 1ms park, yields CPU
+            // Deadline safety net: yield if the deadline has passed (defense against
+            // lost unpark signals). No-op when deadlineNanos == Long.MAX_VALUE.
+            long remaining = deadlineNanos - System.nanoTime();
+            if (remaining <= 0) return;
+            LockSupport.parkNanos(Math.min(1_000_000, remaining)); // 1ms park, yields CPU
         }
     }
 

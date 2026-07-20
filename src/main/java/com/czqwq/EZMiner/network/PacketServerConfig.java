@@ -33,6 +33,28 @@ public class PacketServerConfig implements IMessage {
     public int searchBudgetPerYield;
     public boolean useDualFrontierBfs;
     public boolean usePrimitiveVisitedSet;
+    // Fields that were previously editable in the OP GUI but NOT synced (P1-1 fix).
+    // Without these, the client displays stale local-config values and OP saves silently
+    // reset them on dedicated servers.
+    public int cachedBreakPerTick;
+    public boolean dropImmediately;
+    public double addExhaustion;
+    public boolean dropToPlayer;
+    public double minesweeperProbeCooldownSeconds;
+    public double sudokuProbeCooldownSeconds;
+    public boolean enableCachedChain;
+    public int searchWorkerThreads;
+    public boolean suppressHodgepodgeWarnings;
+    public boolean enableChainChunkLoading;
+    public boolean useChunkCachedHarvest;
+    public boolean crazyMode;
+    public int chainIdleTimeoutSeconds;
+    public int chainIdleCountdownSeconds;
+    public boolean stopOnUnbreakable;
+    public int chainCooldownTicks;
+    public int xpDropMode;
+    public boolean mergeXPOrbs;
+    public boolean fireBreakEvent;
     /** Whether the receiving client has OP permission on this server. Used to show/hide server config tab in GUI. */
     public boolean isOp;
 
@@ -72,6 +94,25 @@ public class PacketServerConfig implements IMessage {
         searchBudgetPerYield = buf.readInt();
         useDualFrontierBfs = buf.readBoolean();
         usePrimitiveVisitedSet = buf.readBoolean();
+        cachedBreakPerTick = buf.readInt();
+        dropImmediately = buf.readBoolean();
+        addExhaustion = buf.readDouble();
+        dropToPlayer = buf.readBoolean();
+        minesweeperProbeCooldownSeconds = buf.readDouble();
+        sudokuProbeCooldownSeconds = buf.readDouble();
+        enableCachedChain = buf.readBoolean();
+        searchWorkerThreads = buf.readInt();
+        suppressHodgepodgeWarnings = buf.readBoolean();
+        enableChainChunkLoading = buf.readBoolean();
+        useChunkCachedHarvest = buf.readBoolean();
+        crazyMode = buf.readBoolean();
+        chainIdleTimeoutSeconds = buf.readInt();
+        chainIdleCountdownSeconds = buf.readInt();
+        stopOnUnbreakable = buf.readBoolean();
+        chainCooldownTicks = buf.readInt();
+        xpDropMode = buf.readInt();
+        mergeXPOrbs = buf.readBoolean();
+        fireBreakEvent = buf.readBoolean();
     }
 
     @Override
@@ -91,6 +132,25 @@ public class PacketServerConfig implements IMessage {
         buf.writeInt(searchBudgetPerYield);
         buf.writeBoolean(useDualFrontierBfs);
         buf.writeBoolean(usePrimitiveVisitedSet);
+        buf.writeInt(cachedBreakPerTick);
+        buf.writeBoolean(dropImmediately);
+        buf.writeDouble(addExhaustion);
+        buf.writeBoolean(dropToPlayer);
+        buf.writeDouble(minesweeperProbeCooldownSeconds);
+        buf.writeDouble(sudokuProbeCooldownSeconds);
+        buf.writeBoolean(enableCachedChain);
+        buf.writeInt(searchWorkerThreads);
+        buf.writeBoolean(suppressHodgepodgeWarnings);
+        buf.writeBoolean(enableChainChunkLoading);
+        buf.writeBoolean(useChunkCachedHarvest);
+        buf.writeBoolean(crazyMode);
+        buf.writeInt(chainIdleTimeoutSeconds);
+        buf.writeInt(chainIdleCountdownSeconds);
+        buf.writeBoolean(stopOnUnbreakable);
+        buf.writeInt(chainCooldownTicks);
+        buf.writeInt(xpDropMode);
+        buf.writeBoolean(mergeXPOrbs);
+        buf.writeBoolean(fireBreakEvent);
     }
 
     /**
@@ -114,6 +174,25 @@ public class PacketServerConfig implements IMessage {
         packet.searchBudgetPerYield = Config.searchBudgetPerYield;
         packet.useDualFrontierBfs = Config.useDualFrontierBfs;
         packet.usePrimitiveVisitedSet = Config.usePrimitiveVisitedSet;
+        packet.cachedBreakPerTick = Config.cachedBreakPerTick;
+        packet.dropImmediately = Config.dropImmediately;
+        packet.addExhaustion = Config.addExhaustion;
+        packet.dropToPlayer = Config.dropToPlayer;
+        packet.minesweeperProbeCooldownSeconds = Config.minesweeperProbeCooldownSeconds;
+        packet.sudokuProbeCooldownSeconds = Config.sudokuProbeCooldownSeconds;
+        packet.enableCachedChain = Config.enableCachedChain;
+        packet.searchWorkerThreads = Config.searchWorkerThreads;
+        packet.suppressHodgepodgeWarnings = Config.suppressHodgepodgeWarnings;
+        packet.enableChainChunkLoading = Config.enableChainChunkLoading;
+        packet.useChunkCachedHarvest = Config.useChunkCachedHarvest;
+        packet.crazyMode = Config.crazyMode;
+        packet.chainIdleTimeoutSeconds = Config.chainIdleTimeoutSeconds;
+        packet.chainIdleCountdownSeconds = Config.chainIdleCountdownSeconds;
+        packet.stopOnUnbreakable = Config.stopOnUnbreakable;
+        packet.chainCooldownTicks = Config.chainCooldownTicks;
+        packet.xpDropMode = Config.xpDropMode;
+        packet.mergeXPOrbs = Config.mergeXPOrbs;
+        packet.fireBreakEvent = Config.fireBreakEvent;
         return packet;
     }
 
@@ -138,6 +217,26 @@ public class PacketServerConfig implements IMessage {
                     msg.searchBudgetPerYield,
                     msg.useDualFrontierBfs,
                     msg.usePrimitiveVisitedSet);
+                Config.applyServerRuntimeConfig(
+                    msg.cachedBreakPerTick,
+                    msg.dropImmediately,
+                    msg.addExhaustion,
+                    msg.dropToPlayer,
+                    msg.minesweeperProbeCooldownSeconds,
+                    msg.sudokuProbeCooldownSeconds,
+                    msg.enableCachedChain,
+                    msg.searchWorkerThreads,
+                    msg.suppressHodgepodgeWarnings,
+                    msg.enableChainChunkLoading,
+                    msg.useChunkCachedHarvest,
+                    msg.crazyMode,
+                    msg.chainIdleTimeoutSeconds,
+                    msg.chainIdleCountdownSeconds,
+                    msg.stopOnUnbreakable,
+                    msg.chainCooldownTicks,
+                    msg.xpDropMode,
+                    msg.mergeXPOrbs,
+                    msg.fireBreakEvent);
                 com.czqwq.EZMiner.EZMiner.clientIsOp = msg.isOp;
             }
             return null;

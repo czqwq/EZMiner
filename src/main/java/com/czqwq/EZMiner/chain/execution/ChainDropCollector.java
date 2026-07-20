@@ -88,6 +88,30 @@ public class ChainDropCollector {
         clear();
     }
 
+    /**
+     * Attempts to flush drops at the given position. Returns {@code false} if the
+     * target chunk is not loaded (drops are preserved in the buffer for later retry).
+     *
+     * @return {@code true} if flush succeeded (including empty-collector case),
+     *         {@code false} if the chunk is unloaded
+     */
+    public boolean tryFlush(World world, double x, double y, double z) {
+        if (isEmpty()) return true;
+        int chunkX = (int) Math.floor(x / 16.0);
+        int chunkZ = (int) Math.floor(z / 16.0);
+        if (!world.getChunkProvider()
+            .chunkExists(chunkX, chunkZ)) {
+            return false;
+        }
+        flush(world, x, y, z);
+        return true;
+    }
+
+    /** Returns the number of pending drop stacks. */
+    public int pendingCount() {
+        return dropsMap.size() + dropsWithNbt.size();
+    }
+
     /** Discards all accumulated drops without spawning them. */
     public void clear() {
         dropsMap.clear();
