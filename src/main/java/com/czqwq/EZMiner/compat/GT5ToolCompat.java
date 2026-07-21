@@ -228,6 +228,25 @@ public class GT5ToolCompat {
         }
     }
 
+    /**
+     * Returns the dig speed of a toolbox's internal tool on the target block.
+     * Used for the efficiency gate (P1 alignment with Qz-Miner).
+     */
+    public static float getToolboxInternalToolDigSpeed(ItemStack toolbox, int slotId, Block block, int meta) {
+        if (!gtLoaded || toolbox == null || block == null) return 0F;
+        try {
+            Object handler = classToolboxItemStackHandler.getConstructor(ItemStack.class)
+                .newInstance(toolbox);
+            ItemStack internalTool = (ItemStack) mToolboxItemStackHandlerGetStackInSlot.invoke(handler, slotId);
+            if (internalTool == null || internalTool.getItem() == null) return 0F;
+            return internalTool.getItem()
+                .getDigSpeed(internalTool, block, meta);
+        } catch (IllegalAccessException | InvocationTargetException | InstantiationException
+            | NoSuchMethodException ignored) {
+            return 0F;
+        }
+    }
+
     public static boolean canToolboxMineBlock(ItemStack toolbox, EntityPlayer player, Block block, int meta) {
         return getToolboxBestInternalSlot(toolbox, player, block, meta) >= 0;
     }

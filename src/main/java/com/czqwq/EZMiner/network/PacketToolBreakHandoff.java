@@ -57,24 +57,73 @@ public class PacketToolBreakHandoff implements IMessage {
             EntityPlayer player = mc.thePlayer;
 
             int current = player.inventory.currentItem;
-            ItemStack held = player.inventory.mainInventory[current];
+            int bestSlot = -1;
+            int bestRemaining = 0;
 
-            // Find the next hotbar slot (different from current) that has a non-empty,
-            // damageable (i.e. tool-like) item. Simple but effective — the server only
-            // sends this packet when the current tool is truly about to break.
-            int hotbarSize = InventoryPlayer.getHotbarSize();
-            for (int i = 0; i < hotbarSize; i++) {
-                int slot = (current + i + 1) % hotbarSize;
-                ItemStack stack = player.inventory.mainInventory[slot];
-                if (stack != null && stack.isItemStackDamageable()) {
-                    int remaining = stack.getMaxDamage() - stack.getItemDamage();
-                    if (remaining > 1) {
-                        player.inventory.currentItem = slot;
-                        return null;
-                    }
+            // Phase 1: scan hotbar for the tool with the most remaining durability
+            for (int i = 0; i < InventoryPlayer.getHotbarSize(); i++) {
+                if (i == current) continue;
+                ItemStack stack = player.inventory.mainInventory[i];
+                if (stack == null) continue;
+                int remaining = stack.isItemStackDamageable()
+                    ? Math.max(0, stack.getMaxDamage() - stack.getItemDamage())
+                    : Integer.MAX_VALUE;
+                if (remaining <= 1) continue;
+                if (remaining > bestRemaining) {
+                    bestRemaining = remaining;
+                    bestSlot = i;
                 }
             }
+
+            // Phase 2: if no hotbar tool and full-inventory mode, scan main inventory
+            if (bestSlot < 0 && Config.smartToolSwitchFullInventory) {
+                for (int i = InventoryPlayer.getHotbarSize(); i < player.inventory.mainInventory.length; i++) {
+                    ItemStack stack = player.inventory.mainInventory[i];
+                    if (stack == null) continue;
+                    int remaining = stack.isItemStackDamageable()
+                        ? Math.max(0, stack.getMaxDamage() - stack.getItemDamage())
+                        : Integer.MAX_VALUE;
+                    if (remaining <= 1) continue;
+                    if (remaining > bestRemaining) {
+                        bestRemaining = remaining;
+                        bestSlot = i;
+                    }
+                }
+                // If found in main inventory, swap it into the hotbar
+                if (bestSlot >= 0) {
+                    int target = findEmptyOrWorstHotbarSlot(player, current);
+                    if (target >= 0) {
+                        ItemStack src = player.inventory.mainInventory[bestSlot];
+                        ItemStack tmp = player.inventory.mainInventory[target];
+                        player.inventory.mainInventory[target] = src;
+                        player.inventory.mainInventory[bestSlot] = tmp;
+                        player.inventory.currentItem = target;
+                        // Sync the swap to the server so the item isn't a ghost
+                        com.czqwq.EZMiner.EZMiner.network.network
+                            .sendToServer(new com.czqwq.EZMiner.network.PacketInventorySwap(target, bestSlot));
+                    }
+                    return null;
+                }
+            }
+
+            if (bestSlot >= 0) {
+                player.inventory.currentItem = bestSlot;
+            }
             return null;
+        }
+
+        /** Finds an empty or least-important hotbar slot, excluding the given current slot. */
+        @SideOnly(Side.CLIENT)
+        private static int findEmptyOrWorstHotbarSlot(EntityPlayer player, int excludeSlot) {
+            int hotbarSize = InventoryPlayer.getHotbarSize();
+            for (int i = 0; i < hotbarSize; i++) {
+                if (i != excludeSlot && player.inventory.mainInventory[i] == null) return i;
+            }
+            // No empty slot — return any slot that's not the current one
+            for (int i = 0; i < hotbarSize; i++) {
+                if (i != excludeSlot) return i;
+            }
+            return -1;
         }
     }
 }

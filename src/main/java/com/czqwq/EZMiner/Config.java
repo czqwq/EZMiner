@@ -1054,137 +1054,545 @@ public class Config {
             EZMiner.LOG.warn("saveServerConfig skipped: serverConfiguration is null");
             return;
         }
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "bigRadius", 8)
+        // Use get() overloads with comment so Forge writes # comment lines above each property
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "bigRadius",
+                8,
+                "Maximum radius (in blocks) for chain and blast operations.",
+                0,
+                Integer.MAX_VALUE)
             .set(bigRadius);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "blockLimit", 1024)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "blockLimit",
+                1024,
+                "Maximum number of blocks harvested in a single chain operation.",
+                0,
+                Integer.MAX_VALUE)
             .set(blockLimit);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "smallRadius", 2)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "smallRadius",
+                2,
+                "Adjacency detection radius for chain mode.",
+                0,
+                Integer.MAX_VALUE)
             .set(smallRadius);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "tunnelWidth", 1)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "tunnelWidth",
+                1,
+                "Half-width of the tunnel in Tunnel blast mode (0 = 1-wide, 1 = 3-wide).",
+                0,
+                Integer.MAX_VALUE)
             .set(tunnelWidth);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "breakPerTick", 16)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "breakPerTick",
+                16,
+                "Maximum blocks broken per server tick during chain mining.",
+                1,
+                512)
             .set(breakPerTick);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "cachedBreakPerTick", 64)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "cachedBreakPerTick",
+                64,
+                "Maximum blocks broken per server tick during cached chain mining.",
+                1,
+                1024)
             .set(cachedBreakPerTick);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "crazyMode", false)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "crazyMode",
+                false,
+                "Remove the per-tick block limit. May cause lag on very large veins.")
             .set(crazyMode);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "dropImmediately", false)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "dropImmediately",
+                false,
+                "Spawn drops per-block immediately instead of batching at chain end.")
             .set(dropImmediately);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "xpDropMode", 1)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "xpDropMode",
+                1,
+                "XP drop mode: 0 = Immediate (per-block), 1 = Delayed (at chain end).",
+                0,
+                1)
             .set(xpDropMode);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "mergeXPOrbs", true)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "mergeXPOrbs",
+                true,
+                "Merge accumulated XP into a single large orb when the chain ends.")
             .set(mergeXPOrbs);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableCachedChain", false)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "enableCachedChain",
+                false,
+                "Enable cached chain sub-modes (experimental, may have bugs with some ores).")
             .set(enableCachedChain);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableBlockSwapMode", false)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "enableBlockSwapMode",
+                false,
+                "Enable the Block Swap special sub-mode.")
             .set(enableBlockSwapMode);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "blockSwapRadius", 8)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "blockSwapRadius",
+                8,
+                "Maximum search radius for block swap mode.",
+                0,
+                Integer.MAX_VALUE)
             .set(blockSwapRadius);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "blockSwapLimit", 1024)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "blockSwapLimit",
+                1024,
+                "Maximum blocks that can be swapped in a single operation.",
+                0,
+                Integer.MAX_VALUE)
             .set(blockSwapLimit);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "searchWorkerThreads", 3)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "searchWorkerThreads",
+                3,
+                "Number of background worker threads for parallel block search (0 = disabled).",
+                0,
+                8)
             .set(searchWorkerThreads);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "searchBudgetPerYield", 0)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "searchBudgetPerYield",
+                0,
+                "Search check interval: 0 = every position (safest), higher = faster but coarser pausing.",
+                0,
+                4096)
             .set(searchBudgetPerYield);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "useDualFrontierBfs", false)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "useDualFrontierBfs",
+                false,
+                "Use O(1) queue-based BFS frontier instead of distance-sorted queue.")
             .set(useDualFrontierBfs);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "usePrimitiveVisitedSet", true)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "usePrimitiveVisitedSet",
+                true,
+                "Use primitive long hash set for visited tracking (reduces memory allocations).")
             .set(usePrimitiveVisitedSet);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableConfigValidation", true)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "enableConfigValidation",
+                true,
+                "Validate config values after load and log warnings for issues.")
             .set(enableConfigValidation);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableSafeReflection", true)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "enableSafeReflection",
+                true,
+                "Use safe reflection wrappers with error guards.")
             .set(enableSafeReflection);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableMixinCapabilityGates", true)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "enableMixinCapabilityGates",
+                true,
+                "Only apply mixins when target class matches expectations (requires restart).")
             .set(enableMixinCapabilityGates);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableMainThreadGuard", true)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "enableMainThreadGuard",
+                true,
+                "Verify network packet handlers run on the main thread.")
             .set(enableMainThreadGuard);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableChainWatchdog", true)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "enableChainWatchdog",
+                true,
+                "Tick-based watchdog to force-cancel stuck chain operations.")
             .set(enableChainWatchdog);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "chainWatchdogTimeoutTicks", 100)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "chainWatchdogTimeoutTicks",
+                100,
+                "Ticks without progress before watchdog fires (100 ticks = 5 seconds).",
+                20,
+                1200)
             .set(chainWatchdogTimeoutTicks);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableDropFallbackChain", true)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "enableDropFallbackChain",
+                true,
+                "Try fallback positions for drop spawning if player chunk is unloaded.")
             .set(enableDropFallbackChain);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableBudgetDeadline", false)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "enableBudgetDeadline",
+                false,
+                "[EXPERIMENTAL] Search threads yield at tick boundaries via deadline timestamp.")
             .set(enableBudgetDeadline);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableToolBreakHandoff", true)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "enableToolBreakHandoff",
+                true,
+                "Signal client to switch tools when the current tool is about to break.")
             .set(enableToolBreakHandoff);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "toolBreakHandoffTimeoutTicks", 5)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "toolBreakHandoffTimeoutTicks",
+                5,
+                "Max ticks waiting for client tool switch (5 ticks = 0.25s).",
+                1,
+                40)
             .set(toolBreakHandoffTimeoutTicks);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "suppressHodgepodgeWarnings", true)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "suppressHodgepodgeWarnings",
+                true,
+                "Suppress off-thread-read warnings for EZMiner background threads.")
             .set(suppressHodgepodgeWarnings);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "useChunkCachedHarvest", false)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "useChunkCachedHarvest",
+                false,
+                "[EXPERIMENTAL] Faster block harvest via direct sub-chunk writes. Use with caution.")
             .set(useChunkCachedHarvest);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "enableChainChunkLoading", false)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "enableChainChunkLoading",
+                false,
+                "Load unloaded chunks during chain mining instead of stopping at boundaries.")
             .set(enableChainChunkLoading);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "chainIdleTimeoutSeconds", 50)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "chainIdleTimeoutSeconds",
+                50,
+                "Seconds without progress before idle countdown begins (-1 = disabled).",
+                -1,
+                Integer.MAX_VALUE)
             .set(chainIdleTimeoutSeconds);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "chainIdleCountdownSeconds", 10)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "chainIdleCountdownSeconds",
+                10,
+                "Countdown seconds before auto-cancelling an idle chain (-1 = disabled).",
+                -1,
+                Integer.MAX_VALUE)
             .set(chainIdleCountdownSeconds);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "addExhaustion", 0.025)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "addExhaustion",
+                0.025,
+                "Food exhaustion per block mined during a chain (negative values restore food).",
+                -Double.MAX_VALUE,
+                Double.MAX_VALUE)
             .set(addExhaustion);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "dropToPlayer", true)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "dropToPlayer",
+                true,
+                "Spawn batched drops at player feet (true) or at the first mined block (false).")
             .set(dropToPlayer);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "serverUsePreview", true)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "serverUsePreview",
+                true,
+                "Server global preview switch (false disables preview for all clients).")
             .set(serverUsePreview);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "serverMaxPreviewBigRadius", 8)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "serverMaxPreviewBigRadius",
+                8,
+                "Server-side maximum allowed preview radius.",
+                0,
+                Integer.MAX_VALUE)
             .set(serverMaxPreviewBigRadius);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "serverMaxPreviewBlockLimit", 1024)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "serverMaxPreviewBlockLimit",
+                1024,
+                "Server-side maximum allowed preview block count.",
+                0,
+                Integer.MAX_VALUE)
             .set(serverMaxPreviewBlockLimit);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "minesweeperProbeCooldownSeconds", 5.0)
+        serverConfiguration
+            .get(
+                "minesweeperProbeCooldownSeconds",
+                Configuration.CATEGORY_GENERAL,
+                5.0,
+                "Cooldown in seconds between minesweeper auto-flag operations.",
+                0.1,
+                3600.0)
             .set(minesweeperProbeCooldownSeconds);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "sudokuProbeCooldownSeconds", 5.0)
+        serverConfiguration
+            .get(
+                "sudokuProbeCooldownSeconds",
+                Configuration.CATEGORY_GENERAL,
+                5.0,
+                "Cooldown in seconds between sudoku auto-fill operations.",
+                0.1,
+                3600.0)
             .set(sudokuProbeCooldownSeconds);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "stopOnUnbreakable", false)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "stopOnUnbreakable",
+                false,
+                "Stop the chain immediately when encountering an unharvestable block.")
             .set(stopOnUnbreakable);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "fireBreakEvent", false)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "fireBreakEvent",
+                false,
+                "Fire the Forge BreakEvent for each chained block (enables protection mod compatibility).")
             .set(fireBreakEvent);
-        serverConfiguration.get(Configuration.CATEGORY_GENERAL, "chainCooldownTicks", 0)
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "chainCooldownTicks",
+                0,
+                "Cooldown in ticks between chain uses (0 = no cooldown, 20 = 1 second).",
+                0,
+                Integer.MAX_VALUE)
             .set(chainCooldownTicks);
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "chainWatchdogTimeoutTicks",
+                100,
+                "Ticks without progress before watchdog fires (100 ticks = 5 seconds).",
+                20,
+                1200)
+            .set(chainWatchdogTimeoutTicks);
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "enableToolBreakHandoff",
+                true,
+                "Signal client to switch tools when the current tool is about to break.")
+            .set(enableToolBreakHandoff);
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "toolBreakHandoffTimeoutTicks",
+                5,
+                "Max ticks waiting for client tool switch (5 ticks = 0.25s).",
+                1,
+                40)
+            .set(toolBreakHandoffTimeoutTicks);
         serverConfiguration.save();
     }
 
     /** Writes all current client-side config values to the client config file. */
     public static void saveClientConfig() {
         if (clientConfiguration == null) return;
-        clientConfiguration.get(CLIENT_CATEGORY, "usePreview", true)
+        // Use get() overloads with comment so Forge writes # comment lines above each property
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "usePreview",
+                true,
+                "Show block-outline preview around chain-targeted blocks while the chain key is held.")
             .set(usePreview);
-        clientConfiguration.get(CLIENT_CATEGORY, "useChainDoneMessage", true)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "useChainDoneMessage",
+                true,
+                "Show a chat summary after each chain operation finishes (blocks mined and time taken).")
             .set(useChainDoneMessage);
-        clientConfiguration.get(CLIENT_CATEGORY, "clientBigRadius", 8)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "clientBigRadius",
+                8,
+                "Preferred chain mining radius (capped by server max).",
+                0,
+                Integer.MAX_VALUE)
             .set(clientBigRadius);
-        clientConfiguration.get(CLIENT_CATEGORY, "clientBlockLimit", 1024)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "clientBlockLimit",
+                1024,
+                "Preferred chain mining block limit (capped by server max).",
+                0,
+                Integer.MAX_VALUE)
             .set(clientBlockLimit);
-        clientConfiguration.get(CLIENT_CATEGORY, "clientSmallRadius", 2)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "clientSmallRadius",
+                2,
+                "Preferred adjacency detection radius for chain mode (capped by server max).",
+                0,
+                Integer.MAX_VALUE)
             .set(clientSmallRadius);
-        clientConfiguration.get(CLIENT_CATEGORY, "clientTunnelWidth", 1)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "clientTunnelWidth",
+                1,
+                "Preferred tunnel half-width for Tunnel blast mode (capped by server max).",
+                0,
+                Integer.MAX_VALUE)
             .set(clientTunnelWidth);
-        clientConfiguration.get(CLIENT_CATEGORY, "previewBigRadius", 8)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "previewBigRadius",
+                8,
+                "Max search radius for the client-side block-outline preview (capped by server max).",
+                0,
+                Integer.MAX_VALUE)
             .set(previewBigRadius);
-        clientConfiguration.get(CLIENT_CATEGORY, "previewBlockLimit", 256)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "previewBlockLimit",
+                256,
+                "Max number of blocks rendered in the client-side outline preview (capped by server max).",
+                0,
+                Integer.MAX_VALUE)
             .set(previewBlockLimit);
-        clientConfiguration.get(CLIENT_CATEGORY, "clientBlockSwapRadius", 8)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "clientBlockSwapRadius",
+                8,
+                "Preferred block swap search radius (capped by server max).",
+                0,
+                Integer.MAX_VALUE)
             .set(clientBlockSwapRadius);
-        clientConfiguration.get(CLIENT_CATEGORY, "clientBlockSwapLimit", 1024)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "clientBlockSwapLimit",
+                1024,
+                "Preferred max blocks per block-swap operation (capped by server max).",
+                0,
+                Integer.MAX_VALUE)
             .set(clientBlockSwapLimit);
-        clientConfiguration.get(CLIENT_CATEGORY, "chainActivationMode", 0)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "chainActivationMode",
+                0,
+                "How the chain key activates mining: 0 = Hold to keep active, 1 = Toggle on/off.",
+                0,
+                1)
             .set(chainActivationMode);
-        clientConfiguration.get(CLIENT_CATEGORY, "suppressIngameInfoHud", false)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "suppressIngameInfoHud",
+                false,
+                "Hide InGame Info XML HUD while EZMiner's own HUD is visible to prevent overlap.")
             .set(suppressIngameInfoHud);
-        clientConfiguration.get(CLIENT_CATEGORY, "hudAnimationStyle", 0)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "hudAnimationStyle",
+                0,
+                "HUD brand animation style: 0 = Rainbow Bounce, 1 = Wave Highlight.",
+                0,
+                1)
             .set(hudAnimationStyle);
-        clientConfiguration.get(CLIENT_CATEGORY, "renderStyle", 0)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "renderStyle",
+                0,
+                "Preview outline render style: 0 = Native wireframe, 1 = Modern two-pass.",
+                0,
+                1)
             .set(renderStyle);
-        clientConfiguration.get(CLIENT_CATEGORY, "blockScrollOnChainKey", true)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "blockScrollOnChainKey",
+                true,
+                "Block hotbar scrolling while the chain key is held (reserved for sub-mode switching).")
             .set(blockScrollOnChainKey);
-        clientConfiguration.get(CLIENT_CATEGORY, "smartToolSwitchEnabled", true)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "smartToolSwitchEnabled",
+                true,
+                "Master switch for Smart Tool Switching. When false the feature is completely disabled.")
             .set(smartToolSwitchEnabled);
-        clientConfiguration.get(CLIENT_CATEGORY, "smartToolSwitchActivationMode", 1)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "smartToolSwitchActivationMode",
+                1,
+                "Smart Tool Switch key mode: 0 = Hold, 1 = Toggle.",
+                0,
+                1)
             .set(smartToolSwitchActivationMode);
-        clientConfiguration.get(CLIENT_CATEGORY, "smartToolSwitchDurabilityScore", true)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "smartToolSwitchDurabilityScore",
+                true,
+                "Prefer tools with more remaining durability when multiple tools have equal harvest level.")
             .set(smartToolSwitchDurabilityScore);
-        clientConfiguration.get(CLIENT_CATEGORY, "smartToolSwitchFullInventory", false)
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "smartToolSwitchFullInventory",
+                false,
+                "Scan all 36 inventory slots instead of only the 9-slot hotbar for tool switching.")
             .set(smartToolSwitchFullInventory);
-        clientConfiguration.get(CLIENT_CATEGORY, "preferredTools", "")
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "preferredTools",
+                "",
+                "Comma-separated tool registry names in preferred order (e.g. minecraft:diamond_pickaxe).")
             .set(preferredTools);
         clientConfiguration.save();
     }

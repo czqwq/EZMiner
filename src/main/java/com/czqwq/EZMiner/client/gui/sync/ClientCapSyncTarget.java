@@ -27,8 +27,8 @@ public enum ClientCapSyncTarget {
         () -> effectiveServerMax(Config.runtimeServerMaxPreviewBigRadius, Config.serverMaxPreviewBigRadius)),
     PREVIEW_BLOCK_LIMIT(5,
         () -> effectiveServerMax(Config.runtimeServerMaxPreviewBlockLimit, Config.serverMaxPreviewBlockLimit)),
-    BLOCK_SWAP_RADIUS(15, () -> effectiveServerMax(Config.runtimeServerMaxBlockSwapRadius, Config.blockSwapRadius)),
-    BLOCK_SWAP_LIMIT(16, () -> effectiveServerMax(Config.runtimeServerMaxBlockSwapLimit, Config.blockSwapLimit));
+    BLOCK_SWAP_RADIUS(18, () -> effectiveServerMax(Config.runtimeServerMaxBlockSwapRadius, Config.blockSwapRadius)),
+    BLOCK_SWAP_LIMIT(19, () -> effectiveServerMax(Config.runtimeServerMaxBlockSwapLimit, Config.blockSwapLimit));
 
     private final int row;
     private final IntSupplier serverMax;
