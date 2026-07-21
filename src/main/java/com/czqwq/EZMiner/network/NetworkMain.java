@@ -83,5 +83,7 @@ public class NetworkMain {
             PacketToolBreakHandoff.class,
             packetId++,
             Side.CLIENT);
+        // Inventory slot swap sync: client → server (tool switch ghost-item fix)
+        network.registerMessage(PacketInventorySwap.Handler.class, PacketInventorySwap.class, packetId++, Side.SERVER);
     }
 }

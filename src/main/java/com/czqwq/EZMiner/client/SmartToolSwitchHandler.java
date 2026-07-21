@@ -48,7 +48,9 @@ public class SmartToolSwitchHandler {
     // ── State ─────────────────────────────────────────────────────────────────
     private boolean wasHolding;
     volatile boolean toggled;
-    private boolean tempDisabled;
+    private volatile boolean tempDisabled;
+    /** Tracks the last swap so tools can be restored to their original slots on key release. */
+    private SwapLedger swapLedger;
 
     // ── Target tracking ───────────────────────────────────────────────────────
     private int lastBlockX = Integer.MIN_VALUE, lastBlockY = Integer.MIN_VALUE, lastBlockZ = Integer.MIN_VALUE;
@@ -77,7 +79,7 @@ public class SmartToolSwitchHandler {
                     resetState();
                 } else {
                     printToggleMessage(false);
-                    suitableSlots.clear();
+                    restoreSwapAndClear();
                 }
             }
         } else {
@@ -88,7 +90,7 @@ public class SmartToolSwitchHandler {
                 resetState();
             } else if (!toggled && wasToggled) {
                 printToggleMessage(false);
-                suitableSlots.clear();
+                restoreSwapAndClear();
             }
         }
         wasHolding = holding;
@@ -135,6 +137,17 @@ public class SmartToolSwitchHandler {
 
         boolean sameTarget = mop.blockX == lastBlockX && mop.blockY == lastBlockY && mop.blockZ == lastBlockZ;
 
+        // ── Stale-cache guard (P6): rebuild if current slot no longer has the expected tool ──
+        if (sameTarget && !suitableSlots.isEmpty()) {
+            ItemStack currentStack = player.inventory.mainInventory[currentSlot];
+            if (currentStack == null
+                || ToolEligibility.remainingDurability(currentStack) < ToolEligibility.MIN_REMAINING_DURABILITY
+                || !ToolEligibility.isEffectiveForBlock(currentStack, block, meta)) {
+                buildSuitableSlotsForBlock(player, block, meta);
+                sameTarget = false; // treat as new target so switching logic runs
+            }
+        }
+
         if (!sameTarget) {
             // New target: find all suitable tools
             buildSuitableSlotsForBlock(player, block, meta);
@@ -147,7 +160,13 @@ public class SmartToolSwitchHandler {
         if (idx >= 0) {
             if (!sameTarget) {
                 cycleIndex = 0;
-                player.inventory.currentItem = suitableSlots.get(0);
+                int bestSlot = suitableSlots.get(0);
+                if (bestSlot != currentSlot) {
+                    ItemStack anchor = player.inventory.mainInventory[currentSlot];
+                    ItemStack candidate = player.inventory.mainInventory[bestSlot];
+                    this.swapLedger = new SwapLedger(currentSlot, bestSlot, anchor, candidate);
+                }
+                player.inventory.currentItem = bestSlot;
             } else {
                 cycleIndex = idx;
             }
@@ -164,6 +183,9 @@ public class SmartToolSwitchHandler {
         // Current slot is NOT suitable → switch to the best one
         cycleIndex = 0;
         int bestSlot = suitableSlots.get(0);
+        int anchorSlot = currentSlot;
+        // Record the swap so we can restore on key release
+        ItemStack anchorStack = player.inventory.mainInventory[currentSlot];
         // If the best tool is in the main inventory (not hotbar), swap it into
         // the least-important hotbar slot first.
         if (bestSlot >= InventoryPlayer.getHotbarSize()) {
@@ -171,6 +193,11 @@ public class SmartToolSwitchHandler {
         }
         if (bestSlot < 0) return;
         configureToolboxIfNeeded(player, bestSlot, block, meta);
+        ItemStack candidateStack = player.inventory.mainInventory[bestSlot];
+        // Only record the ledger if we're actually switching to a different slot
+        if (bestSlot != anchorSlot) {
+            this.swapLedger = new SwapLedger(anchorSlot, bestSlot, anchorStack, candidateStack);
+        }
         player.inventory.currentItem = bestSlot;
         lastBlockX = mop.blockX;
         lastBlockY = mop.blockY;
@@ -187,29 +214,32 @@ public class SmartToolSwitchHandler {
         if (src == null) return -1;
         int targetHotbar = findLeastImportantHotbarSlot(player);
         if (targetHotbar < 0) return -1;
-        // Swap items
+        // Swap items on the client side
         ItemStack tmp = player.inventory.mainInventory[targetHotbar];
         player.inventory.mainInventory[targetHotbar] = src;
         player.inventory.mainInventory[inventorySlot] = tmp;
+        // Sync the swap to the server so the item isn't a ghost
+        com.czqwq.EZMiner.EZMiner.network.network
+            .sendToServer(new com.czqwq.EZMiner.network.PacketInventorySwap(targetHotbar, inventorySlot));
         return targetHotbar;
     }
 
-    /** Finds the least-important hotbar slot (empty or lowest-priority tool). */
+    /** Finds the least-important hotbar slot (empty or lowest-priority tool). Never evicts GT Toolboxes. */
     private int findLeastImportantHotbarSlot(EntityPlayer player) {
         int hotbarSize = InventoryPlayer.getHotbarSize();
         // First: any empty hotbar slot
         for (int i = 0; i < hotbarSize; i++) {
             if (player.inventory.mainInventory[i] == null) return i;
         }
-        // Second: hotbar slot with the lowest-ranked tool (by current suitableSlots order)
-        // suitableSlots is sorted best-first, so the last one in the hotbar is the worst
+        // Second: hotbar slot with the lowest-ranked tool (by current suitableSlots order),
+        // but NEVER evict a GT Toolbox
         for (int i = suitableSlots.size() - 1; i >= 0; i--) {
             int slot = suitableSlots.get(i);
-            if (slot < hotbarSize) return slot;
+            if (slot < hotbarSize && !GT5ToolCompat.isGTToolbox(player.inventory.mainInventory[slot])) return slot;
         }
-        // Fallback: any hotbar slot that's not in suitableSlots
+        // Fallback: any hotbar slot that's not in suitableSlots and not a toolbox
         for (int i = 0; i < hotbarSize; i++) {
-            if (!suitableSlots.contains(i)) return i;
+            if (!suitableSlots.contains(i) && !GT5ToolCompat.isGTToolbox(player.inventory.mainInventory[i])) return i;
         }
         return -1;
     }
@@ -263,17 +293,27 @@ public class SmartToolSwitchHandler {
         event.setCanceled(true);
 
         int delta = event.dwheel > 0 ? -1 : 1;
-        cycleIndex = (cycleIndex + delta + suitableSlots.size()) % suitableSlots.size();
-        int newSlot = suitableSlots.get(cycleIndex);
-        player.inventory.currentItem = newSlot;
-
-        // Update toolbox internal selection if needed
-        if (mop != null && mop.typeOfHit == MovingObjectType.BLOCK) {
-            Block block = player.worldObj.getBlock(mop.blockX, mop.blockY, mop.blockZ);
-            // noinspection deprecation
-            int meta = player.worldObj.getBlockMetadata(mop.blockX, mop.blockY, mop.blockZ);
-            configureToolboxIfNeeded(player, newSlot, block, meta);
+        // Walk through suitableSlots to find the next valid candidate (P7: validate on scroll)
+        int attempts = suitableSlots.size();
+        Block block = player.worldObj.getBlock(mop.blockX, mop.blockY, mop.blockZ);
+        // noinspection deprecation
+        int meta = player.worldObj.getBlockMetadata(mop.blockX, mop.blockY, mop.blockZ);
+        for (int tried = 0; tried < attempts; tried++) {
+            cycleIndex = (cycleIndex + delta + suitableSlots.size()) % suitableSlots.size();
+            int candidate = suitableSlots.get(cycleIndex);
+            ItemStack candidateStack = player.inventory.mainInventory[candidate];
+            if (candidateStack != null
+                && ToolEligibility.remainingDurability(candidateStack) >= ToolEligibility.MIN_REMAINING_DURABILITY
+                && ToolEligibility.isEffectiveForBlock(candidateStack, block, meta)) {
+                int newSlot = candidate;
+                player.inventory.currentItem = newSlot;
+                // Update toolbox internal selection if needed
+                configureToolboxIfNeeded(player, newSlot, block, meta);
+                return;
+            }
         }
+        // No valid tool found via scrolling — rebuild for next tick
+        buildSuitableSlotsForBlock(player, block, meta);
     }
 
     // ── Build suitable-slot lists ─────────────────────────────────────────────
@@ -285,7 +325,7 @@ public class SmartToolSwitchHandler {
         String requiredToolClass = block.getHarvestTool(meta);
         // noinspection deprecation
         int requiredLevel = block.getHarvestLevel(meta);
-        boolean shearBlock = needsShears(block);
+        boolean shearBlock = ToolEligibility.needsShears(block);
 
         // Parse preferred tools list (lazy, cached)
         String[] prefs = parsePreferredTools();
@@ -298,10 +338,24 @@ public class SmartToolSwitchHandler {
             ItemStack stack = player.inventory.mainInventory[i];
             if (stack == null) continue;
 
+            // ── Durability gate (P0): skip tools with <= 1 remaining durability ──
+            if (ToolEligibility.remainingDurability(stack) < ToolEligibility.MIN_REMAINING_DURABILITY) continue;
+
+            // ── Efficiency gate (P1): skip tools that are not effective on this block ──
+            boolean effective;
+            if (GT5ToolCompat.isGTToolbox(stack)) {
+                // Toolbox: check if internal tool is effective
+                int s = GT5ToolCompat.getToolboxBestInternalSlot(stack, player, block, meta);
+                effective = s >= 0 && GT5ToolCompat.getToolboxInternalToolDigSpeed(stack, s, block, meta) > 1.0F;
+            } else {
+                effective = ToolEligibility.isEffectiveForBlock(stack, block, meta);
+            }
+            if (!effective) continue;
+
             int score = -1;
             boolean ok = false;
 
-            if (shearBlock && isShears(stack)) {
+            if (shearBlock && ToolEligibility.isShears(stack)) {
                 ok = true;
                 score = 100;
             } else if (GT5ToolCompat.isGTToolbox(stack)) {
@@ -332,9 +386,9 @@ public class SmartToolSwitchHandler {
             }
             if (!ok) continue;
 
-            // #4: Preferred tools boost — higher index = higher preference decay
+            // Preferred tools boost — higher index = higher preference decay
             int prefBoost = getPreferenceBoost(stack, prefs);
-            // #1: Durability-aware scoring — durabilityPercent as tiebreaker
+            // Durability-aware scoring — durabilityPercent as tiebreaker
             int durabilityBonus = Config.smartToolSwitchDurabilityScore ? getDurabilityPercent(stack) : 0;
 
             // Composite score: harvestLevel * 1000 + prefBoost * 100 + durabilityBonus
@@ -399,27 +453,7 @@ public class SmartToolSwitchHandler {
         return prefs.length;
     }
 
-    // ── Shears ────────────────────────────────────────────────────────────────
-
-    private static boolean needsShears(Block block) {
-        net.minecraft.block.material.Material mat = block.getMaterial();
-        return mat == net.minecraft.block.material.Material.leaves || mat == net.minecraft.block.material.Material.vine
-            || mat == net.minecraft.block.material.Material.plants
-            || mat == net.minecraft.block.material.Material.web
-            || mat == net.minecraft.block.material.Material.cloth
-            || mat == net.minecraft.block.material.Material.carpet;
-    }
-
-    private static boolean isShears(ItemStack stack) {
-        if (stack == null) return false;
-        Item item = stack.getItem();
-        if (item == null) return false;
-        for (Class<?> c = item.getClass(); c != null; c = c.getSuperclass()) {
-            if (c.getName()
-                .equals("net.minecraft.item.ItemShears")) return true;
-        }
-        return false;
-    }
+    // ── Durability helpers ──────────────────────────────────────────────────────
 
     // ── Toolbox pre-configuration ─────────────────────────────────────────────
 
@@ -442,6 +476,34 @@ public class SmartToolSwitchHandler {
         mc.thePlayer.addChatMessage(new ChatComponentTranslation("ezminer.smartToolSwitch.toggle", status));
     }
 
+    // ── Swap restore (returns tools to original slots on key release) ──────────
+
+    /** Restores the last tool swap and clears tracking state. */
+    private void restoreSwapAndClear() {
+        SwapLedger ledger = this.swapLedger;
+        this.swapLedger = null;
+        if (ledger != null) {
+            Minecraft mc = Minecraft.getMinecraft();
+            if (mc.thePlayer != null) {
+                // Only restore if both slots still contain the expected items (content fingerprint check)
+                ItemStack currentAnchor = mc.thePlayer.inventory.mainInventory[ledger.anchorSlot];
+                ItemStack currentCandidate = mc.thePlayer.inventory.mainInventory[ledger.candidateSlot];
+                if (ledger.canRestore(currentAnchor, currentCandidate)) {
+                    // Swap back on the client side
+                    mc.thePlayer.inventory.mainInventory[ledger.anchorSlot] = currentCandidate;
+                    mc.thePlayer.inventory.mainInventory[ledger.candidateSlot] = currentAnchor;
+                    if (mc.thePlayer.inventory.currentItem == ledger.anchorSlot) {
+                        mc.thePlayer.inventory.currentItem = ledger.candidateSlot;
+                    }
+                    // Sync the restore to the server
+                    com.czqwq.EZMiner.EZMiner.network.network.sendToServer(
+                        new com.czqwq.EZMiner.network.PacketInventorySwap(ledger.anchorSlot, ledger.candidateSlot));
+                }
+            }
+        }
+        suitableSlots.clear();
+    }
+
     // ── State reset ───────────────────────────────────────────────────────────
 
     private void resetState() {
@@ -450,6 +512,52 @@ public class SmartToolSwitchHandler {
         lastBlockZ = Integer.MIN_VALUE;
         suitableSlots.clear();
         cycleIndex = -1;
+        swapLedger = null;
+    }
+
+    // ── Swap Ledger ────────────────────────────────────────────────────────────
+
+    /**
+     * Immutable record of a tool swap so we can restore the original arrangement
+     * when the chain key is released. Uses content fingerprint checks so we never
+     * restore over items that were changed externally.
+     */
+    private static final class SwapLedger {
+
+        final int anchorSlot;
+        final int candidateSlot;
+        /** Registry name of the anchor item (or null for empty). */
+        private final String anchorId;
+        /** Registry name of the candidate item. */
+        private final String candidateId;
+        /** Damage value snapshot for fingerprint comparison. */
+        private final int anchorDamage;
+        private final int candidateDamage;
+
+        SwapLedger(int anchorSlot, int candidateSlot, ItemStack anchor, ItemStack candidate) {
+            this.anchorSlot = anchorSlot;
+            this.candidateSlot = candidateSlot;
+            this.anchorId = anchor != null ? Item.itemRegistry.getNameForObject(anchor.getItem()) : null;
+            this.anchorDamage = anchor != null ? anchor.getItemDamage() : 0;
+            this.candidateId = candidate != null ? Item.itemRegistry.getNameForObject(candidate.getItem()) : null;
+            this.candidateDamage = candidate != null ? candidate.getItemDamage() : 0;
+        }
+
+        /** Returns true when both slots still contain the items that were swapped. */
+        boolean canRestore(ItemStack currentAnchor, ItemStack currentCandidate) {
+            // Candidate slot must contain the anchor's original item
+            if (anchorId == null) {
+                if (currentCandidate != null) return false;
+            } else {
+                if (currentCandidate == null) return false;
+                String id = Item.itemRegistry.getNameForObject(currentCandidate.getItem());
+                if (!anchorId.equals(id) || currentCandidate.getItemDamage() != anchorDamage) return false;
+            }
+            // Anchor slot must contain the candidate's item
+            if (currentAnchor == null) return false;
+            String id = Item.itemRegistry.getNameForObject(currentAnchor.getItem());
+            return candidateId.equals(id) && currentAnchor.getItemDamage() == candidateDamage;
+        }
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -459,6 +567,7 @@ public class SmartToolSwitchHandler {
         wasHolding = false;
         toggled = false;
         tempDisabled = false;
+        swapLedger = null;
         resetState();
     }
 

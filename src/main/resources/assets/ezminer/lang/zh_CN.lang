@@ -113,6 +113,9 @@ key.ezminer.smartToolSwitch=智能工具切换
 ezminer.gui.section.smartToolSwitch=智能工具切换
 ezminer.config.smartToolSwitchEnabled=智能工具切换\n开: 自动切换最佳工具\n关: 禁用此功能
 ezminer.config.smartToolSwitchActivationMode=工具切换键模式
+ezminer.config.smartToolSwitchDurabilityScore=耐久度评分\n开: 同等级工具优先选耐久更高的\n关: 仅按挖掘等级选择
+ezminer.config.smartToolSwitchFullInventory=扫描全部背包\n开: 扫描全部36格而非仅9格快捷栏\n关: 仅扫描快捷栏
+ezminer.config.preferredTools=优先工具列表
 
 ezminer.smartToolSwitch.toggle=EZMiner: 智能工具切换 %s
 ezminer.smartToolSwitch.enabled=§a已开启§r
@@ -159,3 +162,6 @@ ezminer.config.enableMainThreadGuard=主线程守卫\n开: 非主线程处理数
 ezminer.config.enableBudgetDeadline=预算截止时间 (实验)\n开: 搜索线程在截止时间后让步\n关: 仅在显式暂停信号时让步
 ezminer.config.enableConfigValidation=配置校验\n开: 验证配置并在有问题时警告\n关: 跳过验证（旧行为）
 ezminer.config.enableSafeReflection=安全反射\n开: 带LinkageError防护的兼容反射\n关: 原生反射（旧行为）
+ezminer.config.chainWatchdogTimeoutTicks=看门狗超时（tick）
+ezminer.config.toolBreakHandoff=工具损坏交接\n开: 工具即将损坏时通知客户端切换\n关: 取消连锁（旧行为）
+ezminer.config.toolBreakHandoffTimeoutTicks=工具切换超时（tick）

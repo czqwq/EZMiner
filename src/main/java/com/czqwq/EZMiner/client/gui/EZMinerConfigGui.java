@@ -68,6 +68,9 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_SERVER_ENABLE_BUDGET_DEADLINE = 34;
     private static final int BTN_SERVER_ENABLE_CONFIG_VALIDATION = 35;
     private static final int BTN_SERVER_ENABLE_SAFE_REFLECTION = 36;
+    private static final int BTN_SERVER_ENABLE_TOOL_BREAK_HANDOFF = 37;
+    private static final int BTN_SMART_TOOL_SWITCH_DURABILITY_SCORE = 38;
+    private static final int BTN_SMART_TOOL_SWITCH_FULL_INVENTORY = 39;
     private static final int BTN_CLIENT_SYNC_BASE = 100;
 
     // ── Layout constants ──────────────────────────────────────────────────────
@@ -80,9 +83,9 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int FIELD_H = 14;
     /** Y (relative to guiTop) where scrollable content begins. */
     private static final int CONTENT_START_Y = 42;
-    private static final int MAX_CONTENT_ROWS = 17; // Client tab row count
+    private static final int MAX_CONTENT_ROWS = 20; // Client tab row count
     /** Server tab row count (has more fields than client tab). */
-    private static final int SERVER_CONTENT_ROWS = 39;
+    private static final int SERVER_CONTENT_ROWS = 42;
     private static final int ROW_H = 20;
     /** Extra vertical spacing added between lines when a label contains \n. */
     private static final int EXTRA_LINE_SPACING = 2;
@@ -156,9 +159,12 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiTextField tfChainCooldownTicks;
     private GuiTextField tfClientBlockSwapRadius;
     private GuiTextField tfClientBlockSwapLimit;
+    private GuiTextField tfPreferredTools;
     private GuiTextField tfServerBlockSwapRadius;
     private GuiTextField tfServerBlockSwapLimit;
     private GuiTextField tfSearchBudgetPerYield;
+    private GuiTextField tfChainWatchdogTimeoutTicks;
+    private GuiTextField tfToolBreakHandoffTimeoutTicks;
 
     // ── Toggle button references ──────────────────────────────────────────────
     private GuiButton btnUsePreview;
@@ -170,6 +176,8 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnBlockScrollOnChainKey;
     private GuiButton btnSmartToolSwitchEnabled;
     private GuiButton btnSmartToolSwitchActivationMode;
+    private GuiButton btnSmartToolSwitchDurabilityScore;
+    private GuiButton btnSmartToolSwitchFullInventory;
     private GuiButton btnServerDropToPlayer;
     private GuiButton btnServerDropImmediately;
     private GuiButton btnServerUsePreview;
@@ -191,6 +199,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnServerEnableBudgetDeadline;
     private GuiButton btnServerEnableConfigValidation;
     private GuiButton btnServerEnableSafeReflection;
+    private GuiButton btnServerEnableToolBreakHandoff;
 
     // ── GuiScreen overrides ───────────────────────────────────────────────────
 
@@ -311,6 +320,22 @@ public class EZMinerConfigGui extends GuiScreen {
             smartToolSwitchActivationModeLabel(),
             smartToolSwitchActivationModeValue());
         buttonList.add(btnSmartToolSwitchActivationMode);
+
+        btnSmartToolSwitchDurabilityScore = newOptionButton(
+            BTN_SMART_TOOL_SWITCH_DURABILITY_SCORE,
+            15,
+            "ezminer.config.smartToolSwitchDurabilityScore",
+            boolLabel("ezminer.config.smartToolSwitchDurabilityScore", Config.smartToolSwitchDurabilityScore),
+            boolValue(Config.smartToolSwitchDurabilityScore));
+        buttonList.add(btnSmartToolSwitchDurabilityScore);
+
+        btnSmartToolSwitchFullInventory = newOptionButton(
+            BTN_SMART_TOOL_SWITCH_FULL_INVENTORY,
+            16,
+            "ezminer.config.smartToolSwitchFullInventory",
+            boolLabel("ezminer.config.smartToolSwitchFullInventory", Config.smartToolSwitchFullInventory),
+            boolValue(Config.smartToolSwitchFullInventory));
+        buttonList.add(btnSmartToolSwitchFullInventory);
 
         // ── Scrollable: per-field sync-to-server-max icon buttons (client tab) ─
         for (ClientCapSyncTarget target : ClientCapSyncTarget.values()) {
@@ -514,6 +539,15 @@ public class EZMinerConfigGui extends GuiScreen {
                 boolValue(Config.enableSafeReflection));
             buttonList.add(btnServerEnableSafeReflection);
 
+            // Tool Break Handoff
+            btnServerEnableToolBreakHandoff = newOptionButton(
+                BTN_SERVER_ENABLE_TOOL_BREAK_HANDOFF,
+                40,
+                "ezminer.config.toolBreakHandoff",
+                boolLabel("ezminer.config.toolBreakHandoff", Config.enableToolBreakHandoff),
+                boolValue(Config.enableToolBreakHandoff));
+            buttonList.add(btnServerEnableToolBreakHandoff);
+
             // Fixed: server action buttons
             buttonList.add(
                 new GuiButton(
@@ -675,6 +709,18 @@ public class EZMinerConfigGui extends GuiScreen {
                 Config.smartToolSwitchActivationMode = 1 - Config.smartToolSwitchActivationMode;
                 btnSmartToolSwitchActivationMode.displayString = smartToolSwitchActivationModeLabel();
                 break;
+            case BTN_SMART_TOOL_SWITCH_DURABILITY_SCORE:
+                Config.smartToolSwitchDurabilityScore = !Config.smartToolSwitchDurabilityScore;
+                btnSmartToolSwitchDurabilityScore.displayString = boolDisplayText(
+                    "ezminer.config.smartToolSwitchDurabilityScore",
+                    Config.smartToolSwitchDurabilityScore);
+                break;
+            case BTN_SMART_TOOL_SWITCH_FULL_INVENTORY:
+                Config.smartToolSwitchFullInventory = !Config.smartToolSwitchFullInventory;
+                btnSmartToolSwitchFullInventory.displayString = boolDisplayText(
+                    "ezminer.config.smartToolSwitchFullInventory",
+                    Config.smartToolSwitchFullInventory);
+                break;
 
             case BTN_CLIENT_RELOAD:
                 applyAndSaveClientConfig();
@@ -805,6 +851,12 @@ public class EZMinerConfigGui extends GuiScreen {
                     "ezminer.config.enableSafeReflection",
                     Config.enableSafeReflection);
                 break;
+            case BTN_SERVER_ENABLE_TOOL_BREAK_HANDOFF:
+                Config.enableToolBreakHandoff = !Config.enableToolBreakHandoff;
+                btnServerEnableToolBreakHandoff.displayString = boolDisplayText(
+                    "ezminer.config.toolBreakHandoff",
+                    Config.enableToolBreakHandoff);
+                break;
 
             case BTN_SERVER_RELOAD:
                 EZMiner.network.network.sendToServer(new PacketReloadServerConfig());
@@ -835,6 +887,7 @@ public class EZMinerConfigGui extends GuiScreen {
             tfPreviewBlockLimit.mouseClicked(x, y, mouseButton);
             tfClientBlockSwapRadius.mouseClicked(x, y, mouseButton);
             tfClientBlockSwapLimit.mouseClicked(x, y, mouseButton);
+            tfPreferredTools.mouseClicked(x, y, mouseButton);
         } else if (activeTab == TAB_SERVER && EZMiner.clientIsOp) {
             tfServerBigRadius.mouseClicked(x, y, mouseButton);
             tfServerBlockLimit.mouseClicked(x, y, mouseButton);
@@ -854,6 +907,8 @@ public class EZMinerConfigGui extends GuiScreen {
             tfServerBlockSwapRadius.mouseClicked(x, y, mouseButton);
             tfServerBlockSwapLimit.mouseClicked(x, y, mouseButton);
             tfSearchBudgetPerYield.mouseClicked(x, y, mouseButton);
+            tfChainWatchdogTimeoutTicks.mouseClicked(x, y, mouseButton);
+            tfToolBreakHandoffTimeoutTicks.mouseClicked(x, y, mouseButton);
         }
     }
 
@@ -872,6 +927,7 @@ public class EZMinerConfigGui extends GuiScreen {
             tfPreviewBlockLimit.textboxKeyTyped(typedChar, keyCode);
             tfClientBlockSwapRadius.textboxKeyTyped(typedChar, keyCode);
             tfClientBlockSwapLimit.textboxKeyTyped(typedChar, keyCode);
+            tfPreferredTools.textboxKeyTyped(typedChar, keyCode);
         } else if (activeTab == TAB_SERVER && EZMiner.clientIsOp) {
             tfServerBigRadius.textboxKeyTyped(typedChar, keyCode);
             tfServerBlockLimit.textboxKeyTyped(typedChar, keyCode);
@@ -891,6 +947,8 @@ public class EZMinerConfigGui extends GuiScreen {
             tfServerBlockSwapRadius.textboxKeyTyped(typedChar, keyCode);
             tfServerBlockSwapLimit.textboxKeyTyped(typedChar, keyCode);
             tfSearchBudgetPerYield.textboxKeyTyped(typedChar, keyCode);
+            tfChainWatchdogTimeoutTicks.textboxKeyTyped(typedChar, keyCode);
+            tfToolBreakHandoffTimeoutTicks.textboxKeyTyped(typedChar, keyCode);
         }
     }
 
@@ -955,8 +1013,14 @@ public class EZMinerConfigGui extends GuiScreen {
                 case 14:
                     return "ezminer.config.smartToolSwitchActivationMode";
                 case 15:
-                    return "ezminer.config.blockSwapRadius";
+                    return "ezminer.config.smartToolSwitchDurabilityScore";
                 case 16:
+                    return "ezminer.config.smartToolSwitchFullInventory";
+                case 17:
+                    return "ezminer.config.preferredTools";
+                case 18:
+                    return "ezminer.config.blockSwapRadius";
+                case 19:
                     return "ezminer.config.blockSwapLimit";
                 default:
                     return null;
@@ -1041,6 +1105,12 @@ public class EZMinerConfigGui extends GuiScreen {
                     return "ezminer.config.enableConfigValidation";
                 case 38:
                     return "ezminer.config.enableSafeReflection";
+                case 39:
+                    return "ezminer.config.chainWatchdogTimeoutTicks";
+                case 40:
+                    return "ezminer.config.toolBreakHandoff";
+                case 41:
+                    return "ezminer.config.toolBreakHandoffTimeoutTicks";
                 default:
                     return null;
             }
@@ -1081,7 +1151,8 @@ public class EZMinerConfigGui extends GuiScreen {
      */
     private boolean isSectionBreak(int index) {
         if (activeTab == TAB_CLIENT) {
-            return index == 3 || index == 5 || index == 12 || index == 14; // after Mining, after Preview, before Smart
+            return index == 3 || index == 5 || index == 12 || index == 17; // after Mining, Preview, Options, Smart Tool
+                                                                           // Switch
                                                                            // Tool Switch, after Smart Tool Switch
         }
         return index == 9 || index == 11 || index == 26 || index == 29 || index == 32; // after Mining, Preview,
@@ -1152,9 +1223,12 @@ public class EZMinerConfigGui extends GuiScreen {
             setScrolledButtonY(BTN_BLOCK_SCROLL_ON_CHAIN_KEY, getControlY(12));
             setScrolledButtonY(BTN_SMART_TOOL_SWITCH_ENABLED, getControlY(13));
             setScrolledButtonY(BTN_SMART_TOOL_SWITCH_ACTIVATION_MODE, getControlY(14));
+            setScrolledButtonY(BTN_SMART_TOOL_SWITCH_DURABILITY_SCORE, getControlY(15));
+            setScrolledButtonY(BTN_SMART_TOOL_SWITCH_FULL_INVENTORY, getControlY(16));
+            tfPreferredTools.yPosition = getControlY(17);
 
-            tfClientBlockSwapRadius.yPosition = getControlY(15);
-            tfClientBlockSwapLimit.yPosition = getControlY(16);
+            tfClientBlockSwapRadius.yPosition = getControlY(18);
+            tfClientBlockSwapLimit.yPosition = getControlY(19);
 
             // Keep each sync button glued to its text field's row.
             for (ClientCapSyncTarget target : ClientCapSyncTarget.values()) {
@@ -1204,6 +1278,9 @@ public class EZMinerConfigGui extends GuiScreen {
             setScrolledButtonY(BTN_SERVER_ENABLE_BUDGET_DEADLINE, getControlY(36));
             setScrolledButtonY(BTN_SERVER_ENABLE_CONFIG_VALIDATION, getControlY(37));
             setScrolledButtonY(BTN_SERVER_ENABLE_SAFE_REFLECTION, getControlY(38));
+            tfChainWatchdogTimeoutTicks.yPosition = getControlY(39);
+            setScrolledButtonY(BTN_SERVER_ENABLE_TOOL_BREAK_HANDOFF, getControlY(40));
+            tfToolBreakHandoffTimeoutTicks.yPosition = getControlY(41);
         }
 
         // Update per-button visibility: hide when scrolled out of viewport.
@@ -1231,8 +1308,9 @@ public class EZMinerConfigGui extends GuiScreen {
         tfClientTunnelWidth = field(fx, contentRowScreenY(3), String.valueOf(Config.clientTunnelWidth));
         tfPreviewBigRadius = field(fx, contentRowScreenY(4), String.valueOf(Config.previewBigRadius));
         tfPreviewBlockLimit = field(fx, contentRowScreenY(5), String.valueOf(Config.previewBlockLimit));
-        tfClientBlockSwapRadius = field(fx, contentRowScreenY(15), String.valueOf(Config.clientBlockSwapRadius));
-        tfClientBlockSwapLimit = field(fx, contentRowScreenY(16), String.valueOf(Config.clientBlockSwapLimit));
+        tfClientBlockSwapRadius = field(fx, contentRowScreenY(18), String.valueOf(Config.clientBlockSwapRadius));
+        tfClientBlockSwapLimit = field(fx, contentRowScreenY(19), String.valueOf(Config.clientBlockSwapLimit));
+        tfPreferredTools = field(fx, contentRowScreenY(17), Config.preferredTools);
     }
 
     private void initServerFields() {
@@ -1273,6 +1351,14 @@ public class EZMinerConfigGui extends GuiScreen {
         tfServerBlockSwapRadius = field(fx, contentRowScreenY(27), String.valueOf(Config.blockSwapRadius));
         tfServerBlockSwapLimit = field(fx, contentRowScreenY(28), String.valueOf(Config.blockSwapLimit));
         tfSearchBudgetPerYield = field(fx, contentRowScreenY(30), String.valueOf(Config.searchBudgetPerYield));
+        tfChainWatchdogTimeoutTicks = field(
+            fx,
+            contentRowScreenY(39),
+            String.valueOf(Config.chainWatchdogTimeoutTicks));
+        tfToolBreakHandoffTimeoutTicks = field(
+            fx,
+            contentRowScreenY(41),
+            String.valueOf(Config.toolBreakHandoffTimeoutTicks));
     }
 
     private GuiTextField field(int x, int y, String initialText) {
@@ -1334,11 +1420,14 @@ public class EZMinerConfigGui extends GuiScreen {
         drawSectionHeader(lx, contentRowScreenY(12) + ROW_H + 4, "ezminer.gui.section.smartToolSwitch");
         drawButtonRowLabel(lx, contentRowScreenY(13), lc, "ezminer.config.smartToolSwitchEnabled");
         drawButtonRowLabel(lx, contentRowScreenY(14), lc, "ezminer.config.smartToolSwitchActivationMode");
+        drawButtonRowLabel(lx, contentRowScreenY(15), lc, "ezminer.config.smartToolSwitchDurabilityScore");
+        drawButtonRowLabel(lx, contentRowScreenY(16), lc, "ezminer.config.smartToolSwitchFullInventory");
+        drawRow(lx, contentRowScreenY(17), lc, "ezminer.config.preferredTools", tfPreferredTools);
 
-        // Block Swap section
-        drawSectionHeader(lx, contentRowScreenY(14) + ROW_H + 4, "ezminer.gui.section.blockSwap");
-        drawRow(lx, contentRowScreenY(15), lc, "ezminer.config.blockSwapRadius", tfClientBlockSwapRadius);
-        drawRow(lx, contentRowScreenY(16), lc, "ezminer.config.blockSwapLimit", tfClientBlockSwapLimit);
+        // Block Swap section — header inside gap after row 17 (Smart Tool Switch section end)
+        drawSectionHeader(lx, contentRowScreenY(17) + getContentRowHeight(17) + 4, "ezminer.gui.section.blockSwap");
+        drawRow(lx, contentRowScreenY(18), lc, "ezminer.config.blockSwapRadius", tfClientBlockSwapRadius);
+        drawRow(lx, contentRowScreenY(19), lc, "ezminer.config.blockSwapLimit", tfClientBlockSwapLimit);
     }
 
     private void drawServerTab() {
@@ -1401,6 +1490,14 @@ public class EZMinerConfigGui extends GuiScreen {
         drawButtonRowLabel(lx, contentRowScreenY(36), lc, "ezminer.config.enableBudgetDeadline");
         drawButtonRowLabel(lx, contentRowScreenY(37), lc, "ezminer.config.enableConfigValidation");
         drawButtonRowLabel(lx, contentRowScreenY(38), lc, "ezminer.config.enableSafeReflection");
+        drawRow(lx, contentRowScreenY(39), lc, "ezminer.config.chainWatchdogTimeoutTicks", tfChainWatchdogTimeoutTicks);
+        drawButtonRowLabel(lx, contentRowScreenY(40), lc, "ezminer.config.toolBreakHandoff");
+        drawRow(
+            lx,
+            contentRowScreenY(41),
+            lc,
+            "ezminer.config.toolBreakHandoffTimeoutTicks",
+            tfToolBreakHandoffTimeoutTicks);
 
     }
 
@@ -1466,7 +1563,9 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_RENDER_STYLE
                 || btn.id == BTN_BLOCK_SCROLL_ON_CHAIN_KEY
                 || btn.id == BTN_SMART_TOOL_SWITCH_ENABLED
-                || btn.id == BTN_SMART_TOOL_SWITCH_ACTIVATION_MODE;
+                || btn.id == BTN_SMART_TOOL_SWITCH_ACTIVATION_MODE
+                || btn.id == BTN_SMART_TOOL_SWITCH_DURABILITY_SCORE
+                || btn.id == BTN_SMART_TOOL_SWITCH_FULL_INVENTORY;
             boolean isClientAction = btn.id == BTN_CLIENT_RELOAD || btn.id == BTN_CLIENT_SAVE;
             boolean isServerContent = btn.id == BTN_SERVER_DROP_TO_PLAYER || btn.id == BTN_SERVER_DROP_IMMEDIATELY
                 || btn.id == BTN_SERVER_USE_PREVIEW
@@ -1487,7 +1586,8 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_SERVER_ENABLE_MAIN_THREAD_GUARD
                 || btn.id == BTN_SERVER_ENABLE_BUDGET_DEADLINE
                 || btn.id == BTN_SERVER_ENABLE_CONFIG_VALIDATION
-                || btn.id == BTN_SERVER_ENABLE_SAFE_REFLECTION;
+                || btn.id == BTN_SERVER_ENABLE_SAFE_REFLECTION
+                || btn.id == BTN_SERVER_ENABLE_TOOL_BREAK_HANDOFF;
             boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;
 
             if (isClientSyncButton(btn.id)) {
@@ -1576,6 +1676,8 @@ public class EZMinerConfigGui extends GuiScreen {
         Config.previewBlockLimit = parseI(tfPreviewBlockLimit, Config.previewBlockLimit, 0);
         Config.clientBlockSwapRadius = parseI(tfClientBlockSwapRadius, Config.clientBlockSwapRadius, 0);
         Config.clientBlockSwapLimit = parseI(tfClientBlockSwapLimit, Config.clientBlockSwapLimit, 0);
+        Config.preferredTools = tfPreferredTools.getText()
+            .trim();
         Config.clampClientMiningToServerCaps();
         Config.clampClientPreviewToServerCaps();
         Config.saveClientConfig();
@@ -1633,7 +1735,12 @@ public class EZMinerConfigGui extends GuiScreen {
         packet.enableBudgetDeadline = Config.enableBudgetDeadline;
         packet.enableConfigValidation = Config.enableConfigValidation;
         packet.enableSafeReflection = Config.enableSafeReflection;
-        packet.chainWatchdogTimeoutTicks = Config.chainWatchdogTimeoutTicks;
+        packet.chainWatchdogTimeoutTicks = parseI(tfChainWatchdogTimeoutTicks, Config.chainWatchdogTimeoutTicks, 20);
+        packet.enableToolBreakHandoff = Config.enableToolBreakHandoff;
+        packet.toolBreakHandoffTimeoutTicks = parseI(
+            tfToolBreakHandoffTimeoutTicks,
+            Config.toolBreakHandoffTimeoutTicks,
+            1);
         EZMiner.network.network.sendToServer(packet);
     }
 

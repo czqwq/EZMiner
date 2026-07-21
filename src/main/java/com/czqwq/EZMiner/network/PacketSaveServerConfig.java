@@ -65,6 +65,9 @@ public class PacketSaveServerConfig implements IMessage {
     public boolean enableConfigValidation;
     public boolean enableSafeReflection;
     public int chainWatchdogTimeoutTicks;
+    // Tool break handoff
+    public boolean enableToolBreakHandoff;
+    public int toolBreakHandoffTimeoutTicks;
 
     public PacketSaveServerConfig() {}
 
@@ -192,6 +195,8 @@ public class PacketSaveServerConfig implements IMessage {
         enableConfigValidation = buf.readBoolean();
         enableSafeReflection = buf.readBoolean();
         chainWatchdogTimeoutTicks = buf.readInt();
+        enableToolBreakHandoff = buf.readBoolean();
+        toolBreakHandoffTimeoutTicks = buf.readInt();
     }
 
     @Override
@@ -236,6 +241,8 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeBoolean(enableConfigValidation);
         buf.writeBoolean(enableSafeReflection);
         buf.writeInt(chainWatchdogTimeoutTicks);
+        buf.writeBoolean(enableToolBreakHandoff);
+        buf.writeInt(toolBreakHandoffTimeoutTicks);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -289,6 +296,8 @@ public class PacketSaveServerConfig implements IMessage {
             Config.enableConfigValidation = msg.enableConfigValidation;
             Config.enableSafeReflection = msg.enableSafeReflection;
             Config.chainWatchdogTimeoutTicks = Math.max(20, Math.min(1200, msg.chainWatchdogTimeoutTicks));
+            Config.enableToolBreakHandoff = msg.enableToolBreakHandoff;
+            Config.toolBreakHandoffTimeoutTicks = Math.max(1, Math.min(40, msg.toolBreakHandoffTimeoutTicks));
 
             // Persist to disk
             Config.saveServerConfig();

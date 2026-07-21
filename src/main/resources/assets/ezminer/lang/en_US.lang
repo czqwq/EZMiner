@@ -113,6 +113,9 @@ key.ezminer.smartToolSwitch=Smart Tool Switch
 ezminer.gui.section.smartToolSwitch=Smart Tool Switch
 ezminer.config.smartToolSwitchEnabled=Smart Tool Switch\nON: auto-swap best tool\nOFF: feature disabled
 ezminer.config.smartToolSwitchActivationMode=Tool Switch Key Mode
+ezminer.config.smartToolSwitchDurabilityScore=Durability Scoring\nON: prefer tools with more durability\nOFF: only rank by harvest level
+ezminer.config.smartToolSwitchFullInventory=Full Inventory Scan\nON: scan all 36 slots not just the hotbar\nOFF: only scan hotbar
+ezminer.config.preferredTools=Preferred Tools List
 
 ezminer.smartToolSwitch.toggle=EZMiner: Smart Tool Switch %s
 ezminer.smartToolSwitch.enabled=§aON§r
@@ -159,3 +162,6 @@ ezminer.config.enableMainThreadGuard=Main Thread Guard\nON: log warning if packe
 ezminer.config.enableBudgetDeadline=Budget Deadline (EXP)\nON: search threads yield on deadline\nOFF: only yield on explicit pause signal
 ezminer.config.enableConfigValidation=Config Validation\nON: validate and warn on config issues\nOFF: skip validation (legacy)
 ezminer.config.enableSafeReflection=Safe Reflection\nON: LinkageError-guarded compat reflection\nOFF: raw reflection (legacy)
+ezminer.config.chainWatchdogTimeoutTicks=Watchdog Timeout (ticks)
+ezminer.config.toolBreakHandoff=Tool Break Handoff\nON: signal client to switch tools before breaking\nOFF: cancel chain (legacy)
+ezminer.config.toolBreakHandoffTimeoutTicks=Tool Switch Timeout (ticks)
