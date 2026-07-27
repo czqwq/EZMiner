@@ -55,6 +55,10 @@ public class PacketServerConfig implements IMessage {
     public int xpDropMode;
     public boolean mergeXPOrbs;
     public boolean fireBreakEvent;
+    // Log (tree-felling) settings
+    public int maxLogBigRadius;
+    public int maxLogBlockLimit;
+    public boolean logFuzzyEnabled;
     /** Whether the receiving client has OP permission on this server. Used to show/hide server config tab in GUI. */
     public boolean isOp;
 
@@ -113,6 +117,9 @@ public class PacketServerConfig implements IMessage {
         xpDropMode = buf.readInt();
         mergeXPOrbs = buf.readBoolean();
         fireBreakEvent = buf.readBoolean();
+        maxLogBigRadius = buf.readInt();
+        maxLogBlockLimit = buf.readInt();
+        logFuzzyEnabled = buf.readBoolean();
     }
 
     @Override
@@ -151,6 +158,9 @@ public class PacketServerConfig implements IMessage {
         buf.writeInt(xpDropMode);
         buf.writeBoolean(mergeXPOrbs);
         buf.writeBoolean(fireBreakEvent);
+        buf.writeInt(maxLogBigRadius);
+        buf.writeInt(maxLogBlockLimit);
+        buf.writeBoolean(logFuzzyEnabled);
     }
 
     /**
@@ -193,6 +203,9 @@ public class PacketServerConfig implements IMessage {
         packet.xpDropMode = Config.xpDropMode;
         packet.mergeXPOrbs = Config.mergeXPOrbs;
         packet.fireBreakEvent = Config.fireBreakEvent;
+        packet.maxLogBigRadius = Config.logBigRadius;
+        packet.maxLogBlockLimit = Config.logBlockLimit;
+        packet.logFuzzyEnabled = Config.logFuzzyEnabled;
         return packet;
     }
 
@@ -212,7 +225,9 @@ public class PacketServerConfig implements IMessage {
                     msg.breakPerTick,
                     msg.maxBlockSwapRadius,
                     msg.maxBlockSwapLimit,
-                    msg.enableBlockSwapMode);
+                    msg.enableBlockSwapMode,
+                    msg.maxLogBigRadius,
+                    msg.maxLogBlockLimit);
                 Config.applyServerRuntimePerformance(
                     msg.searchBudgetPerYield,
                     msg.useDualFrontierBfs,
@@ -237,6 +252,7 @@ public class PacketServerConfig implements IMessage {
                     msg.xpDropMode,
                     msg.mergeXPOrbs,
                     msg.fireBreakEvent);
+                Config.logFuzzyEnabled = msg.logFuzzyEnabled;
                 com.czqwq.EZMiner.EZMiner.clientIsOp = msg.isOp;
             }
             return null;

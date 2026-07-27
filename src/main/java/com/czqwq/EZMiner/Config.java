@@ -65,6 +65,16 @@ public class Config {
     public static int blockSwapRadius = 8;
     /** Server-side max blocks that can be swapped in a single operation. */
     public static int blockSwapLimit = 1024;
+    // ===== Log (tree-felling) settings =====
+    /** Server-side max radius for tree-felling (LogFounder blast sub-mode). */
+    public static int logBigRadius = 1024;
+    /** Server-side max blocks that can be harvested in a single tree-felling operation. */
+    public static int logBlockLimit = 16384;
+    /**
+     * When true, tree-felling uses class-based fuzzy matching (same as FuzzyChain mode)
+     * instead of OreDict wood/leaf lookup. Default: true.
+     */
+    public static boolean logFuzzyEnabled = true;
     /** Enable cached chain sub-modes (2/3). WIP experimental feature — enable at own risk. */
     public static boolean enableCachedChain = false;
     /**
@@ -284,6 +294,10 @@ public class Config {
     public static int clientBlockSwapRadius = 8;
     /** Client preferred block swap limit (capped by server at runtime). */
     public static int clientBlockSwapLimit = 1024;
+    /** Client preferred tree-felling radius (capped by server at runtime). */
+    public static int clientLogBigRadius = 1024;
+    /** Client preferred tree-felling block limit (capped by server at runtime). */
+    public static int clientLogBlockLimit = 16384;
     /**
      * Maximum search radius used by the client-side preview renderer.
      * Independent of the server's {@code bigRadius}: the preview can use a smaller value
@@ -302,6 +316,8 @@ public class Config {
     public static int runtimeServerMaxTunnelWidth = Integer.MAX_VALUE;
     public static int runtimeServerMaxBlockSwapRadius = Integer.MAX_VALUE;
     public static int runtimeServerMaxBlockSwapLimit = Integer.MAX_VALUE;
+    public static int runtimeServerMaxLogBigRadius = Integer.MAX_VALUE;
+    public static int runtimeServerMaxLogBlockLimit = Integer.MAX_VALUE;
     public static int runtimeServerMaxPreviewBigRadius = Integer.MAX_VALUE;
     public static int runtimeServerMaxPreviewBlockLimit = Integer.MAX_VALUE;
     public static boolean runtimeServerUsePreview = true;
@@ -364,7 +380,7 @@ public class Config {
         + "0 = Native (single-pass wireframe, original). "
         + "1 = Modern (two-pass: solid visible lines + translucent hidden lines, FTB-Ultimine inspired).";
 
-    private static final String HUD_ANIMATION_STYLE_COMMENT = "HUD brand animation style. 0 = Rainbow Bounce (original). 1 = Wave Highlight (letters light up one-by-one then fill left-to-right).";
+    private static final String HUD_ANIMATION_STYLE_COMMENT = "HUD brand animation style. 0 = Rainbow Bounce (original). 1 = Wave Highlight (letters light up one-by-one then fill left-to-right). 2 = Off.";
 
     private static final String CHAIN_ACTIVATION_MODE_COMMENT = "Controls how the chain key activates mining. "
         + "0 = Hold (keep the key held to keep mining, release to stop). "
@@ -395,6 +411,8 @@ public class Config {
                 runtimeServerMaxTunnelWidth = tunnelWidth;
                 runtimeServerMaxBlockSwapRadius = blockSwapRadius;
                 runtimeServerMaxBlockSwapLimit = blockSwapLimit;
+                runtimeServerMaxLogBigRadius = logBigRadius;
+                runtimeServerMaxLogBlockLimit = logBlockLimit;
                 runtimeServerMaxPreviewBigRadius = serverMaxPreviewBigRadius;
                 runtimeServerMaxPreviewBlockLimit = serverMaxPreviewBlockLimit;
                 runtimeServerUsePreview = serverUsePreview;
@@ -513,6 +531,26 @@ public class Config {
             0,
             Integer.MAX_VALUE,
             "Maximum number of blocks that can be swapped in a single block-swap operation.");
+        logBigRadius = serverConfiguration.getInt(
+            "logBigRadius",
+            Configuration.CATEGORY_GENERAL,
+            1024,
+            8,
+            Integer.MAX_VALUE,
+            "Maximum radius (in blocks) for tree-felling (LogFounder blast sub-mode).");
+        logBlockLimit = serverConfiguration.getInt(
+            "logBlockLimit",
+            Configuration.CATEGORY_GENERAL,
+            16384,
+            8,
+            Integer.MAX_VALUE,
+            "Maximum number of blocks that can be harvested in a single tree-felling operation.");
+        logFuzzyEnabled = serverConfiguration.getBoolean(
+            "logFuzzyEnabled",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "When true, tree-felling uses class-based fuzzy matching (same as FuzzyChain mode) "
+                + "instead of OreDict wood/leaf lookup. Default: true.");
         enableCachedChain = serverConfiguration.getBoolean(
             "enableCachedChain",
             Configuration.CATEGORY_GENERAL,
@@ -762,13 +800,16 @@ public class Config {
 
     public static void applyServerRuntimeLimits(int maxBigRadius, int maxBlockLimit, int maxSmallRadius,
         int maxTunnelWidth, int maxPreviewBigRadius, int maxPreviewBlockLimit, boolean allowPreview,
-        int syncedBreakPerTick, int maxBlockSwapRadius, int maxBlockSwapLimit, boolean syncedEnableBlockSwapMode) {
+        int syncedBreakPerTick, int maxBlockSwapRadius, int maxBlockSwapLimit, boolean syncedEnableBlockSwapMode,
+        int maxLogBigRadius, int maxLogBlockLimit) {
         runtimeServerMaxBigRadius = Math.max(0, maxBigRadius);
         runtimeServerMaxBlockLimit = Math.max(0, maxBlockLimit);
         runtimeServerMaxSmallRadius = Math.max(0, maxSmallRadius);
         runtimeServerMaxTunnelWidth = Math.max(0, maxTunnelWidth);
         runtimeServerMaxBlockSwapRadius = Math.max(0, maxBlockSwapRadius);
         runtimeServerMaxBlockSwapLimit = Math.max(0, maxBlockSwapLimit);
+        runtimeServerMaxLogBigRadius = Math.max(0, maxLogBigRadius);
+        runtimeServerMaxLogBlockLimit = Math.max(0, maxLogBlockLimit);
         runtimeServerMaxPreviewBigRadius = Math.max(0, maxPreviewBigRadius);
         runtimeServerMaxPreviewBlockLimit = Math.max(0, maxPreviewBlockLimit);
         runtimeServerUsePreview = allowPreview;
@@ -872,6 +913,8 @@ public class Config {
         runtimeServerMaxBlockLimit = Integer.MAX_VALUE;
         runtimeServerMaxSmallRadius = Integer.MAX_VALUE;
         runtimeServerMaxTunnelWidth = Integer.MAX_VALUE;
+        runtimeServerMaxLogBigRadius = Integer.MAX_VALUE;
+        runtimeServerMaxLogBlockLimit = Integer.MAX_VALUE;
         runtimeServerMaxPreviewBigRadius = Integer.MAX_VALUE;
         runtimeServerMaxPreviewBlockLimit = Integer.MAX_VALUE;
         runtimeServerUsePreview = true;
@@ -884,6 +927,9 @@ public class Config {
         cfg.blockLimit = Math.max(0, Math.min(clientBlockLimit, runtimeServerMaxBlockLimit));
         cfg.smallRadius = Math.max(0, Math.min(clientSmallRadius, runtimeServerMaxSmallRadius));
         cfg.tunnelWidth = Math.max(0, Math.min(clientTunnelWidth, runtimeServerMaxTunnelWidth));
+        cfg.logBigRadius = Math.max(0, Math.min(clientLogBigRadius, runtimeServerMaxLogBigRadius));
+        cfg.logBlockLimit = Math.max(0, Math.min(clientLogBlockLimit, runtimeServerMaxLogBlockLimit));
+        cfg.logFuzzyEnabled = logFuzzyEnabled;
         cfg.useChainDoneMessage = useChainDoneMessage;
         return cfg;
     }
@@ -899,6 +945,8 @@ public class Config {
         clientTunnelWidth = Math.max(0, Math.min(clientTunnelWidth, runtimeServerMaxTunnelWidth));
         clientBlockSwapRadius = Math.max(0, Math.min(clientBlockSwapRadius, runtimeServerMaxBlockSwapRadius));
         clientBlockSwapLimit = Math.max(0, Math.min(clientBlockSwapLimit, runtimeServerMaxBlockSwapLimit));
+        clientLogBigRadius = Math.max(0, Math.min(clientLogBigRadius, runtimeServerMaxLogBigRadius));
+        clientLogBlockLimit = Math.max(0, Math.min(clientLogBlockLimit, runtimeServerMaxLogBlockLimit));
     }
 
     public static void clampClientPreviewToServerCaps() {
@@ -978,6 +1026,20 @@ public class Config {
             0,
             Integer.MAX_VALUE,
             "Client preferred block swap limit. Effective value is clamped by server max.");
+        clientLogBigRadius = clientConfiguration.getInt(
+            "clientLogBigRadius",
+            CLIENT_CATEGORY,
+            1024,
+            8,
+            Integer.MAX_VALUE,
+            "Client preferred tree-felling radius. Effective value is clamped by server max.");
+        clientLogBlockLimit = clientConfiguration.getInt(
+            "clientLogBlockLimit",
+            CLIENT_CATEGORY,
+            16384,
+            8,
+            Integer.MAX_VALUE,
+            "Client preferred tree-felling block limit. Effective value is clamped by server max.");
         hudPosX = clientConfiguration.getInt(
             "hudPosX",
             CLIENT_CATEGORY,
@@ -997,7 +1059,7 @@ public class Config {
         suppressIngameInfoHud = clientConfiguration
             .getBoolean("suppressIngameInfoHud", CLIENT_CATEGORY, false, SUPPRESS_INGAMEINFO_HUD_COMMENT);
         hudAnimationStyle = clientConfiguration
-            .getInt("hudAnimationStyle", CLIENT_CATEGORY, 0, 0, 1, HUD_ANIMATION_STYLE_COMMENT);
+            .getInt("hudAnimationStyle", CLIENT_CATEGORY, 0, 0, 2, HUD_ANIMATION_STYLE_COMMENT);
         renderStyle = clientConfiguration.getInt("renderStyle", CLIENT_CATEGORY, 0, 0, 1, RENDER_STYLE_COMMENT);
         blockScrollOnChainKey = clientConfiguration
             .getBoolean("blockScrollOnChainKey", CLIENT_CATEGORY, true, BLOCK_SCROLL_ON_CHAIN_KEY_COMMENT);
@@ -1171,6 +1233,31 @@ public class Config {
                 0,
                 Integer.MAX_VALUE)
             .set(blockSwapLimit);
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "logBigRadius",
+                1024,
+                "Maximum radius for tree-felling (LogFounder blast sub-mode).",
+                8,
+                Integer.MAX_VALUE)
+            .set(logBigRadius);
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "logBlockLimit",
+                16384,
+                "Maximum blocks harvested in a single tree-felling operation.",
+                8,
+                Integer.MAX_VALUE)
+            .set(logBlockLimit);
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "logFuzzyEnabled",
+                true,
+                "Use class-based fuzzy matching for tree-felling instead of OreDict wood/leaf lookup.")
+            .set(logFuzzyEnabled);
         serverConfiguration
             .get(
                 Configuration.CATEGORY_GENERAL,
@@ -1519,6 +1606,24 @@ public class Config {
         clientConfiguration
             .get(
                 CLIENT_CATEGORY,
+                "clientLogBigRadius",
+                1024,
+                "Preferred tree-felling radius (capped by server max).",
+                8,
+                Integer.MAX_VALUE)
+            .set(clientLogBigRadius);
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
+                "clientLogBlockLimit",
+                16384,
+                "Preferred tree-felling block limit (capped by server max).",
+                8,
+                Integer.MAX_VALUE)
+            .set(clientLogBlockLimit);
+        clientConfiguration
+            .get(
+                CLIENT_CATEGORY,
                 "chainActivationMode",
                 0,
                 "How the chain key activates mining: 0 = Hold to keep active, 1 = Toggle on/off.",
@@ -1537,9 +1642,9 @@ public class Config {
                 CLIENT_CATEGORY,
                 "hudAnimationStyle",
                 0,
-                "HUD brand animation style: 0 = Rainbow Bounce, 1 = Wave Highlight.",
+                "HUD brand animation style: 0 = Rainbow Bounce, 1 = Wave Highlight, 2 = Off.",
                 0,
-                1)
+                2)
             .set(hudAnimationStyle);
         clientConfiguration
             .get(

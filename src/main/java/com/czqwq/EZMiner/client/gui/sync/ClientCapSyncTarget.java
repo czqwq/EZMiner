@@ -23,12 +23,14 @@ public enum ClientCapSyncTarget {
     BLOCK_LIMIT(1, () -> effectiveServerMax(Config.runtimeServerMaxBlockLimit, Config.blockLimit)),
     SMALL_RADIUS(2, () -> effectiveServerMax(Config.runtimeServerMaxSmallRadius, Config.smallRadius)),
     TUNNEL_WIDTH(3, () -> effectiveServerMax(Config.runtimeServerMaxTunnelWidth, Config.tunnelWidth)),
-    PREVIEW_BIG_RADIUS(4,
+    PREVIEW_BIG_RADIUS(7,
         () -> effectiveServerMax(Config.runtimeServerMaxPreviewBigRadius, Config.serverMaxPreviewBigRadius)),
-    PREVIEW_BLOCK_LIMIT(5,
+    PREVIEW_BLOCK_LIMIT(8,
         () -> effectiveServerMax(Config.runtimeServerMaxPreviewBlockLimit, Config.serverMaxPreviewBlockLimit)),
-    BLOCK_SWAP_RADIUS(18, () -> effectiveServerMax(Config.runtimeServerMaxBlockSwapRadius, Config.blockSwapRadius)),
-    BLOCK_SWAP_LIMIT(19, () -> effectiveServerMax(Config.runtimeServerMaxBlockSwapLimit, Config.blockSwapLimit));
+    BLOCK_SWAP_RADIUS(21, () -> effectiveServerMax(Config.runtimeServerMaxBlockSwapRadius, Config.blockSwapRadius)),
+    BLOCK_SWAP_LIMIT(22, () -> effectiveServerMax(Config.runtimeServerMaxBlockSwapLimit, Config.blockSwapLimit)),
+    LOG_BIG_RADIUS(4, () -> effectiveServerMax(Config.runtimeServerMaxLogBigRadius, Config.logBigRadius)),
+    LOG_BLOCK_LIMIT(5, () -> effectiveServerMax(Config.runtimeServerMaxLogBlockLimit, Config.logBlockLimit));
 
     private final int row;
     private final IntSupplier serverMax;

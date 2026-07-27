@@ -11,6 +11,9 @@ public class MinerConfig {
     public int blockLimit = Config.clientBlockLimit;
     public int smallRadius = Config.clientSmallRadius;
     public int tunnelWidth = Config.clientTunnelWidth;
+    public int logBigRadius = Config.clientLogBigRadius;
+    public int logBlockLimit = Config.clientLogBlockLimit;
+    public boolean logFuzzyEnabled = Config.logFuzzyEnabled;
     public boolean useChainDoneMessage = Config.useChainDoneMessage;
     /**
      * Exhaustion applied per chain block, replacing vanilla mining exhaustion.
@@ -28,18 +31,24 @@ public class MinerConfig {
             this.blockLimit = Config.blockLimit;
             this.smallRadius = Config.smallRadius;
             this.tunnelWidth = Config.tunnelWidth;
+            this.logBigRadius = Config.logBigRadius;
+            this.logBlockLimit = Config.logBlockLimit;
         }
         this.addExhaustion = Config.addExhaustion;
+        this.logFuzzyEnabled = Config.logFuzzyEnabled;
     }
 
     public MinerConfig(int bigRadius, int blockLimit, int smallRadius, int tunnelWidth, boolean useChainDoneMessage,
-        double addExhaustion) {
+        double addExhaustion, int logBigRadius, int logBlockLimit, boolean logFuzzyEnabled) {
         this.bigRadius = bigRadius;
         this.blockLimit = blockLimit;
         this.smallRadius = smallRadius;
         this.tunnelWidth = tunnelWidth;
         this.useChainDoneMessage = useChainDoneMessage;
         this.addExhaustion = addExhaustion;
+        this.logBigRadius = logBigRadius;
+        this.logBlockLimit = logBlockLimit;
+        this.logFuzzyEnabled = logFuzzyEnabled;
     }
 
     public MinerConfig updateFrom(MinerConfig other) {
@@ -48,6 +57,9 @@ public class MinerConfig {
         this.blockLimit = other.blockLimit;
         this.smallRadius = other.smallRadius;
         this.tunnelWidth = other.tunnelWidth;
+        this.logBigRadius = other.logBigRadius;
+        this.logBlockLimit = other.logBlockLimit;
+        this.logFuzzyEnabled = other.logFuzzyEnabled;
         this.useChainDoneMessage = other.useChainDoneMessage;
         this.addExhaustion = other.addExhaustion;
         return this;

@@ -68,6 +68,10 @@ public class PacketSaveServerConfig implements IMessage {
     // Tool break handoff
     public boolean enableToolBreakHandoff;
     public int toolBreakHandoffTimeoutTicks;
+    // Log (tree-felling) settings
+    public int logBigRadius;
+    public int logBlockLimit;
+    public boolean logFuzzyEnabled;
 
     public PacketSaveServerConfig() {}
 
@@ -197,6 +201,9 @@ public class PacketSaveServerConfig implements IMessage {
         chainWatchdogTimeoutTicks = buf.readInt();
         enableToolBreakHandoff = buf.readBoolean();
         toolBreakHandoffTimeoutTicks = buf.readInt();
+        logBigRadius = buf.readInt();
+        logBlockLimit = buf.readInt();
+        logFuzzyEnabled = buf.readBoolean();
     }
 
     @Override
@@ -243,6 +250,9 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeInt(chainWatchdogTimeoutTicks);
         buf.writeBoolean(enableToolBreakHandoff);
         buf.writeInt(toolBreakHandoffTimeoutTicks);
+        buf.writeInt(logBigRadius);
+        buf.writeInt(logBlockLimit);
+        buf.writeBoolean(logFuzzyEnabled);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -298,6 +308,9 @@ public class PacketSaveServerConfig implements IMessage {
             Config.chainWatchdogTimeoutTicks = Math.max(20, Math.min(1200, msg.chainWatchdogTimeoutTicks));
             Config.enableToolBreakHandoff = msg.enableToolBreakHandoff;
             Config.toolBreakHandoffTimeoutTicks = Math.max(1, Math.min(40, msg.toolBreakHandoffTimeoutTicks));
+            Config.logBigRadius = Math.max(8, msg.logBigRadius);
+            Config.logBlockLimit = Math.max(8, msg.logBlockLimit);
+            Config.logFuzzyEnabled = msg.logFuzzyEnabled;
 
             // Persist to disk
             Config.saveServerConfig();

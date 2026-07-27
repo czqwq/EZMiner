@@ -201,7 +201,10 @@ public class HudRenderer {
      * depending on {@link Config#hudAnimationStyle}.
      */
     private static void drawAnimatedHeader(FontRenderer fr, int x, int y, String suffix) {
-        if (Config.hudAnimationStyle == 1) {
+        if (Config.hudAnimationStyle == 2) {
+            // Off — draw static header text without animation
+            fr.drawStringWithShadow("EZMiner " + suffix, x, y, 0xFFAA00);
+        } else if (Config.hudAnimationStyle == 1) {
             drawWaveHighlightHeader(fr, x, y, suffix);
         } else {
             drawRainbowBounceHeader(fr, x, y, suffix);

@@ -390,6 +390,9 @@ public class Manager {
         pConfig.blockLimit = Math.max(0, Math.min(cfg.blockLimit, Config.blockLimit));
         pConfig.smallRadius = Math.max(0, Math.min(cfg.smallRadius, Config.smallRadius));
         pConfig.tunnelWidth = Math.max(0, Math.min(cfg.tunnelWidth, Config.tunnelWidth));
+        pConfig.logBigRadius = Math.max(0, Math.min(cfg.logBigRadius, Config.logBigRadius));
+        pConfig.logBlockLimit = Math.max(0, Math.min(cfg.logBlockLimit, Config.logBlockLimit));
+        pConfig.logFuzzyEnabled = Config.logFuzzyEnabled;
         pConfig.useChainDoneMessage = cfg.useChainDoneMessage;
         pConfig.addExhaustion = Config.addExhaustion;
     }

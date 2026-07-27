@@ -37,7 +37,7 @@ public class LogFounder extends BasePositionFounder {
         // Track the bounds already covered so each position is visited only once.
         int prevCurRadius = 0;
         int prevHighRadius = 0;
-        while (curCount.get() < minerConfig.blockLimit) {
+        while (curCount.get() < minerConfig.logBlockLimit) {
             for (int x = center.x - curRadius; x <= center.x + curRadius; x++) {
                 for (int y = center.y - highRadius; y <= center.y + highRadius; y++) {
                     for (int z = center.z - curRadius; z <= center.z + curRadius; z++) {
@@ -48,7 +48,7 @@ public class LogFounder extends BasePositionFounder {
                             && Math.abs(z - center.z) <= prevCurRadius) continue;
                         Vector3i pos = new Vector3i(x, y, z);
                         if (checkCanAdd(pos)) addResult(pos);
-                        if (curCount.get() >= minerConfig.blockLimit) return;
+                        if (curCount.get() >= minerConfig.logBlockLimit) return;
                         waitUntil();
                         if (Thread.currentThread()
                             .isInterrupted()) return;
@@ -57,9 +57,9 @@ public class LogFounder extends BasePositionFounder {
             }
             prevCurRadius = curRadius;
             prevHighRadius = highRadius;
-            curRadius = Math.min(curRadius + 1, minerConfig.bigRadius);
+            curRadius = Math.min(curRadius + 1, minerConfig.logBigRadius);
             highRadius++;
-            if (curRadius >= minerConfig.bigRadius && highRadius > minerConfig.bigRadius * 4) break;
+            if (curRadius >= minerConfig.logBigRadius && highRadius > minerConfig.logBigRadius * 4) break;
         }
     }
 
@@ -74,7 +74,16 @@ public class LogFounder extends BasePositionFounder {
         int blockMeta = player.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
         if (pos.x == cachedPlayerFloorX && pos.y == (cachedPlayerFloorY - 1) && pos.z == cachedPlayerFloorZ)
             return false;
-        if (!woodLeafCache.computeIfAbsent(block, LogFounder::isWoodOrLeaf)) return false;
+        if (minerConfig.logFuzzyEnabled) {
+            // Class-based fuzzy matching (same as FuzzyChainPositionFounder).
+            // Matches blocks of the same class regardless of metadata
+            // (e.g. different log orientations share the same BlockLog class).
+            if (sampleBlock == null || !sampleBlock.getClass()
+                .equals(block.getClass())) return false;
+        } else {
+            // Original OreDict-based wood/leaf detection
+            if (!woodLeafCache.computeIfAbsent(block, LogFounder::isWoodOrLeaf)) return false;
+        }
         if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
         return block.canHarvestBlock(player, blockMeta);
