@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 
 import com.czqwq.EZMiner.chain.execution.XPDropHandler;
+import com.czqwq.EZMiner.compat.GT5ToolDurabilityBridge;
 import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 import com.czqwq.EZMiner.mixin.interfaces.IEZMinerItemInWorldManager;
 
@@ -56,12 +57,21 @@ public abstract class MixinItemInWorldManager implements IEZMinerItemInWorldMana
             return true;
         }
 
+        // ── Resolve block info early for GT5 durability check ──
+        Block block = theWorld.getBlock(x, y, z);
+        int meta = theWorld.getBlockMetadata(x, y, z);
+
+        // ── GT5 tool durability pre-check: skip blocks that would break the tool ──
+        if (!isCreative() && !GT5ToolDurabilityBridge.hasEnoughDurability(thisPlayerMP, block, theWorld, x, y, z)) {
+            return false;
+        }
+
         // ── Tool damage (only in survival) ──
         if (!isCreative()) {
             ItemStack stack = thisPlayerMP.getCurrentEquippedItem();
             if (stack != null) {
                 // notify the item that it was used to break a block
-                stack.func_150999_a(theWorld, theWorld.getBlock(x, y, z), x, y, z, thisPlayerMP);
+                stack.func_150999_a(theWorld, block, x, y, z, thisPlayerMP);
                 if (stack.stackSize == 0) {
                     thisPlayerMP.destroyCurrentEquippedItem();
                 }
@@ -69,8 +79,6 @@ public abstract class MixinItemInWorldManager implements IEZMinerItemInWorldMana
         }
 
         // ── Harvest callbacks ──
-        Block block = theWorld.getBlock(x, y, z);
-        int meta = theWorld.getBlockMetadata(x, y, z);
         block.onBlockHarvested(theWorld, x, y, z, meta, thisPlayerMP);
 
         // ── Remove the block ──

@@ -14,6 +14,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 import com.czqwq.EZMiner.Config;
+import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
 
 /**
  * Handles experience orb drops during chain mining operations.
@@ -55,8 +56,9 @@ public class XPDropHandler {
         // Silk Touch prevents XP drops
         if (EnchantmentHelper.getSilkTouchModifier(player)) return 0;
 
-        // Can't harvest → no XP (mirrors BreakEvent logic)
-        if (!block.canHarvestBlock(player, meta)) return 0;
+        // Can't harvest → no XP (mirrors BreakEvent logic).
+        // Witchery vampires at level 5+ can harvest stone-level blocks with bare hands.
+        if (!block.canHarvestBlock(player, meta) && !WitcheryVampireBridge.canHarvestWithBareHands(player)) return 0;
 
         int fortune = EnchantmentHelper.getFortuneModifier(player);
         return block.getExpDrop(world, meta, fortune);

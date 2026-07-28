@@ -8,6 +8,7 @@ import net.minecraft.init.Blocks;
 
 import org.joml.Vector3i;
 
+import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
 import com.czqwq.EZMiner.core.MinerConfig;
 
 /** Blast mode – same-type filter: only breaks blocks matching the target sample. */
@@ -34,6 +35,6 @@ public class ScreenBlastFounder extends BasePositionFounder {
             .identical(sampleBlock, sampleBlockMeta, sampleTileEntity, block, blockMeta, pos, player)) return false;
         if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
-        return block.canHarvestBlock(player, blockMeta);
+        return block.canHarvestBlock(player, blockMeta) || WitcheryVampireBridge.canHarvestWithBareHands(player);
     }
 }

@@ -8,6 +8,7 @@ import net.minecraft.init.Blocks;
 
 import org.joml.Vector3i;
 
+import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
 import com.czqwq.EZMiner.core.MinerConfig;
 
 /**
@@ -55,6 +56,6 @@ public class GtVeinOreFounder extends BasePositionFounder {
             return false;
         if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
-        return block.canHarvestBlock(player, blockMeta);
+        return block.canHarvestBlock(player, blockMeta) || WitcheryVampireBridge.canHarvestWithBareHands(player);
     }
 }
