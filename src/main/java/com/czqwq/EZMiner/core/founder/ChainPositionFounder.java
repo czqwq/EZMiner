@@ -17,6 +17,7 @@ import net.minecraft.init.Blocks;
 import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
+import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
 import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.thread.SearchWorkerPool;
 
@@ -301,7 +302,7 @@ public class ChainPositionFounder extends BasePositionFounder {
             .identical(sampleBlock, sampleBlockMeta, sampleTileEntity, block, blockMeta, pos, player)) return false;
         if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
-        return block.canHarvestBlock(player, blockMeta);
+        return block.canHarvestBlock(player, blockMeta) || WitcheryVampireBridge.canHarvestWithBareHands(player);
     }
 
     private static double distSq(Vector3i a, Vector3i b) {

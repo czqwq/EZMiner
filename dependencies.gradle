@@ -12,6 +12,8 @@ dependencies {
     implementation('org.joml:joml:1.10.8')
     implementation(gtnhDev("GT5-Unofficial"))
     implementation('com.github.GTNewHorizons:LootGames:2.2.14:dev')
+    implementation(deobfCurse('witchery-69673:2234410'))
+    implementation(gtnhDev("WitcheryExtras"))
     runtimeOnlyNonPublishable(gtnhDev("Avaritia"))
     runtimeOnlyNonPublishable(gtnhDev("neiaddons"))
     runtimeOnlyNonPublishable('com.github.GTNewHorizons:Binnie:2.5.16:dev')

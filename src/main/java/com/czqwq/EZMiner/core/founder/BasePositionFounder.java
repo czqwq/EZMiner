@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.Config;
+import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
 import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.thread.Pauseable;
 import com.czqwq.EZMiner.thread.SearchWorkerPool;
@@ -345,7 +346,7 @@ public class BasePositionFounder extends Pauseable {
             return false;
         if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
-        return block.canHarvestBlock(player, blockMeta);
+        return block.canHarvestBlock(player, blockMeta) || WitcheryVampireBridge.canHarvestWithBareHands(player);
     }
 
     public void setSkipHarvestCheck(boolean skipHarvestCheck) {

@@ -11,6 +11,7 @@ import net.minecraftforge.oredict.OreDictionary;
 
 import org.joml.Vector3i;
 
+import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
 import com.czqwq.EZMiner.core.MinerConfig;
 
 /** Blast mode – logging: breaks only wood and leaf blocks. */
@@ -86,7 +87,7 @@ public class LogFounder extends BasePositionFounder {
         }
         if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
-        return block.canHarvestBlock(player, blockMeta);
+        return block.canHarvestBlock(player, blockMeta) || WitcheryVampireBridge.canHarvestWithBareHands(player);
     }
 
     /** OreDict check – called at most once per unique {@link Block} type. */

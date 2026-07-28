@@ -29,6 +29,7 @@ import com.czqwq.EZMiner.chain.planning.CachedPositionsPlanningTask;
 import com.czqwq.EZMiner.chain.planning.ChainPlanningTask;
 import com.czqwq.EZMiner.chain.watchdog.ChainWatchdog;
 import com.czqwq.EZMiner.compat.TinkersConstructCompat;
+import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
 import com.czqwq.EZMiner.core.crop.CropAdapterRegistry;
 import com.czqwq.EZMiner.network.PacketToolBreakHandoff;
 import com.czqwq.EZMiner.utils.MessageUtils;
@@ -382,7 +383,8 @@ public class BaseOperator {
                 Block block = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
                 if (block != null && !block.isAir(playerMP.worldObj, pos.x, pos.y, pos.z)) {
                     int meta = playerMP.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
-                    if (!block.canHarvestBlock(playerMP, meta)) {
+                    if (!block.canHarvestBlock(playerMP, meta)
+                        && !WitcheryVampireBridge.canHarvestWithBareHands(playerMP)) {
                         stopRequested = true;
                         return false;
                     }
@@ -424,7 +426,8 @@ public class BaseOperator {
                     Block block = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
                     if (block != null && !block.isAir(playerMP.worldObj, pos.x, pos.y, pos.z)) {
                         int meta = playerMP.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
-                        if (!block.canHarvestBlock(playerMP, meta)) {
+                        if (!block.canHarvestBlock(playerMP, meta)
+                            && !WitcheryVampireBridge.canHarvestWithBareHands(playerMP)) {
                             stopRequested = true;
                             break;
                         }
@@ -478,7 +481,8 @@ public class BaseOperator {
                     Block block = playerMP.worldObj.getBlock(pos.x, pos.y, pos.z);
                     if (block != null && !block.isAir(playerMP.worldObj, pos.x, pos.y, pos.z)) {
                         int meta = playerMP.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
-                        if (!block.canHarvestBlock(playerMP, meta)) {
+                        if (!block.canHarvestBlock(playerMP, meta)
+                            && !WitcheryVampireBridge.canHarvestWithBareHands(playerMP)) {
                             stopRequested = true;
                             break;
                         }

@@ -11,7 +11,9 @@ import net.minecraftforge.event.world.BlockEvent;
 
 import org.joml.Vector3i;
 
+import com.czqwq.EZMiner.compat.GT5ToolDurabilityBridge;
 import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
+import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
 
 /**
  * Stateful per-tick-batch chunk-cached block harvester.
@@ -123,8 +125,14 @@ public class ChunkCachedHarvester {
             return true;
         }
 
-        boolean canHarvest = block.canHarvestBlock(player, meta);
+        boolean canHarvest = block.canHarvestBlock(player, meta)
+            || WitcheryVampireBridge.canHarvestWithBareHands(player);
         boolean isCreative = player.capabilities.isCreativeMode;
+
+        // ── GT5 tool durability pre-check: skip blocks that would break the tool ──
+        if (!isCreative && !GT5ToolDurabilityBridge.hasEnoughDurability(player, block, world, x, y, z)) {
+            return false;
+        }
 
         // ── Tool damage (survival only) ──
         if (!isCreative) {
