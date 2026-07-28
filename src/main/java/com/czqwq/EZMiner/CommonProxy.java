@@ -7,6 +7,7 @@ import com.czqwq.EZMiner.chain.mode.ChainSubModeBootstrap;
 import com.czqwq.EZMiner.command.ReloadConfigCommand;
 import com.czqwq.EZMiner.core.PlayerManager;
 import com.czqwq.EZMiner.core.crop.CropAdapterRegistry;
+import com.czqwq.EZMiner.permission.ServerOwnerWhitelist;
 import com.czqwq.EZMiner.thread.SearchWorkerPool;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -65,6 +66,9 @@ public class CommonProxy {
 
     public void serverStarted(FMLServerStartedEvent event) {
         SearchWorkerPool.start(Config.searchWorkerThreads);
+        ServerOwnerWhitelist.init(
+            net.minecraft.server.MinecraftServer.getServer().worldServers[0].getSaveHandler()
+                .getWorldDirectory());
     }
 
     public void serverStopping(FMLServerStoppingEvent event) {

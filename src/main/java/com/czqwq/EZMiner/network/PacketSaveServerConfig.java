@@ -7,6 +7,7 @@ import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.core.Manager;
 import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.core.PlayerManager;
+import com.czqwq.EZMiner.permission.OpPermissionChecker;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -261,7 +262,7 @@ public class PacketSaveServerConfig implements IMessage {
         public IMessage onMessage(PacketSaveServerConfig msg, MessageContext ctx) {
             if (!ctx.side.isServer()) return null;
             EntityPlayerMP player = ctx.getServerHandler().playerEntity;
-            if (!player.canCommandSenderUseCommand(2, "EZMiner")) return null;
+            if (!OpPermissionChecker.isOp(player)) return null;
 
             // Clamp values to safe ranges before applying
             Config.bigRadius = Math.max(0, msg.bigRadius);

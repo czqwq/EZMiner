@@ -16,6 +16,7 @@ import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.client.gui.sync.ClientCapSyncTarget;
 import com.czqwq.EZMiner.network.PacketMinerConfig;
+import com.czqwq.EZMiner.network.PacketOpStatusRequest;
 import com.czqwq.EZMiner.network.PacketReloadServerConfig;
 import com.czqwq.EZMiner.network.PacketSaveServerConfig;
 
@@ -231,6 +232,22 @@ public class EZMinerConfigGui extends GuiScreen {
         // Reset scroll when GUI is (re)opened.
         scrollY = 0;
         buttonList.clear();
+
+        // Synchronous OP check for single-player: the async PacketOpStatusRequest
+        // may not arrive before the GUI renders, causing a one-open delay after
+        // LAN-cheats-enable. Access the integrated server directly to get the
+        // authoritative answer immediately.
+        net.minecraft.server.integrated.IntegratedServer integratedServer = mc.getIntegratedServer();
+        if (integratedServer != null) {
+            net.minecraft.entity.player.EntityPlayerMP serverPlayer = integratedServer.getConfigurationManager()
+                .func_152612_a(mc.thePlayer.getCommandSenderName());
+            if (serverPlayer != null) {
+                EZMiner.clientIsOp = com.czqwq.EZMiner.permission.OpPermissionChecker.isOp(serverPlayer);
+            }
+        }
+        // Also fire the async request as a refresh signal for multiplayer and
+        // future GUI opens (non-blocking; no server round-trip in single-player).
+        EZMiner.network.network.sendToServer(new PacketOpStatusRequest());
 
         // ── Fixed: tab selector buttons ───────────────────────────────────────
         buttonList.add(

@@ -85,5 +85,14 @@ public class NetworkMain {
             Side.CLIENT);
         // Inventory slot swap sync: client → server (tool switch ghost-item fix)
         network.registerMessage(PacketInventorySwap.Handler.class, PacketInventorySwap.class, packetId++, Side.SERVER);
+        // OP status check: client → server (real-time check when GUI opens)
+        network
+            .registerMessage(PacketOpStatusRequest.Handler.class, PacketOpStatusRequest.class, packetId++, Side.SERVER);
+        // OP status response: server → client
+        network.registerMessage(
+            PacketOpStatusResponse.Handler.class,
+            PacketOpStatusResponse.class,
+            packetId++,
+            Side.CLIENT);
     }
 }

@@ -1,6 +1,7 @@
 package com.czqwq.EZMiner.network;
 
 import com.czqwq.EZMiner.Config;
+import com.czqwq.EZMiner.permission.OpPermissionChecker;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -177,7 +178,7 @@ public class PacketServerConfig implements IMessage {
             Config.serverMaxPreviewBlockLimit,
             Config.serverUsePreview,
             Config.breakPerTick,
-            player.canCommandSenderUseCommand(2, "EZMiner"),
+            OpPermissionChecker.isOp(player),
             Config.blockSwapRadius,
             Config.blockSwapLimit,
             Config.enableBlockSwapMode);

@@ -97,6 +97,16 @@ ezminer.command.active_mode.usage.0=§e/EZMiner active_mode 0§r - 按住：按�
 ezminer.command.active_mode.usage.1=§e/EZMiner active_mode 1§r - 切换：按下激活连锁，再按一次停止
 ezminer.command.hud.pos.usage=§e/EZMiner hud pos <x> <y>§r - 设置HUD位置（左上角为原点）
 ezminer.command.hud.pos.set=EZMiner: HUD位置已设置为 x=%s, y=%s。
+ezminer.command.addserverowner.usage=§e/EZMiner addserverowner <玩家名>§r - 添加玩家到服务端配置白名单（仅控制台/单人房主）
+ezminer.command.addserverowner.success=已将玩家 %s 添加到服务端配置白名单。
+ezminer.command.addserverowner.already=玩家 %s 已在白名单中。
+ezminer.command.removeserverowner.usage=§e/EZMiner removeserverowner <玩家名>§r - 从服务端配置白名单移除玩家（仅控制台/单人房主）
+ezminer.command.removeserverowner.success=已将玩家 %s 从服务端配置白名单移除。
+ezminer.command.removeserverowner.notfound=玩家 %s 不在白名单中。
+ezminer.command.listserverowner.usage=§e/EZMiner listserverowner§r - 列出服务端配置白名单
+ezminer.command.listserverowner.empty=服务端配置白名单为空。
+ezminer.command.listserverowner.header=服务端配置白名单（%s 人）:
+ezminer.command.whitelist.nopermission=§c此命令只能由单人房主或服务器控制台执行。
 ezminer.message.chain.done=EZMiner: 连锁完成；方块数=%s；耗时=%s
 ezminer.message.chain.idle_countdown=EZMiner: 没有找到新方块，%s秒后自动取消...
 ezminer.message.chain.idle_cancel=EZMiner: 已自动取消 — 空闲超过%s秒

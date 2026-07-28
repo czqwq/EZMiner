@@ -97,6 +97,16 @@ ezminer.command.active_mode.usage.0=§e/EZMiner active_mode 0§r - Hold: keep th
 ezminer.command.active_mode.usage.1=§e/EZMiner active_mode 1§r - Toggle: press once to activate, press again to stop
 ezminer.command.hud.pos.usage=§e/EZMiner hud pos <x> <y>§r - set HUD position (top-left origin)
 ezminer.command.hud.pos.set=EZMiner: HUD position set to x=%s, y=%s.
+ezminer.command.addserverowner.usage=§e/EZMiner addserverowner <player>§r - add player to server config whitelist (console/single-player host only)
+ezminer.command.addserverowner.success=Added %s to the server config whitelist.
+ezminer.command.addserverowner.already=%s is already on the whitelist.
+ezminer.command.removeserverowner.usage=§e/EZMiner removeserverowner <player>§r - remove player from server config whitelist (console/single-player host only)
+ezminer.command.removeserverowner.success=Removed %s from the server config whitelist.
+ezminer.command.removeserverowner.notfound=%s is not on the whitelist.
+ezminer.command.listserverowner.usage=§e/EZMiner listserverowner§r - list server config whitelist
+ezminer.command.listserverowner.empty=The server config whitelist is empty.
+ezminer.command.listserverowner.header=Server config whitelist (%s entries):
+ezminer.command.whitelist.nopermission=§cThis command can only be used by the single-player host or the server console.
 ezminer.message.chain.done=EZMiner: chain done; blocks=%s; time=%s
 ezminer.message.chain.idle_countdown=EZMiner: No new blocks found. Auto-cancelling in %ss...
 ezminer.message.chain.idle_cancel=EZMiner: Auto-cancelled — idle for %s s
