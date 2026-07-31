@@ -282,6 +282,20 @@ public class Config {
     public static boolean useChainDoneMessage = true;
     public static int hudPosX = 5;
     public static int hudPosY = 5;
+    /**
+     * Transient flag set by {@code HudConfigGui} while the drag-to-reposition overlay is
+     * active. {@code HudRenderer} reads this to bypass the normal key-press gating so the
+     * HUD follows the drag handle in real-time.
+     * <p>
+     * <b>Not persisted</b> — only lives in the current client session.
+     */
+    public static boolean hudConfigGuiOpen = false;
+    /**
+     * When {@code true} (default), other in-game HUDs and the game world remain fully
+     * visible behind the HUD drag-config overlay. When {@code false}, a dark scrim is
+     * drawn to mimic a traditional modal config screen.
+     */
+    public static boolean hudConfigShowOtherHuds = true;
     /** Client preferred chain radius (capped by server at runtime). */
     public static int clientBigRadius = 8;
     /** Client preferred chain block limit (capped by server at runtime). */
@@ -334,8 +348,15 @@ public class Config {
     /** HUD brand animation: 0 = Rainbow Bounce, 1 = Wave Highlight. */
     public static int hudAnimationStyle = 0;
 
-    /** Preview render style: 0 = Native wireframe, 1 = Modern two-pass (Ultimine style). */
-    public static int renderStyle = 0;
+    /**
+     * Preview render style.
+     * 0 = Native single-pass wireframe,
+     * 1 = Modern two-pass (Ultimine style, default),
+     * 2 = Modern Rainbow (two-pass, colour cycles every ~0.5 s),
+     * 3 = Modern Gradient (multi-pass static rainbow gradient),
+     * 4 = Off (no preview rendering).
+     */
+    public static int renderStyle = 1;
     /** Block hotbar scrolling while chain key held (reserved for sub-mode switching). */
     public static boolean blockScrollOnChainKey = true;
 
@@ -378,7 +399,10 @@ public class Config {
 
     private static final String RENDER_STYLE_COMMENT = "Preview outline rendering style. "
         + "0 = Native (single-pass wireframe, original). "
-        + "1 = Modern (two-pass: solid visible lines + translucent hidden lines, FTB-Ultimine inspired).";
+        + "1 = Modern (two-pass: solid visible lines + translucent hidden lines, FTB-Ultimine inspired, default). "
+        + "2 = Modern Rainbow (two-pass, colour cycles through the rainbow every ~0.5 s). "
+        + "3 = Modern Gradient (multi-pass static rainbow gradient overlay). "
+        + "4 = Off (no preview outlines rendered).";
 
     private static final String HUD_ANIMATION_STYLE_COMMENT = "HUD brand animation style. 0 = Rainbow Bounce (original). 1 = Wave Highlight (letters light up one-by-one then fill left-to-right). 2 = Off.";
 
@@ -1054,13 +1078,18 @@ public class Config {
             Integer.MIN_VALUE,
             Integer.MAX_VALUE,
             "HUD Y position in screen pixels (origin at top-left).");
+        hudConfigShowOtherHuds = clientConfiguration.getBoolean(
+            "hudConfigShowOtherHuds",
+            CLIENT_CATEGORY,
+            true,
+            "When true (default), other HUDs and the game world remain visible behind the HUD drag-config overlay.");
         chainActivationMode = clientConfiguration
             .getInt("chainActivationMode", CLIENT_CATEGORY, 0, 0, 1, CHAIN_ACTIVATION_MODE_COMMENT);
         suppressIngameInfoHud = clientConfiguration
             .getBoolean("suppressIngameInfoHud", CLIENT_CATEGORY, false, SUPPRESS_INGAMEINFO_HUD_COMMENT);
         hudAnimationStyle = clientConfiguration
             .getInt("hudAnimationStyle", CLIENT_CATEGORY, 0, 0, 2, HUD_ANIMATION_STYLE_COMMENT);
-        renderStyle = clientConfiguration.getInt("renderStyle", CLIENT_CATEGORY, 0, 0, 1, RENDER_STYLE_COMMENT);
+        renderStyle = clientConfiguration.getInt("renderStyle", CLIENT_CATEGORY, 1, 0, 4, RENDER_STYLE_COMMENT);
         blockScrollOnChainKey = clientConfiguration
             .getBoolean("blockScrollOnChainKey", CLIENT_CATEGORY, true, BLOCK_SCROLL_ON_CHAIN_KEY_COMMENT);
         smartToolSwitchEnabled = clientConfiguration
@@ -1651,7 +1680,7 @@ public class Config {
                 CLIENT_CATEGORY,
                 "renderStyle",
                 0,
-                "Preview outline render style: 0 = Native wireframe, 1 = Modern two-pass.",
+                "Preview outline render style: 0 = Native, 1 = Modern, 2 = Rainbow, 3 = Gradient, 4 = Off.",
                 0,
                 1)
             .set(renderStyle);

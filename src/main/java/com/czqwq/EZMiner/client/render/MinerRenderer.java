@@ -53,8 +53,18 @@ public class MinerRenderer {
     public static final RenderCache renderCache = new RenderCache();
     private final SpaceCalculator spaceCalc = new SpaceCalculator();
 
+    // ── Render style strategies (one instance per style, stateless) ────────────
     private static final BlockOutlineRenderStrategy NATIVE_RENDERER = new NativeBlockOutlineRenderer();
     private static final BlockOutlineRenderStrategy MODERN_RENDERER = new ModernBlockOutlineRenderer();
+    private static final BlockOutlineRenderStrategy RAINBOW_RENDERER = new RainbowBlockOutlineRenderer();
+    private static final BlockOutlineRenderStrategy GRADIENT_RENDERER = new GradientBlockOutlineRenderer();
+
+    // ── Render style constants (mirrors Config.renderStyle values) ────────────────
+    private static final int STYLE_NATIVE = 0;
+    private static final int STYLE_MODERN = 1;
+    private static final int STYLE_MODERN_RAINBOW = 2;
+    private static final int STYLE_MODERN_GRADIENT = 3;
+    private static final int STYLE_OFF = 4;
 
     private Vector3i lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
     private BasePositionFounder founder = null;
@@ -342,69 +352,45 @@ public class MinerRenderer {
     }
 
     /**
-     * Renders the preview wireframe by delegating to the active {@link BlockOutlineRenderStrategy}.
+     * Renders the preview wireframe, dispatching to the active
+     * {@link BlockOutlineRenderStrategy}.
      *
      * <p>
-     * The matrix is shifted by {@code -RenderManager.renderPos} so that world-space block
-     * positions map directly onto the rendered scene.
+     * The matrix is shifted by {@code -RenderManager.renderPos} so that world-space
+     * block positions map directly onto the rendered scene. Each strategy receives
+     * the pre-built cache plus the raw position list so per-block renderers can
+     * do their own colouring.
      */
     private void doRender() {
-        if (Config.renderStyle == 1) {
-            doRenderModern();
-        } else {
-            doRenderNative();
+        if (lastIndexCount <= 0) return;
+
+        final BlockOutlineRenderStrategy strategy;
+        switch (Config.renderStyle) {
+            case STYLE_NATIVE:
+                strategy = NATIVE_RENDERER;
+                break;
+            case STYLE_MODERN:
+                strategy = MODERN_RENDERER;
+                break;
+            case STYLE_MODERN_RAINBOW:
+                strategy = RAINBOW_RENDERER;
+                break;
+            case STYLE_MODERN_GRADIENT:
+                strategy = GRADIENT_RENDERER;
+                break;
+            case STYLE_OFF:
+                return; // Preview rendering is disabled.
+            default:
+                strategy = MODERN_RENDERER; // fallback to default
+                break;
         }
-    }
-
-    /** Native single-pass wireframe (original behaviour). */
-    private void doRenderNative() {
-        if (lastIndexCount <= 0) return;
-
-        BlockOutlineRenderStrategy strategy = Config.renderStyle == 1 ? MODERN_RENDERER : NATIVE_RENDERER;
 
         GL11.glPushMatrix();
         GL11.glTranslated(-RenderManager.renderPosX, -RenderManager.renderPosY, -RenderManager.renderPosZ);
-        strategy.render(renderCache, lastIndexCount);
+        // Batch renderers (Native, Modern, Rainbow) use cache+indexCount.
+        // Per-block renderers (Gradient) use positions and ignore cache.
+        strategy.render(renderCache, lastIndexCount, spaceCalc.positions);
         GL11.glPopMatrix();
-    }
-
-    /**
-     * Modern two-pass rendering inspired by FTB-Ultimine.
-     *
-     * <p>
-     * Pass 1 – depth-tested: draws visible outline edges as solid, opaque, thicker lines so
-     * the preview hugs block surfaces correctly and has clear depth perception.
-     *
-     * <p>
-     * Pass 2 – no depth test: draws the same edges with low alpha so the selection shape
-     * is still readable through solid geometry (hidden-line ghost effect).
-     */
-    private void doRenderModern() {
-        if (lastIndexCount <= 0) return;
-
-        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-        GL11.glPushMatrix();
-        GL11.glTranslated(-RenderManager.renderPosX, -RenderManager.renderPosY, -RenderManager.renderPosZ);
-
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-
-        // Pass 1: visible edges – depth-tested, solid, thick, bright white-cyan
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
-        GL11.glLineWidth(2.5F);
-        GL11.glColor4f(0.8F, 1.0F, 1.0F, 1.0F);
-        renderCache.render(lastIndexCount);
-
-        // Pass 2: hidden edges – no depth test, translucent, thin, dim cyan
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glLineWidth(1.0F);
-        GL11.glColor4f(0.25F, 0.9F, 1.0F, 0.2F);
-        renderCache.render(lastIndexCount);
-
-        GL11.glPopMatrix();
-        GL11.glPopAttrib();
     }
 
     public void registry() {

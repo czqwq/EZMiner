@@ -8,6 +8,7 @@ ezminer.hud.minesweeper.ready=Probe Ready
 
 key.ezminer.chainKey=Chain Key
 key.ezminer.modeSwitch=Mode Switch
+key.ezminer.hudConfig=Open HUD Config
 key.categories.ezminer=EZMiner
 
 ezminer.mode.blast=Blast Mode
@@ -76,6 +77,7 @@ ezminer.gui.section.options=Options
 ezminer.gui.tab.client=§aClient Settings§r
 ezminer.gui.tab.server=§cServer Settings §7(OP)§r
 ezminer.gui.apply=§eApply§r
+ezminer.gui.openHudConfig=§bHUD Position§r
 ezminer.gui.saveAndExit=§aSave & Exit§r
 ezminer.gui.reload.server=§6Reload Server Config§r
 ezminer.gui.save=§aSave & Apply§r
@@ -97,6 +99,10 @@ ezminer.command.active_mode.usage.0=§e/EZMiner active_mode 0§r - Hold: keep th
 ezminer.command.active_mode.usage.1=§e/EZMiner active_mode 1§r - Toggle: press once to activate, press again to stop
 ezminer.command.hud.pos.usage=§e/EZMiner hud pos <x> <y>§r - set HUD position (top-left origin)
 ezminer.command.hud.pos.set=EZMiner: HUD position set to x=%s, y=%s.
+ezminer.command.usage.hud_config=§e/EZMiner hud config§r - open drag-to-reposition HUD overlay
+ezminer.command.hud.config.open=EZMiner: HUD drag-config overlay opened. Drag the red handle to reposition, Esc to close.
+ezminer.command.hud.config.player_only=§cThis command can only be used by a player.
+ezminer.hud.config.dragTip=Drag me
 ezminer.command.addserverowner.usage=§e/EZMiner addserverowner <player>§r - add player to server config whitelist (console/single-player host only)
 ezminer.command.addserverowner.success=Added %s to the server config whitelist.
 ezminer.command.addserverowner.already=%s is already on the whitelist.
@@ -118,6 +124,9 @@ ezminer.message.special.sudoku.filled=EZMiner: Sudoku cell (%s, %s) filled with 
 ezminer.config.renderStyle=Preview Render Style
 ezminer.config.renderStyle.native=Native
 ezminer.config.renderStyle.modern=Modern
+ezminer.config.renderStyle.rainbow=Modern (Rainbow)
+ezminer.config.renderStyle.gradient=Modern (Gradient)
+ezminer.config.renderStyle.off=Off
 ezminer.config.blockScrollOnChainKey=Block Hotbar Scroll\nWhile Chain Key Held
 
 key.ezminer.smartToolSwitch=Smart Tool Switch

@@ -68,13 +68,18 @@ public class HudRenderer {
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL) return;
-        if (!Config.isPreviewEnabled()) return;
 
         Minecraft mc = Minecraft.getMinecraft();
-        if (mc.currentScreen != null) return; // hide when a GUI is open
+        final boolean inHudConfig = Config.hudConfigGuiOpen;
+
+        // Normal gating: preview must be enabled, no GUI open, chain key held.
+        // All three gates are bypassed when the HUD drag-config overlay is open
+        // so the HUD follows the drag handle in real-time.
+        if (!Config.isPreviewEnabled() && !inHudConfig) return;
+        if (mc.currentScreen != null && !inHudConfig) return;
 
         ClientStateContainer state = ((ClientProxy) EZMiner.proxy).clientState;
-        if (!state.chainClientState.keyPressed) return;
+        if (!state.chainClientState.keyPressed && !inHudConfig) return;
         MinerModeState modeState = state.minerModeState;
         FontRenderer fr = mc.fontRenderer;
 

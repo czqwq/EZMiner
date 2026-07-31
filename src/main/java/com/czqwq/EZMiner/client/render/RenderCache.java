@@ -93,13 +93,25 @@ public class RenderCache {
      * (blend, depth-test, line-width, color, etc.) before calling this method.
      */
     public void render(int indexCount) {
-        if (indexCount <= 0) return;
+        renderRange(0, indexCount);
+    }
+
+    /**
+     * Draw a subset of the current index data, starting at {@code firstIndex}
+     * (element offset, not byte offset).
+     *
+     * <p>
+     * Used by per-block renderers (e.g. gradient) to render blocks in coloured
+     * bands while still using the GPU-side VBO.
+     */
+    public void renderRange(int firstIndex, int count) {
+        if (count <= 0) return;
         ensureGLInit();
         if (vao == 0) return; // GL init failed – do nothing rather than crash
 
         GL30.glBindVertexArray(vao);
         GL20.glEnableVertexAttribArray(0);
-        GL11.glDrawElements(GL11.GL_LINES, indexCount, GL11.GL_UNSIGNED_INT, 0);
+        GL11.glDrawElements(GL11.GL_LINES, count, GL11.GL_UNSIGNED_INT, (long) firstIndex * 4);
         GL20.glDisableVertexAttribArray(0);
         GL30.glBindVertexArray(0);
     }

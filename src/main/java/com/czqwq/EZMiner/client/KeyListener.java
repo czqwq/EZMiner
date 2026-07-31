@@ -13,6 +13,7 @@ import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.chain.network.PacketChainModeSwitch;
 import com.czqwq.EZMiner.chain.network.PacketKeyState;
+import com.czqwq.EZMiner.client.gui.HudConfigGui;
 import com.czqwq.EZMiner.core.MinerModeState;
 import com.czqwq.EZMiner.network.PacketMinerConfig;
 import com.czqwq.EZMiner.utils.MessageUtils;
@@ -43,6 +44,10 @@ public class KeyListener {
         "key.ezminer.modeSwitch",
         Keyboard.KEY_V,
         "key.categories.ezminer");
+    public static final KeyBinding KEY_HUD_CONFIG = new KeyBinding(
+        "key.ezminer.hudConfig",
+        Keyboard.KEY_NONE,
+        "key.categories.ezminer");
 
     private boolean wasHoldingChain = false;
     /** Tracks whether chain is currently toggled on (only used in toggle mode). */
@@ -52,6 +57,12 @@ public class KeyListener {
     public void onInput(InputEvent event) {
         ClientProxy proxy = (ClientProxy) EZMiner.proxy;
         MinerModeState state = proxy.clientState.minerModeState;
+
+        // ===== HUD config key =====
+        if (KEY_HUD_CONFIG.isPressed()) {
+            HudConfigGui.open();
+            return;
+        }
 
         // ===== Main-mode toggle =====
         if (KEY_MODE_SWITCH.isPressed()) {
@@ -234,6 +245,8 @@ public class KeyListener {
         proxy.clientState.blockSwapResultTimestamp = 0L;
         // Always unfreeze so no stale wireframe survives across sessions.
         proxy.minerRenderer.unfreeze();
+        // Reset HUD config GUI flag in case the GUI was force-closed by disconnect.
+        Config.hudConfigGuiOpen = false;
         Config.clearServerRuntimeOverridesAndReloadClient();
         // Always restore InGame Info XML visibility on disconnect, in case the chain key
         // was held or toggled when the player left the world.
@@ -243,6 +256,7 @@ public class KeyListener {
     public void registry() {
         ClientRegistry.registerKeyBinding(KEY_CHAIN);
         ClientRegistry.registerKeyBinding(KEY_MODE_SWITCH);
+        ClientRegistry.registerKeyBinding(KEY_HUD_CONFIG);
         MinecraftForge.EVENT_BUS.register(this);
         FMLCommonHandler.instance()
             .bus()

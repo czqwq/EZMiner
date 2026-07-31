@@ -13,6 +13,7 @@ import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.core.PlayerManager;
 import com.czqwq.EZMiner.network.PacketHudPos;
 import com.czqwq.EZMiner.network.PacketMinerConfig;
+import com.czqwq.EZMiner.network.PacketOpenHudConfig;
 import com.czqwq.EZMiner.network.PacketReloadClientConfig;
 import com.czqwq.EZMiner.network.PacketServerConfig;
 import com.czqwq.EZMiner.permission.OpPermissionChecker;
@@ -28,7 +29,7 @@ public class ReloadConfigCommand extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/EZMiner <reloadConfig | reloadClientConfig | active_mode <0|1> | hud pos <x> <y>>";
+        return "/EZMiner <reloadConfig | reloadClientConfig | active_mode <0|1> | hud pos <x> <y> | hud config>";
     }
 
     /** Allow all players to run /EZMiner (active_mode is a personal setting). */
@@ -74,7 +75,7 @@ public class ReloadConfigCommand extends CommandBase {
             return getListOfStringsMatchingLastWord(args, "0", "1");
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("hud")) {
-            return getListOfStringsMatchingLastWord(args, "pos");
+            return getListOfStringsMatchingLastWord(args, "pos", "config");
         }
         return java.util.Collections.emptyList();
     }
@@ -154,10 +155,21 @@ public class ReloadConfigCommand extends CommandBase {
             return;
         }
 
-        // ── hud pos <x> <y> ────────────────────────────────────────────────────
+        // ── hud (pos|config) ────────────────────────────────────────────────────
         if (sub.equalsIgnoreCase("hud")) {
             if (!this.canCommandSenderUseCommand(sender)) {
                 sender.addChatMessage(new ChatComponentTranslation("ezminer.command.nopermission"));
+                return;
+            }
+            if (args.length >= 2 && args[1].equalsIgnoreCase("config")) {
+                // Open the drag-to-reposition GUI on the client.
+                if (!(sender instanceof net.minecraft.entity.player.EntityPlayerMP)) {
+                    sender.addChatMessage(new ChatComponentTranslation("ezminer.command.hud.config.player_only"));
+                    return;
+                }
+                net.minecraft.entity.player.EntityPlayerMP player = (net.minecraft.entity.player.EntityPlayerMP) sender;
+                EZMiner.network.network.sendTo(new PacketOpenHudConfig(), player);
+                sender.addChatMessage(new ChatComponentTranslation("ezminer.command.hud.config.open"));
                 return;
             }
             if (args.length != 4 || !args[1].equalsIgnoreCase("pos")) {
@@ -271,6 +283,7 @@ public class ReloadConfigCommand extends CommandBase {
         sender.addChatMessage(new ChatComponentTranslation("ezminer.command.usage.reloadclientconfig"));
         sender.addChatMessage(new ChatComponentTranslation("ezminer.command.usage.active_mode"));
         sender.addChatMessage(new ChatComponentTranslation("ezminer.command.usage.hud_pos"));
+        sender.addChatMessage(new ChatComponentTranslation("ezminer.command.usage.hud_config"));
         sender.addChatMessage(new ChatComponentTranslation("ezminer.command.addserverowner.usage"));
         sender.addChatMessage(new ChatComponentTranslation("ezminer.command.removeserverowner.usage"));
         sender.addChatMessage(new ChatComponentTranslation("ezminer.command.listserverowner.usage"));
@@ -283,5 +296,6 @@ public class ReloadConfigCommand extends CommandBase {
 
     private static void sendHudPosUsage(ICommandSender sender) {
         sender.addChatMessage(new ChatComponentTranslation("ezminer.command.hud.pos.usage"));
+        sender.addChatMessage(new ChatComponentTranslation("ezminer.command.usage.hud_config"));
     }
 }

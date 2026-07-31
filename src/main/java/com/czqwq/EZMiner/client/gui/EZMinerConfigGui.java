@@ -74,6 +74,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_SMART_TOOL_SWITCH_FULL_INVENTORY = 39;
     private static final int BTN_LOG_FUZZY_ENABLED = 40;
     private static final int BTN_SERVER_LOG_FUZZY_ENABLED = 41;
+    private static final int BTN_OPEN_HUD_CONFIG = 42;
     private static final int BTN_CLIENT_SYNC_BASE = 100;
 
     // ── Layout constants ──────────────────────────────────────────────────────
@@ -389,15 +390,23 @@ public class EZMinerConfigGui extends GuiScreen {
                 BTN_CLIENT_RELOAD,
                 guiLeft + 6,
                 guiTop + actionBtnY,
-                134,
+                88,
                 20,
                 I18n.format("ezminer.gui.apply")));
         buttonList.add(
             new GuiButton(
-                BTN_CLIENT_SAVE,
-                guiLeft + 150,
+                BTN_OPEN_HUD_CONFIG,
+                guiLeft + 100,
                 guiTop + actionBtnY,
-                134,
+                90,
+                20,
+                I18n.format("ezminer.gui.openHudConfig")));
+        buttonList.add(
+            new GuiButton(
+                BTN_CLIENT_SAVE,
+                guiLeft + 196,
+                guiTop + actionBtnY,
+                88,
                 20,
                 I18n.format("ezminer.gui.saveAndExit")));
 
@@ -732,7 +741,8 @@ public class EZMinerConfigGui extends GuiScreen {
                 btnHudAnimStyle.displayString = hudAnimStyleLabel();
                 break;
             case BTN_RENDER_STYLE:
-                Config.renderStyle = 1 - Config.renderStyle;
+                // Cycle: 0→1→2→3→4→0 …
+                Config.renderStyle = (Config.renderStyle + 1) % 5;
                 btnRenderStyle.displayString = renderStyleLabel();
                 break;
 
@@ -771,6 +781,12 @@ public class EZMinerConfigGui extends GuiScreen {
                     Config.logFuzzyEnabled);
                 break;
 
+            case BTN_OPEN_HUD_CONFIG:
+                // Open the HUD drag-to-reposition overlay. The config GUI stays
+                // open in the background so the player can see both the current
+                // config values and the live HUD position at the same time.
+                HudConfigGui.open();
+                break;
             case BTN_CLIENT_RELOAD:
                 applyAndSaveClientConfig();
                 break;
@@ -1685,7 +1701,8 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_SMART_TOOL_SWITCH_DURABILITY_SCORE
                 || btn.id == BTN_SMART_TOOL_SWITCH_FULL_INVENTORY
                 || btn.id == BTN_LOG_FUZZY_ENABLED;
-            boolean isClientAction = btn.id == BTN_CLIENT_RELOAD || btn.id == BTN_CLIENT_SAVE;
+            boolean isClientAction = btn.id == BTN_CLIENT_RELOAD || btn.id == BTN_CLIENT_SAVE
+                || btn.id == BTN_OPEN_HUD_CONFIG;
             boolean isServerContent = btn.id == BTN_SERVER_DROP_TO_PLAYER || btn.id == BTN_SERVER_DROP_IMMEDIATELY
                 || btn.id == BTN_SERVER_USE_PREVIEW
                 || btn.id == BTN_SERVER_ENABLE_CACHED_CHAIN
@@ -1957,9 +1974,25 @@ public class EZMinerConfigGui extends GuiScreen {
     }
 
     private static String renderStyleLabel() {
-        String style = Config.renderStyle == 0 ? I18n.format("ezminer.config.renderStyle.native")
-            : I18n.format("ezminer.config.renderStyle.modern");
-        return firstLine(I18n.format("ezminer.config.renderStyle")) + ": §e" + style + "§r";
+        final String key;
+        switch (Config.renderStyle) {
+            case 0:
+                key = "ezminer.config.renderStyle.native";
+                break;
+            case 1:
+                key = "ezminer.config.renderStyle.modern";
+                break;
+            case 2:
+                key = "ezminer.config.renderStyle.rainbow";
+                break;
+            case 3:
+                key = "ezminer.config.renderStyle.gradient";
+                break;
+            default: // 4 = Off (and any future values fall back to Off)
+                key = "ezminer.config.renderStyle.off";
+                break;
+        }
+        return firstLine(I18n.format("ezminer.config.renderStyle")) + ": §e" + I18n.format(key) + "§r";
     }
 
     private String xpDropModeLabel() {

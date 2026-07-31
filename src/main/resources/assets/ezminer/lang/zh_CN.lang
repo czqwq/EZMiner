@@ -8,6 +8,7 @@ ezminer.hud.minesweeper.ready=探测就绪
 
 key.ezminer.chainKey=连锁键
 key.ezminer.modeSwitch=模式切换
+key.ezminer.hudConfig=打开HUD设置
 key.categories.ezminer=EZMiner
 
 ezminer.mode.blast=爆破模式
@@ -76,6 +77,7 @@ ezminer.gui.section.options=选项
 ezminer.gui.tab.client=§a客户端设置§r
 ezminer.gui.tab.server=§c服务端设置 §7（OP）§r
 ezminer.gui.apply=§e应用§r
+ezminer.gui.openHudConfig=§bHUD位置§r
 ezminer.gui.saveAndExit=§a保存并退出§r
 ezminer.gui.reload.server=§6重载服务端配置§r
 ezminer.gui.save=§a保存并应用§r
@@ -97,6 +99,10 @@ ezminer.command.active_mode.usage.0=§e/EZMiner active_mode 0§r - 按住：按�
 ezminer.command.active_mode.usage.1=§e/EZMiner active_mode 1§r - 切换：按下激活连锁，再按一次停止
 ezminer.command.hud.pos.usage=§e/EZMiner hud pos <x> <y>§r - 设置HUD位置（左上角为原点）
 ezminer.command.hud.pos.set=EZMiner: HUD位置已设置为 x=%s, y=%s。
+ezminer.command.usage.hud_config=§e/EZMiner hud config§r - 打开HUD拖拽定位界面
+ezminer.command.hud.config.open=EZMiner: HUD拖拽界面已打开。拖动红色手柄来重新定位，按Esc关闭。
+ezminer.command.hud.config.player_only=§c此命令只能由玩家使用。
+ezminer.hud.config.dragTip=拖动我
 ezminer.command.addserverowner.usage=§e/EZMiner addserverowner <玩家名>§r - 添加玩家到服务端配置白名单（仅控制台/单人房主）
 ezminer.command.addserverowner.success=已将玩家 %s 添加到服务端配置白名单。
 ezminer.command.addserverowner.already=玩家 %s 已在白名单中。
@@ -118,6 +124,9 @@ ezminer.message.special.sudoku.filled=EZMiner: 数独单元格 (%s, %s) 已填�
 ezminer.config.renderStyle=预览渲染风格
 ezminer.config.renderStyle.native=原生
 ezminer.config.renderStyle.modern=现代
+ezminer.config.renderStyle.rainbow=现代(彩虹)
+ezminer.config.renderStyle.gradient=现代(渐变)
+ezminer.config.renderStyle.off=关
 ezminer.config.blockScrollOnChainKey=按住连锁键时\n禁止滚轮切换物品栏
 
 key.ezminer.smartToolSwitch=智能工具切换

@@ -21,6 +21,7 @@ public class NetworkMain {
         network.registerMessage(PacketMinerConfig.Handler.class, PacketMinerConfig.class, packetId++, Side.SERVER);
         network.registerMessage(PacketMinerConfig.Handler.class, PacketMinerConfig.class, packetId++, Side.CLIENT);
         network.registerMessage(PacketHudPos.Handler.class, PacketHudPos.class, packetId++, Side.CLIENT);
+        network.registerMessage(PacketOpenHudConfig.Handler.class, PacketOpenHudConfig.class, packetId++, Side.CLIENT);
         network.registerMessage(PacketServerConfig.Handler.class, PacketServerConfig.class, packetId++, Side.CLIENT);
         network.registerMessage(
             PacketReloadClientConfig.Handler.class,

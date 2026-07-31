@@ -1,5 +1,8 @@
 package com.czqwq.EZMiner.client.render;
 
+import java.util.List;
+
+import org.joml.Vector3i;
 import org.lwjgl.opengl.GL11;
 
 import cpw.mods.fml.relauncher.Side;
@@ -20,7 +23,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 public class ModernBlockOutlineRenderer implements BlockOutlineRenderStrategy {
 
     @Override
-    public void render(RenderCache cache, int indexCount) {
+    public void render(RenderCache cache, int indexCount, List<Vector3i> positions) {
         if (indexCount <= 0) return;
 
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
