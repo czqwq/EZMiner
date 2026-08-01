@@ -63,11 +63,11 @@ public abstract class MixinItemInWorldManager implements IEZMinerItemInWorldMana
         int meta = theWorld.getBlockMetadata(x, y, z);
 
         // ── Vanilla shear hook: shears on IShearable blocks (leaves/grass/vines)
-        // drop the block item itself, exactly like the trigger-block break. Cheap:
-        // a single IShearable instanceof short-circuits for non-shearable blocks. ──
-        if (ShearsHarvestBridge.fireIfShears(thisPlayerMP, x, y, z, block)) {
-            return true;
-        }
+        // drop the block item itself, injected into the drop collector via
+        // HarvestDropsEvent. Cheap: a single IShearable instanceof short-circuits
+        // for non-shearable blocks. The block is not consumed — we continue with
+        // the normal removal below (getDrops may still add saplings etc.). ──
+        ShearsHarvestBridge.fireIfShears(thisPlayerMP, x, y, z, block);
 
         // ── GT5 tool durability pre-check: skip blocks that would break the tool ──
         if (!isCreative() && !GT5ToolDurabilityBridge.hasEnoughDurability(thisPlayerMP, block, theWorld, x, y, z)) {

@@ -135,12 +135,11 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
                 }
 
                 // ── Vanilla shear hook: shears on leaves/grass/vines drop the block
-                // item itself, mirroring the trigger-block break. Cheap: the
-                // IShearable instanceof short-circuits for non-shearable blocks. ──
-                if (ShearsHarvestBridge.fireIfShears(player, x, y, z, block)) {
-                    harvested++;
-                    continue;
-                }
+                // item itself, injected into the drop collector via HarvestDropsEvent.
+                // Cheap: the IShearable instanceof short-circuits for non-shearable
+                // blocks. The block is not consumed — continue with the normal
+                // removal below (getDrops may still add saplings etc.). ──
+                ShearsHarvestBridge.fireIfShears(player, x, y, z, block);
 
                 boolean canHarvest = block.canHarvestBlock(player, meta)
                     || WitcheryVampireBridge.canHarvestWithBareHands(player);

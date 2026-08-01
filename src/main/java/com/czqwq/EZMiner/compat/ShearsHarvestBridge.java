@@ -1,13 +1,22 @@
 package com.czqwq.EZMiner.compat;
 
+import java.util.ArrayList;
+
 import net.minecraft.block.Block;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemShears;
 import net.minecraft.item.ItemStack;
+import net.minecraft.stats.StatList;
+import net.minecraft.world.World;
 import net.minecraftforge.common.IShearable;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.BlockEvent;
 
 /**
- * Replays the vanilla shear-drop hook for EZMiner's fast harvest paths.
+ * Replays the vanilla shear-drop logic for EZMiner's fast harvest paths.
  *
  * <p>
  * Vanilla {@code ItemInWorldManager.tryHarvestBlock} fires
@@ -33,6 +42,17 @@ import net.minecraftforge.common.IShearable;
  * </ol>
  *
  * <p>
+ * Unlike the vanilla hook, the shear drops are <em>not</em> spawned directly as
+ * {@code EntityItem}s — {@code ItemShears.onBlockStartBreak} bypasses
+ * {@code HarvestDropsEvent}, so EZMiner's {@code ChainDropCollector} (which
+ * listens on that event) never sees them and every leaf lands at its own
+ * position. Instead this bridge calls {@code IShearable.onSheared} itself and
+ * posts a {@code HarvestDropsEvent} carrying the harvester, so the drops flow
+ * into the collector like every other chain drop. When no listener collects
+ * them (e.g. Bandit is loaded and EZMiner yields), they fall back to vanilla
+ * entity spawning.
+ *
+ * <p>
  * TiC tools are deliberately excluded: {@link TinkersConstructLevelingBridge}
  * replays their hooks instead, since their {@code onBlockStartBreak} AOE
  * overrides would recursively break extra blocks mid-chain. Excluding them here
@@ -43,8 +63,13 @@ public final class ShearsHarvestBridge {
     private ShearsHarvestBridge() {}
 
     /**
-     * Fires {@code Item.onBlockStartBreak} for the held shears on an
-     * {@code IShearable} block, mirroring the vanilla trigger-block path.
+     * Generates the shear drops for the held shears on an {@code IShearable}
+     * block and injects them into the drop collection pipeline, mirroring the
+     * vanilla trigger-block break.
+     *
+     * <p>
+     * The block is <em>not</em> consumed — the caller must continue with its
+     * normal removal / tool damage / drop flow.
      *
      * @param player the mining player (server side)
      * @param x      block x
@@ -52,17 +77,63 @@ public final class ShearsHarvestBridge {
      * @param z      block z
      * @param block  the resolved block at (x, y, z) — the caller already fetched
      *               it, so no extra world query happens
-     * @return {@code true} if the hook consumed the block (the caller must skip
-     *         its own tool damage / removal / drops and treat the block as
-     *         harvested), {@code false} to continue with the normal fast path
      */
-    public static boolean fireIfShears(EntityPlayerMP player, int x, int y, int z, Block block) {
-        if (!(block instanceof IShearable)) return false;
+    public static void fireIfShears(EntityPlayerMP player, int x, int y, int z, Block block) {
+        if (!(block instanceof IShearable)) return;
         ItemStack stack = player.getCurrentEquippedItem();
         // Mirrors ToolEligibility.isShears' primary branch (client package — not
         // imported here to keep server-side chain code layering clean).
-        if (stack == null || !(stack.getItem() instanceof ItemShears)) return false;
-        return stack.getItem()
-            .onBlockStartBreak(stack, x, y, z, player);
+        if (stack == null || !(stack.getItem() instanceof ItemShears)) return;
+        World world = player.worldObj;
+        if (world == null) return;
+
+        IShearable target = (IShearable) block;
+        if (!target.isShearable(stack, world, x, y, z)) return;
+
+        // Same drop source as vanilla ItemShears.onBlockStartBreak: fortune feeds
+        // into IShearable.onSheared (e.g. more leaves per block).
+        int fortune = EnchantmentHelper.getEnchantmentLevel(Enchantment.fortune.effectId, stack);
+        ArrayList<ItemStack> drops = target.onSheared(stack, world, x, y, z, fortune);
+
+        if (!drops.isEmpty()) {
+            // Inject into the drop pipeline via HarvestDropsEvent (harvester set):
+            // Manager.onHarvestDrops collects event.drops into the ChainDropCollector
+            // during an active chain and clears the list. What no listener collects
+            // (e.g. Bandit yield) is spawned as entities below, like vanilla would.
+            BlockEvent.HarvestDropsEvent event = new BlockEvent.HarvestDropsEvent(
+                x,
+                y,
+                z,
+                world,
+                block,
+                world.getBlockMetadata(x, y, z),
+                fortune,
+                1.0F,
+                drops,
+                player,
+                false);
+            MinecraftForge.EVENT_BUS.post(event);
+            spawnRemainingDrops(world, x, y, z, drops);
+        }
+
+        // Same tool wear and block stat as vanilla ItemShears.onBlockStartBreak.
+        // The fast path's later onBlockDestroyed call skips damage for shearable
+        // blocks (GTNH ItemShears), so the tool loses exactly 1 durability.
+        stack.damageItem(1, player);
+        player.addStat(StatList.mineBlockStatArray[Block.getIdFromBlock(block)], 1);
+    }
+
+    /** Spawns drops that no listener collected, mirroring vanilla entity spawns. */
+    private static void spawnRemainingDrops(World world, int x, int y, int z, ArrayList<ItemStack> drops) {
+        for (ItemStack drop : drops) {
+            if (drop == null || drop.stackSize <= 0) continue;
+            float f = 0.7F;
+            double d = (double) (world.rand.nextFloat() * f) + (1.0F - f) * 0.5D;
+            double d1 = (double) (world.rand.nextFloat() * f) + (1.0F - f) * 0.5D;
+            double d2 = (double) (world.rand.nextFloat() * f) + (1.0F - f) * 0.5D;
+            EntityItem entityitem = new EntityItem(world, (double) x + d, (double) y + d1, (double) z + d2, drop);
+            entityitem.delayBeforeCanPickup = 10;
+            world.spawnEntityInWorld(entityitem);
+        }
     }
 }
