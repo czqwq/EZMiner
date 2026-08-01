@@ -15,6 +15,7 @@ import net.minecraftforge.event.world.BlockEvent;
 import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.compat.GT5ToolDurabilityBridge;
+import com.czqwq.EZMiner.compat.ShearsHarvestBridge;
 import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
 import com.czqwq.EZMiner.mixin.interfaces.IEZMinerItemInWorldManager;
@@ -129,6 +130,14 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
                 // XP, autosmelt, …). true = a hook consumed the block itself — mirror
                 // vanilla and skip our own harvest steps. ──
                 if (TinkersConstructLevelingBridge.fireBeforeBlockBreak(player, x, y, z)) {
+                    harvested++;
+                    continue;
+                }
+
+                // ── Vanilla shear hook: shears on leaves/grass/vines drop the block
+                // item itself, mirroring the trigger-block break. Cheap: the
+                // IShearable instanceof short-circuits for non-shearable blocks. ──
+                if (ShearsHarvestBridge.fireIfShears(player, x, y, z, block)) {
                     harvested++;
                     continue;
                 }

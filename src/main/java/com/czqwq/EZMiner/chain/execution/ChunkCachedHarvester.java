@@ -12,6 +12,7 @@ import net.minecraftforge.event.world.BlockEvent;
 import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.compat.GT5ToolDurabilityBridge;
+import com.czqwq.EZMiner.compat.ShearsHarvestBridge;
 import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
 
@@ -29,7 +30,7 @@ import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
  *
  * <p>
  * <strong>Usage pattern:</strong>
- * 
+ *
  * <pre>
  * {@code
  * ChunkCachedHarvester harvester = new ChunkCachedHarvester();
@@ -122,6 +123,13 @@ public class ChunkCachedHarvester {
         // hook consumed the block itself (autosmelt: set to air + smelted drop +
         // tool damage) — mirror vanilla and skip our own harvest steps. ──
         if (TinkersConstructLevelingBridge.fireBeforeBlockBreak(player, x, y, z)) {
+            return true;
+        }
+
+        // ── Vanilla shear hook: shears on leaves/grass/vines drop the block item
+        // itself, mirroring the trigger-block break. Cheap: the IShearable
+        // instanceof short-circuits for non-shearable blocks. ──
+        if (ShearsHarvestBridge.fireIfShears(player, x, y, z, block)) {
             return true;
         }
 

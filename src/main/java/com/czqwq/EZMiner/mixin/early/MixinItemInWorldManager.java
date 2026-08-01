@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.Unique;
 
 import com.czqwq.EZMiner.chain.execution.XPDropHandler;
 import com.czqwq.EZMiner.compat.GT5ToolDurabilityBridge;
+import com.czqwq.EZMiner.compat.ShearsHarvestBridge;
 import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 import com.czqwq.EZMiner.mixin.interfaces.IEZMinerItemInWorldManager;
 
@@ -60,6 +61,13 @@ public abstract class MixinItemInWorldManager implements IEZMinerItemInWorldMana
         // ── Resolve block info early for GT5 durability check ──
         Block block = theWorld.getBlock(x, y, z);
         int meta = theWorld.getBlockMetadata(x, y, z);
+
+        // ── Vanilla shear hook: shears on IShearable blocks (leaves/grass/vines)
+        // drop the block item itself, exactly like the trigger-block break. Cheap:
+        // a single IShearable instanceof short-circuits for non-shearable blocks. ──
+        if (ShearsHarvestBridge.fireIfShears(thisPlayerMP, x, y, z, block)) {
+            return true;
+        }
 
         // ── GT5 tool durability pre-check: skip blocks that would break the tool ──
         if (!isCreative() && !GT5ToolDurabilityBridge.hasEnoughDurability(thisPlayerMP, block, theWorld, x, y, z)) {

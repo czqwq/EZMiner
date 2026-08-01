@@ -1,0 +1,58 @@
+name: 'Suggest a Change (建议修改)'
+description: Suggest a Change to existing content. (对现有内容提出修改建议。)
+labels:
+  - "Request-Change"
+body:
+  - type: markdown
+    attributes:
+      value: 'Examples of this category include: changing an existing feature, changing a recipe, nerfing an item, buffing an item. (此类示例包括:修改现有功能、修改合成配方、削弱或加强某个物品。)
+
+    Please note that if you want to add a new feature, use the Feature Request template instead. (请注意,如果你想添加新功能,请改用"请求新功能"模板。)'
+  - type: input
+    id: version
+    attributes:
+      label: Your Pack Version (你的整合包版本)
+      description: What version of the pack are you playing? If you're using an ancient version maybe first try updating the pack. We change things all the time, so your suggested change may already be applied in the latest version. There are also usually Dev releases inbetween Official releases that may not show up on other platforms. (你玩的是哪个版本的整合包?如果版本很旧,建议先尝试更新整合包。我们一直在修改内容,所以你的建议可能已经在最新版本中生效。此外,官方版本之间通常还有 Dev 版本,其他平台可能不会显示。)
+      placeholder: "Example: 2.1.1.0 (示例: 2.1.1.0)"
+    validations:
+      required: true
+  - type: input
+    id: mod_version
+    attributes:
+      label: Mod Version (模组版本)
+      description: What version of the mod are you using? Give an actual version number or jar name, not "latest". Speaking of which, if you are not on the latest jar, try updating first. (你正在使用哪个版本的模组?请给出实际的版本号或 jar 文件名,而不是"latest"。另外,如果你没有使用最新版 jar,请先尝试更新。)
+      placeholder: "Example: 3.4 (示例: 3.4)"
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: Your Suggestion (你的建议)
+      description: What do you want to change? Please describe it briefly in one or two sentences. (你想修改什么?请用一两句话简要描述。)
+      placeholder: "Example: Buff the chain mining speed. (示例: 提升连锁挖矿的速度。)"
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Your Goal (你的目标)
+      description: Why is this change needed? (为什么需要这个修改?)
+      placeholder: "Example: The current speed is too slow for large tunnels. (示例: 对于大型隧道来说当前速度太慢了。)"
+    validations:
+      required: true
+  - type: checkboxes
+    id: final
+    attributes:
+      label: Final Checklist (最终确认清单)
+      description: Please mark them so we know you are serious with your suggestion. (请勾选以下选项,以便我们知道你是认真提出建议的。)
+      options:
+        - label: "I have searched this issue tracker and there is nothing similar already. Posting on a closed issue saying *I like this change please reconsider it* will prompt us to investigate and reopen it once we confirm your report. (我已经搜索过问题跟踪器,没有类似的已存在请求。如果在已关闭的问题下回复*我喜欢这个修改,请重新考虑*,我们会在确认你的报告后进行调查并重新打开它。)"
+          required: true
+        - label: "I believe there is nothing similar in the pack already, or the existing solution isn't good enough. (我认为整合包中还没有类似的内容,或者现有的解决方案不够好。)"
+          required: true
+        - label: "I understand this change request may not attract enough attention and thus not be implemented. (我理解这个修改请求可能得不到足够的关注,因此可能不会被实现。)"
+          required: true
+        - label: "I understand this change request may be rejected due to other community members thinking it's inappropriate. (我理解这个修改请求可能会因为其他社区成员认为不合适而被拒绝。)"
+          required: true
+        - label: "I believe this change would make the pack better. (我相信这个修改会让整合包变得更好。)"
+          required: true

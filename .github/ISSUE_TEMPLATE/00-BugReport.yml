@@ -1,5 +1,5 @@
-name: Report Bug
-description: "Report a crash, mod conflict, or any other type of bug."
+name: Report Bug (报告 Bug)
+description: "Report a crash, mod conflict, or any other type of bug. (报告崩溃、模组冲突或任何其他类型的 Bug。)"
 labels:
   - "bug"
 assignees: czqwq
@@ -7,40 +7,40 @@ body:
   - type: input
     id: pack_version
     attributes:
-      label: Your Pack Version
-      description: What version of the pack are you playing? If you're using an ancient version maybe first try updating the pack. We usually fix hundreds of issues per release, so there is a good chance your problem have been fixed already in the latest version. There are also usually Dev releases inbetween Official releases that may not show up on other platforms.
-      placeholder: "Example: 2.1.1.0"
+      label: Your Pack Version (你的整合包版本)
+      description: What version of the pack are you playing? If you're using an ancient version maybe first try updating the pack. We usually fix hundreds of issues per release, so there is a good chance your problem have been fixed already in the latest version. There are also usually Dev releases inbetween Official releases that may not show up on other platforms. (你玩的是哪个版本的整合包?如果版本很旧,建议先尝试更新整合包。我们通常每个版本修复若干个问题,所以你的问题很可能在最新版本中已经修复。此外,官方版本之间通常还有 Dev 版本,其他平台可能不会显示。)
+      placeholder: "Example: 2.1.1.0 (示例: 2.1.1.0)"
     validations:
       required: true
   - type: input
     id: mod_version
     attributes:
-      label: Mod Version
-      description: What version of the mod are you using? Give an actual version number or jar name, not "latest". Speaking of which, if you are not on the latest jar, try updating first.
-      placeholder: "example: 3.4"
+      label: Mod Version (模组版本)
+      description: What version of the mod are you using? Give an actual version number or jar name, not "latest". Speaking of which, if you are not on the latest jar, try updating first. (你正在使用哪个版本的模组?请给出实际的版本号或 jar 文件名,而不是"latest"。另外,如果你没有使用最新版 jar,请先尝试更新。)
+      placeholder: "example: 3.4 (示例: 3.4)"
     validations:
       required: true
   - type: textarea
     id: whatistheissue
     attributes:
-      label: Describe the Issue
-      description: Give a description of the issue, steps to reproduce the issue, as well as what you think the expected result should be.
-      placeholder: "Example: 1 Foo is crafted but no Bar is consumed. 1 Bar should be consumed."
+      label: Describe the Issue (描述问题)
+      description: Give a description of the issue, steps to reproduce the issue, as well as what you think the expected result should be. (请描述问题内容、复现步骤,以及你认为的预期结果。)
+      placeholder: "Example: 1 Foo is crafted but no Bar is consumed. 1 Bar should be consumed. (示例: 合成了 1 个 Foo,但没有消耗 Bar。应该消耗 1 个 Bar。)"
     validations:
       required: true
   - type: textarea
     id: conflict
     attributes:
-      label: Conflicting Mods
-      description: If this is a mod conflict, list the mods you think are causing the issue.
-      placeholder: "Example: Causes <insert feature> to break only if <insert modname> is installed"
+      label: Conflicting Mods (冲突模组)
+      description: If this is a mod conflict, list the mods you think are causing the issue. (如果是模组冲突,请列出你认为导致问题的模组。)
+      placeholder: "Example: Causes <insert feature> to break only if <insert modname> is installed (示例: 只有安装了 <模组名> 时,<功能> 才会出问题)"
     validations:
       required: false
   - type: dropdown
     id: java
     attributes:
-      label: Java Version
-      description: What Java version are you using? It's worth mentioning that if you play on Java9+ you should try update to latest minor release (e.g. prefer Java 17.0.6 over 17.0.2) of that version.
+      label: Java Version (Java 版本)
+      description: What Java version are you using? It's worth mentioning that if you play on Java9+ you should try update to latest minor release (e.g. prefer Java 17.0.6 over 17.0.2) of that version. (你使用的是哪个 Java 版本?值得一提的是,如果你在 Java9+ 上游玩,建议更新到该版本的最新小版本,例如优先选择 Java 17.0.6 而不是 17.0.2。)
       options:
         - Java 8
         - Java 9
@@ -54,26 +54,26 @@ body:
         - Java 24
         - Java 25
         - Java 26
-        - Other versions in between
+        - Other versions in between (其他介于两者之间的版本)
     validations:
       required: true
   - type: textarea
     id: report
     attributes:
-      label: Crash Report / Log
-      description: "If no crash report is created, attach `logs/fml-client-latest.log` or `logs/fml-server-latest.log`, depending on if it's a dedicated server crash or a client crash. You can also type in additional info that you consider important."
-      placeholder: "Example: pastebin/something OR submit the file to github by dragging it to this textbox."
+      label: Crash Report / Log (崩溃报告 / 日志)
+      description: "If no crash report is created, attach `logs/fml-client-latest.log` or `logs/fml-server-latest.log`, depending on if it's a dedicated server crash or a client crash. You can also type in additional info that you consider important. (如果没有生成崩溃报告,请根据是专用服务器崩溃还是客户端崩溃,附上 `logs/fml-client-latest.log` 或 `logs/fml-server-latest.log`。你也可以补充你认为重要的其他信息。)"
+      placeholder: "Example: pastebin/something OR submit the file to github by dragging it to this textbox. (示例: pastebin 链接,或将文件拖拽到输入框中上传到 GitHub。)"
     validations:
       required: true
   - type: checkboxes
     id: final
     attributes:
-      label: Final Checklist
-      description: Please mark them so we can better handle this report.
+      label: Final Checklist (最终确认清单)
+      description: Please mark them so we can better handle this report. (请勾选以下选项,以便我们更好地处理这份报告。)
       options:
-        - label: "I have searched this issue tracker and there is nothing similar already. Posting on a closed issue saying the crash still exists will prompt us to investigate and reopen it once we confirm your report."
+        - label: "I have searched this issue tracker and there is nothing similar already. Posting on a closed issue saying the crash still exists will prompt us to investigate and reopen it once we confirm your report. (我已经搜索过问题跟踪器,没有类似的已存在报告。如果在已关闭的问题下回复说崩溃仍然存在,我们会在确认你的报告后进行调查并重新打开它。)"
           required: true
-        - label: "I can reproduce this crash consistently by following the exact steps I described above."
+        - label: "I can reproduce this crash consistently by following the exact steps I described above. (我可以按照上述步骤稳定复现这个崩溃。)"
           required: false
-        - label: "I have asked other people and they confirm they also crash by following the exact steps I described above."
+        - label: "I have asked other people and they confirm they also crash by following the exact steps I described above. (我已经询问过其他人,他们确认按上述步骤操作也会崩溃。)"
           required: false

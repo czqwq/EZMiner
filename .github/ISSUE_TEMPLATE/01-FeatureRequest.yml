@@ -1,58 +1,58 @@
-name: 'Request New Feature'
-description: Request a new feature.
+name: 'Request New Feature (请求新功能)'
+description: Request a new feature. (请求一个新功能。)
 labels:
   - "Feature"
 body:
   - type: markdown
     attributes:
-      value: 'Examples of this category include: add a new item,add a new function
+      value: 'Examples of this category include: add a new item, add a new function. (此类示例包括:添加新物品、添加新功能。)
 
-    Please note that if you want to change an existing feature, e.g. think something is too OP, you should use the Suggest a Change template instead.'
+    Please note that if you want to change an existing feature, e.g. think something is too OP, you should use the Suggest a Change template instead. (请注意,如果你想修改现有功能,例如认为某个东西太强,请改用 Suggest a Change 模板。)'
   - type: input
     id: version
     attributes:
-      label: Your Pack Version
-      description: What version of the pack are you playing? If you're using an ancient version maybe first try updating the pack. We add new features all the time, so your feature may already be in the latest version. There are also usually Dev releases inbetween Official releases that may not show up on other platforms.
-      placeholder: "Example: 2.1.1.0"
+      label: Your Pack Version (你的整合包版本)
+      description: What version of the pack are you playing? If you're using an ancient version maybe first try updating the pack. We add new features all the time, so your feature may already be in the latest version. There are also usually Dev releases inbetween Official releases that may not show up on other platforms. (你玩的是哪个版本的整合包?如果版本很旧,建议先尝试更新整合包。我们一直在添加新功能,所以你的功能请求可能已经存在于最新版本中。此外,官方版本之间通常还有 Dev 版本,其他平台可能不会显示。)
+      placeholder: "Example: 2.1.1.0 (示例: 2.1.1.0)"
     validations:
       required: true
   - type: input
     id: mod_version
     attributes:
-      label: Mod Version
-      description: What version of the mod are you using? Give an actual version number or jar name, not "latest". Speaking of which, if you are not on the latest jar, try updating first.
-      placeholder: "Example: 3.4"
+      label: Mod Version (模组版本)
+      description: What version of the mod are you using? Give an actual version number or jar name, not "latest". Speaking of which, if you are not on the latest jar, try updating first. (你正在使用哪个版本的模组?请给出实际的版本号或 jar 文件名,而不是"latest"。另外,如果你没有使用最新版 jar,请先尝试更新。)
+      placeholder: "Example: 3.4 (示例: 3.4)"
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
-      label: Your Proposal
-      description: What do you propose? Please describe it briefly in one or two sentence.
-      placeholder: "Example: Add a new chain function."
+      label: Your Proposal (你的提议)
+      description: What do you propose? Please describe it briefly in one or two sentence. (你想提议什么?请用一两句话简要描述。)
+      placeholder: "Example: Add a new chain function. (示例: 添加一个新的连锁功能。)"
     validations:
       required: true
   - type: textarea
     id: goal
     attributes:
-      label: Your Goal
-      description: Why is this feature needed?
-      placeholder: "Example: Old mode can't fill my heart."
+      label: Your Goal (你的目标)
+      description: Why is this feature needed? (为什么需要这个功能?)
+      placeholder: "Example: Old mode can't fill my heart. (示例: 旧的模式无法填满我的心。)"
     validations:
       required: true
   - type: checkboxes
     id: final
     attributes:
-      label: Final Checklist
-      description: Please mark them so we know you are serious with your suggestion.
+      label: Final Checklist (最终确认清单)
+      description: Please mark them so we know you are serious with your suggestion. (请勾选以下选项,以便我们知道你是认真提出建议的。)
       options:
-        - label: "I have searched this issue tracker and there is nothing similar already. Posting on a closed issue saying *I like this feature please reconsider adding it* will prompt us to investigate and reopen it once we confirm your report."
+        - label: "I have searched this issue tracker and there is nothing similar already. Posting on a closed issue saying *I like this feature please reconsider adding it* will prompt us to investigate and reopen it once we confirm your report. (我已经搜索过问题跟踪器,没有类似的已存在请求。如果在已关闭的问题下回复*我喜欢这个功能,请重新考虑添加它*,我们会在确认你的报告后进行调查并重新打开它。)"
           required: true
-        - label: "I believe there is nothing similar in the pack already, or the existing solution isn't good enough."
+        - label: "I believe there is nothing similar in the pack already, or the existing solution isn't good enough. (我认为整合包中还没有类似的功能,或者现有的解决方案不够好。)"
           required: true
-        - label: "I understand this change request may not attract enough attention and thus not be implemented."
+        - label: "I understand this change request may not attract enough attention and thus not be implemented. (我理解这个修改请求可能得不到足够的关注,因此可能不会被实现。)"
           required: true
-        - label: "I understand this change request may be rejected due to other community members thinking it's inappropriate."
+        - label: "I understand this change request may be rejected due to other community members thinking it's inappropriate. (我理解这个修改请求可能会因为其他社区成员认为不合适而被拒绝。)"
           required: true
-        - label: "I believe this feature would make the pack better."
+        - label: "I believe this feature would make the pack better. (我相信这个功能会让整合包变得更好。)"
           required: true
