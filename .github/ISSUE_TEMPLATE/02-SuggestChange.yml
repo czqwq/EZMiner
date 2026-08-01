@@ -1,5 +1,6 @@
 name: 'Suggest a Change (建议修改)'
 description: Suggest a Change to existing content. (对现有内容提出修改建议。)
+assignees: czqwq
 labels:
   - "Request-Change"
 body:
