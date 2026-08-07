@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
+import net.minecraftforge.oredict.OreDictionary;
 
 import org.joml.Vector3i;
 
@@ -241,10 +242,25 @@ public class DeterminingIdentical {
         // EFR – Et Futurum Requiem ores (delegated to compat class)
         if (EtFuturumOreCompat.isOreBlock(block)) return true;
 
-        // Fallback: unlocalized name contains "ore"
+        // ── Fallback 1: OreDictionary "ore*" registration ─────────────────────────────────
+        // Precise — machines are never registered under "ore*". Covers mods whose ore blocks
+        // are plain Block subclasses but register ore dict (e.g. Forestry resources).
+        // Queries every meta (0..15): GTNH's getOreIDs also resolves wildcard registrations
+        // on any query stack, so both wildcard and exact-meta registrations are found.
+        for (int meta = 0; meta < 16; meta++) {
+            for (int oreID : OreDictionary.getOreIDs(new ItemStack(block, 1, meta))) {
+                if (OreDictionary.getOreName(oreID)
+                    .startsWith("ore")) return true;
+            }
+        }
+
+        // ── Fallback 2: "ore" starts a dot-separated name segment ─────────────────────────
+        // e.g. "tile.oreCopper", "tile.forestry.oreApatite". A bare substring check is wrong:
+        // "tile.for.core" (Forestry escritoire/analyzer) contains "ore" only as the "core"
+        // suffix, which made the ore blast mode chain-mine writing desks (写字台).
         String unloc = block.getUnlocalizedName()
             .toLowerCase();
-        if (unloc.contains("ore")) {
+        if (unloc.contains(".ore")) {
             String pkg = block.getClass()
                 .getName();
             if (!reportedOrePackages.contains(pkg)) {
