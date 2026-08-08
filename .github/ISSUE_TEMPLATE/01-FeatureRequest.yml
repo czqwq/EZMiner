@@ -1,5 +1,6 @@
 name: 'Request New Feature (请求新功能)'
 description: Request a new feature. (请求一个新功能。)
+assignees: czqwq
 labels:
   - "Feature"
 body:
