@@ -62,7 +62,7 @@ body:
     attributes:
       label: Crash Report / Log (崩溃报告 / 日志)
       description: "If no crash report is created, attach `logs/fml-client-latest.log` or `logs/fml-server-latest.log`, depending on if it's a dedicated server crash or a client crash. You can also type in additional info that you consider important. (如果没有生成崩溃报告,请根据是专用服务器崩溃还是客户端崩溃,附上 `logs/fml-client-latest.log` 或 `logs/fml-server-latest.log`。你也可以补充你认为重要的其他信息。)"
-      placeholder: "Example: pastebin/something OR submit the file to github by dragging it to this textbox. (示例: pastebin 链接,或将文件拖拽到输入框中上传到 GitHub。)"
+      placeholder: "Example: mclo.gs/something OR submit the file to github by dragging it to this textbox. (示例: mclo.gs 链接,或将文件拖拽到输入框中上传到 GitHub。)"
     validations:
       required: true
   - type: checkboxes

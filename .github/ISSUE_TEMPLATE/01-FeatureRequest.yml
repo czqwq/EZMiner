@@ -49,11 +49,9 @@ body:
       options:
         - label: "I have searched this issue tracker and there is nothing similar already. Posting on a closed issue saying *I like this feature please reconsider adding it* will prompt us to investigate and reopen it once we confirm your report. (我已经搜索过问题跟踪器,没有类似的已存在请求。如果在已关闭的问题下回复*我喜欢这个功能,请重新考虑添加它*,我们会在确认你的报告后进行调查并重新打开它。)"
           required: true
-        - label: "I believe there is nothing similar in the pack already, or the existing solution isn't good enough. (我认为整合包中还没有类似的功能,或者现有的解决方案不够好。)"
+        - label: "I believe there is nothing similar in the mod already, or the existing solution isn't good enough. (我认为模组中还没有类似的功能,或者现有的解决方案不够好。)"
           required: true
         - label: "I understand this change request may not attract enough attention and thus not be implemented. (我理解这个修改请求可能得不到足够的关注,因此可能不会被实现。)"
           required: true
-        - label: "I understand this change request may be rejected due to other community members thinking it's inappropriate. (我理解这个修改请求可能会因为其他社区成员认为不合适而被拒绝。)"
-          required: true
-        - label: "I believe this feature would make the pack better. (我相信这个功能会让整合包变得更好。)"
+        - label: "I believe this feature would make the mod better. (我相信这个功能会让模组变得更好。)"
           required: true
