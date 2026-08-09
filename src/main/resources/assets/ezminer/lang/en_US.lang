@@ -190,3 +190,12 @@ ezminer.config.enableSafeReflection=Safe Reflection\nON: LinkageError-guarded co
 ezminer.config.chainWatchdogTimeoutTicks=Watchdog Timeout (ticks)
 ezminer.config.toolBreakHandoff=Tool Break Handoff\nON: signal client to switch tools before breaking\nOFF: cancel chain (legacy)
 ezminer.config.toolBreakHandoffTimeoutTicks=Tool Switch Timeout (ticks)
+
+# Virtual prospecting (Special mode)
+ezminer.mode.special.prospect=Special: Virtual Prospecting
+ezminer.config.prospectProbeIntervalSeconds=Prospecting Probe Interval (s)
+ezminer.config.prospectMaxScanRadiusChunks=Prospecting Scan Radius (chunks, max 7 -> 15x15 chunks)
+ezminer.gui.section.prospecting=Prospecting
+ezminer.hud.prospect.cooldown=Prospect Cooldown
+ezminer.hud.prospect.ready=Prospect Ready
+ezminer.message.special.prospect.found=EZMiner: Found ore vein %s at (%s, %s), distance=%s blocks

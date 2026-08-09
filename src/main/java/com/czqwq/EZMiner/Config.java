@@ -109,6 +109,20 @@ public class Config {
      */
     public static double sudokuProbeCooldownSeconds = 5.0;
     /**
+     * Interval in seconds between successive chunk probes in Special /
+     * Prospecting mode (while the chain key is held). One chunk per interval.
+     * Minimum: 0.1 s (2 ticks).
+     */
+    public static double prospectProbeIntervalSeconds = 3.0;
+    /**
+     * Maximum spiral scan radius in chunks around the player in Special /
+     * Prospecting mode; past this radius the scan re-centers on the player's
+     * current chunk and continues. Capped at 7 (= 15x15 chunks, the maximum
+     * loaded area at view distance 7) so probed veins are always near the
+     * player. Range: 1-7.
+     */
+    public static int prospectMaxScanRadiusChunks = 7;
+    /**
      * When true, encountering a block that the player's current tool cannot harvest
      * will immediately stop the entire chain operation (instead of silently skipping
      * it). This prevents accidental destruction of blocks that require a higher-tier
@@ -752,6 +766,29 @@ public class Config {
                 0.1,
                 3600.0)
             .getDouble();
+        prospectProbeIntervalSeconds = serverConfiguration
+            .get(
+                "prospectProbeIntervalSeconds",
+                Configuration.CATEGORY_GENERAL,
+                3.0,
+                "Interval in seconds between successive chunk probes in Special / Prospecting mode "
+                    + "(while the chain key is held). One chunk is probed per interval. Minimum: 0.1. Default: 3.",
+                0.1,
+                3600.0)
+            .getDouble();
+        prospectMaxScanRadiusChunks = Math.max(
+            1,
+            Math.min(
+                7,
+                serverConfiguration.getInt(
+                    "prospectMaxScanRadiusChunks",
+                    Configuration.CATEGORY_GENERAL,
+                    7,
+                    1,
+                    7,
+                    "Maximum spiral scan radius in chunks around the player in Special / Prospecting mode; "
+                        + "capped at 7 (= 15x15 chunks, the loaded area at view distance 7) so probed veins "
+                        + "are always near the player. Range: 1-7. Default: 7.")));
         stopOnUnbreakable = serverConfiguration.getBoolean(
             "stopOnUnbreakable",
             Configuration.CATEGORY_GENERAL,
@@ -872,13 +909,16 @@ public class Config {
         boolean syncedSuppressHodgepodgeWarnings, boolean syncedEnableChainChunkLoading,
         boolean syncedUseChunkCachedHarvest, boolean syncedCrazyMode, int syncedChainIdleTimeoutSeconds,
         int syncedChainIdleCountdownSeconds, boolean syncedStopOnUnbreakable, int syncedChainCooldownTicks,
-        int syncedXpDropMode, boolean syncedMergeXPOrbs, boolean syncedFireBreakEvent) {
+        int syncedXpDropMode, boolean syncedMergeXPOrbs, boolean syncedFireBreakEvent,
+        double syncedProspectProbeInterval, int syncedProspectMaxScanRadius) {
         cachedBreakPerTick = Math.max(1, Math.min(1024, syncedCachedBreakPerTick));
         dropImmediately = syncedDropImmediately;
         addExhaustion = syncedAddExhaustion;
         dropToPlayer = syncedDropToPlayer;
         minesweeperProbeCooldownSeconds = Math.max(0.1, syncedMinesweeperCooldown);
         sudokuProbeCooldownSeconds = Math.max(0.1, syncedSudokuCooldown);
+        prospectProbeIntervalSeconds = Math.max(0.1, syncedProspectProbeInterval);
+        prospectMaxScanRadiusChunks = Math.max(1, Math.min(7, syncedProspectMaxScanRadius));
         enableCachedChain = syncedEnableCachedChain;
         searchWorkerThreads = Math.max(0, Math.min(8, syncedSearchWorkerThreads));
         suppressHodgepodgeWarnings = syncedSuppressHodgepodgeWarnings;
@@ -1491,6 +1531,25 @@ public class Config {
                 0.1,
                 3600.0)
             .set(sudokuProbeCooldownSeconds);
+        serverConfiguration
+            .get(
+                "prospectProbeIntervalSeconds",
+                Configuration.CATEGORY_GENERAL,
+                3.0,
+                "Interval in seconds between successive chunk probes in Special / Prospecting mode.",
+                0.1,
+                3600.0)
+            .set(prospectProbeIntervalSeconds);
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "prospectMaxScanRadiusChunks",
+                7,
+                "Maximum spiral scan radius in chunks around the player in Special / Prospecting mode "
+                    + "(capped at 7 = 15x15 chunks).",
+                1,
+                7)
+            .set(prospectMaxScanRadiusChunks);
         serverConfiguration
             .get(
                 Configuration.CATEGORY_GENERAL,

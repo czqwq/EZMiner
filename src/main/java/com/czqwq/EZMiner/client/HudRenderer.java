@@ -9,6 +9,7 @@ import net.minecraftforge.common.MinecraftForge;
 import com.czqwq.EZMiner.ClientProxy;
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.chain.execution.VisualProspectingBridge;
 import com.czqwq.EZMiner.core.MinerModeState;
 import com.czqwq.EZMiner.utils.TimeFormatUtils;
 
@@ -193,6 +194,27 @@ public class HudRenderer {
             } else {
                 fr.drawStringWithShadow(
                     "\u00a77  \u2514\u2500 \u00a7a" + I18n.format("ezminer.hud.minesweeper.ready"),
+                    x,
+                    y,
+                    0xFFFFFF);
+            }
+        }
+        // Prospecting mode: show probe cooldown countdown (hidden when VP is unavailable \u2014
+        // the mode itself is not selectable then).
+        if (modeState.mainMode == 2 && modeState.specialMode == 3 && VisualProspectingBridge.isVpAvailable()) {
+            y += lineH;
+            long remainingMs = state.prospectNextProbeClientMs - System.currentTimeMillis();
+            if (remainingMs > 0) {
+                fr.drawStringWithShadow(
+                    "\u00a77  \u2514\u2500 " + I18n.format("ezminer.hud.prospect.cooldown")
+                        + ": \u00a7e"
+                        + TimeFormatUtils.formatElapsed(remainingMs),
+                    x,
+                    y,
+                    0xFFFFFF);
+            } else {
+                fr.drawStringWithShadow(
+                    "\u00a77  \u2514\u2500 \u00a7a" + I18n.format("ezminer.hud.prospect.ready"),
                     x,
                     y,
                     0xFFFFFF);

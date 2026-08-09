@@ -190,3 +190,12 @@ ezminer.config.enableSafeReflection=安全反射\n开: 带LinkageError防护的�
 ezminer.config.chainWatchdogTimeoutTicks=看门狗超时（tick）
 ezminer.config.toolBreakHandoff=工具损坏交接\n开: 工具即将损坏时通知客户端切换\n关: 取消连锁（旧行为）
 ezminer.config.toolBreakHandoffTimeoutTicks=工具切换超时（tick）
+
+# Virtual prospecting (Special mode)
+ezminer.mode.special.prospect=特殊: 虚拟探矿
+ezminer.config.prospectProbeIntervalSeconds=探矿探测间隔（秒）
+ezminer.config.prospectMaxScanRadiusChunks=探矿扫描半径（区块，上限7->15x15区块）
+ezminer.gui.section.prospecting=探矿
+ezminer.hud.prospect.cooldown=探矿冷却
+ezminer.hud.prospect.ready=探测就绪
+ezminer.message.special.prospect.found=EZMiner: 发现矿脉 %s 于 (%s, %s), 距离=%s格

@@ -73,6 +73,9 @@ public class PacketSaveServerConfig implements IMessage {
     public int logBigRadius;
     public int logBlockLimit;
     public boolean logFuzzyEnabled;
+    // Prospecting settings
+    public double prospectProbeIntervalSeconds;
+    public int prospectMaxScanRadiusChunks;
 
     public PacketSaveServerConfig() {}
 
@@ -205,6 +208,8 @@ public class PacketSaveServerConfig implements IMessage {
         logBigRadius = buf.readInt();
         logBlockLimit = buf.readInt();
         logFuzzyEnabled = buf.readBoolean();
+        prospectProbeIntervalSeconds = buf.readDouble();
+        prospectMaxScanRadiusChunks = buf.readInt();
     }
 
     @Override
@@ -254,6 +259,8 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeInt(logBigRadius);
         buf.writeInt(logBlockLimit);
         buf.writeBoolean(logFuzzyEnabled);
+        buf.writeDouble(prospectProbeIntervalSeconds);
+        buf.writeInt(prospectMaxScanRadiusChunks);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -312,6 +319,8 @@ public class PacketSaveServerConfig implements IMessage {
             Config.logBigRadius = Math.max(8, msg.logBigRadius);
             Config.logBlockLimit = Math.max(8, msg.logBlockLimit);
             Config.logFuzzyEnabled = msg.logFuzzyEnabled;
+            Config.prospectProbeIntervalSeconds = Math.max(0.1, msg.prospectProbeIntervalSeconds);
+            Config.prospectMaxScanRadiusChunks = Math.max(1, Math.min(7, msg.prospectMaxScanRadiusChunks));
 
             // Persist to disk
             Config.saveServerConfig();

@@ -143,6 +143,7 @@ public class KeyListener {
         proxy.clientState.clearSudokuFills();
         proxy.clientState.minesweeperNextProbeClientMs = 0L;
         proxy.clientState.sudokuNextProbeClientMs = 0L;
+        proxy.clientState.prospectNextProbeClientMs = 0L;
         proxy.clientState.blockSwapResultCount = 0;
         proxy.clientState.blockSwapResultTimestamp = 0L;
         // Unfreeze preview: clear the frozen wireframe and allow the renderer to start a
@@ -241,6 +242,7 @@ public class KeyListener {
         proxy.clientState.clearSudokuFills();
         proxy.clientState.minesweeperNextProbeClientMs = 0L;
         proxy.clientState.sudokuNextProbeClientMs = 0L;
+        proxy.clientState.prospectNextProbeClientMs = 0L;
         proxy.clientState.blockSwapResultCount = 0;
         proxy.clientState.blockSwapResultTimestamp = 0L;
         // Always unfreeze so no stale wireframe survives across sessions.

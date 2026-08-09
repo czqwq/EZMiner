@@ -1,6 +1,7 @@
 package com.czqwq.EZMiner.core;
 
 import com.czqwq.EZMiner.Config;
+import com.czqwq.EZMiner.chain.execution.VisualProspectingBridge;
 
 /**
  * Tracks the current mining mode for a player (both client and server side).
@@ -27,7 +28,8 @@ import com.czqwq.EZMiner.Config;
  * 0 = Minesweeper (扫雷模式)
  * 1 = Crop harvest (一键收作物)
  * 2 = Sudoku assistant (数独助手)
- * 3 = Block swap (方块交换)
+ * 3 = Virtual prospecting (虚拟探矿 – hidden when VisualProspecting is unavailable)
+ * 4 = Block swap (方块交换)
  */
 public class MinerModeState {
 
@@ -53,7 +55,8 @@ public class MinerModeState {
     public static final String[] SPECIAL_MODES = { "ezminer.mode.special.minesweeper", // 0
         "ezminer.mode.special.crop", // 1
         "ezminer.mode.special.sudoku", // 2
-        "ezminer.mode.special.blockSwap", // 3
+        "ezminer.mode.special.prospect", // 3 (hidden when VP is unavailable)
+        "ezminer.mode.special.blockSwap", // 4
     };
 
     public int mainMode = 1; // default: chain mode
@@ -155,26 +158,35 @@ public class MinerModeState {
     }
 
     // ===== Special sub-mode =====
-    private int visibleSpecialModeCount() {
-        return Config.enableBlockSwapMode ? SPECIAL_MODES.length : 3; // minesweeper(0), crop(1), sudoku(2)
+    /**
+     * Returns whether the special sub-mode at {@code index} can be selected. Modes
+     * with missing prerequisites (e.g. prospect without VisualProspecting) or
+     * disabled by config are skipped by the cycling logic below.
+     */
+    private boolean isSpecialModeVisible(int index) {
+        if (index == 3) return VisualProspectingBridge.isVpAvailable();
+        if (index == 4) return Config.enableBlockSwapMode;
+        return true;
     }
 
     public String nextSpecialMode() {
-        int cnt = visibleSpecialModeCount();
-        specialMode = (specialMode + 1) % cnt;
-        if (!Config.enableBlockSwapMode && specialMode >= 3) specialMode = 0;
+        int guard = SPECIAL_MODES.length;
+        do {
+            specialMode = (specialMode + 1) % SPECIAL_MODES.length;
+        } while (!isSpecialModeVisible(specialMode) && --guard > 0);
         return currentSpecialMode();
     }
 
     public String previousSpecialMode() {
-        int cnt = visibleSpecialModeCount();
-        specialMode = (specialMode - 1 + cnt) % cnt;
-        if (!Config.enableBlockSwapMode && specialMode >= 3) specialMode = 0;
+        int guard = SPECIAL_MODES.length;
+        do {
+            specialMode = (specialMode - 1 + SPECIAL_MODES.length) % SPECIAL_MODES.length;
+        } while (!isSpecialModeVisible(specialMode) && --guard > 0);
         return currentSpecialMode();
     }
 
     public String currentSpecialMode() {
-        if (!Config.enableBlockSwapMode && specialMode >= 3) specialMode = 0;
+        if (!isSpecialModeVisible(specialMode)) specialMode = 0;
         return SPECIAL_MODES[specialMode];
     }
 }

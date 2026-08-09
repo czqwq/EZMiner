@@ -45,6 +45,12 @@ public class ClientStateContainer {
      * Independent from {@link #minesweeperNextProbeClientMs} so the two modes don't interfere.
      */
     public volatile long sudokuNextProbeClientMs = 0L;
+    /**
+     * Client-side timestamp (epoch ms) when the prospecting probe cooldown expires.
+     * Updated each time a {@link com.czqwq.EZMiner.chain.network.PacketProspectState} is received.
+     * Independent from the minesweeper/sudoku deadlines so the modes don't interfere.
+     */
+    public volatile long prospectNextProbeClientMs = 0L;
 
     /** Adds a newly-flagged mine position and bumps the version counter. */
     public void addMinesweeperMark(Vector3i pos) {

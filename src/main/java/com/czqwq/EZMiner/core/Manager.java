@@ -21,6 +21,7 @@ import com.czqwq.EZMiner.chain.execution.BlockSwapModeHandler;
 import com.czqwq.EZMiner.chain.execution.ChainDropCollector;
 import com.czqwq.EZMiner.chain.execution.CooldownTracker;
 import com.czqwq.EZMiner.chain.execution.MinesweeperModeHandler;
+import com.czqwq.EZMiner.chain.execution.ProspectModeHandler;
 import com.czqwq.EZMiner.chain.execution.SudokuModeHandler;
 import com.czqwq.EZMiner.chain.execution.XPDropHandler;
 import com.czqwq.EZMiner.chain.planning.ChainPreCalcCache;
@@ -84,6 +85,7 @@ public class Manager {
     private final MinesweeperModeHandler minesweeperHandler = new MinesweeperModeHandler();
     private final SudokuModeHandler sudokuHandler = new SudokuModeHandler();
     private final BlockSwapModeHandler blockSwapHandler = new BlockSwapModeHandler();
+    private final ProspectModeHandler prospectHandler = new ProspectModeHandler();
 
     // ── Pre-calculation engine for cached chain sub-modes ──
     //
@@ -116,6 +118,7 @@ public class Manager {
         if (isSpecialMinesweeperMode()) return;
         if (isSpecialCropMode()) return;
         if (isBlockSwapMode()) return;
+        if (isSpecialProspectMode()) return;
         // Cooldown check: prevent starting a new chain while cooldown is active
         if (CooldownTracker.isOnCooldown((EntityPlayerMP) event.getPlayer())) return;
         // For cached chain modes, try to use the pre-calculated cache first.
@@ -378,6 +381,7 @@ public class Manager {
         minesweeperHandler.reset();
         sudokuHandler.reset();
         blockSwapHandler.reset();
+        prospectHandler.reset();
         XPDropHandler.clear(player);
         EZMiner.chainStateService.markSessionStop(playerUUID);
         activeSession = null;
@@ -432,7 +436,11 @@ public class Manager {
     }
 
     public boolean isBlockSwapMode() {
-        return Config.enableBlockSwapMode && minerModeState.mainMode == 2 && minerModeState.specialMode == 3;
+        return Config.enableBlockSwapMode && minerModeState.mainMode == 2 && minerModeState.specialMode == 4;
+    }
+
+    public boolean isSpecialProspectMode() {
+        return minerModeState.mainMode == 2 && minerModeState.specialMode == 3;
     }
 
     // ── Cached chain sub-mode helpers ──
@@ -518,6 +526,13 @@ public class Manager {
             if (!isKeyPressed()) return;
             if (isInOperate() || player == null || player.worldObj == null || player.isDead) return;
             sudokuHandler.tick(player, playerUUID);
+            return;
+        }
+        // ── Virtual prospecting mode ──
+        if (isSpecialProspectMode()) {
+            if (!isKeyPressed()) return;
+            if (isInOperate() || player == null || player.worldObj == null || player.isDead) return;
+            prospectHandler.tick(player, playerUUID);
             return;
         }
         // Not in a tickable special mode — do nothing.

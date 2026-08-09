@@ -43,6 +43,8 @@ public class PacketServerConfig implements IMessage {
     public boolean dropToPlayer;
     public double minesweeperProbeCooldownSeconds;
     public double sudokuProbeCooldownSeconds;
+    public double prospectProbeIntervalSeconds;
+    public int prospectMaxScanRadiusChunks;
     public boolean enableCachedChain;
     public int searchWorkerThreads;
     public boolean suppressHodgepodgeWarnings;
@@ -105,6 +107,8 @@ public class PacketServerConfig implements IMessage {
         dropToPlayer = buf.readBoolean();
         minesweeperProbeCooldownSeconds = buf.readDouble();
         sudokuProbeCooldownSeconds = buf.readDouble();
+        prospectProbeIntervalSeconds = buf.readDouble();
+        prospectMaxScanRadiusChunks = buf.readInt();
         enableCachedChain = buf.readBoolean();
         searchWorkerThreads = buf.readInt();
         suppressHodgepodgeWarnings = buf.readBoolean();
@@ -146,6 +150,8 @@ public class PacketServerConfig implements IMessage {
         buf.writeBoolean(dropToPlayer);
         buf.writeDouble(minesweeperProbeCooldownSeconds);
         buf.writeDouble(sudokuProbeCooldownSeconds);
+        buf.writeDouble(prospectProbeIntervalSeconds);
+        buf.writeInt(prospectMaxScanRadiusChunks);
         buf.writeBoolean(enableCachedChain);
         buf.writeInt(searchWorkerThreads);
         buf.writeBoolean(suppressHodgepodgeWarnings);
@@ -191,6 +197,8 @@ public class PacketServerConfig implements IMessage {
         packet.dropToPlayer = Config.dropToPlayer;
         packet.minesweeperProbeCooldownSeconds = Config.minesweeperProbeCooldownSeconds;
         packet.sudokuProbeCooldownSeconds = Config.sudokuProbeCooldownSeconds;
+        packet.prospectProbeIntervalSeconds = Config.prospectProbeIntervalSeconds;
+        packet.prospectMaxScanRadiusChunks = Config.prospectMaxScanRadiusChunks;
         packet.enableCachedChain = Config.enableCachedChain;
         packet.searchWorkerThreads = Config.searchWorkerThreads;
         packet.suppressHodgepodgeWarnings = Config.suppressHodgepodgeWarnings;
@@ -252,7 +260,9 @@ public class PacketServerConfig implements IMessage {
                     msg.chainCooldownTicks,
                     msg.xpDropMode,
                     msg.mergeXPOrbs,
-                    msg.fireBreakEvent);
+                    msg.fireBreakEvent,
+                    msg.prospectProbeIntervalSeconds,
+                    msg.prospectMaxScanRadiusChunks);
                 Config.logFuzzyEnabled = msg.logFuzzyEnabled;
                 com.czqwq.EZMiner.EZMiner.clientIsOp = msg.isOp;
             }
