@@ -199,3 +199,11 @@ ezminer.gui.section.prospecting=探矿
 ezminer.hud.prospect.cooldown=探矿冷却
 ezminer.hud.prospect.ready=探测就绪
 ezminer.message.special.prospect.found=EZMiner: 发现矿脉 %s 于 (%s, %s), 距离=%s格
+
+# Planting (Special mode)
+ezminer.mode.special.plant=特殊: 种植
+ezminer.config.plantRadius=种植半径（格）
+ezminer.config.plantMaxCount=单次种植上限
+ezminer.gui.section.planting=种植
+ezminer.message.plant.done=EZMiner: 已种植 %s
+ezminer.message.plant.none=EZMiner: 无可种植的土壤

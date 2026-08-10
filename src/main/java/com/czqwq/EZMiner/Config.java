@@ -123,6 +123,16 @@ public class Config {
      */
     public static int prospectMaxScanRadiusChunks = 7;
     /**
+     * Planting radius in blocks around the right-clicked soil block in Special /
+     * Planting mode. Range: 1-12.
+     */
+    public static int plantRadius = 5;
+    /**
+     * Maximum number of plants placed per right-click in Special / Planting
+     * mode; stops early when the held stack runs out. Range: 1-256.
+     */
+    public static int plantMaxCount = 64;
+    /**
      * When true, encountering a block that the player's current tool cannot harvest
      * will immediately stop the entire chain operation (instead of silently skipping
      * it). This prevents accidental destruction of blocks that require a higher-tier
@@ -789,6 +799,30 @@ public class Config {
                     "Maximum spiral scan radius in chunks around the player in Special / Prospecting mode; "
                         + "capped at 7 (= 15x15 chunks, the loaded area at view distance 7) so probed veins "
                         + "are always near the player. Range: 1-7. Default: 7.")));
+        plantRadius = Math.max(
+            1,
+            Math.min(
+                12,
+                serverConfiguration.getInt(
+                    "plantRadius",
+                    Configuration.CATEGORY_GENERAL,
+                    5,
+                    1,
+                    12,
+                    "Planting radius in blocks around the right-clicked soil block in Special / Planting mode "
+                        + "(while the chain key is held). Range: 1-12. Default: 5.")));
+        plantMaxCount = Math.max(
+            1,
+            Math.min(
+                256,
+                serverConfiguration.getInt(
+                    "plantMaxCount",
+                    Configuration.CATEGORY_GENERAL,
+                    64,
+                    1,
+                    256,
+                    "Maximum number of plants placed per right-click in Special / Planting mode; stops early "
+                        + "when the held stack runs out. Range: 1-256. Default: 64.")));
         stopOnUnbreakable = serverConfiguration.getBoolean(
             "stopOnUnbreakable",
             Configuration.CATEGORY_GENERAL,
@@ -910,7 +944,8 @@ public class Config {
         boolean syncedUseChunkCachedHarvest, boolean syncedCrazyMode, int syncedChainIdleTimeoutSeconds,
         int syncedChainIdleCountdownSeconds, boolean syncedStopOnUnbreakable, int syncedChainCooldownTicks,
         int syncedXpDropMode, boolean syncedMergeXPOrbs, boolean syncedFireBreakEvent,
-        double syncedProspectProbeInterval, int syncedProspectMaxScanRadius) {
+        double syncedProspectProbeInterval, int syncedProspectMaxScanRadius, int syncedPlantRadius,
+        int syncedPlantMaxCount) {
         cachedBreakPerTick = Math.max(1, Math.min(1024, syncedCachedBreakPerTick));
         dropImmediately = syncedDropImmediately;
         addExhaustion = syncedAddExhaustion;
@@ -919,6 +954,8 @@ public class Config {
         sudokuProbeCooldownSeconds = Math.max(0.1, syncedSudokuCooldown);
         prospectProbeIntervalSeconds = Math.max(0.1, syncedProspectProbeInterval);
         prospectMaxScanRadiusChunks = Math.max(1, Math.min(7, syncedProspectMaxScanRadius));
+        plantRadius = Math.max(1, Math.min(12, syncedPlantRadius));
+        plantMaxCount = Math.max(1, Math.min(256, syncedPlantMaxCount));
         enableCachedChain = syncedEnableCachedChain;
         searchWorkerThreads = Math.max(0, Math.min(8, syncedSearchWorkerThreads));
         suppressHodgepodgeWarnings = syncedSuppressHodgepodgeWarnings;
@@ -1550,6 +1587,24 @@ public class Config {
                 1,
                 7)
             .set(prospectMaxScanRadiusChunks);
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "plantRadius",
+                5,
+                "Planting radius in blocks around the right-clicked soil block in Special / Planting mode.",
+                1,
+                12)
+            .set(plantRadius);
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "plantMaxCount",
+                64,
+                "Maximum number of plants placed per right-click in Special / Planting mode.",
+                1,
+                256)
+            .set(plantMaxCount);
         serverConfiguration
             .get(
                 Configuration.CATEGORY_GENERAL,

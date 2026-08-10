@@ -20,7 +20,7 @@ public class PacketChainModeSwitch implements IMessage {
     // Keep in sync with MinerModeState.CHAIN_MODES.length - 1.
     private static final int MAX_CHAIN_MODE = 3;
     // Keep in sync with MinerModeState.SPECIAL_MODES.length - 1.
-    private static final int MAX_SPECIAL_MODE = 4;
+    private static final int MAX_SPECIAL_MODE = 5;
 
     public int mainMode;
     public int blastMode;

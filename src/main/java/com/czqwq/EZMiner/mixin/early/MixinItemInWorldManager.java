@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.Unique;
 
 import com.czqwq.EZMiner.chain.execution.XPDropHandler;
 import com.czqwq.EZMiner.compat.GT5ToolDurabilityBridge;
+import com.czqwq.EZMiner.compat.NaturaSaguaroCompat;
 import com.czqwq.EZMiner.compat.ShearsHarvestBridge;
 import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 import com.czqwq.EZMiner.mixin.interfaces.IEZMinerItemInWorldManager;
@@ -101,7 +102,9 @@ public abstract class MixinItemInWorldManager implements IEZMinerItemInWorldMana
         }
 
         // ── Drops ──
-        if (removed && canHarvest) {
+        // Saguaro non-zero metas drop an unregistered ItemStack; the compat
+        // intercepts and replaces the drops (returns true = handled).
+        if (removed && canHarvest && !NaturaSaguaroCompat.maybeHarvest(theWorld, thisPlayerMP, x, y, z, block, meta)) {
             block.harvestBlock(theWorld, thisPlayerMP, x, y, z, meta);
         }
 

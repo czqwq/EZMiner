@@ -22,6 +22,7 @@ public class ChainModeBootstrap {
                 .addSubMode(new ChainSubModeDefinition("special_crop", "ezminer.mode.special.crop"))
                 .addSubMode(new ChainSubModeDefinition("special_sudoku", "ezminer.mode.special.sudoku"))
                 .addSubMode(new ChainSubModeDefinition("special_prospect", "ezminer.mode.special.prospect"))
-                .addSubMode(new ChainSubModeDefinition("special_block_swap", "ezminer.mode.special.blockSwap")));
+                .addSubMode(new ChainSubModeDefinition("special_block_swap", "ezminer.mode.special.blockSwap"))
+                .addSubMode(new ChainSubModeDefinition("special_plant", "ezminer.mode.special.plant")));
     }
 }

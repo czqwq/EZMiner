@@ -28,6 +28,7 @@ import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
 import com.czqwq.EZMiner.chain.planning.CachedPositionsPlanningTask;
 import com.czqwq.EZMiner.chain.planning.ChainPlanningTask;
 import com.czqwq.EZMiner.chain.watchdog.ChainWatchdog;
+import com.czqwq.EZMiner.compat.NaturaSaguaroCompat;
 import com.czqwq.EZMiner.compat.TinkersConstructCompat;
 import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
 import com.czqwq.EZMiner.core.crop.CropAdapterRegistry;
@@ -434,8 +435,15 @@ public class BaseOperator {
                     }
                 }
                 vpBridge.notifyOreDiscovery(playerMP, pos, vpNotifiedChunks);
+                // Record the type before removal; after removal the position is air.
+                // Saguaro cascades its unsupported neighbors into the work queue.
+                boolean wasSaguaro = NaturaSaguaroCompat.isSaguaroBlock(playerMP.worldObj, pos.x, pos.y, pos.z);
                 boolean ok = harvestActionExecutor.execute(pos, playerMP);
                 if (!ok) continue;
+                if (wasSaguaro) {
+                    NaturaSaguaroCompat
+                        .cascadeUnsupportedNeighbors(playerMP.worldObj, pos.x, pos.y, pos.z, canBreakPositions);
+                }
                 operatorCount++;
                 harvested++;
                 markHarvested();
@@ -491,8 +499,15 @@ public class BaseOperator {
 
                 vpBridge.notifyOreDiscovery(playerMP, pos, vpNotifiedChunks);
 
+                // Record the type before removal; after removal the position is air.
+                // Saguaro cascades its unsupported neighbors into the work queue.
+                boolean wasSaguaro = NaturaSaguaroCompat.isSaguaroBlock(playerMP.worldObj, pos.x, pos.y, pos.z);
                 boolean ok = harvester.harvestNext(pos, playerMP);
                 if (!ok) continue;
+                if (wasSaguaro) {
+                    NaturaSaguaroCompat
+                        .cascadeUnsupportedNeighbors(playerMP.worldObj, pos.x, pos.y, pos.z, canBreakPositions);
+                }
 
                 operatorCount++;
                 harvested++;

@@ -5,6 +5,7 @@ import java.util.UUID;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChunkCoordinates;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.world.World;
@@ -21,8 +22,10 @@ import com.czqwq.EZMiner.chain.execution.BlockSwapModeHandler;
 import com.czqwq.EZMiner.chain.execution.ChainDropCollector;
 import com.czqwq.EZMiner.chain.execution.CooldownTracker;
 import com.czqwq.EZMiner.chain.execution.MinesweeperModeHandler;
+import com.czqwq.EZMiner.chain.execution.PlantingModeHandler;
 import com.czqwq.EZMiner.chain.execution.ProspectModeHandler;
 import com.czqwq.EZMiner.chain.execution.SudokuModeHandler;
+import com.czqwq.EZMiner.chain.execution.VisualProspectingBridge;
 import com.czqwq.EZMiner.chain.execution.XPDropHandler;
 import com.czqwq.EZMiner.chain.planning.ChainPreCalcCache;
 import com.czqwq.EZMiner.chain.planning.ChainPreCalcCache.CachedEntry;
@@ -86,6 +89,7 @@ public class Manager {
     private final SudokuModeHandler sudokuHandler = new SudokuModeHandler();
     private final BlockSwapModeHandler blockSwapHandler = new BlockSwapModeHandler();
     private final ProspectModeHandler prospectHandler = new ProspectModeHandler();
+    private final PlantingModeHandler plantingHandler = new PlantingModeHandler();
 
     // ── Pre-calculation engine for cached chain sub-modes ──
     //
@@ -119,6 +123,7 @@ public class Manager {
         if (isSpecialCropMode()) return;
         if (isBlockSwapMode()) return;
         if (isSpecialProspectMode()) return;
+        if (isSpecialPlantMode()) return;
         // Cooldown check: prevent starting a new chain while cooldown is active
         if (CooldownTracker.isOnCooldown((EntityPlayerMP) event.getPlayer())) return;
         // For cached chain modes, try to use the pre-calculated cache first.
@@ -199,6 +204,40 @@ public class Manager {
             flushDrops();
             setInOperate(false);
         }
+        event.useBlock = Result.DENY;
+        event.useItem = Result.DENY;
+        event.setCanceled(true);
+    }
+
+    /**
+     * Planting mode: while the chain key is held and a plantable item is in hand,
+     * a right-click on a soil block plants the whole {@code plantRadius} range via
+     * the item's vanilla {@code onItemUse} path (all logic lives in
+     * {@link PlantingModeHandler}). Non-plantable hands are left untouched so
+     * vanilla interactions keep working.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
+    public void onPlantRightClick(PlayerInteractEvent event) {
+        if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
+        if (!isSamePlayer(event.entityPlayer)) return;
+        if (isInOperate() || !isKeyPressed()) return;
+        if (!isSpecialPlantMode()) return;
+        // Cooldown check: prevent starting a new planting burst while cooldown is active
+        if (CooldownTracker.isOnCooldown((EntityPlayerMP) event.entityPlayer)) return;
+
+        EntityPlayerMP player = (EntityPlayerMP) event.entityPlayer;
+        ItemStack held = player.getCurrentEquippedItem();
+        if (held == null || !PlantingModeHandler.isPlantable(held)) return; // vanilla single planting
+
+        setInOperate(true);
+        int planted;
+        try {
+            planted = plantingHandler.handlePlant(player, new Vector3i(event.x, event.y, event.z));
+        } finally {
+            setInOperate(false);
+        }
+        // Debounced / not plantable → handler returns -1 → do not consume the event.
+        if (planted < 0) return;
         event.useBlock = Result.DENY;
         event.useItem = Result.DENY;
         event.setCanceled(true);
@@ -382,6 +421,7 @@ public class Manager {
         sudokuHandler.reset();
         blockSwapHandler.reset();
         prospectHandler.reset();
+        plantingHandler.reset();
         XPDropHandler.clear(player);
         EZMiner.chainStateService.markSessionStop(playerUUID);
         activeSession = null;
@@ -440,7 +480,15 @@ public class Manager {
     }
 
     public boolean isSpecialProspectMode() {
-        return minerModeState.mainMode == 2 && minerModeState.specialMode == 3;
+        // Mirror of isBlockSwapMode: the index is only selectable while VP is
+        // available (see MinerModeState.isSpecialModeVisible), so gate here too —
+        // the mode index is dynamic, not static.
+        return VisualProspectingBridge.isVpAvailable() && minerModeState.mainMode == 2
+            && minerModeState.specialMode == 3;
+    }
+
+    public boolean isSpecialPlantMode() {
+        return minerModeState.mainMode == 2 && minerModeState.specialMode == 5;
     }
 
     // ── Cached chain sub-mode helpers ──

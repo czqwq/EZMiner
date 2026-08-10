@@ -45,6 +45,8 @@ public class PacketServerConfig implements IMessage {
     public double sudokuProbeCooldownSeconds;
     public double prospectProbeIntervalSeconds;
     public int prospectMaxScanRadiusChunks;
+    public int plantRadius;
+    public int plantMaxCount;
     public boolean enableCachedChain;
     public int searchWorkerThreads;
     public boolean suppressHodgepodgeWarnings;
@@ -109,6 +111,8 @@ public class PacketServerConfig implements IMessage {
         sudokuProbeCooldownSeconds = buf.readDouble();
         prospectProbeIntervalSeconds = buf.readDouble();
         prospectMaxScanRadiusChunks = buf.readInt();
+        plantRadius = buf.readInt();
+        plantMaxCount = buf.readInt();
         enableCachedChain = buf.readBoolean();
         searchWorkerThreads = buf.readInt();
         suppressHodgepodgeWarnings = buf.readBoolean();
@@ -152,6 +156,8 @@ public class PacketServerConfig implements IMessage {
         buf.writeDouble(sudokuProbeCooldownSeconds);
         buf.writeDouble(prospectProbeIntervalSeconds);
         buf.writeInt(prospectMaxScanRadiusChunks);
+        buf.writeInt(plantRadius);
+        buf.writeInt(plantMaxCount);
         buf.writeBoolean(enableCachedChain);
         buf.writeInt(searchWorkerThreads);
         buf.writeBoolean(suppressHodgepodgeWarnings);
@@ -199,6 +205,8 @@ public class PacketServerConfig implements IMessage {
         packet.sudokuProbeCooldownSeconds = Config.sudokuProbeCooldownSeconds;
         packet.prospectProbeIntervalSeconds = Config.prospectProbeIntervalSeconds;
         packet.prospectMaxScanRadiusChunks = Config.prospectMaxScanRadiusChunks;
+        packet.plantRadius = Config.plantRadius;
+        packet.plantMaxCount = Config.plantMaxCount;
         packet.enableCachedChain = Config.enableCachedChain;
         packet.searchWorkerThreads = Config.searchWorkerThreads;
         packet.suppressHodgepodgeWarnings = Config.suppressHodgepodgeWarnings;
@@ -262,7 +270,9 @@ public class PacketServerConfig implements IMessage {
                     msg.mergeXPOrbs,
                     msg.fireBreakEvent,
                     msg.prospectProbeIntervalSeconds,
-                    msg.prospectMaxScanRadiusChunks);
+                    msg.prospectMaxScanRadiusChunks,
+                    msg.plantRadius,
+                    msg.plantMaxCount);
                 Config.logFuzzyEnabled = msg.logFuzzyEnabled;
                 com.czqwq.EZMiner.EZMiner.clientIsOp = msg.isOp;
             }

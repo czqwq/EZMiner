@@ -14,5 +14,6 @@ public class ChainSubModeBootstrap {
         registry.register(new ChainSubModeDefinition("special_sudoku", "ezminer.mode.special.sudoku"));
         registry.register(new ChainSubModeDefinition("special_prospect", "ezminer.mode.special.prospect"));
         registry.register(new ChainSubModeDefinition("special_block_swap", "ezminer.mode.special.blockSwap"));
+        registry.register(new ChainSubModeDefinition("special_plant", "ezminer.mode.special.plant"));
     }
 }

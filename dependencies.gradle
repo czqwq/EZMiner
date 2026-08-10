@@ -14,6 +14,7 @@ dependencies {
     implementation('com.github.GTNewHorizons:LootGames:2.2.14:dev')
     implementation(deobfCurse('witchery-69673:2234410'))
     implementation(gtnhDev("WitcheryExtras"))
+    implementation('com.github.GTNewHorizons:Natura:2.8.23:dev')
     runtimeOnlyNonPublishable(gtnhDev("Avaritia"))
     runtimeOnlyNonPublishable(gtnhDev("neiaddons"))
     runtimeOnlyNonPublishable('com.github.GTNewHorizons:Binnie:2.5.16:dev')
@@ -38,7 +39,6 @@ dependencies {
     // in main code) — declared compileOnly here only for compile-time visibility.
     compileOnly('it.unimi.dsi:fastutil:8.5.18')
     compileOnly('com.github.GTNewHorizons:CropsNH:2.0.99:dev') { transitive = false }
-    compileOnly('com.github.GTNewHorizons:Natura:2.8.20:dev') { transitive = false }
     // Compile-time only for the TiC leveling bridge (ActiveToolMod hooks);
     // runtime presence is optional and guarded by Loader.isModLoaded.
     compileOnly(gtnhDev("TinkersConstruct")) { transitive = false }

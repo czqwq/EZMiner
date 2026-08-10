@@ -89,7 +89,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int CONTENT_START_Y = 42;
     private static final int MAX_CONTENT_ROWS = 23; // Client tab row count
     /** Server tab row count (has more fields than client tab). */
-    private static final int SERVER_CONTENT_ROWS = 47;
+    private static final int SERVER_CONTENT_ROWS = 49;
     private static final int ROW_H = 20;
     /** Extra vertical spacing added between lines when a label contains \n. */
     private static final int EXTRA_LINE_SPACING = 2;
@@ -175,6 +175,8 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiTextField tfToolBreakHandoffTimeoutTicks;
     private GuiTextField tfProspectProbeInterval;
     private GuiTextField tfProspectMaxScanRadius;
+    private GuiTextField tfPlantRadius;
+    private GuiTextField tfPlantMaxCount;
 
     // ── Toggle button references ──────────────────────────────────────────────
     private GuiButton btnUsePreview;
@@ -988,6 +990,8 @@ public class EZMinerConfigGui extends GuiScreen {
             tfToolBreakHandoffTimeoutTicks.mouseClicked(x, y, mouseButton);
             tfProspectProbeInterval.mouseClicked(x, y, mouseButton);
             tfProspectMaxScanRadius.mouseClicked(x, y, mouseButton);
+            tfPlantRadius.mouseClicked(x, y, mouseButton);
+            tfPlantMaxCount.mouseClicked(x, y, mouseButton);
         }
     }
 
@@ -1031,6 +1035,8 @@ public class EZMinerConfigGui extends GuiScreen {
             tfServerBlockSwapLimit.textboxKeyTyped(typedChar, keyCode);
             tfProspectProbeInterval.textboxKeyTyped(typedChar, keyCode);
             tfProspectMaxScanRadius.textboxKeyTyped(typedChar, keyCode);
+            tfPlantRadius.textboxKeyTyped(typedChar, keyCode);
+            tfPlantMaxCount.textboxKeyTyped(typedChar, keyCode);
             tfSearchBudgetPerYield.textboxKeyTyped(typedChar, keyCode);
             tfChainWatchdogTimeoutTicks.textboxKeyTyped(typedChar, keyCode);
             tfToolBreakHandoffTimeoutTicks.textboxKeyTyped(typedChar, keyCode);
@@ -1212,6 +1218,10 @@ public class EZMinerConfigGui extends GuiScreen {
                     return "ezminer.config.prospectProbeIntervalSeconds";
                 case 46:
                     return "ezminer.config.prospectMaxScanRadiusChunks";
+                case 47:
+                    return "ezminer.config.plantRadius";
+                case 48:
+                    return "ezminer.config.plantMaxCount";
                 default:
                     return null;
             }
@@ -1262,8 +1272,9 @@ public class EZMinerConfigGui extends GuiScreen {
             || index == 29
             || index == 32
             || index == 35
-            || index == 44; // after Mining, Tree Felling, Mining extended, Preview, Options, Block Swap, Performance,
-                            // Stability (Prospecting section follows)
+            || index == 44
+            || index == 46; // after Mining, Tree Felling, Mining extended, Preview, Options, Block Swap, Performance,
+                            // Stability, Prospecting (Planting section follows)
     }
 
     /** Content height of a row excluding any section gap. */
@@ -1395,6 +1406,8 @@ public class EZMinerConfigGui extends GuiScreen {
             tfToolBreakHandoffTimeoutTicks.yPosition = getControlY(44);
             tfProspectProbeInterval.yPosition = getControlY(45);
             tfProspectMaxScanRadius.yPosition = getControlY(46);
+            tfPlantRadius.yPosition = getControlY(47);
+            tfPlantMaxCount.yPosition = getControlY(48);
         }
 
         // Update per-button visibility: hide when scrolled out of viewport.
@@ -1488,6 +1501,8 @@ public class EZMinerConfigGui extends GuiScreen {
             String.valueOf(Config.toolBreakHandoffTimeoutTicks));
         tfProspectProbeInterval = field(fx, contentRowScreenY(45), String.valueOf(Config.prospectProbeIntervalSeconds));
         tfProspectMaxScanRadius = field(fx, contentRowScreenY(46), String.valueOf(Config.prospectMaxScanRadiusChunks));
+        tfPlantRadius = field(fx, contentRowScreenY(47), String.valueOf(Config.plantRadius));
+        tfPlantMaxCount = field(fx, contentRowScreenY(48), String.valueOf(Config.plantMaxCount));
     }
 
     private GuiTextField field(int x, int y, String initialText) {
@@ -1650,6 +1665,12 @@ public class EZMinerConfigGui extends GuiScreen {
         drawSectionHeader(lx, contentRowScreenY(44) + getContentRowHeight(44) + 4, "ezminer.gui.section.prospecting");
         drawRow(lx, contentRowScreenY(45), lc, "ezminer.config.prospectProbeIntervalSeconds", tfProspectProbeInterval);
         drawRow(lx, contentRowScreenY(46), lc, "ezminer.config.prospectMaxScanRadiusChunks", tfProspectMaxScanRadius);
+
+        // Planting section — header inside the SECTION_GAP appended below row 46;
+        // getContentRowHeight accounts for row 46's label height (per GUI layout convention).
+        drawSectionHeader(lx, contentRowScreenY(46) + getContentRowHeight(46) + 4, "ezminer.gui.section.planting");
+        drawRow(lx, contentRowScreenY(47), lc, "ezminer.config.plantRadius", tfPlantRadius);
+        drawRow(lx, contentRowScreenY(48), lc, "ezminer.config.plantMaxCount", tfPlantMaxCount);
 
     }
 
@@ -1914,6 +1935,9 @@ public class EZMinerConfigGui extends GuiScreen {
         // Prospecting settings
         packet.prospectProbeIntervalSeconds = parseD(tfProspectProbeInterval, Config.prospectProbeIntervalSeconds);
         packet.prospectMaxScanRadiusChunks = parseI(tfProspectMaxScanRadius, Config.prospectMaxScanRadiusChunks, 1);
+        // Planting settings
+        packet.plantRadius = parseI(tfPlantRadius, Config.plantRadius, 1);
+        packet.plantMaxCount = parseI(tfPlantMaxCount, Config.plantMaxCount, 1);
         EZMiner.network.network.sendToServer(packet);
     }
 

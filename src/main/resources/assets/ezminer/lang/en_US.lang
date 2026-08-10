@@ -199,3 +199,11 @@ ezminer.gui.section.prospecting=Prospecting
 ezminer.hud.prospect.cooldown=Prospect Cooldown
 ezminer.hud.prospect.ready=Prospect Ready
 ezminer.message.special.prospect.found=EZMiner: Found ore vein %s at (%s, %s), distance=%s blocks
+
+# Planting (Special mode)
+ezminer.mode.special.plant=Special: Planting
+ezminer.config.plantRadius=Planting Radius (blocks)
+ezminer.config.plantMaxCount=Planting Count Limit
+ezminer.gui.section.planting=Planting
+ezminer.message.plant.done=EZMiner: Planted %s
+ezminer.message.plant.none=EZMiner: No placeable soil found

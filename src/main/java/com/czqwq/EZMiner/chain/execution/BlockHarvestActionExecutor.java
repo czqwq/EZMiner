@@ -15,6 +15,7 @@ import net.minecraftforge.event.world.BlockEvent;
 import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.compat.GT5ToolDurabilityBridge;
+import com.czqwq.EZMiner.compat.NaturaSaguaroCompat;
 import com.czqwq.EZMiner.compat.ShearsHarvestBridge;
 import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
@@ -175,7 +176,9 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
                 }
 
                 // ── Drops ──
-                if (removed && canHarvest) {
+                // Saguaro non-zero metas drop an unregistered ItemStack; the compat
+                // intercepts and replaces the drops (returns true = handled).
+                if (removed && canHarvest && !NaturaSaguaroCompat.maybeHarvest(world, player, x, y, z, block, meta)) {
                     block.harvestBlock(world, player, x, y, z, meta);
                 }
 

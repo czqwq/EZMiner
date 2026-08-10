@@ -30,6 +30,7 @@ import com.czqwq.EZMiner.chain.execution.VisualProspectingBridge;
  * 2 = Sudoku assistant (数独助手)
  * 3 = Virtual prospecting (虚拟探矿 – hidden when VisualProspecting is unavailable)
  * 4 = Block swap (方块交换)
+ * 5 = Planting (种植模式 – 手持种子/树苗右键批量种植)
  */
 public class MinerModeState {
 
@@ -57,6 +58,7 @@ public class MinerModeState {
         "ezminer.mode.special.sudoku", // 2
         "ezminer.mode.special.prospect", // 3 (hidden when VP is unavailable)
         "ezminer.mode.special.blockSwap", // 4
+        "ezminer.mode.special.plant", // 5
     };
 
     public int mainMode = 1; // default: chain mode
