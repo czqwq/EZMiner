@@ -19,6 +19,7 @@ import com.czqwq.EZMiner.chain.client.preview.ChainPreviewController;
 import com.czqwq.EZMiner.chain.client.preview.ChainPreviewState;
 import com.czqwq.EZMiner.client.ClientStateContainer;
 import com.czqwq.EZMiner.core.MinerConfig;
+import com.czqwq.EZMiner.core.MinerModeState;
 import com.czqwq.EZMiner.core.founder.BasePositionFounder;
 
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -75,6 +76,13 @@ public class MinerRenderer {
     private int lastMinesweeperVersion = -1;
     /** Last sudokuFilledVersion seen; used to detect when the filled-cell list changed. */
     private int lastSudokuVersion = -1;
+    /**
+     * Mode fingerprint of the last preview search. Mode switches (while the chain
+     * key stays held) do not change the aim target, so without this the previous
+     * mode's founder preview would linger (e.g. a normal chain preview after
+     * switching into planting mode).
+     */
+    private int lastPreviewModeFingerprint = Integer.MIN_VALUE;
 
     private final ClientStateContainer clientState;
     private final ChainPreviewController previewController = new ChainPreviewController();
@@ -164,6 +172,15 @@ public class MinerRenderer {
             return;
         }
 
+        // A mode switch while holding the chain key leaves the aim target
+        // unchanged — invalidate lastTarget so restartViewer runs and builds the
+        // preview for the newly selected mode instead of lingering on the old one.
+        int modeFingerprint = previewModeFingerprint(clientState.minerModeState);
+        if (modeFingerprint != lastPreviewModeFingerprint) {
+            lastPreviewModeFingerprint = modeFingerprint;
+            lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+        }
+
         if (mc.objectMouseOver == null || mc.objectMouseOver.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
             stopViewer();
             return;
@@ -178,6 +195,11 @@ public class MinerRenderer {
 
         drainQueue(mc);
         doRender();
+    }
+
+    /** Encodes all four mode indices into a single int for switch detection. */
+    private static int previewModeFingerprint(MinerModeState state) {
+        return (state.mainMode << 8) | (state.blastMode << 5) | (state.chainMode << 3) | state.specialMode;
     }
 
     private void restartViewer(Minecraft mc, Vector3i target) {

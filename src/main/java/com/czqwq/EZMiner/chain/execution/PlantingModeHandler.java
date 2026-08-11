@@ -2,11 +2,13 @@ package com.czqwq.EZMiner.chain.execution;
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IPlantable;
+import net.minecraftforge.common.util.ForgeDirection;
 
 import org.joml.Vector3i;
 
@@ -68,6 +70,7 @@ public class PlantingModeHandler {
         lastPlantTimeMs = now;
 
         Item item = held.getItem();
+        IPlantable plantable = plantableFrom(held); // non-null: guaranteed by isPlantable above
         int radius = Config.plantRadius;
         int maxCount = Config.plantMaxCount;
         int planted = 0;
@@ -95,14 +98,9 @@ public class PlantingModeHandler {
                         int x = soilPos.x + dx;
                         int y = soilPos.y + dy;
                         int z = soilPos.z + dz;
-                        // World.isAirBlock has no y bounds guard — check manually.
-                        if (y < 0 || y >= 255) continue;
-                        if (!world.blockExists(x, y, z)) continue;
-                        // Pre-filter: the plant would occupy (x, y+1), which must be air,
-                        // and the soil block itself must not be air.
-                        if (!world.isAirBlock(x, y + 1, z)) continue;
-                        if (world.getBlock(x, y, z)
-                            .isAir(world, x, y, z)) continue;
+                        // Shared candidate predicate — the client planting preview
+                        // uses the exact same check, so preview == planting area.
+                        if (!isPlantablePosition(world, x, y, z, plantable)) continue;
                         // Vanilla planting path: the item validates the soil itself
                         // (canSustainPlant), offsets to y+1 and consumes from the stack.
                         if (item.onItemUse(current, player, world, x, y, z, 1, 0.5F, 1.0F, 0.5F)) {
@@ -160,9 +158,58 @@ public class PlantingModeHandler {
 
     /** Returns true when the held stack is plantable (seeds, saplings, …). */
     public static boolean isPlantable(ItemStack stack) {
-        if (stack == null) return false;
+        return plantableFrom(stack) != null;
+    }
+
+    /**
+     * Resolves the {@link IPlantable} for a held stack: either the item itself
+     * (seeds) or the block it places (saplings via their ItemBlock).
+     */
+    public static IPlantable plantableFrom(ItemStack stack) {
+        if (stack == null) return null;
         Item item = stack.getItem();
-        return item instanceof IPlantable || Block.getBlockFromItem(item) instanceof IPlantable;
+        if (item instanceof IPlantable) return (IPlantable) item;
+        Block block = Block.getBlockFromItem(item);
+        return block instanceof IPlantable ? (IPlantable) block : null;
+    }
+
+    /**
+     * Shared area-level candidate predicate for a soil position ({@code x},
+     * {@code y}, {@code z} — the plant occupies {@code y+1}). Used by the server
+     * planting loop as a cheap pre-filter (the item's own {@code onItemUse} does
+     * the authoritative validation afterwards), and as the base of the client
+     * preview predicate.
+     *
+     * <p>
+     * Deliberately area-level only (no {@code canSustainPlant} refinement):
+     * adding it to the server path would change behaviour for custom onItemUse
+     * items that do not go through {@code canSustainPlant}.
+     */
+    public static boolean isPlantablePosition(World world, int x, int y, int z, IPlantable plantable) {
+        if (plantable == null) return false;
+        // World.isAirBlock has no y bounds guard — check manually.
+        if (y < 0 || y >= 255) return false;
+        if (!world.blockExists(x, y, z)) return false;
+        // The plant would occupy (x, y+1), which must be air, and the soil
+        // block itself must be plantable ground (not air/liquid/bedrock).
+        if (!world.isAirBlock(x, y + 1, z)) return false;
+        Block soil = world.getBlock(x, y, z);
+        if (soil == null || soil.isAir(world, x, y, z)) return false;
+        if (soil.getMaterial()
+            .isLiquid() || soil.equals(Blocks.bedrock)) return false;
+        return true;
+    }
+
+    /**
+     * Exact client-preview predicate: {@link #isPlantablePosition} plus the
+     * {@code canSustainPlant} soil check — the same validation the item's
+     * {@code onItemUse} performs. Without it the preview would highlight every
+     * non-air block in range (stone, logs, …) instead of the actual plantable
+     * soil, looking like a normal chain preview.
+     */
+    public static boolean isPreviewPlantablePosition(World world, int x, int y, int z, IPlantable plantable) {
+        return isPlantablePosition(world, x, y, z, plantable) && world.getBlock(x, y, z)
+            .canSustainPlant(world, x, y, z, ForgeDirection.UP, plantable);
     }
 
     private static void sendDoneMessage(EntityPlayerMP player, int planted) {

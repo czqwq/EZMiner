@@ -18,6 +18,7 @@ import com.czqwq.EZMiner.core.founder.InverseBlastFounder;
 import com.czqwq.EZMiner.core.founder.LogFounder;
 import com.czqwq.EZMiner.core.founder.NoOpPositionFounder;
 import com.czqwq.EZMiner.core.founder.OreFounder;
+import com.czqwq.EZMiner.core.founder.PlantingPositionFounder;
 import com.czqwq.EZMiner.core.founder.ScreenBlastFounder;
 import com.czqwq.EZMiner.core.founder.TunnelFounder;
 
@@ -45,6 +46,11 @@ public class LegacyFounderPlanningFactory {
             // Block swap mode: use chain founder for client preview
             if (modeState.specialMode == 4) {
                 return new ChainPositionFounder(center, results, player, config);
+            }
+            // Planting mode: dedicated area preview (shared predicate with the
+            // server-side planting loop — preview == actual planting area).
+            if (modeState.specialMode == 5) {
+                return new PlantingPositionFounder(center, results, player, config);
             }
             return new NoOpPositionFounder(center, results, player, config);
         }
