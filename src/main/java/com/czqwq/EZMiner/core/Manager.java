@@ -1,16 +1,21 @@
 package com.czqwq.EZMiner.core;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import net.minecraft.block.Block;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 
@@ -32,6 +37,7 @@ import com.czqwq.EZMiner.chain.planning.ChainPreCalcCache.CachedEntry;
 import com.czqwq.EZMiner.chain.planning.ChainPreCalcEngine;
 import com.czqwq.EZMiner.chain.state.ChainPlayerState;
 import com.czqwq.EZMiner.chain.state.ChainSession;
+import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 import com.czqwq.EZMiner.core.founder.CropFounder;
 
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -259,6 +265,51 @@ public class Manager {
             // Flush drops after every harvest instead of batching at chain end.
             // This eliminates the lag spike caused by spawning hundreds of EntityItems
             // simultaneously when a large vein finishes.
+            flushCollectedDrops();
+        }
+    }
+
+    // ===== TiC Auto-Smelt Drop Aggregation =====
+
+    /**
+     * Routes Tinkers' Construct auto-smelt drops into the collector during chain
+     * operations.
+     *
+     * <p>
+     * TiC's autosmelt hook consumes the block itself and spawns the smelted
+     * {@link EntityItem} synchronously inside {@code beforeBlockBreak}, bypassing
+     * {@code HarvestDropsEvent} — so {@link ChainDropCollector} never sees it and
+     * every item lands where it was mined instead of the player's feet. Ownership
+     * is deterministic, not heuristic: the harvest paths pre-register each block
+     * position with this player in {@code TinkersConstructLevelingBridge} right
+     * before replaying the hooks, and this listener only intercepts items whose
+     * join event fires while that registration is live. Other players' drops,
+     * other mods' exact-centre spawns and our own flush output never match.
+     */
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public void onEntityJoinWorld(EntityJoinWorldEvent event) {
+        if (event.entity.worldObj.isRemote) return;
+        if (BANDIT_LOADED) return; // Bandit collects EntityItems itself — yield.
+        if (!isInOperate()) return;
+        if (event.entity.worldObj != player.worldObj) return;
+        if (!(event.entity instanceof EntityItem item)) return;
+
+        // Deterministic attribution: the position must be registered as "about to
+        // be replayed through the TiC hooks for this exact player". 1.7.10 fires
+        // the join event synchronously inside spawnEntityInWorld, i.e. still
+        // inside the bridge call window.
+        int x = MathHelper.floor_double(item.posX);
+        int y = MathHelper.floor_double(item.posY);
+        int z = MathHelper.floor_double(item.posZ);
+        if (!TinkersConstructLevelingBridge.isSmeltCandidate(player, x, y, z)) return;
+
+        event.setCanceled(true); // canceled entities never enter the world.
+        ItemStack stack = item.getEntityItem();
+        if (stack == null || stack.stackSize <= 0) return;
+        List<ItemStack> single = new ArrayList<>(1);
+        single.add(stack);
+        dropCollector.collect(single);
+        if (Config.dropImmediately) {
             flushCollectedDrops();
         }
     }

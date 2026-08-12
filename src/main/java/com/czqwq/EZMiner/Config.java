@@ -46,6 +46,16 @@ public class Config {
     /** Spawn drops immediately per-block instead of batching at chain end (avoids lag spike). */
     public static boolean dropImmediately = false;
     /**
+     * Item blacklist expression — items matching it are destroyed during chain
+     * drop collection instead of being flushed with the other drops (e.g. endless
+     * cobblestone). Only active in delayed-drop mode ({@link #dropImmediately} off).
+     * Syntax: numeric IDs {@code 123} / {@code 456:1}, ore-name wildcards
+     * {@code OreCopper} / {@code raw*} / {@code *Purified*}, combined with
+     * {@code |} (or) / {@code &} (and) / {@code !} (not) / {@code ()} grouping.
+     * Empty (default) disables filtering. See {@code ItemFilterExpression}.
+     */
+    public static String blacklistExpression = "";
+    /**
      * XP drop mode for chain mining.
      * 0 = Immediate — XP orbs spawn per-block as vanilla does.
      * 1 = Delayed — XP is accumulated and spawned when the chain ends (default).
@@ -543,6 +553,18 @@ public class Config {
             "When true, drops are spawned immediately after each block harvest during a "
                 + "chain, instead of being batched and flushed at the end. "
                 + "Eliminates the end-of-chain lag spike on large veins.");
+        blacklistExpression = serverConfiguration
+            .getString(
+                "blacklistExpression",
+                Configuration.CATEGORY_GENERAL,
+                "",
+                "Item blacklist expression — matching drops are destroyed during chain drop "
+                    + "collection instead of being flushed (e.g. endless cobblestone). Only "
+                    + "active when dropImmediately is false. Syntax: numeric IDs '123' or "
+                    + "'456:1', ore-name wildcards like 'OreCopper', 'raw*', '*Purified*', "
+                    + "combined with '|' (or), '&' (and), '!' (not), '(' ')' grouping. "
+                    + "Empty (default) disables filtering.")
+            .trim();
         xpDropMode = serverConfiguration.getInt(
             "xpDropMode",
             Configuration.CATEGORY_GENERAL,
@@ -1291,6 +1313,18 @@ public class Config {
                 false,
                 "Spawn drops per-block immediately instead of batching at chain end.")
             .set(dropImmediately);
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "blacklistExpression",
+                "",
+                "Item blacklist expression — matching drops are destroyed during chain drop "
+                    + "collection instead of being flushed (e.g. endless cobblestone). Only "
+                    + "active when dropImmediately is false. Syntax: numeric IDs '123' or "
+                    + "'456:1', ore-name wildcards like 'OreCopper', 'raw*', '*Purified*', "
+                    + "combined with '|' (or), '&' (and), '!' (not), '(' ')' grouping. "
+                    + "Empty (default) disables filtering.")
+            .set(blacklistExpression);
         serverConfiguration
             .get(
                 Configuration.CATEGORY_GENERAL,

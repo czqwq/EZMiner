@@ -55,7 +55,17 @@ public abstract class MixinItemInWorldManager implements IEZMinerItemInWorldMana
         // ── TiC compat: fire ActiveToolMod.beforeBlockBreak (IguanaTweaks tool XP,
         // autosmelt, …) like vanilla tryHarvestBlock does via onBlockStartBreak.
         // true = a hook consumed the block itself — skip our own harvest steps. ──
-        if (TinkersConstructLevelingBridge.fireBeforeBlockBreak(thisPlayerMP, x, y, z)) {
+        // The position is pre-registered so Manager's EntityJoinWorldEvent
+        // interceptor can attribute the synchronous smelt-drop spawn to this
+        // player, and cleared afterwards (the hook may or may not consume).
+        TinkersConstructLevelingBridge.markBeforeBlockBreak(thisPlayerMP, x, y, z);
+        boolean consumed;
+        try {
+            consumed = TinkersConstructLevelingBridge.fireBeforeBlockBreak(thisPlayerMP, x, y, z);
+        } finally {
+            TinkersConstructLevelingBridge.clearBlockBreak(x, y, z);
+        }
+        if (consumed) {
             return true;
         }
 

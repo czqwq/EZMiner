@@ -46,6 +46,10 @@ public final class GuiTooltipRenderer {
         int screenH) {
         if (text == null || text.isEmpty()) return;
 
+        // MC 1.7.10's .lang parser stores \n as literal backslash-n; convert so
+        // lang-file tooltips actually line-break.
+        text = text.replace("\\n", "\n");
+
         String[] lines = text.split("\n", -1);
         int textW = 0;
         for (String line : lines) {

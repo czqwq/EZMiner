@@ -1,5 +1,7 @@
 package com.czqwq.EZMiner.client.gui;
 
+import java.util.List;
+
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
@@ -89,7 +91,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int CONTENT_START_Y = 42;
     private static final int MAX_CONTENT_ROWS = 23; // Client tab row count
     /** Server tab row count (has more fields than client tab). */
-    private static final int SERVER_CONTENT_ROWS = 49;
+    private static final int SERVER_CONTENT_ROWS = 50;
     private static final int ROW_H = 20;
     /** Extra vertical spacing added between lines when a label contains \n. */
     private static final int EXTRA_LINE_SPACING = 2;
@@ -100,6 +102,8 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int ACTION_STRIP_H = 48;
     private static final int MIN_VIEWPORT_H = ROW_H * 3;
     private static final int SCROLLBAR_W = 4;
+    /** Max label text width before auto-wrap — the label column ends at FIELD_X. */
+    private static final int LABEL_MAX_WIDTH = FIELD_X - LABEL_X - 6;
     /** Gap between a numeric text field and its sync-to-server-max icon button. */
     private static final int SYNC_BTN_GAP = 4;
     /** Sync button size; matches {@link #FIELD_H} so the icon aligns with the field. */
@@ -177,6 +181,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiTextField tfProspectMaxScanRadius;
     private GuiTextField tfPlantRadius;
     private GuiTextField tfPlantMaxCount;
+    private GuiTextField tfServerBlacklist;
 
     // ── Toggle button references ──────────────────────────────────────────────
     private GuiButton btnUsePreview;
@@ -418,7 +423,7 @@ public class EZMinerConfigGui extends GuiScreen {
         if (EZMiner.clientIsOp) {
             btnServerDropToPlayer = newOptionButton(
                 BTN_SERVER_DROP_TO_PLAYER,
-                14,
+                22,
                 "ezminer.config.dropToPlayer",
                 boolLabel("ezminer.config.dropToPlayer", Config.dropToPlayer),
                 boolValue(Config.dropToPlayer));
@@ -426,7 +431,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerDropImmediately = newOptionButton(
                 BTN_SERVER_DROP_IMMEDIATELY,
-                15,
+                23,
                 "ezminer.config.dropImmediately",
                 boolLabel("ezminer.config.dropImmediately", Config.dropImmediately),
                 boolValue(Config.dropImmediately));
@@ -434,7 +439,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerUsePreview = newOptionButton(
                 BTN_SERVER_USE_PREVIEW,
-                16,
+                13,
                 "ezminer.config.serverUsePreview",
                 boolLabel("ezminer.config.serverUsePreview", Config.serverUsePreview),
                 boolValue(Config.serverUsePreview));
@@ -442,7 +447,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerEnableCachedChain = newOptionButton(
                 BTN_SERVER_ENABLE_CACHED_CHAIN,
-                17,
+                14,
                 "ezminer.config.enableCachedChain",
                 boolLabel("ezminer.config.enableCachedChain", Config.enableCachedChain),
                 boolValue(Config.enableCachedChain));
@@ -450,7 +455,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerSuppressHodgepodgeWarnings = newOptionButton(
                 BTN_SERVER_SUPPRESS_HODGEPODGE_WARNINGS,
-                18,
+                48,
                 "ezminer.config.suppressHodgepodgeWarnings",
                 boolLabel("ezminer.config.suppressHodgepodgeWarnings", Config.suppressHodgepodgeWarnings),
                 boolValue(Config.suppressHodgepodgeWarnings));
@@ -458,7 +463,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerEnableChainChunkLoading = newOptionButton(
                 BTN_SERVER_ENABLE_CHAIN_CHUNK_LOADING,
-                20,
+                15,
                 "ezminer.config.enableChainChunkLoading",
                 boolLabel("ezminer.config.enableChainChunkLoading", Config.enableChainChunkLoading),
                 boolValue(Config.enableChainChunkLoading));
@@ -466,7 +471,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerUseChunkCachedHarvest = newOptionButton(
                 BTN_SERVER_USE_CHUNK_CACHED_HARVEST,
-                21,
+                16,
                 "ezminer.config.useChunkCachedHarvest",
                 boolLabel("ezminer.config.useChunkCachedHarvest", Config.useChunkCachedHarvest),
                 boolValue(Config.useChunkCachedHarvest));
@@ -474,7 +479,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerCrazyMode = newOptionButton(
                 BTN_SERVER_CRAZY_MODE,
-                22,
+                17,
                 "ezminer.config.crazyMode",
                 boolLabel("ezminer.config.crazyMode", Config.crazyMode),
                 boolValue(Config.crazyMode));
@@ -482,7 +487,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerStopOnUnbreakable = newOptionButton(
                 BTN_SERVER_STOP_ON_UNBREAKABLE,
-                26,
+                18,
                 "ezminer.config.stopOnUnbreakable",
                 boolLabel("ezminer.config.stopOnUnbreakable", Config.stopOnUnbreakable),
                 boolValue(Config.stopOnUnbreakable));
@@ -490,7 +495,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerXPDropMode = newOptionButton(
                 BTN_SERVER_XP_DROP_MODE,
-                27,
+                25,
                 "ezminer.config.xpDropMode",
                 xpDropModeLabel(),
                 xpDropModeValue());
@@ -498,7 +503,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerMergeXPOrbs = newOptionButton(
                 BTN_SERVER_MERGE_XP_ORBS,
-                28,
+                26,
                 "ezminer.config.mergeXPOrbs",
                 boolLabel("ezminer.config.mergeXPOrbs", Config.mergeXPOrbs),
                 boolValue(Config.mergeXPOrbs));
@@ -506,7 +511,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerFireBreakEvent = newOptionButton(
                 BTN_SERVER_FIRE_BREAK_EVENT,
-                29,
+                49,
                 "ezminer.config.fireBreakEvent",
                 boolLabel("ezminer.config.fireBreakEvent", Config.fireBreakEvent),
                 boolValue(Config.fireBreakEvent));
@@ -514,7 +519,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerEnableBlockSwap = newOptionButton(
                 BTN_SERVER_ENABLE_BLOCK_SWAP,
-                32,
+                30,
                 "ezminer.config.enableBlockSwapMode",
                 boolLabel("ezminer.config.enableBlockSwapMode", Config.enableBlockSwapMode),
                 boolValue(Config.enableBlockSwapMode));
@@ -523,7 +528,7 @@ public class EZMinerConfigGui extends GuiScreen {
             // Performance section (values synced from the server via PacketServerConfig)
             btnServerUseDualFrontierBfs = newOptionButton(
                 BTN_SERVER_USE_DUAL_FRONTIER_BFS,
-                34,
+                38,
                 "ezminer.config.useDualFrontierBfs",
                 boolLabel("ezminer.config.useDualFrontierBfs", Config.useDualFrontierBfs),
                 boolValue(Config.useDualFrontierBfs));
@@ -531,7 +536,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerUsePrimitiveVisitedSet = newOptionButton(
                 BTN_SERVER_USE_PRIMITIVE_VISITED_SET,
-                35,
+                39,
                 "ezminer.config.usePrimitiveVisitedSet",
                 boolLabel("ezminer.config.usePrimitiveVisitedSet", Config.usePrimitiveVisitedSet),
                 boolValue(Config.usePrimitiveVisitedSet));
@@ -540,7 +545,7 @@ public class EZMinerConfigGui extends GuiScreen {
             // Stability section
             btnServerEnableChainWatchdog = newOptionButton(
                 BTN_SERVER_ENABLE_CHAIN_WATCHDOG,
-                36,
+                40,
                 "ezminer.config.enableChainWatchdog",
                 boolLabel("ezminer.config.enableChainWatchdog", Config.enableChainWatchdog),
                 boolValue(Config.enableChainWatchdog));
@@ -548,7 +553,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerEnableDropFallbackChain = newOptionButton(
                 BTN_SERVER_ENABLE_DROP_FALLBACK_CHAIN,
-                37,
+                27,
                 "ezminer.config.enableDropFallbackChain",
                 boolLabel("ezminer.config.enableDropFallbackChain", Config.enableDropFallbackChain),
                 boolValue(Config.enableDropFallbackChain));
@@ -556,7 +561,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerEnableMainThreadGuard = newOptionButton(
                 BTN_SERVER_ENABLE_MAIN_THREAD_GUARD,
-                38,
+                41,
                 "ezminer.config.enableMainThreadGuard",
                 boolLabel("ezminer.config.enableMainThreadGuard", Config.enableMainThreadGuard),
                 boolValue(Config.enableMainThreadGuard));
@@ -564,7 +569,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerEnableBudgetDeadline = newOptionButton(
                 BTN_SERVER_ENABLE_BUDGET_DEADLINE,
-                39,
+                42,
                 "ezminer.config.enableBudgetDeadline",
                 boolLabel("ezminer.config.enableBudgetDeadline", Config.enableBudgetDeadline),
                 boolValue(Config.enableBudgetDeadline));
@@ -572,7 +577,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerEnableConfigValidation = newOptionButton(
                 BTN_SERVER_ENABLE_CONFIG_VALIDATION,
-                40,
+                43,
                 "ezminer.config.enableConfigValidation",
                 boolLabel("ezminer.config.enableConfigValidation", Config.enableConfigValidation),
                 boolValue(Config.enableConfigValidation));
@@ -580,7 +585,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
             btnServerEnableSafeReflection = newOptionButton(
                 BTN_SERVER_ENABLE_SAFE_REFLECTION,
-                41,
+                44,
                 "ezminer.config.enableSafeReflection",
                 boolLabel("ezminer.config.enableSafeReflection", Config.enableSafeReflection),
                 boolValue(Config.enableSafeReflection));
@@ -589,7 +594,7 @@ public class EZMinerConfigGui extends GuiScreen {
             // Tool Break Handoff
             btnServerEnableToolBreakHandoff = newOptionButton(
                 BTN_SERVER_ENABLE_TOOL_BREAK_HANDOFF,
-                43,
+                46,
                 "ezminer.config.toolBreakHandoff",
                 boolLabel("ezminer.config.toolBreakHandoff", Config.enableToolBreakHandoff),
                 boolValue(Config.enableToolBreakHandoff));
@@ -685,6 +690,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
         // Hover tooltips for icon buttons — drawn last so they overlay the panel.
         drawButtonTooltips(mouseX, mouseY);
+        drawServerFieldTooltip(mouseX, mouseY);
     }
 
     /** Renders the tooltip of the hovered icon button, if any. */
@@ -696,6 +702,25 @@ public class EZMinerConfigGui extends GuiScreen {
                 GuiTooltipRenderer.render(mc.fontRenderer, btn.getTooltip(), mouseX, mouseY, width, height);
                 return;
             }
+        }
+    }
+
+    /**
+     * Renders the hover tooltip of the server blacklist text field. Scrolling moves
+     * {@code yPosition} with the row, so the hover rect stays in sync automatically.
+     */
+    private void drawServerFieldTooltip(int mouseX, int mouseY) {
+        if (activeTab != TAB_SERVER || !EZMiner.clientIsOp || tfServerBlacklist == null) return;
+        if (mouseX >= tfServerBlacklist.xPosition && mouseX <= tfServerBlacklist.xPosition + tfServerBlacklist.width
+            && mouseY >= tfServerBlacklist.yPosition
+            && mouseY <= tfServerBlacklist.yPosition + tfServerBlacklist.height) {
+            GuiTooltipRenderer.render(
+                mc.fontRenderer,
+                I18n.format("ezminer.config.blacklistExpression.tooltip"),
+                mouseX,
+                mouseY,
+                width,
+                height);
         }
     }
 
@@ -948,8 +973,66 @@ public class EZMinerConfigGui extends GuiScreen {
         }
     }
 
+    /**
+     * Right-click (反选) on an option toggle button. Boolean switches and 2-state
+     * cycles are direction-agnostic — right-click toggles exactly like left-click.
+     * Multi-state cycles (HUD animation style, render style) step backwards.
+     *
+     * @return {@code true} if the click landed on a button and was consumed
+     */
+    private boolean handleRightClickToggle(int x, int y) {
+        for (Object obj : buttonList) {
+            GuiButton btn = (GuiButton) obj;
+            if (!btn.enabled || !btn.visible) continue;
+            if (x >= btn.xPosition && x < btn.xPosition + btn.width
+                && y >= btn.yPosition
+                && y < btn.yPosition + btn.height) {
+                if (isToggleButton(btn.id)) {
+                    onRightClickToggle(btn);
+                }
+                return true; // any button consumes the right-click
+            }
+        }
+        return false;
+    }
+
+    /** Backward-cycle handling for a right-clicked toggle button. */
+    private void onRightClickToggle(GuiButton button) {
+        switch (button.id) {
+            case BTN_HUD_ANIM_STYLE:
+                Config.hudAnimationStyle = (Config.hudAnimationStyle + 2) % 3; // -1 ≡ +2 mod 3
+                btnHudAnimStyle.displayString = hudAnimStyleLabel();
+                break;
+            case BTN_RENDER_STYLE:
+                Config.renderStyle = (Config.renderStyle + 4) % 5; // -1 ≡ +4 mod 5
+                btnRenderStyle.displayString = renderStyleLabel();
+                break;
+            default:
+                // Booleans and 2-state cycles: identical to the left-click action.
+                actionPerformed(button);
+                break;
+        }
+    }
+
+    /** True for option toggle buttons; tabs, action buttons and sync icons are excluded. */
+    private boolean isToggleButton(int id) {
+        return id != BTN_TAB_CLIENT && id != BTN_TAB_SERVER
+            && id != BTN_CLOSE
+            && id != BTN_OPEN_HUD_CONFIG
+            && id != BTN_CLIENT_RELOAD
+            && id != BTN_CLIENT_SAVE
+            && id != BTN_SERVER_RELOAD
+            && id != BTN_SERVER_SAVE
+            && !isClientSyncButton(id);
+    }
+
     @Override
     protected void mouseClicked(int x, int y, int mouseButton) {
+        // Right-click on an option toggle button cycles backwards (反选). GuiButton
+        // only handles left-click, so the hit-test is done here.
+        if (mouseButton == 1 && handleRightClickToggle(x, y)) {
+            return; // consumed — don't also focus a text field underneath
+        }
         super.mouseClicked(x, y, mouseButton);
         // Only forward clicks that land inside the scrollable viewport.
         if (y < viewportTop || y >= viewportBottom) return;
@@ -983,6 +1066,7 @@ public class EZMinerConfigGui extends GuiScreen {
             tfChainIdleTimeout.mouseClicked(x, y, mouseButton);
             tfChainIdleCountdown.mouseClicked(x, y, mouseButton);
             tfChainCooldownTicks.mouseClicked(x, y, mouseButton);
+            tfServerBlacklist.mouseClicked(x, y, mouseButton);
             tfServerBlockSwapRadius.mouseClicked(x, y, mouseButton);
             tfServerBlockSwapLimit.mouseClicked(x, y, mouseButton);
             tfSearchBudgetPerYield.mouseClicked(x, y, mouseButton);
@@ -1031,6 +1115,7 @@ public class EZMinerConfigGui extends GuiScreen {
             tfChainIdleTimeout.textboxKeyTyped(typedChar, keyCode);
             tfChainIdleCountdown.textboxKeyTyped(typedChar, keyCode);
             tfChainCooldownTicks.textboxKeyTyped(typedChar, keyCode);
+            tfServerBlacklist.textboxKeyTyped(typedChar, keyCode);
             tfServerBlockSwapRadius.textboxKeyTyped(typedChar, keyCode);
             tfServerBlockSwapLimit.textboxKeyTyped(typedChar, keyCode);
             tfProspectProbeInterval.textboxKeyTyped(typedChar, keyCode);
@@ -1124,6 +1209,7 @@ public class EZMinerConfigGui extends GuiScreen {
             }
         } else {
             switch (index) {
+                // ── Mining (rows 0-21) ──
                 case 0:
                     return "ezminer.config.bigRadius";
                 case 1:
@@ -1147,81 +1233,86 @@ public class EZMinerConfigGui extends GuiScreen {
                 case 10:
                     return "ezminer.config.addExhaustion";
                 case 11:
-                    return "ezminer.config.minesweeperCooldown";
-                case 12:
-                    return "ezminer.config.sudokuCooldown";
-                case 13:
                     return "ezminer.config.serverPreviewRadius";
-                case 14:
+                case 12:
                     return "ezminer.config.serverPreviewLimit";
-                case 15:
-                    return "ezminer.config.dropToPlayer";
-                case 16:
-                    return "ezminer.config.dropImmediately";
-                case 17:
+                case 13:
                     return "ezminer.config.serverUsePreview";
-                case 18:
+                case 14:
                     return "ezminer.config.enableCachedChain";
-                case 19:
-                    return "ezminer.config.suppressHodgepodgeWarnings";
-                case 20:
+                case 15:
                     return "ezminer.config.enableChainChunkLoading";
-                case 21:
+                case 16:
                     return "ezminer.config.useChunkCachedHarvest";
-                case 22:
+                case 17:
                     return "ezminer.config.crazyMode";
-                case 23:
-                    return "ezminer.config.chainIdleTimeoutSeconds";
-                case 24:
-                    return "ezminer.config.chainIdleCountdownSeconds";
-                case 25:
-                    return "ezminer.config.chainCooldownTicks";
-                case 26:
+                case 18:
                     return "ezminer.config.stopOnUnbreakable";
-                case 27:
+                case 19:
+                    return "ezminer.config.chainIdleTimeoutSeconds";
+                case 20:
+                    return "ezminer.config.chainIdleCountdownSeconds";
+                case 21:
+                    return "ezminer.config.chainCooldownTicks";
+                // ── Drops (rows 22-27) ──
+                case 22:
+                    return "ezminer.config.dropToPlayer";
+                case 23:
+                    return "ezminer.config.dropImmediately";
+                case 24:
+                    return "ezminer.config.blacklistExpression";
+                case 25:
                     return "ezminer.config.xpDropMode";
-                case 28:
+                case 26:
                     return "ezminer.config.mergeXPOrbs";
-                case 29:
-                    return "ezminer.config.fireBreakEvent";
-                case 30:
-                    return "ezminer.config.blockSwapRadius";
-                case 31:
-                    return "ezminer.config.blockSwapLimit";
-                case 32:
-                    return "ezminer.config.enableBlockSwapMode";
-                case 33:
-                    return "ezminer.config.searchBudgetPerYield";
-                case 34:
-                    return "ezminer.config.useDualFrontierBfs";
-                case 35:
-                    return "ezminer.config.usePrimitiveVisitedSet";
-                case 36:
-                    return "ezminer.config.enableChainWatchdog";
-                case 37:
+                case 27:
                     return "ezminer.config.enableDropFallbackChain";
-                case 38:
-                    return "ezminer.config.enableMainThreadGuard";
-                case 39:
-                    return "ezminer.config.enableBudgetDeadline";
-                case 40:
-                    return "ezminer.config.enableConfigValidation";
-                case 41:
-                    return "ezminer.config.enableSafeReflection";
-                case 42:
-                    return "ezminer.config.chainWatchdogTimeoutTicks";
-                case 43:
-                    return "ezminer.config.toolBreakHandoff";
-                case 44:
-                    return "ezminer.config.toolBreakHandoffTimeoutTicks";
-                case 45:
+                // ── Special modes (rows 28-36) ──
+                case 28:
+                    return "ezminer.config.blockSwapRadius";
+                case 29:
+                    return "ezminer.config.blockSwapLimit";
+                case 30:
+                    return "ezminer.config.enableBlockSwapMode";
+                case 31:
                     return "ezminer.config.prospectProbeIntervalSeconds";
-                case 46:
+                case 32:
                     return "ezminer.config.prospectMaxScanRadiusChunks";
-                case 47:
+                case 33:
                     return "ezminer.config.plantRadius";
-                case 48:
+                case 34:
                     return "ezminer.config.plantMaxCount";
+                case 35:
+                    return "ezminer.config.minesweeperCooldown";
+                case 36:
+                    return "ezminer.config.sudokuCooldown";
+                // ── System (rows 37-49) ──
+                case 37:
+                    return "ezminer.config.searchBudgetPerYield";
+                case 38:
+                    return "ezminer.config.useDualFrontierBfs";
+                case 39:
+                    return "ezminer.config.usePrimitiveVisitedSet";
+                case 40:
+                    return "ezminer.config.enableChainWatchdog";
+                case 41:
+                    return "ezminer.config.enableMainThreadGuard";
+                case 42:
+                    return "ezminer.config.enableBudgetDeadline";
+                case 43:
+                    return "ezminer.config.enableConfigValidation";
+                case 44:
+                    return "ezminer.config.enableSafeReflection";
+                case 45:
+                    return "ezminer.config.chainWatchdogTimeoutTicks";
+                case 46:
+                    return "ezminer.config.toolBreakHandoff";
+                case 47:
+                    return "ezminer.config.toolBreakHandoffTimeoutTicks";
+                case 48:
+                    return "ezminer.config.suppressHodgepodgeWarnings";
+                case 49:
+                    return "ezminer.config.fireBreakEvent";
                 default:
                     return null;
             }
@@ -1244,15 +1335,27 @@ public class EZMinerConfigGui extends GuiScreen {
         return value ? "§aON§r" : "§cOFF§r";
     }
 
-    /** Counts the number of {@code \n}-separated lines in the localised label. */
-    private int getLabelLines(String key) {
+    /**
+     * Wraps the localised label into visual lines that fit {@link #LABEL_MAX_WIDTH}
+     * using vanilla {@code FontRenderer.listFormattedStringToWidth} (the chat
+     * wrapper — breaks on spaces, per-character for CJK), so long Chinese labels
+     * stay fully readable instead of being clipped. The method already expands
+     * {@code \n} into line breaks.
+     */
+    @SuppressWarnings("unchecked")
+    private List<String> splitLabel(String text) {
+        return (List<String>) mc.fontRenderer.listFormattedStringToWidth(text, LABEL_MAX_WIDTH);
+    }
+
+    /**
+     * Returns the number of visual lines the localised label occupies when wrapped
+     * at {@link #LABEL_MAX_WIDTH}. Must match {@link #splitLabel} so row heights,
+     * control centering and the rendered text always agree.
+     */
+    private int getLabelRenderLines(String key) {
         if (key == null) return 1;
-        String text = resolveNewlines(I18n.format(key));
-        int count = 1;
-        for (int i = 0; i < text.length(); i++) {
-            if (text.charAt(i) == '\n') count++;
-        }
-        return count;
+        int total = splitLabel(resolveNewlines(I18n.format(key))).size();
+        return Math.max(1, total);
     }
 
     /**
@@ -1266,21 +1369,17 @@ public class EZMinerConfigGui extends GuiScreen {
                                                                                          // Preview, Options, Smart
                                                                                          // Tool Switch
         }
-        return index == 3 || index == 6
-            || index == 12
-            || index == 14
-            || index == 29
-            || index == 32
-            || index == 35
-            || index == 44
-            || index == 46; // after Mining, Tree Felling, Mining extended, Preview, Options, Block Swap, Performance,
-                            // Stability, Prospecting (Planting section follows)
+        return index == 3 || index == 6 || index == 21 || index == 27 || index == 36 || index == 49; // after Mining
+                                                                                                     // sub-groups,
+                                                                                                     // Mining, Drops,
+                                                                                                     // Special Modes,
+                                                                                                     // System
     }
 
     /** Content height of a row excluding any section gap. */
     private int getContentRowHeight(int index) {
         String key = getRowLabelKey(index);
-        int lines = getLabelLines(key);
+        int lines = getLabelRenderLines(key);
         return ROW_H + (lines - 1) * (mc.fontRenderer.FONT_HEIGHT + EXTRA_LINE_SPACING);
     }
 
@@ -1355,6 +1454,7 @@ public class EZMinerConfigGui extends GuiScreen {
                 setScrolledButtonY(BTN_CLIENT_SYNC_BASE + target.ordinal(), getControlY(target.row()));
             }
         } else if (EZMiner.clientIsOp) {
+            // Mining (rows 0-21)
             tfServerBigRadius.yPosition = getControlY(0);
             tfServerBlockLimit.yPosition = getControlY(1);
             tfServerSmallRadius.yPosition = getControlY(2);
@@ -1366,48 +1466,51 @@ public class EZMinerConfigGui extends GuiScreen {
             tfCachedBreakPerTick.yPosition = getControlY(8);
             tfSearchWorkerThreads.yPosition = getControlY(9);
             tfAddExhaustion.yPosition = getControlY(10);
-            tfMinesweeperCooldown.yPosition = getControlY(11);
-            tfSudokuCooldown.yPosition = getControlY(12);
-            tfServerMaxPreviewRadius.yPosition = getControlY(13);
-            tfServerMaxPreviewLimit.yPosition = getControlY(14);
-            tfChainIdleTimeout.yPosition = getControlY(23);
-            tfChainIdleCountdown.yPosition = getControlY(24);
-            tfChainCooldownTicks.yPosition = getControlY(25);
+            tfServerMaxPreviewRadius.yPosition = getControlY(11);
+            tfServerMaxPreviewLimit.yPosition = getControlY(12);
+            setScrolledButtonY(BTN_SERVER_USE_PREVIEW, getControlY(13));
+            setScrolledButtonY(BTN_SERVER_ENABLE_CACHED_CHAIN, getControlY(14));
+            setScrolledButtonY(BTN_SERVER_ENABLE_CHAIN_CHUNK_LOADING, getControlY(15));
+            setScrolledButtonY(BTN_SERVER_USE_CHUNK_CACHED_HARVEST, getControlY(16));
+            setScrolledButtonY(BTN_SERVER_CRAZY_MODE, getControlY(17));
+            setScrolledButtonY(BTN_SERVER_STOP_ON_UNBREAKABLE, getControlY(18));
+            tfChainIdleTimeout.yPosition = getControlY(19);
+            tfChainIdleCountdown.yPosition = getControlY(20);
+            tfChainCooldownTicks.yPosition = getControlY(21);
 
-            setScrolledButtonY(BTN_SERVER_DROP_TO_PLAYER, getControlY(15));
-            setScrolledButtonY(BTN_SERVER_DROP_IMMEDIATELY, getControlY(16));
-            setScrolledButtonY(BTN_SERVER_USE_PREVIEW, getControlY(17));
-            setScrolledButtonY(BTN_SERVER_ENABLE_CACHED_CHAIN, getControlY(18));
-            setScrolledButtonY(BTN_SERVER_SUPPRESS_HODGEPODGE_WARNINGS, getControlY(19));
-            setScrolledButtonY(BTN_SERVER_ENABLE_CHAIN_CHUNK_LOADING, getControlY(20));
-            setScrolledButtonY(BTN_SERVER_USE_CHUNK_CACHED_HARVEST, getControlY(21));
-            setScrolledButtonY(BTN_SERVER_CRAZY_MODE, getControlY(22));
-            setScrolledButtonY(BTN_SERVER_STOP_ON_UNBREAKABLE, getControlY(26));
-            setScrolledButtonY(BTN_SERVER_XP_DROP_MODE, getControlY(27));
-            setScrolledButtonY(BTN_SERVER_MERGE_XP_ORBS, getControlY(28));
+            // Drops (rows 22-27)
+            setScrolledButtonY(BTN_SERVER_DROP_TO_PLAYER, getControlY(22));
+            setScrolledButtonY(BTN_SERVER_DROP_IMMEDIATELY, getControlY(23));
+            tfServerBlacklist.yPosition = getControlY(24);
+            setScrolledButtonY(BTN_SERVER_XP_DROP_MODE, getControlY(25));
+            setScrolledButtonY(BTN_SERVER_MERGE_XP_ORBS, getControlY(26));
+            setScrolledButtonY(BTN_SERVER_ENABLE_DROP_FALLBACK_CHAIN, getControlY(27));
 
-            setScrolledButtonY(BTN_SERVER_FIRE_BREAK_EVENT, getControlY(29));
+            // Special modes (rows 28-36)
+            tfServerBlockSwapRadius.yPosition = getControlY(28);
+            tfServerBlockSwapLimit.yPosition = getControlY(29);
+            setScrolledButtonY(BTN_SERVER_ENABLE_BLOCK_SWAP, getControlY(30));
+            tfProspectProbeInterval.yPosition = getControlY(31);
+            tfProspectMaxScanRadius.yPosition = getControlY(32);
+            tfPlantRadius.yPosition = getControlY(33);
+            tfPlantMaxCount.yPosition = getControlY(34);
+            tfMinesweeperCooldown.yPosition = getControlY(35);
+            tfSudokuCooldown.yPosition = getControlY(36);
 
-            tfServerBlockSwapRadius.yPosition = getControlY(30);
-            tfServerBlockSwapLimit.yPosition = getControlY(31);
-            setScrolledButtonY(BTN_SERVER_ENABLE_BLOCK_SWAP, getControlY(32));
-
-            tfSearchBudgetPerYield.yPosition = getControlY(33);
-            setScrolledButtonY(BTN_SERVER_USE_DUAL_FRONTIER_BFS, getControlY(34));
-            setScrolledButtonY(BTN_SERVER_USE_PRIMITIVE_VISITED_SET, getControlY(35));
-            setScrolledButtonY(BTN_SERVER_ENABLE_CHAIN_WATCHDOG, getControlY(36));
-            setScrolledButtonY(BTN_SERVER_ENABLE_DROP_FALLBACK_CHAIN, getControlY(37));
-            setScrolledButtonY(BTN_SERVER_ENABLE_MAIN_THREAD_GUARD, getControlY(38));
-            setScrolledButtonY(BTN_SERVER_ENABLE_BUDGET_DEADLINE, getControlY(39));
-            setScrolledButtonY(BTN_SERVER_ENABLE_CONFIG_VALIDATION, getControlY(40));
-            setScrolledButtonY(BTN_SERVER_ENABLE_SAFE_REFLECTION, getControlY(41));
-            tfChainWatchdogTimeoutTicks.yPosition = getControlY(42);
-            setScrolledButtonY(BTN_SERVER_ENABLE_TOOL_BREAK_HANDOFF, getControlY(43));
-            tfToolBreakHandoffTimeoutTicks.yPosition = getControlY(44);
-            tfProspectProbeInterval.yPosition = getControlY(45);
-            tfProspectMaxScanRadius.yPosition = getControlY(46);
-            tfPlantRadius.yPosition = getControlY(47);
-            tfPlantMaxCount.yPosition = getControlY(48);
+            // System (rows 37-49)
+            tfSearchBudgetPerYield.yPosition = getControlY(37);
+            setScrolledButtonY(BTN_SERVER_USE_DUAL_FRONTIER_BFS, getControlY(38));
+            setScrolledButtonY(BTN_SERVER_USE_PRIMITIVE_VISITED_SET, getControlY(39));
+            setScrolledButtonY(BTN_SERVER_ENABLE_CHAIN_WATCHDOG, getControlY(40));
+            setScrolledButtonY(BTN_SERVER_ENABLE_MAIN_THREAD_GUARD, getControlY(41));
+            setScrolledButtonY(BTN_SERVER_ENABLE_BUDGET_DEADLINE, getControlY(42));
+            setScrolledButtonY(BTN_SERVER_ENABLE_CONFIG_VALIDATION, getControlY(43));
+            setScrolledButtonY(BTN_SERVER_ENABLE_SAFE_REFLECTION, getControlY(44));
+            tfChainWatchdogTimeoutTicks.yPosition = getControlY(45);
+            setScrolledButtonY(BTN_SERVER_ENABLE_TOOL_BREAK_HANDOFF, getControlY(46));
+            tfToolBreakHandoffTimeoutTicks.yPosition = getControlY(47);
+            setScrolledButtonY(BTN_SERVER_SUPPRESS_HODGEPODGE_WARNINGS, getControlY(48));
+            setScrolledButtonY(BTN_SERVER_FIRE_BREAK_EVENT, getControlY(49));
         }
 
         // Update per-button visibility: hide when scrolled out of viewport.
@@ -1478,31 +1581,33 @@ public class EZMinerConfigGui extends GuiScreen {
         tfCachedBreakPerTick = field(fx, contentRowScreenY(8), String.valueOf(Config.cachedBreakPerTick));
         tfSearchWorkerThreads = field(fx, contentRowScreenY(9), String.valueOf(Config.searchWorkerThreads));
         tfAddExhaustion = field(fx, contentRowScreenY(10), String.valueOf(Config.addExhaustion));
+        tfServerMaxPreviewRadius = field(fx, contentRowScreenY(11), String.valueOf(Config.serverMaxPreviewBigRadius));
+        tfServerMaxPreviewLimit = field(fx, contentRowScreenY(12), String.valueOf(Config.serverMaxPreviewBlockLimit));
+        tfChainIdleTimeout = field(fx, contentRowScreenY(19), String.valueOf(Config.chainIdleTimeoutSeconds));
+        tfChainIdleCountdown = field(fx, contentRowScreenY(20), String.valueOf(Config.chainIdleCountdownSeconds));
+        tfChainCooldownTicks = field(fx, contentRowScreenY(21), String.valueOf(Config.chainCooldownTicks));
+        tfServerBlacklist = field(fx, contentRowScreenY(24), Config.blacklistExpression);
+        tfServerBlacklist.setMaxStringLength(512);
+        tfServerBlockSwapRadius = field(fx, contentRowScreenY(28), String.valueOf(Config.blockSwapRadius));
+        tfServerBlockSwapLimit = field(fx, contentRowScreenY(29), String.valueOf(Config.blockSwapLimit));
+        tfProspectProbeInterval = field(fx, contentRowScreenY(31), String.valueOf(Config.prospectProbeIntervalSeconds));
+        tfProspectMaxScanRadius = field(fx, contentRowScreenY(32), String.valueOf(Config.prospectMaxScanRadiusChunks));
+        tfPlantRadius = field(fx, contentRowScreenY(33), String.valueOf(Config.plantRadius));
+        tfPlantMaxCount = field(fx, contentRowScreenY(34), String.valueOf(Config.plantMaxCount));
         tfMinesweeperCooldown = field(
             fx,
-            contentRowScreenY(11),
+            contentRowScreenY(35),
             String.valueOf(Config.minesweeperProbeCooldownSeconds));
-        tfSudokuCooldown = field(fx, contentRowScreenY(12), String.valueOf(Config.sudokuProbeCooldownSeconds));
-        tfServerMaxPreviewRadius = field(fx, contentRowScreenY(13), String.valueOf(Config.serverMaxPreviewBigRadius));
-        tfServerMaxPreviewLimit = field(fx, contentRowScreenY(14), String.valueOf(Config.serverMaxPreviewBlockLimit));
-        tfChainIdleTimeout = field(fx, contentRowScreenY(23), String.valueOf(Config.chainIdleTimeoutSeconds));
-        tfChainIdleCountdown = field(fx, contentRowScreenY(24), String.valueOf(Config.chainIdleCountdownSeconds));
-        tfChainCooldownTicks = field(fx, contentRowScreenY(25), String.valueOf(Config.chainCooldownTicks));
-        tfServerBlockSwapRadius = field(fx, contentRowScreenY(30), String.valueOf(Config.blockSwapRadius));
-        tfServerBlockSwapLimit = field(fx, contentRowScreenY(31), String.valueOf(Config.blockSwapLimit));
-        tfSearchBudgetPerYield = field(fx, contentRowScreenY(33), String.valueOf(Config.searchBudgetPerYield));
+        tfSudokuCooldown = field(fx, contentRowScreenY(36), String.valueOf(Config.sudokuProbeCooldownSeconds));
+        tfSearchBudgetPerYield = field(fx, contentRowScreenY(37), String.valueOf(Config.searchBudgetPerYield));
         tfChainWatchdogTimeoutTicks = field(
             fx,
-            contentRowScreenY(42),
+            contentRowScreenY(45),
             String.valueOf(Config.chainWatchdogTimeoutTicks));
         tfToolBreakHandoffTimeoutTicks = field(
             fx,
-            contentRowScreenY(44),
+            contentRowScreenY(47),
             String.valueOf(Config.toolBreakHandoffTimeoutTicks));
-        tfProspectProbeInterval = field(fx, contentRowScreenY(45), String.valueOf(Config.prospectProbeIntervalSeconds));
-        tfProspectMaxScanRadius = field(fx, contentRowScreenY(46), String.valueOf(Config.prospectMaxScanRadiusChunks));
-        tfPlantRadius = field(fx, contentRowScreenY(47), String.valueOf(Config.plantRadius));
-        tfPlantMaxCount = field(fx, contentRowScreenY(48), String.valueOf(Config.plantMaxCount));
     }
 
     private GuiTextField field(int x, int y, String initialText) {
@@ -1586,100 +1691,84 @@ public class EZMinerConfigGui extends GuiScreen {
         int lx = guiLeft + LABEL_X;
         int lc = 0xCCCCCC;
 
+        // ── Mining section (rows 0-21) — header drawn inside the TOP_PAD area above row 0
         drawSectionHeader(lx, contentRowScreenY(0) - 10, "ezminer.gui.section.mining");
         drawRow(lx, contentRowScreenY(0), lc, "ezminer.config.bigRadius", tfServerBigRadius);
         drawRow(lx, contentRowScreenY(1), lc, "ezminer.config.blockLimit", tfServerBlockLimit);
         drawRow(lx, contentRowScreenY(2), lc, "ezminer.config.smallRadius", tfServerSmallRadius);
         drawRow(lx, contentRowScreenY(3), lc, "ezminer.config.tunnelWidth", tfServerTunnelWidth);
 
-        // Tree Felling section — header inside the SECTION_GAP appended below row 3
-        drawSectionHeader(lx, contentRowScreenY(3) + getContentRowHeight(3) + 4, "ezminer.gui.section.treeFelling");
+        // Tree felling sub-group (gap after row 3, no header)
         drawRow(lx, contentRowScreenY(4), lc, "ezminer.config.logBigRadius", tfServerLogBigRadius);
         drawRow(lx, contentRowScreenY(5), lc, "ezminer.config.logBlockLimit", tfServerLogBlockLimit);
         drawButtonRowLabel(lx, contentRowScreenY(6), lc, "ezminer.config.logFuzzyEnabled");
 
-        // Mining continued (after Tree Felling section break at row 6)
-        drawSectionHeader(lx, contentRowScreenY(6) + getContentRowHeight(6) + 4, "ezminer.gui.section.miningExtended");
+        // Mining extended sub-group (gap after row 6, no header)
         drawRow(lx, contentRowScreenY(7), lc, "ezminer.config.breakPerTick", tfBreakPerTick);
         drawRow(lx, contentRowScreenY(8), lc, "ezminer.config.cachedBreakPerTick", tfCachedBreakPerTick);
         drawRow(lx, contentRowScreenY(9), lc, "ezminer.config.searchWorkerThreads", tfSearchWorkerThreads);
         drawRow(lx, contentRowScreenY(10), lc, "ezminer.config.addExhaustion", tfAddExhaustion);
-        drawRow(lx, contentRowScreenY(11), lc, "ezminer.config.minesweeperCooldown", tfMinesweeperCooldown);
-        drawRow(lx, contentRowScreenY(12), lc, "ezminer.config.sudokuCooldown", tfSudokuCooldown);
+        drawRow(lx, contentRowScreenY(11), lc, "ezminer.config.serverPreviewRadius", tfServerMaxPreviewRadius);
+        drawRow(lx, contentRowScreenY(12), lc, "ezminer.config.serverPreviewLimit", tfServerMaxPreviewLimit);
+        drawButtonRowLabel(lx, contentRowScreenY(13), lc, "ezminer.config.serverUsePreview");
+        drawButtonRowLabel(lx, contentRowScreenY(14), lc, "ezminer.config.enableCachedChain");
+        drawButtonRowLabel(lx, contentRowScreenY(15), lc, "ezminer.config.enableChainChunkLoading");
+        drawButtonRowLabel(lx, contentRowScreenY(16), lc, "ezminer.config.useChunkCachedHarvest");
+        drawButtonRowLabel(lx, contentRowScreenY(17), lc, "ezminer.config.crazyMode");
+        drawButtonRowLabel(lx, contentRowScreenY(18), lc, "ezminer.config.stopOnUnbreakable");
+        drawRow(lx, contentRowScreenY(19), lc, "ezminer.config.chainIdleTimeoutSeconds", tfChainIdleTimeout);
+        drawRow(lx, contentRowScreenY(20), lc, "ezminer.config.chainIdleCountdownSeconds", tfChainIdleCountdown);
+        drawRow(lx, contentRowScreenY(21), lc, "ezminer.config.chainCooldownTicks", tfChainCooldownTicks);
 
-        // Preview section — header inside the SECTION_GAP appended below row 12
-        drawSectionHeader(lx, contentRowScreenY(12) + getContentRowHeight(12) + 4, "ezminer.gui.section.preview");
-        drawRow(lx, contentRowScreenY(13), lc, "ezminer.config.serverPreviewRadius", tfServerMaxPreviewRadius);
-        drawRow(lx, contentRowScreenY(14), lc, "ezminer.config.serverPreviewLimit", tfServerMaxPreviewLimit);
+        // ── Drops section (rows 22-27) — header inside the SECTION_GAP below row 21;
+        // getContentRowHeight accounts for row 21's label height (per GUI layout convention).
+        drawSectionHeader(lx, contentRowScreenY(21) + getContentRowHeight(21) + 4, "ezminer.gui.section.drops");
+        drawButtonRowLabel(lx, contentRowScreenY(22), lc, "ezminer.config.dropToPlayer");
+        drawButtonRowLabel(lx, contentRowScreenY(23), lc, "ezminer.config.dropImmediately");
+        drawRow(lx, contentRowScreenY(24), lc, "ezminer.config.blacklistExpression", tfServerBlacklist);
+        drawButtonRowLabel(lx, contentRowScreenY(25), lc, "ezminer.config.xpDropMode");
+        drawButtonRowLabel(lx, contentRowScreenY(26), lc, "ezminer.config.mergeXPOrbs");
+        drawButtonRowLabel(lx, contentRowScreenY(27), lc, "ezminer.config.enableDropFallbackChain");
 
-        // Options section — header inside the SECTION_GAP appended below row 14
-        drawSectionHeader(lx, contentRowScreenY(14) + getContentRowHeight(14) + 4, "ezminer.gui.section.options");
-        drawButtonRowLabel(lx, contentRowScreenY(15), lc, "ezminer.config.dropToPlayer");
-        drawButtonRowLabel(lx, contentRowScreenY(16), lc, "ezminer.config.dropImmediately");
-        drawButtonRowLabel(lx, contentRowScreenY(17), lc, "ezminer.config.serverUsePreview");
-        drawButtonRowLabel(lx, contentRowScreenY(18), lc, "ezminer.config.enableCachedChain");
-        drawButtonRowLabel(lx, contentRowScreenY(19), lc, "ezminer.config.suppressHodgepodgeWarnings");
-        drawButtonRowLabel(lx, contentRowScreenY(20), lc, "ezminer.config.enableChainChunkLoading");
-        drawButtonRowLabel(lx, contentRowScreenY(21), lc, "ezminer.config.useChunkCachedHarvest");
-        drawButtonRowLabel(lx, contentRowScreenY(22), lc, "ezminer.config.crazyMode");
-        drawRow(lx, contentRowScreenY(23), lc, "ezminer.config.chainIdleTimeoutSeconds", tfChainIdleTimeout);
-        drawRow(lx, contentRowScreenY(24), lc, "ezminer.config.chainIdleCountdownSeconds", tfChainIdleCountdown);
-        drawRow(lx, contentRowScreenY(25), lc, "ezminer.config.chainCooldownTicks", tfChainCooldownTicks);
-        drawButtonRowLabel(lx, contentRowScreenY(26), lc, "ezminer.config.stopOnUnbreakable");
-        drawButtonRowLabel(lx, contentRowScreenY(27), lc, "ezminer.config.xpDropMode");
-        drawButtonRowLabel(lx, contentRowScreenY(28), lc, "ezminer.config.mergeXPOrbs");
-        drawButtonRowLabel(lx, contentRowScreenY(29), lc, "ezminer.config.fireBreakEvent");
+        // ── Special Modes section (rows 28-36) — header inside the SECTION_GAP below row 27
+        drawSectionHeader(lx, contentRowScreenY(27) + getContentRowHeight(27) + 4, "ezminer.gui.section.modes");
+        drawRow(lx, contentRowScreenY(28), lc, "ezminer.config.blockSwapRadius", tfServerBlockSwapRadius);
+        drawRow(lx, contentRowScreenY(29), lc, "ezminer.config.blockSwapLimit", tfServerBlockSwapLimit);
+        drawButtonRowLabel(lx, contentRowScreenY(30), lc, "ezminer.config.enableBlockSwapMode");
+        drawRow(lx, contentRowScreenY(31), lc, "ezminer.config.prospectProbeIntervalSeconds", tfProspectProbeInterval);
+        drawRow(lx, contentRowScreenY(32), lc, "ezminer.config.prospectMaxScanRadiusChunks", tfProspectMaxScanRadius);
+        drawRow(lx, contentRowScreenY(33), lc, "ezminer.config.plantRadius", tfPlantRadius);
+        drawRow(lx, contentRowScreenY(34), lc, "ezminer.config.plantMaxCount", tfPlantMaxCount);
+        drawRow(lx, contentRowScreenY(35), lc, "ezminer.config.minesweeperCooldown", tfMinesweeperCooldown);
+        drawRow(lx, contentRowScreenY(36), lc, "ezminer.config.sudokuCooldown", tfSudokuCooldown);
 
-        // Block Swap section
-        drawSectionHeader(lx, contentRowScreenY(29) + getContentRowHeight(29) + 4, "ezminer.gui.section.blockSwap");
-        drawRow(lx, contentRowScreenY(30), lc, "ezminer.config.blockSwapRadius", tfServerBlockSwapRadius);
-        drawRow(lx, contentRowScreenY(31), lc, "ezminer.config.blockSwapLimit", tfServerBlockSwapLimit);
-        drawButtonRowLabel(lx, contentRowScreenY(32), lc, "ezminer.config.enableBlockSwapMode");
-
-        // Performance section — header inside the SECTION_GAP appended below row 32;
-        // getContentRowHeight already accounts for row 32's multi-line label.
-        drawSectionHeader(lx, contentRowScreenY(32) + getContentRowHeight(32) + 4, "ezminer.gui.section.performance");
-        drawRow(lx, contentRowScreenY(33), lc, "ezminer.config.searchBudgetPerYield", tfSearchBudgetPerYield);
-        drawButtonRowLabel(lx, contentRowScreenY(34), lc, "ezminer.config.useDualFrontierBfs");
-        drawButtonRowLabel(lx, contentRowScreenY(35), lc, "ezminer.config.usePrimitiveVisitedSet");
-
-        // Stability section
-        drawSectionHeader(lx, contentRowScreenY(35) + getContentRowHeight(35) + 4, "ezminer.gui.section.stability");
-        drawButtonRowLabel(lx, contentRowScreenY(36), lc, "ezminer.config.enableChainWatchdog");
-        drawButtonRowLabel(lx, contentRowScreenY(37), lc, "ezminer.config.enableDropFallbackChain");
-        drawButtonRowLabel(lx, contentRowScreenY(38), lc, "ezminer.config.enableMainThreadGuard");
-        drawButtonRowLabel(lx, contentRowScreenY(39), lc, "ezminer.config.enableBudgetDeadline");
-        drawButtonRowLabel(lx, contentRowScreenY(40), lc, "ezminer.config.enableConfigValidation");
-        drawButtonRowLabel(lx, contentRowScreenY(41), lc, "ezminer.config.enableSafeReflection");
-        drawRow(lx, contentRowScreenY(42), lc, "ezminer.config.chainWatchdogTimeoutTicks", tfChainWatchdogTimeoutTicks);
-        drawButtonRowLabel(lx, contentRowScreenY(43), lc, "ezminer.config.toolBreakHandoff");
+        // ── System section (rows 37-49) — header inside the SECTION_GAP below row 36
+        drawSectionHeader(lx, contentRowScreenY(36) + getContentRowHeight(36) + 4, "ezminer.gui.section.system");
+        drawRow(lx, contentRowScreenY(37), lc, "ezminer.config.searchBudgetPerYield", tfSearchBudgetPerYield);
+        drawButtonRowLabel(lx, contentRowScreenY(38), lc, "ezminer.config.useDualFrontierBfs");
+        drawButtonRowLabel(lx, contentRowScreenY(39), lc, "ezminer.config.usePrimitiveVisitedSet");
+        drawButtonRowLabel(lx, contentRowScreenY(40), lc, "ezminer.config.enableChainWatchdog");
+        drawButtonRowLabel(lx, contentRowScreenY(41), lc, "ezminer.config.enableMainThreadGuard");
+        drawButtonRowLabel(lx, contentRowScreenY(42), lc, "ezminer.config.enableBudgetDeadline");
+        drawButtonRowLabel(lx, contentRowScreenY(43), lc, "ezminer.config.enableConfigValidation");
+        drawButtonRowLabel(lx, contentRowScreenY(44), lc, "ezminer.config.enableSafeReflection");
+        drawRow(lx, contentRowScreenY(45), lc, "ezminer.config.chainWatchdogTimeoutTicks", tfChainWatchdogTimeoutTicks);
+        drawButtonRowLabel(lx, contentRowScreenY(46), lc, "ezminer.config.toolBreakHandoff");
         drawRow(
             lx,
-            contentRowScreenY(44),
+            contentRowScreenY(47),
             lc,
             "ezminer.config.toolBreakHandoffTimeoutTicks",
             tfToolBreakHandoffTimeoutTicks);
-
-        // Prospecting section — header inside the SECTION_GAP appended below row 44;
-        // getContentRowHeight accounts for row 44's label height (per GUI layout convention).
-        drawSectionHeader(lx, contentRowScreenY(44) + getContentRowHeight(44) + 4, "ezminer.gui.section.prospecting");
-        drawRow(lx, contentRowScreenY(45), lc, "ezminer.config.prospectProbeIntervalSeconds", tfProspectProbeInterval);
-        drawRow(lx, contentRowScreenY(46), lc, "ezminer.config.prospectMaxScanRadiusChunks", tfProspectMaxScanRadius);
-
-        // Planting section — header inside the SECTION_GAP appended below row 46;
-        // getContentRowHeight accounts for row 46's label height (per GUI layout convention).
-        drawSectionHeader(lx, contentRowScreenY(46) + getContentRowHeight(46) + 4, "ezminer.gui.section.planting");
-        drawRow(lx, contentRowScreenY(47), lc, "ezminer.config.plantRadius", tfPlantRadius);
-        drawRow(lx, contentRowScreenY(48), lc, "ezminer.config.plantMaxCount", tfPlantMaxCount);
-
+        drawButtonRowLabel(lx, contentRowScreenY(48), lc, "ezminer.config.suppressHodgepodgeWarnings");
+        drawButtonRowLabel(lx, contentRowScreenY(49), lc, "ezminer.config.fireBreakEvent");
     }
 
     private void drawRow(int labelX, int y, int color, String labelKey, GuiTextField field) {
-        String text = resolveNewlines(I18n.format(labelKey));
-        String[] lines = text.split("\n", -1);
+        List<String> lines = splitLabel(resolveNewlines(I18n.format(labelKey)));
         int fontH = mc.fontRenderer.FONT_HEIGHT;
-        for (int i = 0; i < lines.length; i++) {
-            String line = (i == 0 && lines.length == 1) ? lines[i] + ":" : lines[i];
+        for (int i = 0; i < lines.size(); i++) {
+            String line = (i == 0 && lines.size() == 1) ? lines.get(0) + ":" : lines.get(i);
             mc.fontRenderer.drawStringWithShadow(line, labelX, y + 2 + i * (fontH + EXTRA_LINE_SPACING), color);
         }
         field.drawTextBox();
@@ -1688,16 +1777,17 @@ public class EZMinerConfigGui extends GuiScreen {
     /**
      * Draws a multi-line label for a button row. For single-line labels this is a
      * no-op — the button's own displayString already shows the text. For multi-line
-     * labels (containing {@code \n}), all lines are drawn here and the button only
-     * shows the condensed first line.
+     * labels (containing {@code \n}), each line is wrapped at
+     * {@link #LABEL_MAX_WIDTH} so it never overlaps the compact right-hand button.
      */
     private void drawButtonRowLabel(int labelX, int rowY, int color, String labelKey) {
         String text = resolveNewlines(I18n.format(labelKey));
         if (!text.contains("\n")) return; // single-line: button text is sufficient
-        String[] lines = text.split("\n", -1);
+        List<String> lines = splitLabel(text);
         int fontH = mc.fontRenderer.FONT_HEIGHT;
-        for (int i = 0; i < lines.length; i++) {
-            mc.fontRenderer.drawStringWithShadow(lines[i], labelX, rowY + 2 + i * (fontH + EXTRA_LINE_SPACING), color);
+        for (int i = 0; i < lines.size(); i++) {
+            mc.fontRenderer
+                .drawStringWithShadow(lines.get(i), labelX, rowY + 2 + i * (fontH + EXTRA_LINE_SPACING), color);
         }
     }
 
@@ -1938,6 +2028,9 @@ public class EZMinerConfigGui extends GuiScreen {
         // Planting settings
         packet.plantRadius = parseI(tfPlantRadius, Config.plantRadius, 1);
         packet.plantMaxCount = parseI(tfPlantMaxCount, Config.plantMaxCount, 1);
+        // Item blacklist expression
+        packet.blacklistExpression = tfServerBlacklist.getText()
+            .trim();
         EZMiner.network.network.sendToServer(packet);
     }
 

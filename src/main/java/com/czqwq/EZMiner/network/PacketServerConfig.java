@@ -3,6 +3,7 @@ package com.czqwq.EZMiner.network;
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.permission.OpPermissionChecker;
 
+import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -60,6 +61,7 @@ public class PacketServerConfig implements IMessage {
     public int xpDropMode;
     public boolean mergeXPOrbs;
     public boolean fireBreakEvent;
+    public String blacklistExpression;
     // Log (tree-felling) settings
     public int maxLogBigRadius;
     public int maxLogBlockLimit;
@@ -129,6 +131,7 @@ public class PacketServerConfig implements IMessage {
         maxLogBigRadius = buf.readInt();
         maxLogBlockLimit = buf.readInt();
         logFuzzyEnabled = buf.readBoolean();
+        blacklistExpression = ByteBufUtils.readUTF8String(buf);
     }
 
     @Override
@@ -174,6 +177,7 @@ public class PacketServerConfig implements IMessage {
         buf.writeInt(maxLogBigRadius);
         buf.writeInt(maxLogBlockLimit);
         buf.writeBoolean(logFuzzyEnabled);
+        ByteBufUtils.writeUTF8String(buf, blacklistExpression == null ? "" : blacklistExpression);
     }
 
     /**
@@ -220,6 +224,7 @@ public class PacketServerConfig implements IMessage {
         packet.xpDropMode = Config.xpDropMode;
         packet.mergeXPOrbs = Config.mergeXPOrbs;
         packet.fireBreakEvent = Config.fireBreakEvent;
+        packet.blacklistExpression = Config.blacklistExpression;
         packet.maxLogBigRadius = Config.logBigRadius;
         packet.maxLogBlockLimit = Config.logBlockLimit;
         packet.logFuzzyEnabled = Config.logFuzzyEnabled;
@@ -274,6 +279,7 @@ public class PacketServerConfig implements IMessage {
                     msg.plantRadius,
                     msg.plantMaxCount);
                 Config.logFuzzyEnabled = msg.logFuzzyEnabled;
+                Config.blacklistExpression = msg.blacklistExpression == null ? "" : msg.blacklistExpression.trim();
                 com.czqwq.EZMiner.EZMiner.clientIsOp = msg.isOp;
             }
             return null;

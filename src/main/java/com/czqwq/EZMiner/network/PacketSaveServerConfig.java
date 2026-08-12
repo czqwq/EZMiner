@@ -9,6 +9,7 @@ import com.czqwq.EZMiner.core.MinerConfig;
 import com.czqwq.EZMiner.core.PlayerManager;
 import com.czqwq.EZMiner.permission.OpPermissionChecker;
 
+import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -53,6 +54,7 @@ public class PacketSaveServerConfig implements IMessage {
     public int blockSwapLimit;
     public boolean enableBlockSwapMode;
     public boolean fireBreakEvent;
+    public String blacklistExpression;
     // Performance settings — assigned via public fields at the GUI call site instead of
     // growing the positional constructor further (adjacent booleans swap silently).
     public int searchBudgetPerYield;
@@ -215,6 +217,7 @@ public class PacketSaveServerConfig implements IMessage {
         prospectMaxScanRadiusChunks = buf.readInt();
         plantRadius = buf.readInt();
         plantMaxCount = buf.readInt();
+        blacklistExpression = ByteBufUtils.readUTF8String(buf);
     }
 
     @Override
@@ -268,6 +271,7 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeInt(prospectMaxScanRadiusChunks);
         buf.writeInt(plantRadius);
         buf.writeInt(plantMaxCount);
+        ByteBufUtils.writeUTF8String(buf, blacklistExpression == null ? "" : blacklistExpression);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveServerConfig, IMessage> {
@@ -328,8 +332,9 @@ public class PacketSaveServerConfig implements IMessage {
             Config.logFuzzyEnabled = msg.logFuzzyEnabled;
             Config.prospectProbeIntervalSeconds = Math.max(0.1, msg.prospectProbeIntervalSeconds);
             Config.prospectMaxScanRadiusChunks = Math.max(1, Math.min(7, msg.prospectMaxScanRadiusChunks));
-            Config.plantRadius = Math.max(1, Math.min(12, msg.plantRadius));
-            Config.plantMaxCount = Math.max(1, Math.min(256, msg.plantMaxCount));
+            Config.plantRadius = Math.max(1, Math.min(64, msg.plantRadius));
+            Config.plantMaxCount = Math.max(1, Math.min(1024, msg.plantMaxCount));
+            Config.blacklistExpression = msg.blacklistExpression == null ? "" : msg.blacklistExpression.trim();
 
             // Persist to disk
             Config.saveServerConfig();

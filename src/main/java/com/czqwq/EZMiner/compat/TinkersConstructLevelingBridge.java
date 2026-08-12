@@ -1,9 +1,14 @@
 package com.czqwq.EZMiner.compat;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+
+import com.czqwq.EZMiner.core.founder.BasePositionFounder;
 
 import cpw.mods.fml.common.Loader;
 
@@ -68,6 +73,43 @@ public final class TinkersConstructLevelingBridge {
         // unconditionally read stack.getTagCompound().
         if (stack == null || !stack.hasTagCompound()) return false;
         return Impl.fire(stack, x, y, z, player);
+    }
+
+    // ── Deterministic auto-smelt drop ownership ──────────────────────────────
+    //
+    // TiC's autosmelt hook spawns the smelted EntityItem synchronously INSIDE
+    // beforeBlockBreak (exact block centre, block already air). Manager's
+    // EntityJoinWorldEvent interceptor needs to attribute that item to the
+    // current chain without stealing other players' or other mods' drops, so
+    // the harvest paths pre-register the position (with the owning player)
+    // immediately before replaying the hooks. The interceptor checks this map
+    // during the synchronously-dispatched join event; the caller then clears
+    // the entry. All access happens on the server thread — a plain HashMap
+    // suffices, and the map is empty outside the brief hook window.
+
+    private static final Map<Long, UUID> pendingSmelt = new HashMap<>();
+
+    /**
+     * Registers {@code (x, y, z)} as being about to go through the TiC
+     * {@code beforeBlockBreak} replay for {@code player}. Call immediately
+     * before {@link #fireBeforeBlockBreak}; must be paired with
+     * {@link #clearBlockBreak} afterwards.
+     */
+    public static void markBeforeBlockBreak(EntityPlayerMP player, int x, int y, int z) {
+        if (!TIC_LOADED) return;
+        pendingSmelt.put(BasePositionFounder.encodePos(x, y, z), player.getUniqueID());
+    }
+
+    /** Removes the pending entry for the given position. Idempotent. */
+    public static void clearBlockBreak(int x, int y, int z) {
+        if (TIC_LOADED) pendingSmelt.remove(BasePositionFounder.encodePos(x, y, z));
+    }
+
+    /** True when {@code (x, y, z)} was just marked for this exact player. */
+    public static boolean isSmeltCandidate(EntityPlayerMP player, int x, int y, int z) {
+        if (!TIC_LOADED) return false;
+        UUID owner = pendingSmelt.get(BasePositionFounder.encodePos(x, y, z));
+        return owner != null && owner.equals(player.getUniqueID());
     }
 
     /** Holder for all TConstruct class references — only classloaded when TiC is present. */

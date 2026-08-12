@@ -122,8 +122,17 @@ public class ChunkCachedHarvester {
         // ── TiC compat: fire ActiveToolMod.beforeBlockBreak (IguanaTweaks tool XP,
         // autosmelt, …) like vanilla onBlockStartBreak would. A true return means a
         // hook consumed the block itself (autosmelt: set to air + smelted drop +
-        // tool damage) — mirror vanilla and skip our own harvest steps. ──
-        if (TinkersConstructLevelingBridge.fireBeforeBlockBreak(player, x, y, z)) {
+        // tool damage) — mirror vanilla and skip our own harvest steps. The
+        // position is pre-registered so Manager's EntityJoinWorldEvent interceptor
+        // can attribute the synchronous smelt-drop spawn to this player. ──
+        TinkersConstructLevelingBridge.markBeforeBlockBreak(player, x, y, z);
+        boolean consumed;
+        try {
+            consumed = TinkersConstructLevelingBridge.fireBeforeBlockBreak(player, x, y, z);
+        } finally {
+            TinkersConstructLevelingBridge.clearBlockBreak(x, y, z);
+        }
+        if (consumed) {
             return true;
         }
 

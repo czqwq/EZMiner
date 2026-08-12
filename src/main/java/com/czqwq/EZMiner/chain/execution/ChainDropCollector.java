@@ -9,8 +9,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 
+import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.core.ItemStackKey;
 import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
+import com.czqwq.EZMiner.utils.ItemFilterExpression;
 
 /**
  * Aggregates block drops during a chain operation and flushes them as world entities.
@@ -38,10 +40,25 @@ public class ChainDropCollector {
     /**
      * Merges all stacks in {@code drops} into the internal collection, then clears
      * {@code drops} so the caller's list is empty (preventing vanilla item spawning).
+     *
+     * <p>
+     * Blacklist filtering: in delayed-drop mode ({@code dropImmediately == false}),
+     * items matching {@link Config#blacklistExpression} are destroyed instead of
+     * collected (e.g. endless cobblestone). The expression is compiled once and
+     * lazily refreshed via {@link ItemFilterExpression#cached(String)}; when
+     * disabled (blank expression or immediate mode) the loop cost is one boolean
+     * plus a null check per drop.
+     * </p>
      */
     public void collect(List<ItemStack> drops) {
+        String blacklistExpression = Config.blacklistExpression;
+        ItemFilterExpression.Compiled blacklist = (!Config.dropImmediately
+            && ItemFilterExpression.isEnabled(blacklistExpression)) ? ItemFilterExpression.cached(blacklistExpression)
+                : null;
         for (ItemStack drop : drops) {
             if (drop == null || drop.stackSize <= 0) continue;
+            // Blacklisted item — destroyed, never enters the collector.
+            if (blacklist != null && blacklist.matches(drop)) continue;
             NBTTagCompound tag = drop.getTagCompound();
             if (tag == null) {
                 // Fast O(1) path: no NBT — item + damage uniquely identifies the stack type.
