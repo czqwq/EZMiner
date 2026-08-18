@@ -29,6 +29,17 @@ import cpw.mods.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class EZMinerConfigGui extends GuiScreen {
 
+    /** Screen to return to on close (mod list / mod options); {@code null} returns to the game HUD. */
+    private final GuiScreen returnScreen;
+
+    public EZMinerConfigGui() {
+        this(null);
+    }
+
+    public EZMinerConfigGui(GuiScreen returnScreen) {
+        this.returnScreen = returnScreen;
+    }
+
     // ── Tab IDs ──────────────────────────────────────────────────────────────
     private static final int TAB_CLIENT = 0;
     private static final int TAB_SERVER = 1;
@@ -77,6 +88,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int BTN_LOG_FUZZY_ENABLED = 40;
     private static final int BTN_SERVER_LOG_FUZZY_ENABLED = 41;
     private static final int BTN_OPEN_HUD_CONFIG = 42;
+    private static final int BTN_SERVER_NOTIFY_NEIGHBORS = 43;
     private static final int BTN_CLIENT_SYNC_BASE = 100;
 
     // ── Layout constants ──────────────────────────────────────────────────────
@@ -91,7 +103,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private static final int CONTENT_START_Y = 42;
     private static final int MAX_CONTENT_ROWS = 23; // Client tab row count
     /** Server tab row count (has more fields than client tab). */
-    private static final int SERVER_CONTENT_ROWS = 50;
+    private static final int SERVER_CONTENT_ROWS = 51;
     private static final int ROW_H = 20;
     /** Extra vertical spacing added between lines when a label contains \n. */
     private static final int EXTRA_LINE_SPACING = 2;
@@ -219,6 +231,7 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiButton btnServerEnableToolBreakHandoff;
     private GuiButton btnLogFuzzyEnabled;
     private GuiButton btnServerLogFuzzyEnabled;
+    private GuiButton btnServerNotifyNeighborsOnChainBreak;
 
     // ── GuiScreen overrides ───────────────────────────────────────────────────
 
@@ -609,6 +622,16 @@ public class EZMinerConfigGui extends GuiScreen {
                 boolValue(Config.logFuzzyEnabled));
             buttonList.add(btnServerLogFuzzyEnabled);
 
+            // System section — notify neighbours of mined blocks (fixes floating
+            // water/sand/grass; a performance cost, default off).
+            btnServerNotifyNeighborsOnChainBreak = newOptionButton(
+                BTN_SERVER_NOTIFY_NEIGHBORS,
+                50,
+                "ezminer.config.notifyNeighborsOnChainBreak",
+                boolLabel("ezminer.config.notifyNeighborsOnChainBreak", Config.notifyNeighborsOnChainBreak),
+                boolValue(Config.notifyNeighborsOnChainBreak));
+            buttonList.add(btnServerNotifyNeighborsOnChainBreak);
+
             // Fixed: server action buttons
             buttonList.add(
                 new GuiButton(
@@ -742,7 +765,7 @@ public class EZMinerConfigGui extends GuiScreen {
                 updateScrolledPositions();
                 break;
             case BTN_CLOSE:
-                mc.displayGuiScreen(null);
+                close();
                 break;
 
             case BTN_USE_PREVIEW:
@@ -821,7 +844,7 @@ public class EZMinerConfigGui extends GuiScreen {
                 break;
             case BTN_CLIENT_SAVE:
                 applyAndSaveClientConfig();
-                mc.displayGuiScreen(null);
+                close();
                 break;
 
             case BTN_SERVER_DROP_TO_PLAYER:
@@ -957,6 +980,12 @@ public class EZMinerConfigGui extends GuiScreen {
                     "ezminer.config.logFuzzyEnabled",
                     Config.logFuzzyEnabled);
                 break;
+            case BTN_SERVER_NOTIFY_NEIGHBORS:
+                Config.notifyNeighborsOnChainBreak = !Config.notifyNeighborsOnChainBreak;
+                btnServerNotifyNeighborsOnChainBreak.displayString = boolDisplayText(
+                    "ezminer.config.notifyNeighborsOnChainBreak",
+                    Config.notifyNeighborsOnChainBreak);
+                break;
 
             case BTN_SERVER_RELOAD:
                 EZMiner.network.network.sendToServer(new PacketReloadServerConfig());
@@ -1082,7 +1111,7 @@ public class EZMinerConfigGui extends GuiScreen {
     @Override
     protected void keyTyped(char typedChar, int keyCode) {
         if (keyCode == Keyboard.KEY_ESCAPE) {
-            mc.displayGuiScreen(null);
+            close();
             return;
         }
         if (activeTab == TAB_CLIENT) {
@@ -1131,6 +1160,16 @@ public class EZMinerConfigGui extends GuiScreen {
     @Override
     public boolean doesGuiPauseGame() {
         return false;
+    }
+
+    /**
+     * Closes the config GUI. When opened from the mod list / mod options screen
+     * ({@link #returnScreen} non-null) returns there; otherwise (inventory button /
+     * no-op constructor) returns to the game HUD exactly like the old
+     * {@code displayGuiScreen(null)}.
+     */
+    private void close() {
+        mc.displayGuiScreen(returnScreen);
     }
 
     // ── Layout helpers ────────────────────────────────────────────────────────
@@ -1313,6 +1352,8 @@ public class EZMinerConfigGui extends GuiScreen {
                     return "ezminer.config.suppressHodgepodgeWarnings";
                 case 49:
                     return "ezminer.config.fireBreakEvent";
+                case 50:
+                    return "ezminer.config.notifyNeighborsOnChainBreak";
                 default:
                     return null;
             }
@@ -1369,7 +1410,7 @@ public class EZMinerConfigGui extends GuiScreen {
                                                                                          // Preview, Options, Smart
                                                                                          // Tool Switch
         }
-        return index == 3 || index == 6 || index == 21 || index == 27 || index == 36 || index == 49; // after Mining
+        return index == 3 || index == 6 || index == 21 || index == 27 || index == 36 || index == 50; // after Mining
                                                                                                      // sub-groups,
                                                                                                      // Mining, Drops,
                                                                                                      // Special Modes,
@@ -1511,6 +1552,7 @@ public class EZMinerConfigGui extends GuiScreen {
             tfToolBreakHandoffTimeoutTicks.yPosition = getControlY(47);
             setScrolledButtonY(BTN_SERVER_SUPPRESS_HODGEPODGE_WARNINGS, getControlY(48));
             setScrolledButtonY(BTN_SERVER_FIRE_BREAK_EVENT, getControlY(49));
+            setScrolledButtonY(BTN_SERVER_NOTIFY_NEIGHBORS, getControlY(50));
         }
 
         // Update per-button visibility: hide when scrolled out of viewport.
@@ -1762,6 +1804,7 @@ public class EZMinerConfigGui extends GuiScreen {
             tfToolBreakHandoffTimeoutTicks);
         drawButtonRowLabel(lx, contentRowScreenY(48), lc, "ezminer.config.suppressHodgepodgeWarnings");
         drawButtonRowLabel(lx, contentRowScreenY(49), lc, "ezminer.config.fireBreakEvent");
+        drawButtonRowLabel(lx, contentRowScreenY(50), lc, "ezminer.config.notifyNeighborsOnChainBreak");
     }
 
     private void drawRow(int labelX, int y, int color, String labelKey, GuiTextField field) {
@@ -1853,7 +1896,8 @@ public class EZMinerConfigGui extends GuiScreen {
                 || btn.id == BTN_SERVER_ENABLE_CONFIG_VALIDATION
                 || btn.id == BTN_SERVER_ENABLE_SAFE_REFLECTION
                 || btn.id == BTN_SERVER_ENABLE_TOOL_BREAK_HANDOFF
-                || btn.id == BTN_SERVER_LOG_FUZZY_ENABLED;
+                || btn.id == BTN_SERVER_LOG_FUZZY_ENABLED
+                || btn.id == BTN_SERVER_NOTIFY_NEIGHBORS;
             boolean isServerAction = btn.id == BTN_SERVER_RELOAD || btn.id == BTN_SERVER_SAVE;
 
             if (isClientSyncButton(btn.id)) {
@@ -1999,6 +2043,7 @@ public class EZMinerConfigGui extends GuiScreen {
         // unless the OP changed them in this GUI session).
         packet.searchBudgetPerYield = parseI(tfSearchBudgetPerYield, Config.searchBudgetPerYield, 0);
         packet.useDualFrontierBfs = Config.useDualFrontierBfs;
+        packet.notifyNeighborsOnChainBreak = Config.notifyNeighborsOnChainBreak;
         packet.usePrimitiveVisitedSet = Config.usePrimitiveVisitedSet;
         // Stability settings
         packet.enableChainWatchdog = Config.enableChainWatchdog;

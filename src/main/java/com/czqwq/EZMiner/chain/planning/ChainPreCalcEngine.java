@@ -223,7 +223,10 @@ public final class ChainPreCalcEngine {
                                 lastY4 = -1; // force EBS refresh
                             }
                             if (y4 != lastY4 || currentEbs == null) {
-                                currentEbs = currentChunk != null ? currentChunk.getBlockStorageArray()[y4] : null;
+                                ExtendedBlockStorage[] storage = currentChunk != null
+                                    ? currentChunk.getBlockStorageArray()
+                                    : null;
+                                currentEbs = (storage != null && y4 >= 0 && y4 < storage.length) ? storage[y4] : null;
                                 lastY4 = y4;
                             }
 

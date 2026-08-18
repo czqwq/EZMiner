@@ -1,5 +1,6 @@
 package com.czqwq.EZMiner.core;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,6 +20,7 @@ import com.czqwq.EZMiner.chain.execution.ChainActionExecutor;
 import com.czqwq.EZMiner.chain.execution.ChainExecutionErrorReporter;
 import com.czqwq.EZMiner.chain.execution.ChainExecutor;
 import com.czqwq.EZMiner.chain.execution.ChainHarvestExhaustionStrategy;
+import com.czqwq.EZMiner.chain.execution.ChunkBlockWriteHelper;
 import com.czqwq.EZMiner.chain.execution.ChunkCachedHarvester;
 import com.czqwq.EZMiner.chain.execution.ChunkPreloader;
 import com.czqwq.EZMiner.chain.execution.CooldownTracker;
@@ -76,7 +78,7 @@ public class BaseOperator {
      * chunk is sufficient and avoids redundant network packets in multiplayer.
      */
     private final Set<Long> vpNotifiedChunks = new HashSet<>();
-    private final ChainActionExecutor harvestActionExecutor = new BlockHarvestActionExecutor();
+    private final BlockHarvestActionExecutor harvestActionExecutor = new BlockHarvestActionExecutor();
     private final ChainActionExecutor cropHarvestActionExecutor = new CropHarvestActionExecutor();
     private final ChainExecutor chainExecutor = new ChainExecutor(harvestActionExecutor);
     private final ChainHarvestExhaustionStrategy exhaustionStrategy = new ChainHarvestExhaustionStrategy();
@@ -412,6 +414,12 @@ public class BaseOperator {
         float exhaustionBefore = exhaustionStrategy.getExhaustion(food);
         int harvested = 0;
 
+        // Optional batched neighbour notification (floating water/sand/grass fix).
+        // When disabled no sink is created and the hot path is untouched.
+        List<ChunkBlockWriteHelper.RemovedBlock> removedSink = Config.notifyNeighborsOnChainBreak
+            ? new ArrayList<>(Math.min(perTick, 64) * 2)
+            : null;
+
         // ── Collect batch positions ──
         Vector3i pos;
         while (harvested < perTick && (pos = canBreakPositions.poll()) != null) {
@@ -438,7 +446,7 @@ public class BaseOperator {
                 // Record the type before removal; after removal the position is air.
                 // Saguaro cascades its unsupported neighbors into the work queue.
                 boolean wasSaguaro = NaturaSaguaroCompat.isSaguaroBlock(playerMP.worldObj, pos.x, pos.y, pos.z);
-                boolean ok = harvestActionExecutor.execute(pos, playerMP);
+                boolean ok = harvestActionExecutor.execute(pos, playerMP, removedSink);
                 if (!ok) continue;
                 if (wasSaguaro) {
                     NaturaSaguaroCompat
@@ -451,6 +459,10 @@ public class BaseOperator {
                 manager.reportRuntimeError("harvest_error");
                 ChainExecutionErrorReporter.reportHarvestError(manager, pos, e);
             }
+        }
+
+        if (removedSink != null && !removedSink.isEmpty()) {
+            ChunkBlockWriteHelper.notifyBatchNeighborChange(playerMP.worldObj, removedSink);
         }
 
         exhaustionStrategy.setExhaustion(food, exhaustionBefore + harvested * (float) manager.pConfig.addExhaustion);
@@ -471,6 +483,11 @@ public class BaseOperator {
         net.minecraft.util.FoodStats food = playerMP.getFoodStats();
         float exhaustionBefore = exhaustionStrategy.getExhaustion(food);
         int harvested = 0;
+
+        // Optional batched neighbour notification (floating water/sand/grass fix).
+        List<ChunkBlockWriteHelper.RemovedBlock> removedSink = Config.notifyNeighborsOnChainBreak
+            ? new ArrayList<>(Math.min(perTick, 64) * 2)
+            : null;
 
         ChunkCachedHarvester harvester = new ChunkCachedHarvester();
 
@@ -502,7 +519,7 @@ public class BaseOperator {
                 // Record the type before removal; after removal the position is air.
                 // Saguaro cascades its unsupported neighbors into the work queue.
                 boolean wasSaguaro = NaturaSaguaroCompat.isSaguaroBlock(playerMP.worldObj, pos.x, pos.y, pos.z);
-                boolean ok = harvester.harvestNext(pos, playerMP);
+                boolean ok = harvester.harvestNext(pos, playerMP, removedSink);
                 if (!ok) continue;
                 if (wasSaguaro) {
                     NaturaSaguaroCompat
@@ -520,6 +537,10 @@ public class BaseOperator {
 
         // Flush height map for the last chunk touched
         harvester.flushRemaining();
+
+        if (removedSink != null && !removedSink.isEmpty()) {
+            ChunkBlockWriteHelper.notifyBatchNeighborChange(playerMP.worldObj, removedSink);
+        }
 
         exhaustionStrategy.setExhaustion(food, exhaustionBefore + harvested * (float) manager.pConfig.addExhaustion);
     }

@@ -290,6 +290,22 @@ public class Config {
      */
     public static boolean useChunkCachedHarvest = false;
 
+    /**
+     * When enabled, chain mining fires vanilla neighbour-block notifications
+     * ({@code onNeighborBlockChange}) after each tick's harvest batch, so water /
+     * sand / gravel / cactus / attached blocks react correctly instead of staying
+     * floating next to a freshly mined cavity.
+     *
+     * <p>
+     * <strong>Default: {@code true}.</strong> The notifications are batched and
+     * deduplicated (each non-air neighbour coordinate notified once per batch), so
+     * the cost scales with the mined region's <em>surface</em>, not its volume —
+     * for solid ore veins the boundary neighbours' {@code onNeighborBlockChange}
+     * is a no-op, so the overhead stays small. Disable it for maximum mining
+     * throughput on servers that accept floating blocks.
+     */
+    public static boolean notifyNeighborsOnChainBreak = true;
+
     /** Remove Fortune III cap for GT/BW ore drops. Mixin-based — requires game restart. */
     public static boolean enableUnlimitedOreFortune = false;
 
@@ -886,6 +902,13 @@ public class Config {
             "EXPERIMENTAL — Enables a faster block-harvest path during chain mining. "
                 + "Skips some safety checks for maximum speed. "
                 + "⚠ Use with caution. Default: false.");
+        notifyNeighborsOnChainBreak = serverConfiguration.getBoolean(
+            "notifyNeighborsOnChainBreak",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "When true, chain mining notifies neighbouring blocks after each tick's harvest "
+                + "batch so water/sand/gravel/cactus react correctly instead of floating next to a "
+                + "mined cavity. Batched and deduplicated (surface-proportional cost). Default: true.");
         suppressHodgepodgeWarnings = serverConfiguration.getBoolean(
             "suppressHodgepodgeWarnings",
             Configuration.CATEGORY_GENERAL,
@@ -967,7 +990,7 @@ public class Config {
         int syncedChainIdleCountdownSeconds, boolean syncedStopOnUnbreakable, int syncedChainCooldownTicks,
         int syncedXpDropMode, boolean syncedMergeXPOrbs, boolean syncedFireBreakEvent,
         double syncedProspectProbeInterval, int syncedProspectMaxScanRadius, int syncedPlantRadius,
-        int syncedPlantMaxCount) {
+        int syncedPlantMaxCount, boolean syncedNotifyNeighborsOnChainBreak) {
         cachedBreakPerTick = Math.max(1, Math.min(1024, syncedCachedBreakPerTick));
         dropImmediately = syncedDropImmediately;
         addExhaustion = syncedAddExhaustion;
@@ -992,6 +1015,7 @@ public class Config {
         xpDropMode = Math.max(0, Math.min(1, syncedXpDropMode));
         mergeXPOrbs = syncedMergeXPOrbs;
         fireBreakEvent = syncedFireBreakEvent;
+        notifyNeighborsOnChainBreak = syncedNotifyNeighborsOnChainBreak;
     }
 
     /**
@@ -1518,6 +1542,14 @@ public class Config {
                 false,
                 "[EXPERIMENTAL] Faster block harvest via direct sub-chunk writes. Use with caution.")
             .set(useChunkCachedHarvest);
+        serverConfiguration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "notifyNeighborsOnChainBreak",
+                true,
+                "Notify neighbouring blocks after chain-mining batches (fixes floating water/sand; "
+                    + "batched+deduplicated so it is cheap — default on).")
+            .set(notifyNeighborsOnChainBreak);
         serverConfiguration
             .get(
                 Configuration.CATEGORY_GENERAL,

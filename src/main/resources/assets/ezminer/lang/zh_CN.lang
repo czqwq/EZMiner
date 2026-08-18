@@ -117,6 +117,7 @@ ezminer.command.listserverowner.usage=§e/EZMiner listserverowner§r - 列出服
 ezminer.command.listserverowner.empty=服务端配置白名单为空。
 ezminer.command.listserverowner.header=服务端配置白名单（%s 人）:
 ezminer.command.whitelist.nopermission=§c此命令只能由单人房主或服务器控制台执行。
+ezminer.config.notifyNeighborsOnChainBreak=通知邻接方块(防悬浮)\n开(默认): 连锁批次后通知邻居,修复水流/沙子/仙人掌悬浮\n关: 快速路径,不通知邻居,可能有悬浮方块(极致FPS)
 ezminer.message.chain.done=EZMiner: 连锁完成；方块数=%s；耗时=%s
 ezminer.message.chain.idle_countdown=EZMiner: 没有找到新方块，%s秒后自动取消...
 ezminer.message.chain.idle_cancel=EZMiner: 已自动取消 — 空闲超过%s秒
@@ -211,3 +212,11 @@ ezminer.config.plantMaxCount=单次种植上限
 ezminer.gui.section.planting=种植
 ezminer.message.plant.done=EZMiner: 已种植 %s
 ezminer.message.plant.none=EZMiner: 无可种植的土壤
+
+# Forge mod list config entry + in-game Mod Options screen
+ezminer.gui.done=§a完成§r
+ezminer.gui.needIngame=§c请先进入存档或服务器，然后在游戏内打开 EZMiner 设置§r
+ezminer.gui.modoptions.title=模组选项
+ezminer.gui.modoptions.empty=没有提供配置界面的模组。
+ezminer.gui.modoptions.openConfig=打开配置
+ezminer.gui.modoptions.openFailed=§c无法打开该模组的配置界面：%s
