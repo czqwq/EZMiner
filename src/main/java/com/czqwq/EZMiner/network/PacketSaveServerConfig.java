@@ -60,6 +60,8 @@ public class PacketSaveServerConfig implements IMessage {
     public int searchBudgetPerYield;
     public boolean useDualFrontierBfs;
     public boolean usePrimitiveVisitedSet;
+    /** Notify neighbouring blocks after chain-mining batches (fixes floating water/sand; default off). */
+    public boolean notifyNeighborsOnChainBreak;
     // Stability settings
     public boolean enableChainWatchdog;
     public boolean enableDropFallbackChain;
@@ -201,6 +203,7 @@ public class PacketSaveServerConfig implements IMessage {
         searchBudgetPerYield = buf.readInt();
         useDualFrontierBfs = buf.readBoolean();
         usePrimitiveVisitedSet = buf.readBoolean();
+        notifyNeighborsOnChainBreak = buf.readBoolean();
         enableChainWatchdog = buf.readBoolean();
         enableDropFallbackChain = buf.readBoolean();
         enableMainThreadGuard = buf.readBoolean();
@@ -255,6 +258,7 @@ public class PacketSaveServerConfig implements IMessage {
         buf.writeInt(searchBudgetPerYield);
         buf.writeBoolean(useDualFrontierBfs);
         buf.writeBoolean(usePrimitiveVisitedSet);
+        buf.writeBoolean(notifyNeighborsOnChainBreak);
         buf.writeBoolean(enableChainWatchdog);
         buf.writeBoolean(enableDropFallbackChain);
         buf.writeBoolean(enableMainThreadGuard);
@@ -302,6 +306,7 @@ public class PacketSaveServerConfig implements IMessage {
             Config.suppressHodgepodgeWarnings = msg.suppressHodgepodgeWarnings;
             Config.enableChainChunkLoading = msg.enableChainChunkLoading;
             Config.useChunkCachedHarvest = msg.useChunkCachedHarvest;
+            Config.notifyNeighborsOnChainBreak = msg.notifyNeighborsOnChainBreak;
             Config.crazyMode = msg.crazyMode;
             Config.chainIdleTimeoutSeconds = msg.chainIdleTimeoutSeconds <= 0 ? -1
                 : Math.max(1, msg.chainIdleTimeoutSeconds);

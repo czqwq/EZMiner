@@ -28,7 +28,8 @@ import cpw.mods.fml.common.event.FMLServerStoppingEvent;
     version = Tags.VERSION,
     name = "EZMiner",
     acceptedMinecraftVersions = "[1.7.10]",
-    acceptableRemoteVersions = "*")
+    acceptableRemoteVersions = "*",
+    guiFactory = "com.czqwq.EZMiner.client.gui.EZMinerGuiFactory")
 public class EZMiner {
 
     public static final String MODID = "EZMiner";

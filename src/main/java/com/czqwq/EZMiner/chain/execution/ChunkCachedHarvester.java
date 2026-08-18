@@ -1,5 +1,7 @@
 package com.czqwq.EZMiner.chain.execution;
 
+import java.util.List;
+
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
@@ -76,6 +78,21 @@ public class ChunkCachedHarvester {
      * @return {@code true} if the block was successfully removed
      */
     public boolean harvestNext(Vector3i pos, EntityPlayerMP player) {
+        return harvestNext(pos, player, null);
+    }
+
+    /**
+     * Overload with a neighbour-notification sink.
+     *
+     * @param removedSink when non-null, every successfully removed (non-TE) block
+     *                    is appended as a {@link ChunkBlockWriteHelper.RemovedBlock}
+     *                    so the caller can fire batched, deduplicated neighbour
+     *                    notifications afterwards (see
+     *                    {@link ChunkBlockWriteHelper#notifyBatchNeighborChange}).
+     *                    Passing {@code null} maintains the zero-overhead fast path.
+     */
+    public boolean harvestNext(Vector3i pos, EntityPlayerMP player,
+        List<ChunkBlockWriteHelper.RemovedBlock> removedSink) {
         World world = player.worldObj;
         if (world == null) return false;
 
@@ -170,6 +187,12 @@ public class ChunkCachedHarvester {
 
         if (removed) {
             block.onBlockDestroyedByPlayer(world, x, y, z, meta);
+            // Tree felling: flag adjacent leaves for vanilla decay so canopies
+            // don't stay floating (the fast path never calls Block.breakBlock).
+            ChunkBlockWriteHelper.flagNeighbouringLeavesForDecay(world, x, y, z, block);
+            if (removedSink != null) {
+                removedSink.add(new ChunkBlockWriteHelper.RemovedBlock(x, y, z, block));
+            }
             // Notify clients of the block change. Without this the client-side
             // preview renderer still sees the old ore blocks and draws outlines
             // over already-mined air. Sends S23PacketBlockChange to all players

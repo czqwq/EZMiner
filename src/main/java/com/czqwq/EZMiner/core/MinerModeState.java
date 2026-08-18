@@ -72,11 +72,6 @@ public class MinerModeState {
         return currentMainMode();
     }
 
-    public String previousMainMode() {
-        mainMode = (mainMode - 1 + MAIN_MODES.length) % MAIN_MODES.length;
-        return currentMainMode();
-    }
-
     public String currentMainMode() {
         return MAIN_MODES[mainMode];
     }

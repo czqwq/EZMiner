@@ -501,7 +501,14 @@ public class Manager {
             && !(p instanceof FakePlayer);
     }
 
-    private void startChain(Vector3i pos, EntityPlayerMP player) {
+    /**
+     * Starts a new chain operation rooted at {@code pos} for {@code player}.
+     *
+     * <p>
+     * Server thread only. Also exposed to other mods through
+     * {@link com.czqwq.EZMiner.api.EZMinerAPI#startChain(java.util.UUID, org.joml.Vector3i)}.
+     */
+    public void startChain(Vector3i pos, EntityPlayerMP player) {
         if (operator != null) {
             operator.stopImmediately();
             operator = null;

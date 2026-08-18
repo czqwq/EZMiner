@@ -48,6 +48,17 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
 
     @Override
     public boolean execute(Vector3i pos, EntityPlayerMP player) {
+        return execute(pos, player, null);
+    }
+
+    /**
+     * Per-block fast harvest with an optional neighbour-notification sink.
+     *
+     * @param removedSink when non-null, successfully removed non-TE blocks are
+     *                    appended (see {@link ChunkCachedHarvester#harvestNext}).
+     *                    {@code null} preserves the zero-overhead fast path.
+     */
+    public boolean execute(Vector3i pos, EntityPlayerMP player, List<ChunkBlockWriteHelper.RemovedBlock> removedSink) {
         final int x = pos.x, y = pos.y, z = pos.z;
         World world = player.worldObj;
         if (world == null) return false;
@@ -73,7 +84,15 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
         IEZMinerItemInWorldManager fastMgr = (IEZMinerItemInWorldManager) player.theItemInWorldManager;
         boolean canHarvest = block.canHarvestBlock(player, meta)
             || WitcheryVampireBridge.canHarvestWithBareHands(player);
-        return fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, event);
+        boolean removed = fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, event);
+        if (removed) {
+            // Tree felling: flag adjacent leaves for vanilla decay (O(1), wood only).
+            ChunkBlockWriteHelper.flagNeighbouringLeavesForDecay(world, x, y, z, block);
+            if (removedSink != null) {
+                removedSink.add(new ChunkBlockWriteHelper.RemovedBlock(x, y, z, block));
+            }
+        }
+        return removed;
     }
 
     /**
@@ -180,6 +199,8 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
 
                 if (removed) {
                     block.onBlockDestroyedByPlayer(world, x, y, z, meta);
+                    // Tree felling: flag adjacent leaves for vanilla decay.
+                    ChunkBlockWriteHelper.flagNeighbouringLeavesForDecay(world, x, y, z, block);
                     // Notify clients so preview outlines disappear for mined blocks
                     world.markBlockForUpdate(x, y, z);
                 }

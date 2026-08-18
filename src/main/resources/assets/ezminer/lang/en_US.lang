@@ -117,6 +117,7 @@ ezminer.command.listserverowner.usage=§e/EZMiner listserverowner§r - list serv
 ezminer.command.listserverowner.empty=The server config whitelist is empty.
 ezminer.command.listserverowner.header=Server config whitelist (%s entries):
 ezminer.command.whitelist.nopermission=§cThis command can only be used by the single-player host or the server console.
+ezminer.config.notifyNeighborsOnChainBreak=Notify neighbour blocks (anti-floating)\nOn (default): notifies neighbours after each chain batch — water/sand/cactus no longer float\nOff: fast path, no neighbour notifications — floating blocks may occur (max FPS)
 ezminer.message.chain.done=EZMiner: chain done; blocks=%s; time=%s
 ezminer.message.chain.idle_countdown=EZMiner: No new blocks found. Auto-cancelling in %ss...
 ezminer.message.chain.idle_cancel=EZMiner: Auto-cancelled — idle for %s s
@@ -211,3 +212,11 @@ ezminer.config.plantMaxCount=Planting Count Limit
 ezminer.gui.section.planting=Planting
 ezminer.message.plant.done=EZMiner: Planted %s
 ezminer.message.plant.none=EZMiner: No placeable soil found
+
+# Forge mod list config entry + in-game Mod Options screen
+ezminer.gui.done=§aDone§r
+ezminer.gui.needIngame=§cJoin a world or server first, then open EZMiner settings in-game§r
+ezminer.gui.modoptions.title=Mod Options
+ezminer.gui.modoptions.empty=No mod provides a config screen.
+ezminer.gui.modoptions.openConfig=Open Config
+ezminer.gui.modoptions.openFailed=§cFailed to open this mod's config screen: %s

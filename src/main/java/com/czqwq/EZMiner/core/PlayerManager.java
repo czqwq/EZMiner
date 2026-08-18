@@ -1,8 +1,8 @@
 package com.czqwq.EZMiner.core;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.event.world.WorldEvent;
@@ -28,7 +28,17 @@ public class PlayerManager {
     /** Singleton instance – set in serverStarting. */
     public static PlayerManager instance;
 
-    public final Map<UUID, Manager> managers = new HashMap<>();
+    /**
+     * Per-player managers, keyed by UUID.
+     *
+     * <p>
+     * Concurrent because 1.7.10 netty IO-thread packet handlers read this map
+     * (PacketKeyState, PacketChainModeSwitch, PacketMinerConfig,
+     * PacketSaveServerConfig, PacketReloadServerConfig) while the server thread
+     * adds/removes entries on login/logout. A plain HashMap would risk table
+     * corruption on concurrent get+put/remove.
+     */
+    public final Map<UUID, Manager> managers = new ConcurrentHashMap<>();
 
     @SubscribeEvent
     public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
@@ -78,8 +88,12 @@ public class PlayerManager {
 
     @SubscribeEvent
     public void onServerTick(TickEvent.ServerTickEvent event) {
-        // Per-player special-mode ticking is now handled in Manager.onWorldTick
-        // (once per world tick for the player's own world), so nothing to do here.
+        // Drain packet handlers that were deferred off the netty IO thread onto the
+        // server thread (see MainThreadEnforcer). Runs once per server tick, on the
+        // server thread.
+        if (event.phase == TickEvent.Phase.START) {
+            com.czqwq.EZMiner.network.MainThreadEnforcer.drainDeferred();
+        }
     }
 
     public void registry() {

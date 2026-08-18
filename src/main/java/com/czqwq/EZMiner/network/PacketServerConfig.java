@@ -53,6 +53,7 @@ public class PacketServerConfig implements IMessage {
     public boolean suppressHodgepodgeWarnings;
     public boolean enableChainChunkLoading;
     public boolean useChunkCachedHarvest;
+    public boolean notifyNeighborsOnChainBreak;
     public boolean crazyMode;
     public int chainIdleTimeoutSeconds;
     public int chainIdleCountdownSeconds;
@@ -120,6 +121,7 @@ public class PacketServerConfig implements IMessage {
         suppressHodgepodgeWarnings = buf.readBoolean();
         enableChainChunkLoading = buf.readBoolean();
         useChunkCachedHarvest = buf.readBoolean();
+        notifyNeighborsOnChainBreak = buf.readBoolean();
         crazyMode = buf.readBoolean();
         chainIdleTimeoutSeconds = buf.readInt();
         chainIdleCountdownSeconds = buf.readInt();
@@ -166,6 +168,7 @@ public class PacketServerConfig implements IMessage {
         buf.writeBoolean(suppressHodgepodgeWarnings);
         buf.writeBoolean(enableChainChunkLoading);
         buf.writeBoolean(useChunkCachedHarvest);
+        buf.writeBoolean(notifyNeighborsOnChainBreak);
         buf.writeBoolean(crazyMode);
         buf.writeInt(chainIdleTimeoutSeconds);
         buf.writeInt(chainIdleCountdownSeconds);
@@ -216,6 +219,7 @@ public class PacketServerConfig implements IMessage {
         packet.suppressHodgepodgeWarnings = Config.suppressHodgepodgeWarnings;
         packet.enableChainChunkLoading = Config.enableChainChunkLoading;
         packet.useChunkCachedHarvest = Config.useChunkCachedHarvest;
+        packet.notifyNeighborsOnChainBreak = Config.notifyNeighborsOnChainBreak;
         packet.crazyMode = Config.crazyMode;
         packet.chainIdleTimeoutSeconds = Config.chainIdleTimeoutSeconds;
         packet.chainIdleCountdownSeconds = Config.chainIdleCountdownSeconds;
@@ -277,7 +281,8 @@ public class PacketServerConfig implements IMessage {
                     msg.prospectProbeIntervalSeconds,
                     msg.prospectMaxScanRadiusChunks,
                     msg.plantRadius,
-                    msg.plantMaxCount);
+                    msg.plantMaxCount,
+                    msg.notifyNeighborsOnChainBreak);
                 Config.logFuzzyEnabled = msg.logFuzzyEnabled;
                 Config.blacklistExpression = msg.blacklistExpression == null ? "" : msg.blacklistExpression.trim();
                 com.czqwq.EZMiner.EZMiner.clientIsOp = msg.isOp;
