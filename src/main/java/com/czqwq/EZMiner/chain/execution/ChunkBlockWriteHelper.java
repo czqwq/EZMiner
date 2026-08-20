@@ -163,9 +163,17 @@ public class ChunkBlockWriteHelper {
         int ly = y & 15;
         int lz = z & 15;
 
-        // Check if already air (avoid unnecessary refcount changes)
+        // Check if already air (avoid unnecessary refcount changes) — but still
+        // clear any stale metadata nibble. func_150818_a alone leaves the old
+        // metadata in place, so an already-air cell can carry a leftover GT-ore
+        // nibble that S23PacketBlockChange serializes and that persists into the
+        // chunk save, surfacing the mined position as a wrong/unlocalized name
+        // ("name.0"). Zeroing is one nibble write with no refcount/neighbour cost.
         Block existing = ebs.getBlockByExtId(lx, ly, lz);
-        if (existing == Blocks.air) return false;
+        if (existing == Blocks.air) {
+            ebs.setExtBlockMetadata(lx, ly, lz, 0);
+            return false;
+        }
 
         // func_150818_a handles blockRefCount and tickRefCount correctly in both
         // vanilla and EndlessIDs-patched ExtendedBlockStorage. EndlessIDs @Overwrites

@@ -272,11 +272,68 @@ public class DeterminingIdentical {
         return false;
     }
 
-    /** True if GregTech BlockOresAbstract — gates VisualProspecting vein discovery. */
+    /**
+     * True if the block at {@code pos} is a GregTech ore block — gates VisualProspecting
+     * vein discovery.
+     *
+     * <p>
+     * Version-agnostic across every GT5U generation:
+     * <ul>
+     * <li>old GT5U &lt; 5.10 ({@code BlockOresAbstract}, e.g. 5.09.51.482),</li>
+     * <li>newer GT5U TE-based legacy ores ({@code BlockOresAbstractLegacy}), and</li>
+     * <li>newer GT5U metadata-based ores ({@code GTBlockOre}).</li>
+     * </ul>
+     */
     public static boolean isGTOreBlock(Vector3i pos, EntityPlayer player) {
-        if (!hasBlockOresAbstract || gtBlockOresAbstractClass == null) return false;
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
-        return gtBlockOresAbstractClass.isInstance(block);
+        return block != null && isGTOreBlock(block);
+    }
+
+    /** Overload with a pre-fetched block — avoids a redundant world lookup. */
+    public static boolean isGTOreBlock(Block block) {
+        if (block == null) return false;
+        if (hasBlockOresAbstract && gtBlockOresAbstractClass != null && gtBlockOresAbstractClass.isInstance(block)) {
+            return true;
+        }
+        if (hasBlockOresAbstractLegacy && gtBlockOresAbstractLegacyClass != null
+            && gtBlockOresAbstractLegacyClass.isInstance(block)) {
+            return true;
+        }
+        return hasGTBlockOre && gtBlockOreClass != null && gtBlockOreClass.isInstance(block);
+    }
+
+    /**
+     * True if {@code block} is a GregTech ore container that always carries a
+     * {@link TileEntity} holding the real ore identity in {@code mMetaData}.
+     *
+     * <p>
+     * This covers both ore generations:
+     * <ul>
+     * <li>old GT5U &lt; 5.10 ({@code gregtech.common.blocks.BlockOresAbstract} —
+     * e.g. 5.09.51.482), and</li>
+     * <li>newer GT5U ({@code gregtech.common.blocks.BlockOresAbstractLegacy}).
+     * </ul>
+     *
+     * <p>
+     * The harvest executors use this as a <em>second</em> "must use the vanilla
+     * {@code tryHarvestBlock} path" gate, consulted only for blocks whose per-meta
+     * {@code hasTileEntity(meta)} is already false (the fast-path candidates). It
+     * guarantees such GT ore containers are always broken through
+     * {@code breakBlock}/{@code removeTileEntity}, so they can never be reduced to
+     * a stale {@code air + leftover metadata/TE} state that renders as
+     * {@code name.0}. Because the two hierarchy classes live on different GT5U
+     * versions, at most one cached reference is non-null at runtime, so the check
+     * is a single {@code isInstance} in practice (near-zero cost on the hot path;
+     * modern metadata-only {@code GTBlockOre} is intentionally NOT matched and
+     * keeps the fast path).
+     */
+    public static boolean isGTTileEntityCarrier(Block block) {
+        if (block == null) return false;
+        if (hasBlockOresAbstract && gtBlockOresAbstractClass != null && gtBlockOresAbstractClass.isInstance(block)) {
+            return true;
+        }
+        return hasBlockOresAbstractLegacy && gtBlockOresAbstractLegacyClass != null
+            && gtBlockOresAbstractLegacyClass.isInstance(block);
     }
 
     /** Convenience overload — prefers world-less check (conservative for legacy). */

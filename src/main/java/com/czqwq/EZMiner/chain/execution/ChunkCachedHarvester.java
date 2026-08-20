@@ -18,6 +18,7 @@ import com.czqwq.EZMiner.compat.NaturaSaguaroCompat;
 import com.czqwq.EZMiner.compat.ShearsHarvestBridge;
 import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
+import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
 
 /**
  * Stateful per-tick-batch chunk-cached block harvester.
@@ -123,8 +124,12 @@ public class ChunkCachedHarvester {
 
         int meta = currentEbs.getExtBlockMetadata(lx, ly, lz);
 
-        // TE blocks → vanilla path (does its own chunk lookup)
-        if (block.hasTileEntity(meta)) {
+        // TE blocks → vanilla path (does its own chunk lookup). GT ore containers
+        // that carry a companion TileEntity (legacy BlockOresAbstract /
+        // BlockOresAbstractLegacy) also stay on the vanilla path so breakBlock /
+        // removeTileEntity always run — never leaving an "air + leftover metadata/TE"
+        // state that renders as "name.0".
+        if (block.hasTileEntity(meta) || DeterminingIdentical.isGTTileEntityCarrier(block)) {
             boolean ok = player.theItemInWorldManager.tryHarvestBlock(x, y, z);
             if (ok) {
                 touchedColumns[(lx) | (lz << 4)] = true;

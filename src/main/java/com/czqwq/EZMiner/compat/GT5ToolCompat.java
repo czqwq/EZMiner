@@ -26,6 +26,14 @@ public class GT5ToolCompat {
 
     private static volatile boolean initialized;
     private static boolean gtLoaded;
+    /**
+     * Whether the GT <em>toolbox</em> subsystem resolved. The toolbox classes
+     * ({@code ItemGTToolbox}, {@code ToolboxItemStackHandler}, {@code PickResults},
+     * …) only exist on newer GT5U — GT5U 5.09.51.482 does not ship them. When
+     * {@code false}, the core tool features stay enabled and every toolbox method
+     * returns a safe default ({@code false}/{@code -1}).
+     */
+    private static boolean toolboxLoaded;
 
     // ── Cached classes ───────────────────────────────────────────────────────
     private static Class<?> classMetaGeneratedTool;
@@ -65,22 +73,14 @@ public class GT5ToolCompat {
         if (initialized) return;
         initialized = true;
         try {
-            // Resolve all GT classes via SafeReflection (LinkageError-guarded when enabled).
+            // Core GT classes: MetaGeneratedTool + IToolStats exist on every GT5U
+            // generation (5.09.51.482 and master). The toolbox classes do NOT exist
+            // on old GT5U, so they are resolved separately and treated as optional.
             classMetaGeneratedTool = SafeReflection.forName("gregtech.api.items.MetaGeneratedTool");
-            classItemGTToolbox = SafeReflection.forName("gregtech.common.items.ItemGTToolbox");
             classIToolStats = SafeReflection.forName("gregtech.api.interfaces.IToolStats");
-            classToolboxPickBlockDecider = SafeReflection
-                .forName("gregtech.common.items.toolbox.ToolboxPickBlockDecider");
-            classToolboxItemStackHandler = SafeReflection
-                .forName("gregtech.common.items.toolbox.ToolboxItemStackHandler");
-            classPickResults = SafeReflection.forName("gregtech.common.items.toolbox.pickblock.PickResults");
 
-            // All classes must resolve for GT compat to be considered loaded.
-            if (classMetaGeneratedTool == null || classItemGTToolbox == null
-                || classIToolStats == null
-                || classToolboxPickBlockDecider == null
-                || classToolboxItemStackHandler == null
-                || classPickResults == null) {
+            // The core bridge can only work when the two tool pillars resolve.
+            if (classMetaGeneratedTool == null || classIToolStats == null) {
                 gtLoaded = false;
                 return;
             }
@@ -90,43 +90,62 @@ public class GT5ToolCompat {
                 .getMethod(classMetaGeneratedTool, "getToolCombatDamage", ItemStack.class);
             mIsMinableBlock = SafeReflection.getMethod(classIToolStats, "isMinableBlock", Block.class, int.class);
             mGetBaseQuality = SafeReflection.getMethod(classIToolStats, "getBaseQuality");
-            mGetSuggestedTool = SafeReflection
-                .getMethod(classToolboxPickBlockDecider, "getSuggestedTool", EntityPlayer.class);
 
-            // PickResults: find suggestedTools() and forceDeselect() by name + arity.
-            for (Method m : classPickResults.getMethods()) {
-                if (m.getName()
-                    .equals("suggestedTools") && m.getParameterTypes().length == 0) {
-                    mPickResultsSuggestedTools = m;
-                    mPickResultsSuggestedTools.setAccessible(true);
-                } else if (m.getName()
-                    .equals("forceDeselect") && m.getParameterTypes().length == 0) {
-                        mPickResultsForceDeselect = m;
-                        mPickResultsForceDeselect.setAccessible(true);
-                    }
-            }
-            // ToolboxItemStackHandler: find getStackInSlot(int)
-            mToolboxItemStackHandlerGetStackInSlot = SafeReflection
-                .getMethod(classToolboxItemStackHandler, "getStackInSlot", int.class);
-            // sendChangeToolPacket is private static
-            mSendChangeToolPacket = SafeReflection
-                .getDeclaredMethod(classItemGTToolbox, "sendChangeToolPacket", int.class, int.class);
-
-            // All required methods must resolve.
+            // All core methods must resolve for GT compat to be considered loaded.
             if (mGetToolStats == null || mGetToolCombatDamage == null
                 || mIsMinableBlock == null
-                || mGetBaseQuality == null
-                || mGetSuggestedTool == null
-                || mToolboxItemStackHandlerGetStackInSlot == null
-                || mSendChangeToolPacket == null) {
+                || mGetBaseQuality == null) {
                 gtLoaded = false;
                 return;
+            }
+
+            // ── Toolbox subsystem (optional). On old GT5U these classes are absent;
+            // the core bridge stays loaded and toolbox methods degrade gracefully. ──
+            classItemGTToolbox = SafeReflection.forName("gregtech.common.items.ItemGTToolbox");
+            classToolboxPickBlockDecider = SafeReflection
+                .forName("gregtech.common.items.toolbox.ToolboxPickBlockDecider");
+            classToolboxItemStackHandler = SafeReflection
+                .forName("gregtech.common.items.toolbox.ToolboxItemStackHandler");
+            classPickResults = SafeReflection.forName("gregtech.common.items.toolbox.pickblock.PickResults");
+
+            if (classItemGTToolbox != null && classToolboxPickBlockDecider != null
+                && classToolboxItemStackHandler != null
+                && classPickResults != null) {
+                mGetSuggestedTool = SafeReflection
+                    .getMethod(classToolboxPickBlockDecider, "getSuggestedTool", EntityPlayer.class);
+
+                // PickResults: find suggestedTools() and forceDeselect() by name + arity.
+                for (Method m : classPickResults.getMethods()) {
+                    if (m.getName()
+                        .equals("suggestedTools") && m.getParameterTypes().length == 0) {
+                        mPickResultsSuggestedTools = m;
+                        mPickResultsSuggestedTools.setAccessible(true);
+                    } else if (m.getName()
+                        .equals("forceDeselect") && m.getParameterTypes().length == 0) {
+                            mPickResultsForceDeselect = m;
+                            mPickResultsForceDeselect.setAccessible(true);
+                        }
+                }
+                // ToolboxItemStackHandler: find getStackInSlot(int)
+                mToolboxItemStackHandlerGetStackInSlot = SafeReflection
+                    .getMethod(classToolboxItemStackHandler, "getStackInSlot", int.class);
+                // sendChangeToolPacket is private static
+                mSendChangeToolPacket = SafeReflection
+                    .getDeclaredMethod(classItemGTToolbox, "sendChangeToolPacket", int.class, int.class);
+
+                // All toolbox methods must resolve for toolbox support to be considered
+                // loaded; a partial toolbox init is worse than a clean "no toolbox".
+                toolboxLoaded = mGetSuggestedTool != null && mToolboxItemStackHandlerGetStackInSlot != null
+                    && mSendChangeToolPacket != null;
+            } else {
+                toolboxLoaded = false;
             }
 
             gtLoaded = true;
         } catch (Exception e) {
             // Catch-all for unexpected errors (e.g. SecurityException from setAccessible).
             gtLoaded = false;
+            toolboxLoaded = false;
             e.printStackTrace();
         }
     }
@@ -145,7 +164,7 @@ public class GT5ToolCompat {
     }
 
     public static boolean isGTToolbox(ItemStack stack) {
-        if (!gtLoaded || stack == null) return false;
+        if (!gtLoaded || !toolboxLoaded || stack == null) return false;
         Item item = stack.getItem();
         return item != null && classItemGTToolbox.isInstance(item);
     }
@@ -191,7 +210,7 @@ public class GT5ToolCompat {
     // ── Toolbox API ──────────────────────────────────────────────────────────
 
     public static int getToolboxBestInternalSlot(ItemStack toolbox, EntityPlayer player, Block block, int meta) {
-        if (!gtLoaded || toolbox == null || player == null) return -1;
+        if (!gtLoaded || !toolboxLoaded || toolbox == null || player == null) return -1;
         try {
             Object pickResults = mGetSuggestedTool.invoke(null, player);
             if (pickResults == null) return -1;
@@ -214,7 +233,7 @@ public class GT5ToolCompat {
     }
 
     public static int getToolboxInternalToolHarvestLevel(ItemStack toolbox, int slotId, String toolClass) {
-        if (!gtLoaded || toolbox == null) return -1;
+        if (!gtLoaded || !toolboxLoaded || toolbox == null) return -1;
         try {
             Object handler = classToolboxItemStackHandler.getConstructor(ItemStack.class)
                 .newInstance(toolbox);
@@ -233,7 +252,7 @@ public class GT5ToolCompat {
      * Used for the efficiency gate (P1 alignment with Qz-Miner).
      */
     public static float getToolboxInternalToolDigSpeed(ItemStack toolbox, int slotId, Block block, int meta) {
-        if (!gtLoaded || toolbox == null || block == null) return 0F;
+        if (!gtLoaded || !toolboxLoaded || toolbox == null || block == null) return 0F;
         try {
             Object handler = classToolboxItemStackHandler.getConstructor(ItemStack.class)
                 .newInstance(toolbox);
@@ -260,7 +279,7 @@ public class GT5ToolCompat {
      * @param hotbarSlot the hotbar index (0–8) where the toolbox currently resides
      */
     public static void setToolboxSelectedTool(int hotbarSlot, int slotId) {
-        if (!gtLoaded || mSendChangeToolPacket == null) return;
+        if (!gtLoaded || !toolboxLoaded || mSendChangeToolPacket == null) return;
         try {
             mSendChangeToolPacket.invoke(null, hotbarSlot, slotId);
         } catch (IllegalAccessException | InvocationTargetException ignored) {}

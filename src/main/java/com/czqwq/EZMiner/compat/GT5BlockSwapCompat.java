@@ -44,7 +44,10 @@ public class GT5BlockSwapCompat {
     private static Field metaTileEntitiesField;
     private static Field baseMetaPipeMConnectionsField;
     private static Field metaPipeMConnectionsField;
-    private static Field coverableTileEntityMIdField;
+    /** {@code IGregTechTileEntity.getMetaTileID()} — public, on the interface. */
+    private static java.lang.reflect.Method metaTileIdMethod;
+    /** {@code CommonBaseMetaTileEntity.setInitialValuesAsNBT(NBTTagCompound, short)}. */
+    private static java.lang.reflect.Method setInitialValuesMethod;
 
     /** Call once during mod init or lazily on first use. */
     public static void checkCompatibility() {
@@ -67,9 +70,33 @@ public class GT5BlockSwapCompat {
             Class<?> metaPipeClass = Class.forName("gregtech.api.metatileentity.MetaPipeEntity");
             metaPipeMConnectionsField = metaPipeClass.getField("mConnections");
 
-            // CoverableTileEntity.mID (public short) — meta-tile-entity type identifier
-            Class<?> coverableTileEntityClass = Class.forName("gregtech.api.metatileentity.CoverableTileEntity");
-            coverableTileEntityMIdField = coverableTileEntityClass.getField("mID");
+            // The meta-tile-entity type ID: `CoverableTileEntity.mID` is a *protected*
+            // short on every GT5U generation (5.09.51.482 and master alike), so
+            // Class.getField("mID") would always throw NoSuchFieldException and take
+            // down the whole bridge. Read it through the public interface method
+            // IGregTechTileEntity.getMetaTileID() instead, which both generations
+            // implement on BaseMetaTileEntity / BaseMetaPipeEntity.
+            Class<?> iGregTechTileEntityClass = Class.forName("gregtech.api.interfaces.tileentity.IGregTechTileEntity");
+            try {
+                metaTileIdMethod = commonBaseMetaTileEntityClass.getMethod("getMetaTileID");
+            } catch (NoSuchMethodException e) {
+                metaTileIdMethod = iGregTechTileEntityClass.getMethod("getMetaTileID");
+            }
+
+            // setInitialValuesAsNBT(NBTTagCompound, short) is declared on the
+            // IGregTechTileEntity interface and implemented publicly on
+            // BaseMetaTileEntity / BaseMetaPipeEntity. `CommonBaseMetaTileEntity`
+            // itself is abstract and only inherits the interface declaration, so
+            // resolve via the interface explicitly to work on both Generations
+            // (Class.getMethod on the interface's implementor finds the abstract
+            // declaration, but resolving the implementation class is more robust).
+            try {
+                setInitialValuesMethod = commonBaseMetaTileEntityClass
+                    .getMethod("setInitialValuesAsNBT", net.minecraft.nbt.NBTTagCompound.class, short.class);
+            } catch (NoSuchMethodException e) {
+                setInitialValuesMethod = iGregTechTileEntityClass
+                    .getMethod("setInitialValuesAsNBT", net.minecraft.nbt.NBTTagCompound.class, short.class);
+            }
 
             available = true;
         } catch (Exception e) {
@@ -92,9 +119,10 @@ public class GT5BlockSwapCompat {
 
     /** Returns the meta-tile-entity ID (material+voltage+insulation key) of a GT cable. */
     public static int getCableMetaTileId(TileEntity te) {
-        if (!isCable(te)) return -1;
+        if (!isCable(te) || metaTileIdMethod == null) return -1;
         try {
-            return coverableTileEntityMIdField.getShort(te) & 0xFFFF;
+            Number id = (Number) metaTileIdMethod.invoke(te);
+            return id == null ? -1 : id.intValue() & 0xFFFF;
         } catch (Exception e) {
             return -1;
         }
@@ -180,14 +208,12 @@ public class GT5BlockSwapCompat {
      * the correct base meta.
      */
     public static void initGTMetaTileEntity(World world, int x, int y, int z, int itemDamage) {
-        if (!isAvailable()) return;
+        if (!isAvailable() || setInitialValuesMethod == null) return;
         TileEntity te = world.getTileEntity(x, y, z);
         if (te == null) return;
         try {
             // CommonBaseMetaTileEntity.setInitialValuesAsNBT(null, (short) itemDamage)
-            commonBaseMetaTileEntityClass
-                .getMethod("setInitialValuesAsNBT", net.minecraft.nbt.NBTTagCompound.class, short.class)
-                .invoke(te, null, (short) itemDamage);
+            setInitialValuesMethod.invoke(te, null, (short) itemDamage);
         } catch (Exception e) {
             EZMiner.LOG.debug("GT5BlockSwapCompat: TE init failed — {}", e.getMessage());
         }

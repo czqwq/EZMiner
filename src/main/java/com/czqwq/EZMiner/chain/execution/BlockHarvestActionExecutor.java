@@ -19,6 +19,7 @@ import com.czqwq.EZMiner.compat.NaturaSaguaroCompat;
 import com.czqwq.EZMiner.compat.ShearsHarvestBridge;
 import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
+import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
 import com.czqwq.EZMiner.mixin.interfaces.IEZMinerItemInWorldManager;
 
 /**
@@ -70,8 +71,12 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
 
         // Blocks with tile entities must go through the vanilla path so that
         // BreakEvent fires, TE cleanup runs, and neighbor notifications reach
-        // adjacent redstone/logic blocks.
-        if (block.hasTileEntity(meta)) {
+        // adjacent redstone/logic blocks. GT ore containers that carry a companion
+        // TileEntity (legacy BlockOresAbstract / BlockOresAbstractLegacy) must also
+        // stay on the vanilla path so breakBlock/removeTileEntity always run — never
+        // reducing them to a stale "air + leftover metadata/TE" which renders as
+        // "name.0".
+        if (block.hasTileEntity(meta) || DeterminingIdentical.isGTTileEntityCarrier(block)) {
             return player.theItemInWorldManager.tryHarvestBlock(x, y, z);
         }
 
@@ -134,8 +139,9 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
 
                 int meta = ebs.getExtBlockMetadata(lx, ly, lz);
 
-                // TE blocks must use vanilla path
-                if (block.hasTileEntity(meta)) {
+                // TE blocks must use vanilla path (incl. TE-carrying GT ore containers
+                // so breakBlock/TE cleanup always runs — see isGTTileEntityCarrier).
+                if (block.hasTileEntity(meta) || DeterminingIdentical.isGTTileEntityCarrier(block)) {
                     if (player.theItemInWorldManager.tryHarvestBlock(x, y, z)) {
                         harvested++;
                     }
@@ -244,7 +250,7 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
         World world = player.worldObj;
         if (world == null || block == null) return false;
 
-        if (block.hasTileEntity(meta)) {
+        if (block.hasTileEntity(meta) || DeterminingIdentical.isGTTileEntityCarrier(block)) {
             return player.theItemInWorldManager.tryHarvestBlock(x, y, z);
         }
 
