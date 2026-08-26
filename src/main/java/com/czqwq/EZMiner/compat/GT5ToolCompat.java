@@ -249,7 +249,6 @@ public class GT5ToolCompat {
 
     /**
      * Returns the dig speed of a toolbox's internal tool on the target block.
-     * Used for the efficiency gate (P1 alignment with Qz-Miner).
      */
     public static float getToolboxInternalToolDigSpeed(ItemStack toolbox, int slotId, Block block, int meta) {
         if (!gtLoaded || !toolboxLoaded || toolbox == null || block == null) return 0F;

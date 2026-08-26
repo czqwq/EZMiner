@@ -6,8 +6,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockOre;
-import net.minecraft.block.BlockRedstoneOre;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -19,6 +17,7 @@ import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.compat.EtFuturumOreCompat;
+import com.czqwq.EZMiner.compat.ore.OreCompatRegistry;
 
 /**
  * Block comparison and ore detection utilities.
@@ -34,11 +33,6 @@ public class DeterminingIdentical {
     static boolean hasTileEntityOres = false;
     static boolean hasBWTileEntity = false;
     static boolean hasBlockOresAbstract = false;
-    static boolean hasBWSmallOres = false;
-    static boolean hasBWOres = false;
-    static boolean hasBlockBaseOre = false;
-    static boolean hasAEQuartz = false;
-    static boolean hasAEQuartzCharged = false;
     /** GT5 >= 5.09: new-style GTBlockOre. */
     static boolean hasGTBlockOre = false;
     /** Legacy BlockOresAbstractLegacy (GT5-Unofficial). */
@@ -54,11 +48,6 @@ public class DeterminingIdentical {
     private static volatile Class<?> bwTileEntityClass;
     private static volatile Field bwMetaDataField;
     private static volatile Class<?> gtBlockOresAbstractClass;
-    private static volatile Class<?> bwSmallOresClass;
-    private static volatile Class<?> bwOresClass;
-    private static volatile Class<?> gtPlusPlusBlockBaseOreClass;
-    private static volatile Class<?> aeQuartzClass;
-    private static volatile Class<?> aeQuartzChargedClass;
     private static volatile Class<?> gtBlockOreClass;
     /** Legacy ore class — both large and small ores; distinguished via TileEntityOres.mMetaData. */
     private static volatile Class<?> gtBlockOresAbstractLegacyClass;
@@ -73,10 +62,6 @@ public class DeterminingIdentical {
         hasTileEntityOres = classExists("gregtech.common.blocks.TileEntityOres");
         hasBWTileEntity = classExists("bartworks.system.material.TileEntityMetaGeneratedBlock");
         hasBlockOresAbstract = classExists("gregtech.common.blocks.BlockOresAbstract");
-        hasBWSmallOres = classExists("bartworks.system.material.BWMetaGeneratedSmallOres");
-        hasBlockBaseOre = classExists("gtPlusPlus.core.block.base.BlockBaseOre");
-        hasAEQuartz = classExists("appeng.block.solids.OreQuartz");
-        hasAEQuartzCharged = classExists("appeng.block.solids.OreQuartzCharged");
         hasGTBlockOre = classExists("gregtech.common.blocks.GTBlockOre");
         hasBlockOresAbstractLegacy = classExists("gregtech.common.blocks.BlockOresAbstractLegacy");
 
@@ -109,41 +94,6 @@ public class DeterminingIdentical {
                 gtBlockOresAbstractClass = Class.forName("gregtech.common.blocks.BlockOresAbstract");
             } catch (Exception ignored) {
                 hasBlockOresAbstract = false;
-            }
-        }
-        if (hasBWSmallOres) {
-            try {
-                bwSmallOresClass = Class.forName("bartworks.system.material.BWMetaGeneratedSmallOres");
-            } catch (Exception ignored) {
-                hasBWSmallOres = false;
-            }
-        }
-        if (hasBWOres) {
-            try {
-                bwOresClass = Class.forName("bartworks.system.material.BWMetaGeneratedOres");
-            } catch (Exception ignored) {
-                hasBWOres = false;
-            }
-        }
-        if (hasBlockBaseOre) {
-            try {
-                gtPlusPlusBlockBaseOreClass = Class.forName("gtPlusPlus.core.block.base.BlockBaseOre");
-            } catch (Exception ignored) {
-                hasBlockBaseOre = false;
-            }
-        }
-        if (hasAEQuartz) {
-            try {
-                aeQuartzClass = Class.forName("appeng.block.solids.OreQuartz");
-            } catch (Exception ignored) {
-                hasAEQuartz = false;
-            }
-        }
-        if (hasAEQuartzCharged) {
-            try {
-                aeQuartzChargedClass = Class.forName("appeng.block.solids.OreQuartzCharged");
-            } catch (Exception ignored) {
-                hasAEQuartzCharged = false;
             }
         }
         if (hasGTBlockOre) {
@@ -220,27 +170,21 @@ public class DeterminingIdentical {
     /** True if block at pos is an ore. Results cached per Block instance. */
     public static boolean isOreBlock(Vector3i pos, EntityPlayer player) {
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
-        return oreBlockCache.computeIfAbsent(block, DeterminingIdentical::computeIsOreBlock);
+        if (block == null) return false;
+        // Block-class based detection is cached per Block instance.
+        if (oreBlockCache.computeIfAbsent(block, DeterminingIdentical::computeIsOreBlock)) return true;
+        // TE-only ore families (e.g. BartWorks ore TileEntities) need the live TE.
+        // Only pay for the getTileEntity lookup when such an adapter is present,
+        // and only scan TE-only adapters (block-only adapters already missed).
+        if (!OreCompatRegistry.hasTileEntityOnlyDetectors()) return false;
+        TileEntity tileEntity = player.worldObj.getTileEntity(pos.x, pos.y, pos.z);
+        return OreCompatRegistry.isOreBlockByTileEntity(tileEntity);
     }
 
     private static boolean computeIsOreBlock(Block block) {
-        if (block instanceof BlockOre || block instanceof BlockRedstoneOre) return true;
-
-        // GT – uses cached class reference
-        if (hasBlockOresAbstract && gtBlockOresAbstractClass != null && gtBlockOresAbstractClass.isInstance(block))
-            return true;
-        // BW – uses cached class references
-        if (hasBWSmallOres && bwSmallOresClass != null && bwSmallOresClass.isInstance(block)) return true;
-        if (hasBWOres && bwOresClass != null && bwOresClass.isInstance(block)) return true;
-        // GTPlusPlus – uses cached class reference
-        if (hasBlockBaseOre && gtPlusPlusBlockBaseOreClass != null && gtPlusPlusBlockBaseOreClass.isInstance(block))
-            return true;
-        // AE2 – uses cached class references
-        if (hasAEQuartz && aeQuartzClass != null && aeQuartzClass.isInstance(block)) return true;
-        if (hasAEQuartzCharged && aeQuartzChargedClass != null && aeQuartzChargedClass.isInstance(block)) return true;
-
-        // EFR – Et Futurum Requiem ores (delegated to compat class)
-        if (EtFuturumOreCompat.isOreBlock(block)) return true;
+        // Vanilla + all block-class based optional-mod ores; TE-only adapters are
+        // handled by the TE-aware path in isOreBlock(Vector3i, EntityPlayer).
+        if (OreCompatRegistry.isOreBlock(block, null)) return true;
 
         // ── Fallback 1: OreDictionary "ore*" registration ─────────────────────────────────
         // Precise — machines are never registered under "ore*". Covers mods whose ore blocks
