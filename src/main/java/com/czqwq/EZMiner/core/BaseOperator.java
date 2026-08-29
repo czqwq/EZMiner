@@ -378,6 +378,11 @@ public class BaseOperator {
             stopRequested = true;
             return false;
         }
+        // Tool-break handoff has just been requested: stop processing further
+        // candidates this tick (see processBatchWithBatchedExhaustion for rationale).
+        if (toolBreakHandoffTick != 0) {
+            return false;
+        }
         try {
             if (!shouldHarvest(pos)) return true;
             // Stop-on-unbreakable: if the player's tool cannot harvest this block,
@@ -425,6 +430,13 @@ public class BaseOperator {
         while (harvested < perTick && (pos = canBreakPositions.poll()) != null) {
             if (!canOperate() || !isPlayerOnline()) {
                 stopRequested = true;
+                break;
+            }
+            // Tool-break handoff has just been requested: stop mining this tick
+            // immediately. Otherwise the same-tick loop would continue with a
+            // broken/doomed tool and remove blocks without drops (TiC tools in
+            // particular lose all drops once Broken because canHarvestBlock fails).
+            if (toolBreakHandoffTick != 0) {
                 break;
             }
             try {
@@ -495,6 +507,11 @@ public class BaseOperator {
         while (harvested < perTick && (pos = canBreakPositions.poll()) != null) {
             if (!canOperate() || !isPlayerOnline()) {
                 stopRequested = true;
+                break;
+            }
+            // Tool-break handoff has just been requested: stop mining this tick
+            // immediately (see processBatchWithBatchedExhaustion for rationale).
+            if (toolBreakHandoffTick != 0) {
                 break;
             }
             try {

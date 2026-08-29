@@ -62,16 +62,15 @@ public final class TinkersConstructCompat {
     public static boolean canContinueMining(ItemStack stack) {
         if (!isTiCTool(stack)) return true;
 
-        NBTTagCompound toolTag = stack.getTagCompound()
-            .getCompoundTag("InfiTool");
-
         // 1. Broken tool — cannot mine at all (speed ≈ 0.1×).
-        if (toolTag.getBoolean("Broken")) return false;
+        if (isBroken(stack)) return false;
 
         // 2. Unbreakable tool — durability loss is always negated; safe to continue.
-        if (toolTag.getInteger("Unbreaking") >= 10) return true;
+        if (isUnbreakable(stack)) return true;
 
         // 3. Normal tool — use the real NBT durability values.
+        NBTTagCompound toolTag = stack.getTagCompound()
+            .getCompoundTag("InfiTool");
         int damage = toolTag.getInteger("Damage");
         int maxDurability = toolTag.getInteger("TotalDurability");
 
