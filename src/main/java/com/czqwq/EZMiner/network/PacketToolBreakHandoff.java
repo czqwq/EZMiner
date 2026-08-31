@@ -133,7 +133,7 @@ public class PacketToolBreakHandoff implements IMessage {
                 // GT Toolbox: select the correct internal tool for the target.
                 ItemStack selected = player.inventory.mainInventory[bestSlot];
                 if (block != null && block != net.minecraft.init.Blocks.air && GT5ToolCompat.isGTToolbox(selected)) {
-                    int internal = GT5ToolCompat.getToolboxBestInternalSlot(selected, player, block, meta);
+                    int internal = GT5ToolCompat.findBestToolboxSlotForBlock(selected, block, meta);
                     if (internal >= 0) {
                         GT5ToolCompat.setToolboxSelectedTool(bestSlot, internal);
                     }
@@ -148,7 +148,7 @@ public class PacketToolBreakHandoff implements IMessage {
             if (GT5ToolCompat.isGTToolbox(stack)) {
                 // Toolboxes need a concrete target to pick an internal tool.
                 if (block == null || block == net.minecraft.init.Blocks.air) return false;
-                return GT5ToolCompat.getToolboxBestInternalSlot(stack, player, block, meta) >= 0;
+                return GT5ToolCompat.findBestToolboxSlotForBlock(stack, block, meta) >= 0;
             }
             if (block != null && block != net.minecraft.init.Blocks.air) {
                 return ToolHarvestEligibility.isEligible(stack, block, meta);

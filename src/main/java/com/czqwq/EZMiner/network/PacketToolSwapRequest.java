@@ -84,7 +84,7 @@ public class PacketToolSwapRequest implements IMessage {
             // the target (GT tools use isMinableBlock, TiC uses real NBT durability).
             boolean eligible = ToolHarvestEligibility.isEligible(candidateStack, block, meta);
             if (!eligible && GT5ToolCompat.isGTToolbox(candidateStack)) {
-                eligible = GT5ToolCompat.getToolboxBestInternalSlot(candidateStack, player, block, meta) >= 0;
+                eligible = GT5ToolCompat.findBestToolboxSlotForBlock(candidateStack, block, meta) >= 0;
             }
             if (!eligible) return null;
 
@@ -97,9 +97,7 @@ public class PacketToolSwapRequest implements IMessage {
             // For GT Toolbox, remember the internal tool slot so the client can
             // configure it after the server has physically moved the toolbox.
             boolean toolbox = GT5ToolCompat.isGTToolbox(candidateStack);
-            int toolboxInternal = toolbox
-                ? GT5ToolCompat.getToolboxBestInternalSlot(candidateStack, player, block, meta)
-                : -1;
+            int toolboxInternal = toolbox ? GT5ToolCompat.findBestToolboxSlotForBlock(candidateStack, block, meta) : -1;
 
             if (candidate < 9) {
                 // Hotbar candidate: no physical swap, just change the held slot.

@@ -10,6 +10,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
 import com.czqwq.EZMiner.utils.SafeReflection;
+import com.czqwq.EZMiner.utils.ToolHarvestEligibility;
 
 /**
  * Reflection bridge for GregTech 5 Unofficial tool compatibility.
@@ -56,6 +57,7 @@ public class GT5ToolCompat {
     private static Method mPickResultsSuggestedTools;
     private static Method mPickResultsForceDeselect;
     private static Method mToolboxItemStackHandlerGetStackInSlot;
+    private static Method mToolboxItemStackHandlerGetSlots;
     /** {@code ItemGTToolbox.sendChangeToolPacket(int, int)} — private static. */
     private static Method mSendChangeToolPacket;
 
@@ -126,9 +128,10 @@ public class GT5ToolCompat {
                             mPickResultsForceDeselect.setAccessible(true);
                         }
                 }
-                // ToolboxItemStackHandler: find getStackInSlot(int)
+                // ToolboxItemStackHandler: find getStackInSlot(int) and getSlots()
                 mToolboxItemStackHandlerGetStackInSlot = SafeReflection
                     .getMethod(classToolboxItemStackHandler, "getStackInSlot", int.class);
+                mToolboxItemStackHandlerGetSlots = SafeReflection.getMethod(classToolboxItemStackHandler, "getSlots");
                 // sendChangeToolPacket is private static
                 mSendChangeToolPacket = SafeReflection
                     .getDeclaredMethod(classItemGTToolbox, "sendChangeToolPacket", int.class, int.class);
@@ -136,6 +139,7 @@ public class GT5ToolCompat {
                 // All toolbox methods must resolve for toolbox support to be considered
                 // loaded; a partial toolbox init is worse than a clean "no toolbox".
                 toolboxLoaded = mGetSuggestedTool != null && mToolboxItemStackHandlerGetStackInSlot != null
+                    && mToolboxItemStackHandlerGetSlots != null
                     && mSendChangeToolPacket != null;
             } else {
                 toolboxLoaded = false;
@@ -237,6 +241,48 @@ public class GT5ToolCompat {
         }
     }
 
+    /**
+     * Finds the best internal toolbox slot whose tool can actually harvest the
+     * target block.
+     *
+     * <p>
+     * Unlike {@link #getToolboxBestInternalSlot} (which only knows wrench/crowbar/
+     * soft-mallet suggestions for machine blocks), this scans every internal stack
+     * and applies the same real harvest-eligibility rules used for normal tools.
+     * This is what makes a toolbox containing a pickaxe a valid switch candidate
+     * for stone/ore mining.
+     *
+     * @return internal slot index, or -1 if no internal tool can harvest the block
+     */
+    public static int findBestToolboxSlotForBlock(ItemStack toolbox, Block block, int meta) {
+        if (!gtLoaded || !toolboxLoaded
+            || toolbox == null
+            || block == null
+            || mToolboxItemStackHandlerGetSlots == null) {
+            return -1;
+        }
+        try {
+            Object handler = classToolboxItemStackHandler.getConstructor(ItemStack.class)
+                .newInstance(toolbox);
+            int slots = ((Number) mToolboxItemStackHandlerGetSlots.invoke(handler)).intValue();
+            int best = -1;
+            int bestRemaining = -1;
+            for (int i = 0; i < slots; i++) {
+                ItemStack internal = (ItemStack) mToolboxItemStackHandlerGetStackInSlot.invoke(handler, i);
+                if (internal == null || internal.getItem() == null) continue;
+                if (!ToolHarvestEligibility.isEligible(internal, block, meta)) continue;
+                int remaining = ToolHarvestEligibility.remainingDurability(internal);
+                if (remaining > bestRemaining) {
+                    bestRemaining = remaining;
+                    best = i;
+                }
+            }
+            return best;
+        } catch (RuntimeException | LinkageError | ReflectiveOperationException ignored) {
+            return -1;
+        }
+    }
+
     public static int getToolboxInternalToolHarvestLevel(ItemStack toolbox, int slotId, String toolClass) {
         if (!gtLoaded || !toolboxLoaded || toolbox == null) return -1;
         try {
@@ -271,7 +317,7 @@ public class GT5ToolCompat {
     }
 
     public static boolean canToolboxMineBlock(ItemStack toolbox, EntityPlayer player, Block block, int meta) {
-        return getToolboxBestInternalSlot(toolbox, player, block, meta) >= 0;
+        return findBestToolboxSlotForBlock(toolbox, block, meta) >= 0;
     }
 
     /**

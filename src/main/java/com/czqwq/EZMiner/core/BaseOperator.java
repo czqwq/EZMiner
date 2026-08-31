@@ -308,7 +308,7 @@ public class BaseOperator {
                 // GT Toolbox is a valid replacement only when it has an internal
                 // tool that can harvest the next target.
                 if (GT5ToolCompat.isGTToolbox(item)) {
-                    return GT5ToolCompat.getToolboxBestInternalSlot(item, playerMP, block, meta) >= 0;
+                    return GT5ToolCompat.findBestToolboxSlotForBlock(item, block, meta) >= 0;
                 }
                 return ToolHarvestEligibility.isEligible(item, block, meta);
             }

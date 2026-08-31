@@ -333,8 +333,8 @@ public class SmartToolSwitchHandler {
             // ── Efficiency gate (P1): skip tools that are not effective on this block ──
             boolean effective;
             if (GT5ToolCompat.isGTToolbox(stack)) {
-                // Toolbox: check if internal tool is effective
-                int s = GT5ToolCompat.getToolboxBestInternalSlot(stack, player, block, meta);
+                // Toolbox: check if an internal tool can actually harvest the block
+                int s = GT5ToolCompat.findBestToolboxSlotForBlock(stack, block, meta);
                 effective = s >= 0 && GT5ToolCompat.getToolboxInternalToolDigSpeed(stack, s, block, meta) > 1.0F;
             } else {
                 effective = ToolEligibility.isEffectiveForBlock(stack, block, meta);
@@ -348,7 +348,7 @@ public class SmartToolSwitchHandler {
                 ok = true;
                 score = 100;
             } else if (GT5ToolCompat.isGTToolbox(stack)) {
-                int s = GT5ToolCompat.getToolboxBestInternalSlot(stack, player, block, meta);
+                int s = GT5ToolCompat.findBestToolboxSlotForBlock(stack, block, meta);
                 if (s >= 0) {
                     ok = true;
                     score = GT5ToolCompat.getToolboxInternalToolHarvestLevel(stack, s, requiredToolClass);
@@ -461,7 +461,7 @@ public class SmartToolSwitchHandler {
     private static void configureToolboxIfNeeded(EntityPlayer player, int bestSlot, Block block, int meta) {
         ItemStack bestStack = player.inventory.mainInventory[bestSlot];
         if (bestStack == null || !GT5ToolCompat.isGTToolbox(bestStack)) return;
-        int internalSlot = GT5ToolCompat.getToolboxBestInternalSlot(bestStack, player, block, meta);
+        int internalSlot = GT5ToolCompat.findBestToolboxSlotForBlock(bestStack, block, meta);
         if (internalSlot >= 0) {
             GT5ToolCompat.setToolboxSelectedTool(bestSlot, internalSlot);
         }
