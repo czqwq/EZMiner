@@ -1,11 +1,17 @@
 package com.czqwq.EZMiner.network;
 
+import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.MovingObjectPosition;
 
+import com.czqwq.EZMiner.ClientProxy;
 import com.czqwq.EZMiner.Config;
+import com.czqwq.EZMiner.EZMiner;
+import com.czqwq.EZMiner.compat.GT5ToolCompat;
+import com.czqwq.EZMiner.utils.ToolHarvestEligibility;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -56,19 +62,39 @@ public class PacketToolBreakHandoff implements IMessage {
             if (mc.thePlayer == null) return null;
             EntityPlayer player = mc.thePlayer;
 
+            // Only auto-switch when smart-tool-switch mode is actually active.
+            // The config flag defaults to true, so checking it alone would hijack
+            // the hotbar even for players who never activated the mode.
+            if (!((ClientProxy) EZMiner.proxy).smartToolSwitchHandler.isActive()) return null;
+
+            // Capture the current look target (if any) so candidate tools must be
+            // able to actually harvest it. When no target is available, fall back
+            // to the generic "plausible mining tool" heuristic.
+            Block targetBlock = null;
+            int targetMeta = 0;
+            MovingObjectPosition mop = mc.objectMouseOver;
+            if (mop != null && mop.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
+                targetBlock = player.worldObj.getBlock(mop.blockX, mop.blockY, mop.blockZ);
+                targetMeta = player.worldObj.getBlockMetadata(mop.blockX, mop.blockY, mop.blockZ);
+            }
+            final Block block = targetBlock;
+            final int meta = targetMeta;
+
             int current = player.inventory.currentItem;
             int bestSlot = -1;
             int bestRemaining = 0;
 
-            // Phase 1: scan hotbar for the tool with the most remaining durability
+            // Phase 1: scan hotbar for the best usable replacement mining tool.
+            // Non-tool items (arrows, seeds, blocks) are rejected — and when a
+            // target block is known the candidate must actually be able to harvest it.
             for (int i = 0; i < InventoryPlayer.getHotbarSize(); i++) {
                 if (i == current) continue;
                 ItemStack stack = player.inventory.mainInventory[i];
-                if (stack == null) continue;
-                int remaining = stack.isItemStackDamageable()
-                    ? Math.max(0, stack.getMaxDamage() - stack.getItemDamage())
-                    : Integer.MAX_VALUE;
-                if (remaining <= 1) continue;
+                if (!isUsableCandidate(stack, player, block, meta)) continue;
+                // Toolboxes are a last-resort fallback: give them a low score so a
+                // real direct tool (remaining >= 2) always wins when present.
+                int remaining = GT5ToolCompat.isGTToolbox(stack) ? 1
+                    : ToolHarvestEligibility.remainingDurability(stack);
                 if (remaining > bestRemaining) {
                     bestRemaining = remaining;
                     bestSlot = i;
@@ -79,11 +105,9 @@ public class PacketToolBreakHandoff implements IMessage {
             if (bestSlot < 0 && Config.smartToolSwitchFullInventory) {
                 for (int i = InventoryPlayer.getHotbarSize(); i < player.inventory.mainInventory.length; i++) {
                     ItemStack stack = player.inventory.mainInventory[i];
-                    if (stack == null) continue;
-                    int remaining = stack.isItemStackDamageable()
-                        ? Math.max(0, stack.getMaxDamage() - stack.getItemDamage())
-                        : Integer.MAX_VALUE;
-                    if (remaining <= 1) continue;
+                    if (!isUsableCandidate(stack, player, block, meta)) continue;
+                    int remaining = GT5ToolCompat.isGTToolbox(stack) ? 1
+                        : ToolHarvestEligibility.remainingDurability(stack);
                     if (remaining > bestRemaining) {
                         bestRemaining = remaining;
                         bestSlot = i;
@@ -98,8 +122,11 @@ public class PacketToolBreakHandoff implements IMessage {
                         player.inventory.mainInventory[target] = src;
                         player.inventory.mainInventory[bestSlot] = tmp;
                         player.inventory.currentItem = target;
+                        // Record the physical borrow so it is returned when smart-switch
+                        // mode is deactivated or the chain ends.
+                        com.czqwq.EZMiner.client.toolswap.ToolSwapBorrowLedger.recordHandoffSwap(target, bestSlot);
                         // Sync the swap to the server so the item isn't a ghost
-                        com.czqwq.EZMiner.EZMiner.network.network
+                        EZMiner.network.network
                             .sendToServer(new com.czqwq.EZMiner.network.PacketInventorySwap(target, bestSlot));
                     }
                     return null;
@@ -108,8 +135,30 @@ public class PacketToolBreakHandoff implements IMessage {
 
             if (bestSlot >= 0) {
                 player.inventory.currentItem = bestSlot;
+                // GT Toolbox: select the correct internal tool for the target.
+                ItemStack selected = player.inventory.mainInventory[bestSlot];
+                if (block != null && block != net.minecraft.init.Blocks.air && GT5ToolCompat.isGTToolbox(selected)) {
+                    int internal = GT5ToolCompat.getToolboxBestInternalSlot(selected, player, block, meta);
+                    if (internal >= 0) {
+                        GT5ToolCompat.setToolboxSelectedTool(bestSlot, internal);
+                    }
+                }
             }
             return null;
+        }
+
+        /** True when the stack may be swapped in as a replacement mining tool. */
+        @SideOnly(Side.CLIENT)
+        private static boolean isUsableCandidate(ItemStack stack, EntityPlayer player, Block block, int meta) {
+            if (GT5ToolCompat.isGTToolbox(stack)) {
+                // Toolboxes need a concrete target to pick an internal tool.
+                if (block == null || block == net.minecraft.init.Blocks.air) return false;
+                return GT5ToolCompat.getToolboxBestInternalSlot(stack, player, block, meta) >= 0;
+            }
+            if (block != null && block != net.minecraft.init.Blocks.air) {
+                return ToolHarvestEligibility.isEligible(stack, block, meta);
+            }
+            return ToolHarvestEligibility.isUsableMiningTool(stack);
         }
 
         /** Finds an empty or least-important hotbar slot, excluding the given current slot. */

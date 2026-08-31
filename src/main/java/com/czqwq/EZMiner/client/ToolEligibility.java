@@ -4,31 +4,33 @@ import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
+import com.czqwq.EZMiner.utils.ToolHarvestEligibility;
+
 /**
  * Pure eligibility checks for smart tool switching.
  * <p>
  * All methods are static and side-effect-free — they only read immutable
- * properties of the arguments. Separated from the handler to keep scoring,
- * durability, and efficiency rules in one testable place.
+ * properties of the arguments. Durability and replacement-tool rules are shared
+ * with the server via {@link ToolHarvestEligibility}; this class adds the
+ * client-only efficiency/shears helpers.
  */
 public final class ToolEligibility {
 
     /** Minimum remaining durability for a tool to be considered usable. */
-    public static final int MIN_REMAINING_DURABILITY = 2;
+    public static final int MIN_REMAINING_DURABILITY = ToolHarvestEligibility.MIN_REMAINING_DURABILITY;
 
     private ToolEligibility() {}
 
     // ── Durability ──────────────────────────────────────────────────────────────
 
-    /** Returns remaining durability; unbreakable items map to Integer.MAX_VALUE. */
+    /** Returns real remaining durability; unbreakable/non-damageable map to Integer.MAX_VALUE. */
     public static int remainingDurability(ItemStack stack) {
-        if (stack == null || !stack.isItemStackDamageable()) return Integer.MAX_VALUE;
-        return Math.max(0, stack.getMaxDamage() - stack.getItemDamage());
+        return ToolHarvestEligibility.remainingDurability(stack);
     }
 
     /** Returns true when the tool has enough durability reserve to safely continue. */
     public static boolean hasDurabilityReserve(ItemStack stack) {
-        return remainingDurability(stack) >= MIN_REMAINING_DURABILITY;
+        return ToolHarvestEligibility.hasDurabilityReserve(stack);
     }
 
     // ── Efficiency ──────────────────────────────────────────────────────────────
@@ -38,6 +40,21 @@ public final class ToolEligibility {
         if (stack == null || stack.getItem() == null || block == null) return false;
         return stack.getItem()
             .getDigSpeed(stack, block, meta) > 1.0F;
+    }
+
+    // ── Replacement-tool eligibility ───────────────────────────────────────────
+
+    /**
+     * True when the stack is a plausible replacement mining tool for the tool-break
+     * handoff.
+     *
+     * <p>
+     * Non-damageable non-tool items (arrows, seeds, blocks, food…) are deliberately
+     * rejected: the handoff previously treated them as "infinite durability" and
+     * could auto-switch to them when the TiC tool was about to break.
+     */
+    public static boolean isUsableMiningTool(ItemStack stack) {
+        return ToolHarvestEligibility.isUsableMiningTool(stack);
     }
 
     // ── Combined eligibility ────────────────────────────────────────────────────

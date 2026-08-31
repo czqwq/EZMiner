@@ -30,6 +30,7 @@ import com.czqwq.EZMiner.chain.network.PacketChainStateSync;
 import com.czqwq.EZMiner.chain.planning.CachedPositionsPlanningTask;
 import com.czqwq.EZMiner.chain.planning.ChainPlanningTask;
 import com.czqwq.EZMiner.chain.watchdog.ChainWatchdog;
+import com.czqwq.EZMiner.compat.GT5ToolCompat;
 import com.czqwq.EZMiner.compat.NaturaSaguaroCompat;
 import com.czqwq.EZMiner.compat.TinkersConstructCompat;
 import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
@@ -37,6 +38,7 @@ import com.czqwq.EZMiner.core.crop.CropAdapterRegistry;
 import com.czqwq.EZMiner.network.PacketToolBreakHandoff;
 import com.czqwq.EZMiner.utils.MessageUtils;
 import com.czqwq.EZMiner.utils.TimeFormatUtils;
+import com.czqwq.EZMiner.utils.ToolHarvestEligibility;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -193,18 +195,12 @@ public class BaseOperator {
                 unRegistry();
                 return;
             }
-            // Re-check: has the tool changed? If so, resume.
-            ItemStack item = playerMP.getCurrentEquippedItem();
-            if (item != null && item.isItemStackDamageable()) {
-                boolean stillBad;
-                if (TinkersConstructCompat.isTiCTool(item)) {
-                    stillBad = !TinkersConstructCompat.canContinueMining(item);
-                } else {
-                    stillBad = (item.getMaxDamage() - item.getItemDamage()) <= 1;
-                }
-                if (stillBad) return; // Still waiting, skip this tick
-            }
-            // Tool has been switched — resume
+            // Re-check: has the tool changed to a usable replacement? If so, resume.
+            // A null item or a non-tool item (empty slot, block, food…) must NOT
+            // resume the chain — otherwise the client auto-switch to an empty hotbar
+            // slot would let mining continue without a real tool (and often without
+            // drops).
+            if (!isHandoffToolUsable()) return; // Still waiting, skip this tick
             toolBreakHandoffTick = 0;
         }
 
@@ -284,6 +280,40 @@ public class BaseOperator {
         }
         // Timeout — handoff failed, cancel the chain
         return false;
+    }
+
+    /**
+     * True when the currently equipped item is a usable replacement mining tool
+     * for the tool-break handoff.
+     *
+     * <p>
+     * This deliberately rejects {@code null} and non-tool items: the client's
+     * auto-switch can move to an empty hotbar slot or a block/food when no better
+     * tool exists, and resuming the chain there would keep mining without a real
+     * tool (and often without drops).
+     */
+    private boolean isHandoffToolUsable() {
+        ItemStack item = playerMP.getCurrentEquippedItem();
+        if (item == null) return false;
+
+        // When the next chain target is known, require the held item to actually
+        // harvest it — this prevents resuming with a wrong-type tool (sword, bow,
+        // non-tool) that would break blocks without drops.
+        Vector3i next = canBreakPositions.peek();
+        if (next != null && playerMP.worldObj != null && playerMP.worldObj.blockExists(next.x, next.y, next.z)) {
+            Block block = playerMP.worldObj.getBlock(next.x, next.y, next.z);
+            int meta = playerMP.worldObj.getBlockMetadata(next.x, next.y, next.z);
+            if (block != null && block != net.minecraft.init.Blocks.air) {
+                // GT Toolbox is a valid replacement only when it has an internal
+                // tool that can harvest the next target.
+                if (GT5ToolCompat.isGTToolbox(item)) {
+                    return GT5ToolCompat.getToolboxBestInternalSlot(item, playerMP, block, meta) >= 0;
+                }
+                return ToolHarvestEligibility.isEligible(item, block, meta);
+            }
+        }
+        if (GT5ToolCompat.isGTToolbox(item)) return false; // cannot validate without a target
+        return ToolHarvestEligibility.isUsableMiningTool(item);
     }
 
     private static long getServerTick() {

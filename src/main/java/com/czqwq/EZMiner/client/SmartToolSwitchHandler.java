@@ -23,6 +23,7 @@ import net.minecraftforge.common.MinecraftForge;
 import org.lwjgl.input.Keyboard;
 
 import com.czqwq.EZMiner.Config;
+import com.czqwq.EZMiner.client.toolswap.ToolSwapBorrowLedger;
 import com.czqwq.EZMiner.compat.GT5ToolCompat;
 
 import cpw.mods.fml.client.registry.ClientRegistry;
@@ -54,9 +55,11 @@ public class SmartToolSwitchHandler {
 
     // ── Target tracking ───────────────────────────────────────────────────────
     private int lastBlockX = Integer.MIN_VALUE, lastBlockY = Integer.MIN_VALUE, lastBlockZ = Integer.MIN_VALUE;
-    /** Sorted list of suitable hotbar slots for the current target. */
+    /** Sorted list of suitable hotbar slots for the current target (best-first by score). */
     private final List<Integer> suitableSlots = new ArrayList<>();
-    /** Index into {@link #suitableSlots} that is currently selected. */
+    /** Suitable slots in hotbar/ascending slot order for predictable scroll-wheel cycling. */
+    private final List<Integer> scrollSlots = new ArrayList<>();
+    /** Index into {@link #scrollSlots} that is currently selected. */
     private int cycleIndex = -1;
 
     public boolean isActive() {
@@ -103,6 +106,7 @@ public class SmartToolSwitchHandler {
         if (event.phase != TickEvent.Phase.START) return;
         if (!Config.smartToolSwitchEnabled || !toggled || tempDisabled) {
             if (!suitableSlots.isEmpty()) suitableSlots.clear();
+            scrollSlots.clear();
             return;
         }
 
@@ -112,6 +116,7 @@ public class SmartToolSwitchHandler {
         MovingObjectPosition mop = mc.objectMouseOver;
         if (mop == null) {
             if (!suitableSlots.isEmpty()) suitableSlots.clear();
+            scrollSlots.clear();
             return;
         }
 
@@ -249,6 +254,7 @@ public class SmartToolSwitchHandler {
         lastBlockY = Integer.MIN_VALUE;
         lastBlockZ = Integer.MIN_VALUE;
         suitableSlots.clear();
+        scrollSlots.clear();
         cycleIndex = -1;
     }
 
@@ -263,7 +269,10 @@ public class SmartToolSwitchHandler {
             if (mc.objectMouseOver != null && mc.objectMouseOver.typeOfHit != MovingObjectType.MISS) return;
             if (!toggled && !tempDisabled) return;
             tempDisabled = !tempDisabled;
-            if (tempDisabled) suitableSlots.clear();
+            if (tempDisabled) {
+                suitableSlots.clear();
+                scrollSlots.clear();
+            }
             if (mc.thePlayer != null) {
                 mc.thePlayer.addChatMessage(
                     new ChatComponentTranslation(
@@ -287,25 +296,37 @@ public class SmartToolSwitchHandler {
         if (mop != null && mop.typeOfHit == MovingObjectType.BLOCK) {
             if (mop.blockX == lastBlockX && mop.blockY == lastBlockY && mop.blockZ == lastBlockZ) hasTarget = true;
         }
-        if (!hasTarget || suitableSlots.size() < 2) return;
+        if (!hasTarget || scrollSlots.size() < 2) return;
 
         // Cancel vanilla inventory scroll — we handle hotbar switching ourselves
         event.setCanceled(true);
 
         int delta = event.dwheel > 0 ? -1 : 1;
-        // Walk through suitableSlots to find the next valid candidate (P7: validate on scroll)
-        int attempts = suitableSlots.size();
+        // Walk through scrollSlots (hotbar/ascending order) to find the next valid
+        // candidate (P7: validate on scroll).
+        int attempts = scrollSlots.size();
         Block block = player.worldObj.getBlock(mop.blockX, mop.blockY, mop.blockZ);
         // noinspection deprecation
         int meta = player.worldObj.getBlockMetadata(mop.blockX, mop.blockY, mop.blockZ);
         for (int tried = 0; tried < attempts; tried++) {
-            cycleIndex = (cycleIndex + delta + suitableSlots.size()) % suitableSlots.size();
-            int candidate = suitableSlots.get(cycleIndex);
+            cycleIndex = (cycleIndex + delta + scrollSlots.size()) % scrollSlots.size();
+            int candidate = scrollSlots.get(cycleIndex);
             ItemStack candidateStack = player.inventory.mainInventory[candidate];
             if (candidateStack != null
                 && ToolEligibility.remainingDurability(candidateStack) >= ToolEligibility.MIN_REMAINING_DURABILITY
                 && ToolEligibility.isEffectiveForBlock(candidateStack, block, meta)) {
                 int newSlot = candidate;
+                // Inventory slots (9-35) cannot be assigned to currentItem (0-8).
+                // Swap the tool into a hotbar slot first, exactly like the normal
+                // block-target switch path, and record it so it can be restored.
+                if (candidate >= InventoryPlayer.getHotbarSize()) {
+                    int anchorSlot = player.inventory.currentItem;
+                    ItemStack anchorStack = player.inventory.mainInventory[anchorSlot];
+                    newSlot = swapIntoHotbar(player, candidate);
+                    if (newSlot < 0) continue;
+                    ItemStack candidateAfterSwap = player.inventory.mainInventory[newSlot];
+                    this.swapLedger = new SwapLedger(anchorSlot, newSlot, anchorStack, candidateAfterSwap);
+                }
                 player.inventory.currentItem = newSlot;
                 // Update toolbox internal selection if needed
                 configureToolboxIfNeeded(player, newSlot, block, meta);
@@ -320,6 +341,7 @@ public class SmartToolSwitchHandler {
 
     private void buildSuitableSlotsForBlock(EntityPlayer player, Block block, int meta) {
         suitableSlots.clear();
+        scrollSlots.clear();
         cycleIndex = -1;
         // noinspection deprecation
         String requiredToolClass = block.getHarvestTool(meta);
@@ -367,9 +389,14 @@ public class SmartToolSwitchHandler {
                 }
             } else if (GT5ToolCompat.isGTTool(stack)) {
                 if (GT5ToolCompat.canGTToolMineBlock(stack, block, meta)) {
-                    ok = true;
-                    score = GT5ToolCompat.getGTToolHarvestLevel(stack, requiredToolClass);
-                    if (score < 0) score = requiredLevel;
+                    // A GT tool must actually have the required tool class/level.
+                    // Without this, a wrench could claim a pickaxe slot via the
+                    // generic quality fallback (now removed from the helper too).
+                    int gtLevel = GT5ToolCompat.getGTToolHarvestLevel(stack, requiredToolClass);
+                    if (requiredToolClass == null || requiredToolClass.isEmpty() || gtLevel >= requiredLevel) {
+                        ok = true;
+                        score = Math.max(0, gtLevel);
+                    }
                 }
             } else {
                 int hl = stack.getItem()
@@ -398,13 +425,20 @@ public class SmartToolSwitchHandler {
             scored.add(new int[] { i, effectiveScore });
         }
 
-        // Sort by effective score descending, then slot ascending
+        // Sort by effective score descending, then slot ascending (auto-best order).
         Collections.sort(
             scored,
             Comparator.<int[]>comparingInt(a -> -a[1])
                 .thenComparingInt(a -> a[0]));
         suitableSlots.clear();
         for (int[] s : scored) suitableSlots.add(s[0]);
+
+        // Scroll-wheel order: same eligible tools, but in hotbar/ascending slot
+        // order so the player can predictably cycle 1→2→…→9 instead of a
+        // score-sorted order that looks random.
+        scrollSlots.clear();
+        for (int[] s : scored) scrollSlots.add(s[0]);
+        scrollSlots.sort(Comparator.naturalOrder());
     }
 
     // ── Durability helpers ──────────────────────────────────────────────────────
@@ -478,8 +512,18 @@ public class SmartToolSwitchHandler {
 
     // ── Swap restore (returns tools to original slots on key release) ──────────
 
+    /**
+     * Restores any borrowed hotbar items when a chain execution ends, without
+     * disabling smart-switch mode. The player can immediately start another chain
+     * and the hotbar layout is back to normal in between.
+     */
+    public void restoreAfterChainEnd() {
+        restoreSwapAndClear();
+    }
+
     /** Restores the last tool swap and clears tracking state. */
     private void restoreSwapAndClear() {
+        ToolSwapBorrowLedger.restoreHandoffSwaps();
         SwapLedger ledger = this.swapLedger;
         this.swapLedger = null;
         if (ledger != null) {
@@ -502,6 +546,7 @@ public class SmartToolSwitchHandler {
             }
         }
         suitableSlots.clear();
+        scrollSlots.clear();
     }
 
     // ── State reset ───────────────────────────────────────────────────────────
@@ -511,6 +556,7 @@ public class SmartToolSwitchHandler {
         lastBlockY = Integer.MIN_VALUE;
         lastBlockZ = Integer.MIN_VALUE;
         suitableSlots.clear();
+        scrollSlots.clear();
         cycleIndex = -1;
         swapLedger = null;
     }
@@ -568,6 +614,7 @@ public class SmartToolSwitchHandler {
         toggled = false;
         tempDisabled = false;
         swapLedger = null;
+        ToolSwapBorrowLedger.clear();
         resetState();
     }
 

@@ -116,6 +116,9 @@ public class PacketChainStateSync implements IMessage {
                         proxy.minerRenderer.unfreeze();
                     }
                     // Key already released: stopChain() already called unfreeze() → no-op here.
+                    // Return borrowed hotbar items (smart-switch full-inventory swaps and
+                    // handoff borrows) now that the chain is finished.
+                    proxy.smartToolSwitchHandler.restoreAfterChainEnd();
                 }
             }
             return null;

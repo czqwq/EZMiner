@@ -183,10 +183,15 @@ public class GT5ToolCompat {
     }
 
     public static int getGTToolHarvestLevel(ItemStack tool, String toolClass) {
-        if (!gtLoaded || tool == null || toolClass == null) return -1;
-        int level = tool.getItem()
-            .getHarvestLevel(tool, toolClass);
-        if (level >= 0) return level;
+        if (!gtLoaded || tool == null) return -1;
+        if (toolClass != null && !toolClass.isEmpty()) {
+            // A specific tool class was requested: only the item's own harvest level
+            // for that class counts. Falling back to getBaseQuality here would let a
+            // wrench claim a pickaxe level just because it has a generic quality.
+            return tool.getItem()
+                .getHarvestLevel(tool, toolClass);
+        }
+        // No specific tool class: use base quality as the generic harvest level.
         try {
             Object toolStats = mGetToolStats.invoke(tool.getItem(), tool);
             if (toolStats == null) return -1;

@@ -48,6 +48,22 @@ public final class TinkersConstructCompat {
             .getBoolean("Broken");
     }
 
+    /**
+     * Real remaining durability from the TiC {@code InfiTool} NBT, not the vanilla
+     * 100-durability placeholder. Unbreakable tools report {@link Integer#MAX_VALUE}.
+     * Returns {@code -1} for non-TiC stacks.
+     */
+    public static int remainingDurability(ItemStack stack) {
+        if (!isTiCTool(stack)) return -1;
+        if (isUnbreakable(stack)) return Integer.MAX_VALUE;
+        NBTTagCompound toolTag = stack.getTagCompound()
+            .getCompoundTag("InfiTool");
+        int damage = toolTag.getInteger("Damage");
+        int maxDurability = toolTag.getInteger("TotalDurability");
+        if (maxDurability <= 0) return Integer.MAX_VALUE;
+        return Math.max(0, maxDurability - damage);
+    }
+
     // ── Durability decision ─────────────────────────────────────────────────────
 
     /**

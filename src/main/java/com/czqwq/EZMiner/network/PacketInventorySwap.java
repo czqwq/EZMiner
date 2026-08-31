@@ -50,7 +50,7 @@ public class PacketInventorySwap implements IMessage {
         public IMessage onMessage(PacketInventorySwap msg, MessageContext ctx) {
             if (!ctx.side.isServer()) return null;
             EntityPlayerMP player = ctx.getServerHandler().playerEntity;
-            if (player == null) return null;
+            if (player == null || player.isDead) return null;
 
             int a = msg.slotA;
             int b = msg.slotB;
@@ -58,6 +58,15 @@ public class PacketInventorySwap implements IMessage {
                 || b < 0
                 || b >= player.inventory.mainInventory.length
                 || a == b) return null;
+
+            // Defensive: reject swaps while a non-personal GUI is open. The client
+            // only sends this after its own smart-switch/handoff swap; accepting it
+            // mid-GUI would desync the open container's slots.
+            if (player.openContainer != player.inventoryContainer) return null;
+            // Defensive: reject swaps while the player is carrying something on the
+            // cursor (e.g. mid-drag in a GUI); the swap would be applied to the wrong
+            // inventory image.
+            if (player.inventory.getItemStack() != null) return null;
 
             // Atomically swap the two slots on the server side
             ItemStack tmp = player.inventory.mainInventory[a];
