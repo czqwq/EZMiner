@@ -23,7 +23,6 @@ import net.minecraftforge.common.MinecraftForge;
 import org.lwjgl.input.Keyboard;
 
 import com.czqwq.EZMiner.Config;
-import com.czqwq.EZMiner.client.toolswap.ToolSwapBorrowLedger;
 import com.czqwq.EZMiner.compat.GT5ToolCompat;
 
 import cpw.mods.fml.client.registry.ClientRegistry;
@@ -50,8 +49,7 @@ public class SmartToolSwitchHandler {
     private boolean wasHolding;
     volatile boolean toggled;
     private volatile boolean tempDisabled;
-    /** Tracks the last swap so tools can be restored to their original slots on key release. */
-    private SwapLedger swapLedger;
+    /** Server owns tool-borrow restore; the client is a thin observer. */
 
     // ── Target tracking ───────────────────────────────────────────────────────
     private int lastBlockX = Integer.MIN_VALUE, lastBlockY = Integer.MIN_VALUE, lastBlockZ = Integer.MIN_VALUE;
@@ -167,11 +165,17 @@ public class SmartToolSwitchHandler {
                 cycleIndex = 0;
                 int bestSlot = suitableSlots.get(0);
                 if (bestSlot != currentSlot) {
-                    ItemStack anchor = player.inventory.mainInventory[currentSlot];
-                    ItemStack candidate = player.inventory.mainInventory[bestSlot];
-                    this.swapLedger = new SwapLedger(currentSlot, bestSlot, anchor, candidate);
+                    // The better tool may live in the main inventory (9-35): use the
+                    // server-authoritative path (or client swap for GT toolbox).
+                    if (bestSlot >= InventoryPlayer.getHotbarSize()) {
+                        requestOrSwapInventoryTool(player, mop, bestSlot);
+                        lastBlockX = mop.blockX;
+                        lastBlockY = mop.blockY;
+                        lastBlockZ = mop.blockZ;
+                        return;
+                    }
+                    player.inventory.currentItem = bestSlot;
                 }
-                player.inventory.currentItem = bestSlot;
             } else {
                 cycleIndex = idx;
             }
@@ -188,21 +192,16 @@ public class SmartToolSwitchHandler {
         // Current slot is NOT suitable → switch to the best one
         cycleIndex = 0;
         int bestSlot = suitableSlots.get(0);
-        int anchorSlot = currentSlot;
-        // Record the swap so we can restore on key release
-        ItemStack anchorStack = player.inventory.mainInventory[currentSlot];
-        // If the best tool is in the main inventory (not hotbar), swap it into
-        // the least-important hotbar slot first.
+        // If the best tool is in the main inventory (not hotbar), bring it into
+        // hand via the server-authoritative request.
         if (bestSlot >= InventoryPlayer.getHotbarSize()) {
-            bestSlot = swapIntoHotbar(player, bestSlot);
+            requestOrSwapInventoryTool(player, mop, bestSlot);
+            lastBlockX = mop.blockX;
+            lastBlockY = mop.blockY;
+            lastBlockZ = mop.blockZ;
+            return;
         }
-        if (bestSlot < 0) return;
         configureToolboxIfNeeded(player, bestSlot, block, meta);
-        ItemStack candidateStack = player.inventory.mainInventory[bestSlot];
-        // Only record the ledger if we're actually switching to a different slot
-        if (bestSlot != anchorSlot) {
-            this.swapLedger = new SwapLedger(anchorSlot, bestSlot, anchorStack, candidateStack);
-        }
         player.inventory.currentItem = bestSlot;
         lastBlockX = mop.blockX;
         lastBlockY = mop.blockY;
@@ -210,43 +209,16 @@ public class SmartToolSwitchHandler {
     }
 
     /**
-     * Swaps the item in {@code inventorySlot} (9-35) into the least-important
-     * hotbar slot, returning that hotbar slot index. Returns -1 if no swap target
-     * found.
+     * Brings an inventory tool (9-35) into hand via the server-authoritative path.
+     * The server validates the candidate, performs the physical swap (including GT
+     * Toolboxes — internal selection is configured via {@code PacketToolSwapResult}),
+     * records the borrow in its ledger and syncs the inventory back.
      */
-    private int swapIntoHotbar(EntityPlayer player, int inventorySlot) {
-        ItemStack src = player.inventory.mainInventory[inventorySlot];
-        if (src == null) return -1;
-        int targetHotbar = findLeastImportantHotbarSlot(player);
-        if (targetHotbar < 0) return -1;
-        // Swap items on the client side
-        ItemStack tmp = player.inventory.mainInventory[targetHotbar];
-        player.inventory.mainInventory[targetHotbar] = src;
-        player.inventory.mainInventory[inventorySlot] = tmp;
-        // Sync the swap to the server so the item isn't a ghost
-        com.czqwq.EZMiner.EZMiner.network.network
-            .sendToServer(new com.czqwq.EZMiner.network.PacketInventorySwap(targetHotbar, inventorySlot));
-        return targetHotbar;
-    }
-
-    /** Finds the least-important hotbar slot (empty or lowest-priority tool). Never evicts GT Toolboxes. */
-    private int findLeastImportantHotbarSlot(EntityPlayer player) {
-        int hotbarSize = InventoryPlayer.getHotbarSize();
-        // First: any empty hotbar slot
-        for (int i = 0; i < hotbarSize; i++) {
-            if (player.inventory.mainInventory[i] == null) return i;
-        }
-        // Second: hotbar slot with the lowest-ranked tool (by current suitableSlots order),
-        // but NEVER evict a GT Toolbox
-        for (int i = suitableSlots.size() - 1; i >= 0; i--) {
-            int slot = suitableSlots.get(i);
-            if (slot < hotbarSize && !GT5ToolCompat.isGTToolbox(player.inventory.mainInventory[slot])) return slot;
-        }
-        // Fallback: any hotbar slot that's not in suitableSlots and not a toolbox
-        for (int i = 0; i < hotbarSize; i++) {
-            if (!suitableSlots.contains(i) && !GT5ToolCompat.isGTToolbox(player.inventory.mainInventory[i])) return i;
-        }
-        return -1;
+    private void requestOrSwapInventoryTool(EntityPlayer player, MovingObjectPosition mop, int inventorySlot) {
+        if (mop == null || mop.typeOfHit != MovingObjectType.BLOCK) return;
+        if (player.inventory.mainInventory[inventorySlot] == null) return;
+        com.czqwq.EZMiner.EZMiner.network.network.sendToServer(
+            new com.czqwq.EZMiner.network.PacketToolSwapRequest(mop.blockX, mop.blockY, mop.blockZ, inventorySlot));
     }
 
     private void clearBlockTracking() {
@@ -315,21 +287,16 @@ public class SmartToolSwitchHandler {
             if (candidateStack != null
                 && ToolEligibility.remainingDurability(candidateStack) >= ToolEligibility.MIN_REMAINING_DURABILITY
                 && ToolEligibility.isEffectiveForBlock(candidateStack, block, meta)) {
-                int newSlot = candidate;
-                // Inventory slots (9-35) cannot be assigned to currentItem (0-8).
-                // Swap the tool into a hotbar slot first, exactly like the normal
-                // block-target switch path, and record it so it can be restored.
+                // Inventory slots (9-35) cannot be assigned to currentItem (0-8):
+                // ask the server to swap the tool into the current hotbar slot
+                // (server-authoritative, ledger + restore + sync).
                 if (candidate >= InventoryPlayer.getHotbarSize()) {
-                    int anchorSlot = player.inventory.currentItem;
-                    ItemStack anchorStack = player.inventory.mainInventory[anchorSlot];
-                    newSlot = swapIntoHotbar(player, candidate);
-                    if (newSlot < 0) continue;
-                    ItemStack candidateAfterSwap = player.inventory.mainInventory[newSlot];
-                    this.swapLedger = new SwapLedger(anchorSlot, newSlot, anchorStack, candidateAfterSwap);
+                    requestOrSwapInventoryTool(player, mop, candidate);
+                    return;
                 }
-                player.inventory.currentItem = newSlot;
+                player.inventory.currentItem = candidate;
                 // Update toolbox internal selection if needed
-                configureToolboxIfNeeded(player, newSlot, block, meta);
+                configureToolboxIfNeeded(player, candidate, block, meta);
                 return;
             }
         }
@@ -521,30 +488,11 @@ public class SmartToolSwitchHandler {
         restoreSwapAndClear();
     }
 
-    /** Restores the last tool swap and clears tracking state. */
+    /** Restores borrowed hotbar items and clears tracking state. */
     private void restoreSwapAndClear() {
-        ToolSwapBorrowLedger.restoreHandoffSwaps();
-        SwapLedger ledger = this.swapLedger;
-        this.swapLedger = null;
-        if (ledger != null) {
-            Minecraft mc = Minecraft.getMinecraft();
-            if (mc.thePlayer != null) {
-                // Only restore if both slots still contain the expected items (content fingerprint check)
-                ItemStack currentAnchor = mc.thePlayer.inventory.mainInventory[ledger.anchorSlot];
-                ItemStack currentCandidate = mc.thePlayer.inventory.mainInventory[ledger.candidateSlot];
-                if (ledger.canRestore(currentAnchor, currentCandidate)) {
-                    // Swap back on the client side
-                    mc.thePlayer.inventory.mainInventory[ledger.anchorSlot] = currentCandidate;
-                    mc.thePlayer.inventory.mainInventory[ledger.candidateSlot] = currentAnchor;
-                    if (mc.thePlayer.inventory.currentItem == ledger.anchorSlot) {
-                        mc.thePlayer.inventory.currentItem = ledger.candidateSlot;
-                    }
-                    // Sync the restore to the server
-                    com.czqwq.EZMiner.EZMiner.network.network.sendToServer(
-                        new com.czqwq.EZMiner.network.PacketInventorySwap(ledger.anchorSlot, ledger.candidateSlot));
-                }
-            }
-        }
+        // The server is the authority for restoring borrows (chain end or
+        // smart-switch deactivate); the client only asks and clears its lists.
+        com.czqwq.EZMiner.EZMiner.network.network.sendToServer(new com.czqwq.EZMiner.network.PacketToolSwapFinalize());
         suitableSlots.clear();
         scrollSlots.clear();
     }
@@ -558,52 +506,6 @@ public class SmartToolSwitchHandler {
         suitableSlots.clear();
         scrollSlots.clear();
         cycleIndex = -1;
-        swapLedger = null;
-    }
-
-    // ── Swap Ledger ────────────────────────────────────────────────────────────
-
-    /**
-     * Immutable record of a tool swap so we can restore the original arrangement
-     * when the chain key is released. Uses content fingerprint checks so we never
-     * restore over items that were changed externally.
-     */
-    private static final class SwapLedger {
-
-        final int anchorSlot;
-        final int candidateSlot;
-        /** Registry name of the anchor item (or null for empty). */
-        private final String anchorId;
-        /** Registry name of the candidate item. */
-        private final String candidateId;
-        /** Damage value snapshot for fingerprint comparison. */
-        private final int anchorDamage;
-        private final int candidateDamage;
-
-        SwapLedger(int anchorSlot, int candidateSlot, ItemStack anchor, ItemStack candidate) {
-            this.anchorSlot = anchorSlot;
-            this.candidateSlot = candidateSlot;
-            this.anchorId = anchor != null ? Item.itemRegistry.getNameForObject(anchor.getItem()) : null;
-            this.anchorDamage = anchor != null ? anchor.getItemDamage() : 0;
-            this.candidateId = candidate != null ? Item.itemRegistry.getNameForObject(candidate.getItem()) : null;
-            this.candidateDamage = candidate != null ? candidate.getItemDamage() : 0;
-        }
-
-        /** Returns true when both slots still contain the items that were swapped. */
-        boolean canRestore(ItemStack currentAnchor, ItemStack currentCandidate) {
-            // Candidate slot must contain the anchor's original item
-            if (anchorId == null) {
-                if (currentCandidate != null) return false;
-            } else {
-                if (currentCandidate == null) return false;
-                String id = Item.itemRegistry.getNameForObject(currentCandidate.getItem());
-                if (!anchorId.equals(id) || currentCandidate.getItemDamage() != anchorDamage) return false;
-            }
-            // Anchor slot must contain the candidate's item
-            if (currentAnchor == null) return false;
-            String id = Item.itemRegistry.getNameForObject(currentAnchor.getItem());
-            return candidateId.equals(id) && currentAnchor.getItemDamage() == candidateDamage;
-        }
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -613,8 +515,6 @@ public class SmartToolSwitchHandler {
         wasHolding = false;
         toggled = false;
         tempDisabled = false;
-        swapLedger = null;
-        ToolSwapBorrowLedger.clear();
         resetState();
     }
 

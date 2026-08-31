@@ -89,8 +89,18 @@ public class NetworkMain {
             PacketToolBreakHandoff.class,
             packetId++,
             Side.CLIENT);
-        // Inventory slot swap sync: client → server (tool switch ghost-item fix)
-        network.registerMessage(PacketInventorySwap.Handler.class, PacketInventorySwap.class, packetId++, Side.SERVER);
+        // Server-authoritative tool swap request: client → server (tool borrow)
+        network
+            .registerMessage(PacketToolSwapRequest.Handler.class, PacketToolSwapRequest.class, packetId++, Side.SERVER);
+        // Smart-switch deactivated: client → server, restore any outstanding borrows
+        network.registerMessage(
+            PacketToolSwapFinalize.Handler.class,
+            PacketToolSwapFinalize.class,
+            packetId++,
+            Side.SERVER);
+        // Server-authoritative swap result (GT toolbox internal selection): server → client
+        network
+            .registerMessage(PacketToolSwapResult.Handler.class, PacketToolSwapResult.class, packetId++, Side.CLIENT);
         // OP status check: client → server (real-time check when GUI opens)
         network
             .registerMessage(PacketOpStatusRequest.Handler.class, PacketOpStatusRequest.class, packetId++, Side.SERVER);

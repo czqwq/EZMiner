@@ -36,6 +36,7 @@ import com.czqwq.EZMiner.compat.TinkersConstructCompat;
 import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
 import com.czqwq.EZMiner.core.crop.CropAdapterRegistry;
 import com.czqwq.EZMiner.network.PacketToolBreakHandoff;
+import com.czqwq.EZMiner.toolswap.server.ToolSwapServerService;
 import com.czqwq.EZMiner.utils.MessageUtils;
 import com.czqwq.EZMiner.utils.TimeFormatUtils;
 import com.czqwq.EZMiner.utils.ToolHarvestEligibility;
@@ -367,6 +368,8 @@ public class BaseOperator {
             .unregister(this);
         planningTask.interrupt();
         cleanupOperatorState();
+        // Server-authoritative restore of borrowed hotbar items after the chain ends.
+        ToolSwapServerService.finalize(playerMP);
     }
 
     /** Emergency stop on player logout — no chat messages or drop delivery. */
@@ -379,6 +382,7 @@ public class BaseOperator {
                 .unregister(this);
         } catch (Exception ignored) {}
         cleanupOperatorState(); // also removes watchdog tracking
+        ToolSwapServerService.finalize(playerMP);
     }
 
     private void cleanupOperatorState() {

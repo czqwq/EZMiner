@@ -113,21 +113,16 @@ public class PacketToolBreakHandoff implements IMessage {
                         bestSlot = i;
                     }
                 }
-                // If found in main inventory, swap it into the hotbar
+                // If found in main inventory, ask the server to perform the swap
+                // authoritatively (server records the borrow and syncs inventory).
                 if (bestSlot >= 0) {
-                    int target = findEmptyOrWorstHotbarSlot(player, current);
-                    if (target >= 0) {
-                        ItemStack src = player.inventory.mainInventory[bestSlot];
-                        ItemStack tmp = player.inventory.mainInventory[target];
-                        player.inventory.mainInventory[target] = src;
-                        player.inventory.mainInventory[bestSlot] = tmp;
-                        player.inventory.currentItem = target;
-                        // Record the physical borrow so it is returned when smart-switch
-                        // mode is deactivated or the chain ends.
-                        com.czqwq.EZMiner.client.toolswap.ToolSwapBorrowLedger.recordHandoffSwap(target, bestSlot);
-                        // Sync the swap to the server so the item isn't a ghost
-                        EZMiner.network.network
-                            .sendToServer(new com.czqwq.EZMiner.network.PacketInventorySwap(target, bestSlot));
+                    if (block != null && block != net.minecraft.init.Blocks.air && mop != null) {
+                        EZMiner.network.network.sendToServer(
+                            new com.czqwq.EZMiner.network.PacketToolSwapRequest(
+                                mop.blockX,
+                                mop.blockY,
+                                mop.blockZ,
+                                bestSlot));
                     }
                     return null;
                 }
@@ -161,18 +156,5 @@ public class PacketToolBreakHandoff implements IMessage {
             return ToolHarvestEligibility.isUsableMiningTool(stack);
         }
 
-        /** Finds an empty or least-important hotbar slot, excluding the given current slot. */
-        @SideOnly(Side.CLIENT)
-        private static int findEmptyOrWorstHotbarSlot(EntityPlayer player, int excludeSlot) {
-            int hotbarSize = InventoryPlayer.getHotbarSize();
-            for (int i = 0; i < hotbarSize; i++) {
-                if (i != excludeSlot && player.inventory.mainInventory[i] == null) return i;
-            }
-            // No empty slot — return any slot that's not the current one
-            for (int i = 0; i < hotbarSize; i++) {
-                if (i != excludeSlot) return i;
-            }
-            return -1;
-        }
     }
 }
