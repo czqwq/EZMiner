@@ -1,7 +1,7 @@
 
 elytraModpackVersion {
     // 在这配置的gtnh版本 用于自动拉取依赖版本
-    gtnhVersion = "2.9.0-beta-2"
+    gtnhVersion = "2.9.0-beta-3"
     // 是否不缓存拉取的依赖清单文件
     manifestNoCache = false
     // 是否自动为输出的jar添加 `gtnhVersion` 后缀
@@ -11,13 +11,13 @@ elytraModpackVersion {
 dependencies {
     implementation('org.joml:joml:1.10.8')
     implementation(gtnhDev("GT5-Unofficial"))
-    implementation('com.github.GTNewHorizons:LootGames:2.2.14:dev')
+    implementation(gtnhDev("LootGames"))
     implementation(deobfCurse('witchery-69673:2234410'))
     implementation(gtnhDev("WitcheryExtras"))
-    implementation('com.github.GTNewHorizons:Natura:2.8.23:dev')
+    implementation(gtnhDev("Natura"))
     runtimeOnlyNonPublishable(gtnhDev("Avaritia"))
     runtimeOnlyNonPublishable(gtnhDev("neiaddons"))
-    runtimeOnlyNonPublishable('com.github.GTNewHorizons:Binnie:2.5.16:dev')
+    runtimeOnlyNonPublishable(gtnhDev("Binnie"))
     runtimeOnlyNonPublishable(gtnhDev("NotEnoughItems"))
     runtimeOnlyNonPublishable('com.github.GTNewHorizons:worldedit-gtnh:v0.0.9:dev')
 
@@ -38,10 +38,8 @@ dependencies {
     // fastutil is on the runtime classpath in GTNH (FalsePatternLib loader jars; GT5U uses it
     // in main code) — declared compileOnly here only for compile-time visibility.
     compileOnly('it.unimi.dsi:fastutil:8.5.18')
-    compileOnly('com.github.GTNewHorizons:CropsNH:2.0.99:dev') { transitive = false }
-    // Compile-time only for the TiC leveling bridge (ActiveToolMod hooks);
-    // runtime presence is optional and guarded by Loader.isModLoaded.
-    // actually transitive deps already included it
+    //compileOnly('com.github.GTNewHorizons:CropsNH:2.0.99:dev') { transitive = false }
+    compileOnly(gtnhDev("CropsNH")) { transitive = false }
     compileOnly(gtnhDev("TinkersConstruct")) { transitive = false }
 
     annotationProcessor('com.google.auto.value:auto-value:1.10.1')
