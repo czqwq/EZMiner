@@ -1,5 +1,7 @@
 package com.czqwq.EZMiner;
 
+import net.minecraft.launchwrapper.Launch;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Filter;
@@ -34,6 +36,9 @@ public class EZMiner {
 
     public static final String MODID = "EZMiner";
     public static final Logger LOG = LogManager.getLogger(MODID);
+    /** True in a deobfuscated (development) environment — FML's in-game mod options stub is shown there. */
+    public static final boolean isDeobfuscatedEnvironment = Boolean.TRUE
+        .equals(Launch.blackboard.get("fml.deobfuscatedEnvironment"));
 
     @SidedProxy(clientSide = "com.czqwq.EZMiner.ClientProxy", serverSide = "com.czqwq.EZMiner.CommonProxy")
     public static CommonProxy proxy;

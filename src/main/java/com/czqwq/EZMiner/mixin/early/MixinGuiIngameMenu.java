@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.client.gui.EZMinerModOptionsScreen;
 
 /**
@@ -31,7 +32,9 @@ public abstract class MixinGuiIngameMenu {
 
     @Inject(method = "actionPerformed", at = @At("HEAD"), cancellable = true)
     private void ezminer$openFunctionalModOptions(GuiButton button, CallbackInfo ci) {
-        if (button.id == 12) {
+        // Only replace FML's unfinished dev-environment stub. In a production
+        // environment FML's own in-game mod options flow is left untouched.
+        if (button.id == 12 && EZMiner.isDeobfuscatedEnvironment) {
             EZMinerModOptionsScreen.open((GuiIngameMenu) (Object) this);
             ci.cancel();
         }

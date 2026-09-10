@@ -143,9 +143,7 @@ public class SmartToolSwitchHandler {
         // ── Stale-cache guard (P6): rebuild if current slot no longer has the expected tool ──
         if (sameTarget && !suitableSlots.isEmpty()) {
             ItemStack currentStack = player.inventory.mainInventory[currentSlot];
-            if (currentStack == null
-                || ToolEligibility.remainingDurability(currentStack) < ToolEligibility.MIN_REMAINING_DURABILITY
-                || !ToolEligibility.isEffectiveForBlock(currentStack, block, meta)) {
+            if (!isUsableForTarget(currentStack, block, meta)) {
                 buildSuitableSlotsForBlock(player, block, meta);
                 sameTarget = false; // treat as new target so switching logic runs
             }
@@ -221,6 +219,20 @@ public class SmartToolSwitchHandler {
             new com.czqwq.EZMiner.network.PacketToolSwapRequest(mop.blockX, mop.blockY, mop.blockZ, inventorySlot));
     }
 
+    /**
+     * True when the stack is usable for the target. Toolboxes are validated by
+     * scanning their internal tools (a wrench/crowbar has no meaningful dig speed
+     * gate, so {@code isEffectiveForBlock} must not be applied to the toolbox item).
+     */
+    private static boolean isUsableForTarget(ItemStack stack, Block block, int meta) {
+        if (stack == null || block == null) return false;
+        if (GT5ToolCompat.isGTToolbox(stack)) {
+            return GT5ToolCompat.findBestToolboxSlotForBlock(stack, block, meta) >= 0;
+        }
+        return ToolEligibility.remainingDurability(stack) >= ToolEligibility.MIN_REMAINING_DURABILITY
+            && ToolEligibility.isEffectiveForBlock(stack, block, meta);
+    }
+
     private void clearBlockTracking() {
         lastBlockX = Integer.MIN_VALUE;
         lastBlockY = Integer.MIN_VALUE;
@@ -284,9 +296,7 @@ public class SmartToolSwitchHandler {
             cycleIndex = (cycleIndex + delta + scrollSlots.size()) % scrollSlots.size();
             int candidate = scrollSlots.get(cycleIndex);
             ItemStack candidateStack = player.inventory.mainInventory[candidate];
-            if (candidateStack != null
-                && ToolEligibility.remainingDurability(candidateStack) >= ToolEligibility.MIN_REMAINING_DURABILITY
-                && ToolEligibility.isEffectiveForBlock(candidateStack, block, meta)) {
+            if (isUsableForTarget(candidateStack, block, meta)) {
                 // Inventory slots (9-35) cannot be assigned to currentItem (0-8):
                 // ask the server to swap the tool into the current hotbar slot
                 // (server-authoritative, ledger + restore + sync).
@@ -333,9 +343,9 @@ public class SmartToolSwitchHandler {
             // ── Efficiency gate (P1): skip tools that are not effective on this block ──
             boolean effective;
             if (GT5ToolCompat.isGTToolbox(stack)) {
-                // Toolbox: check if an internal tool can actually harvest the block
-                int s = GT5ToolCompat.findBestToolboxSlotForBlock(stack, block, meta);
-                effective = s >= 0 && GT5ToolCompat.getToolboxInternalToolDigSpeed(stack, s, block, meta) > 1.0F;
+                // A toolbox is effective when one of its internal tools can harvest
+                // the target. Wrench/crowbar dig speed is not a meaningful gate.
+                effective = GT5ToolCompat.findBestToolboxSlotForBlock(stack, block, meta) >= 0;
             } else {
                 effective = ToolEligibility.isEffectiveForBlock(stack, block, meta);
             }
