@@ -8,6 +8,7 @@
 /run/
 /build/
 /eclipse/
+/.dsh-vision-router/
 .classpath
 .project
 /bin/

@@ -178,12 +178,12 @@ public class BasePositionFounder extends Pauseable {
         // Face x=xMin and x=xMax: full yz-plane (includes all edges)
         for (int y = yMin; y <= yMax; y++) {
             for (int z = zMin; z <= zMax; z++) {
-                if (tryProcessShellPos(xMin, y, z)) return;
+                if (tryProcessShellPos(xMin, y, z, false)) return;
             }
         }
         for (int y = yMin; y <= yMax; y++) {
             for (int z = zMin; z <= zMax; z++) {
-                if (tryProcessShellPos(xMax, y, z)) return;
+                if (tryProcessShellPos(xMax, y, z, false)) return;
             }
         }
         // Face y=yMin and y=yMax: exclude the x-edge faces already covered above,
@@ -193,12 +193,12 @@ public class BasePositionFounder extends Pauseable {
         if (xMinInner <= xMaxInner) {
             for (int x = xMinInner; x <= xMaxInner; x++) {
                 for (int z = zMin; z <= zMax; z++) {
-                    if (tryProcessShellPos(x, yMin, z)) return;
+                    if (tryProcessShellPos(x, yMin, z, false)) return;
                 }
             }
             for (int x = xMinInner; x <= xMaxInner; x++) {
                 for (int z = zMin; z <= zMax; z++) {
-                    if (tryProcessShellPos(x, yMax, z)) return;
+                    if (tryProcessShellPos(x, yMax, z, false)) return;
                 }
             }
         }
@@ -207,22 +207,32 @@ public class BasePositionFounder extends Pauseable {
         if (xMinInner <= xMaxInner && yMinInner <= yMaxInner) {
             for (int x = xMinInner; x <= xMaxInner; x++) {
                 for (int y = yMinInner; y <= yMaxInner; y++) {
-                    if (tryProcessShellPos(x, y, zMin)) return;
+                    if (tryProcessShellPos(x, y, zMin, false)) return;
                 }
             }
             for (int x = xMinInner; x <= xMaxInner; x++) {
                 for (int y = yMinInner; y <= yMaxInner; y++) {
-                    if (tryProcessShellPos(x, y, zMax)) return;
+                    if (tryProcessShellPos(x, y, zMax, false)) return;
                 }
             }
         }
     }
 
-    /** Process a single shell position. Returns true if the search should stop (limit reached or interrupted). */
-    private boolean tryProcessShellPos(int x, int y, int z) {
+    /**
+     * Process a single shell position. Returns true if the search should stop (limit reached,
+     * tick-end pause observed, or the founder thread interrupted).
+     *
+     * @param worker true when called from a strip task on the shared worker pool: a worker only
+     *               needs the tick-end pause flag, so it reads {@link Pauseable#paused} directly
+     *               instead of paying {@link Pauseable#consumeBudget()}'s
+     *               {@code Thread.currentThread()} + {@code isInterrupted()} native calls once per
+     *               position. This is exactly {@code consumeBudget()}'s worker branch.
+     */
+    private boolean tryProcessShellPos(int x, int y, int z, boolean worker) {
         if (curCount.get() >= minerConfig.blockLimit) return true;
-        // Cooperative pause/interrupt check (founder thread only; no-op on workers).
-        if (!consumeBudget()) return true;
+        // Cooperative pause check: the founder thread parks and checks its interrupt flag,
+        // a worker only observes the tick-end pause.
+        if (worker ? paused.get() : !consumeBudget()) return true;
         if (isVisited(x, y, z)) return false;
         Vector3i pos = new Vector3i(x, y, z);
         if (checkCanAdd(pos)) addResult(pos);
@@ -231,10 +241,46 @@ public class BasePositionFounder extends Pauseable {
 
     // ── Multi-threaded shell-expansion ────────────────────────────────────────
 
+    /**
+     * Per-strip resumable cursor for the multi-threaded shell scan.
+     *
+     * <p>
+     * A worker aborts its strip as soon as it observes the tick-end {@code pause()} flag via
+     * {@link Pauseable#consumeBudget()}, so one shell layer can span several server ticks. Each
+     * strip therefore remembers how many of its positions were already scanned and resumes exactly
+     * there on the next attempt. Without this, the unscanned tail of the shell was dropped
+     * permanently (the "striped residue" bug): {@code curRadius} advanced to a strictly larger
+     * shell whose faces never revisit those positions.
+     * </p>
+     */
+    private static final class StripScan {
+
+        /** Positions enumerated in the current attempt (scratch; reset by every {@link #scanShellStrip} call). */
+        int ordinal;
+        /** Number of leading positions already scanned; the next attempt resumes here. */
+        int resumeFrom;
+        /** {@link #resumeFrom} captured when the current attempt was submitted — used to detect stalls. */
+        int resumeAtAttemptStart;
+        /** True once every position of this strip has been scanned for the current shell. */
+        boolean complete;
+    }
+
+    /**
+     * Consecutive zero-progress attempts of one shell layer before the search gives up. A single
+     * attempt makes no progress only when a worker observes the pause flag before scanning anything,
+     * so this is a defensive guard against a retry loop that can never advance — not a normal path.
+     */
+    private static final int MAX_STALLED_SHELL_ATTEMPTS = 20;
+
     /** Divides each shell layer into X-axis strips processed by worker threads. */
     private void run1MultiThreaded() {
         final int numWorkers = Math.max(1, Config.searchWorkerThreads);
+        final StripScan[] strips = new StripScan[numWorkers];
+        for (int w = 0; w < numWorkers; w++) {
+            strips[w] = new StripScan();
+        }
         int curRadius = 1;
+        int stalledAttempts = 0;
         while (curCount.get() < minerConfig.blockLimit && curRadius <= minerConfig.bigRadius) {
             if (player == null || player.isDead || player.worldObj == null) return;
             // Set a deadline so waitUntil() yields even without an explicit unpark.
@@ -247,12 +293,24 @@ public class BasePositionFounder extends Pauseable {
 
             final int stripW = Math.max(1, (xMax - xMin + 1) / numWorkers);
             java.util.List<Callable<Void>> tasks = new java.util.ArrayList<>(numWorkers);
+            java.util.List<StripScan> activeStrips = new java.util.ArrayList<>(numWorkers);
             for (int w = 0; w < numWorkers; w++) {
                 final int sx = xMin + w * stripW;
                 final int ex = (w == numWorkers - 1) ? xMax : sx + stripW - 1;
                 if (sx > ex) continue;
+                final StripScan strip = strips[w];
+                // Strips finished in an earlier attempt of this shell need no re-scan.
+                if (strip.complete) continue;
+                strip.resumeAtAttemptStart = strip.resumeFrom;
+                activeStrips.add(strip);
                 tasks.add(() -> {
-                    scanShellStrip(sx, ex, xMin, xMax, yMin, yMax, zMin, zMax);
+                    try {
+                        scanShellStrip(sx, ex, xMin, xMax, yMin, yMax, zMin, zMax, strip);
+                    } catch (RuntimeException e) {
+                        // Retrying a strip that keeps throwing would loop forever; skip it instead.
+                        strip.complete = true;
+                        LOG.error("Shell strip scan failed; skipping the rest of this strip", e);
+                    }
                     return null;
                 });
             }
@@ -264,7 +322,41 @@ public class BasePositionFounder extends Pauseable {
                     .interrupt();
                 return;
             }
-            curRadius++;
+            if (curCount.get() >= minerConfig.blockLimit) return;
+
+            boolean shellComplete = true;
+            boolean madeProgress = false;
+            for (StripScan strip : activeStrips) {
+                if (strip.complete) {
+                    madeProgress = true;
+                    continue;
+                }
+                shellComplete = false;
+                if (strip.resumeFrom != strip.resumeAtAttemptStart) madeProgress = true;
+            }
+
+            if (shellComplete) {
+                stalledAttempts = 0;
+                // Shell fully scanned — reset the cursors before moving to the next radius.
+                for (int w = 0; w < numWorkers; w++) {
+                    strips[w].resumeFrom = 0;
+                    strips[w].complete = false;
+                }
+                curRadius++;
+            } else if (madeProgress) {
+                stalledAttempts = 0;
+            } else if (++stalledAttempts >= MAX_STALLED_SHELL_ATTEMPTS) {
+                LOG.warn(
+                    "Blast shell scan made no progress for {} ticks at radius {}; aborting search",
+                    stalledAttempts,
+                    curRadius);
+                return;
+            }
+
+            // Park until the next tick. When the shell is incomplete (a worker yielded at the
+            // tick boundary) curRadius is deliberately NOT advanced: the next iteration resumes
+            // the same shell from the per-strip cursors. Advancing here would permanently drop
+            // the unscanned tail of the shell — the "striped residue" bug.
             waitUntil();
             if (Thread.currentThread()
                 .isInterrupted()) return;
@@ -275,12 +367,14 @@ public class BasePositionFounder extends Pauseable {
      * Scans a subset of the shell for the given X-range. Called by worker threads.
      * Uses explicit face iteration — O(stripWidth × R) instead of O(stripWidth × R²).
      */
-    private void scanShellStrip(int sx, int ex, int xMin, int xMax, int yMin, int yMax, int zMin, int zMax) {
+    private void scanShellStrip(int sx, int ex, int xMin, int xMax, int yMin, int yMax, int zMin, int zMax,
+        StripScan strip) {
+        strip.ordinal = 0;
         // Face x=xMin: full yz-plane, only if this strip covers xMin
         if (sx <= xMin && xMin <= ex) {
             for (int y = yMin; y <= yMax; y++) {
                 for (int z = zMin; z <= zMax; z++) {
-                    if (tryProcessShellPos(xMin, y, z)) return;
+                    if (shellPos(strip, xMin, y, z)) return;
                 }
             }
         }
@@ -288,7 +382,7 @@ public class BasePositionFounder extends Pauseable {
         if (sx <= xMax && xMax <= ex) {
             for (int y = yMin; y <= yMax; y++) {
                 for (int z = zMin; z <= zMax; z++) {
-                    if (tryProcessShellPos(xMax, y, z)) return;
+                    if (shellPos(strip, xMax, y, z)) return;
                 }
             }
         }
@@ -301,12 +395,12 @@ public class BasePositionFounder extends Pauseable {
         if (xMinInner <= xMaxInner) {
             for (int x = xMinInner; x <= xMaxInner; x++) {
                 for (int z = zMin; z <= zMax; z++) {
-                    if (tryProcessShellPos(x, yMin, z)) return;
+                    if (shellPos(strip, x, yMin, z)) return;
                 }
             }
             for (int x = xMinInner; x <= xMaxInner; x++) {
                 for (int z = zMin; z <= zMax; z++) {
-                    if (tryProcessShellPos(x, yMax, z)) return;
+                    if (shellPos(strip, x, yMax, z)) return;
                 }
             }
         }
@@ -314,15 +408,35 @@ public class BasePositionFounder extends Pauseable {
         if (xMinInner <= xMaxInner && yMinInner <= yMaxInner) {
             for (int x = xMinInner; x <= xMaxInner; x++) {
                 for (int y = yMinInner; y <= yMaxInner; y++) {
-                    if (tryProcessShellPos(x, y, zMin)) return;
+                    if (shellPos(strip, x, y, zMin)) return;
                 }
             }
             for (int x = xMinInner; x <= xMaxInner; x++) {
                 for (int y = yMinInner; y <= yMaxInner; y++) {
-                    if (tryProcessShellPos(x, y, zMax)) return;
+                    if (shellPos(strip, x, y, zMax)) return;
                 }
             }
         }
+        strip.resumeFrom = strip.ordinal;
+        strip.complete = true;
+    }
+
+    /**
+     * Visits one position of a multi-threaded strip, skipping the prefix already scanned in an
+     * earlier attempt of the same shell. Skipped positions cost one integer increment and no world
+     * reads; positions whose result (added or rejected) was already decided are re-decided for free
+     * by the visited set.
+     *
+     * @return true if the strip must stop now (block limit reached, or the tick-end pause observed
+     *         by {@link Pauseable#consumeBudget()}); the cursor is left on the stopping position so
+     *         the retry re-processes it
+     */
+    private boolean shellPos(StripScan strip, int x, int y, int z) {
+        int ordinal = strip.ordinal++;
+        if (ordinal < strip.resumeFrom) return false;
+        if (!tryProcessShellPos(x, y, z, true)) return false;
+        strip.resumeFrom = ordinal;
+        return true;
     }
 
     public boolean checkCanAdd(Vector3i pos) {
