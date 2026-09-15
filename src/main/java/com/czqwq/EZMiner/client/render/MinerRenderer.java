@@ -68,6 +68,8 @@ public class MinerRenderer {
     private static final int STYLE_OFF = 4;
 
     private Vector3i lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+    /** Scratch for the per-frame aim-target comparison and the "n" counter removed below. */
+    private final Vector3i scratchTarget = new Vector3i();
     private BasePositionFounder founder = null;
     private final LinkedBlockingQueue<Vector3i> foundQueue = new LinkedBlockingQueue<>();
     private boolean searchComplete = false;
@@ -186,11 +188,13 @@ public class MinerRenderer {
             return;
         }
 
-        Vector3i target = new Vector3i(mc.objectMouseOver.blockX, mc.objectMouseOver.blockY, mc.objectMouseOver.blockZ);
-        if (!lastTarget.equals(target)) {
-            restartViewer(mc, target);
-            previewController.setTarget(target);
-            lastTarget = new Vector3i(target);
+        scratchTarget.set(mc.objectMouseOver.blockX, mc.objectMouseOver.blockY, mc.objectMouseOver.blockZ);
+        if (!lastTarget.equals(scratchTarget)) {
+            // restartViewer hands the position to the new founder, which keeps the reference, so
+            // it gets its own copy — the scratch must never be retained.
+            restartViewer(mc, new Vector3i(scratchTarget));
+            previewController.setTarget(scratchTarget);
+            lastTarget.set(scratchTarget);
         }
 
         drainQueue(mc);
@@ -244,7 +248,6 @@ public class MinerRenderer {
 
     private void drainQueue(Minecraft mc) {
         if (searchComplete) return;
-        int n = 0;
         Vector3i p;
         EntityPlayer player = mc.thePlayer;
         // Render distance in blocks (chunks × 16). Blocks beyond this have no loaded chunk
@@ -254,13 +257,14 @@ public class MinerRenderer {
             if (player != null && withinRenderDist(p, player, renderDistBlocks)) {
                 spaceCalc.add(p);
             }
-            n++;
         }
         // Only mark complete once the founder has stopped AND the queue is fully drained.
         if (founder != null && founder.stopped.get() && foundQueue.isEmpty()) {
             searchComplete = true;
         }
-        if (n > 0) {
+        // SpaceCalculator.add() maintains the dirty flag, so a batch of positions that were all
+        // filtered out (out of render distance / duplicates) no longer triggers a full mesh rebuild.
+        if (spaceCalc.hasChange) {
             SpaceCalculator.VertexAndIndex vi = spaceCalc.getVertexAndIndex();
             lastIndexCount = vi.indices.length;
             renderCache.updateData(vi.vertices, vi.indices);

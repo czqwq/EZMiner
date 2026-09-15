@@ -60,6 +60,12 @@ public final class ChainPreCalcEngine {
     private int hash = -1;
     private boolean inProgress;
     private int cooldown;
+    /**
+     * True once a non-empty pre-calculation result set has been pushed to the client. {@link #stop}
+     * runs every server tick while the chain key is released, so the clear packet must only be sent
+     * once — otherwise every idle player gets 20 packets/second.
+     */
+    private boolean dirty;
 
     private static final int CHECKS_PER_TICK = 2048;
 
@@ -90,11 +96,17 @@ public final class ChainPreCalcEngine {
     }
 
     public void stop(EntityPlayerMP player) {
+        // Only push the clear packet when a pre-calculation actually reached the client (stop() is
+        // called on every server tick while the key is released, see Manager.onWorldTick).
+        boolean needsClientClear = dirty;
+        dirty = false;
         clearState();
         if (player != null) {
             ChainPreCalcCache.remove(player.getUniqueID());
-            EZMiner.network.network
-                .sendTo(new PacketCachedBlockSync(java.util.Collections.<Vector3i>emptyList(), 0, 0, 0, 0), player);
+            if (needsClientClear) {
+                EZMiner.network.network
+                    .sendTo(new PacketCachedBlockSync(java.util.Collections.<Vector3i>emptyList(), 0, 0, 0, 0), player);
+            }
         }
     }
 
@@ -275,6 +287,7 @@ public final class ChainPreCalcEngine {
             boolean done = frontier.isEmpty() || results.size() >= pConfig.blockLimit;
 
             int dimension = world.provider.dimensionId;
+            dirty = true;
             EZMiner.network.network
                 .sendTo(new PacketCachedBlockSync(results, center.x, center.y, center.z, dimension), player);
 

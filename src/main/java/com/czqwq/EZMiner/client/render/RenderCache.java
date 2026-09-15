@@ -25,6 +25,15 @@ public class RenderCache {
     private int vboCap = 0, eboCap = 0;
     private boolean glInitialized = false;
 
+    /**
+     * Reusable direct staging buffers. {@code BufferUtils.createFloatBuffer/createIntBuffer}
+     * allocates off-heap native memory per call, and {@link #updateData} runs once per mesh
+     * rebuild while the preview streams — so the buffers are grown only when the data no longer
+     * fits.
+     */
+    private FloatBuffer vertexStaging;
+    private IntBuffer indexStaging;
+
     public RenderCache() {
         // Intentionally empty – GL objects are created lazily in ensureGLInit().
     }
@@ -64,7 +73,11 @@ public class RenderCache {
         GL30.glBindVertexArray(vao);
 
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
-        FloatBuffer fb = BufferUtils.createFloatBuffer(vertices.length);
+        if (vertexStaging == null || vertexStaging.capacity() < vertices.length) {
+            vertexStaging = BufferUtils.createFloatBuffer(Math.max(vertices.length, 8192));
+        }
+        FloatBuffer fb = vertexStaging;
+        fb.clear();
         fb.put(vertices)
             .flip();
         if (vertices.length * 4 > vboCap) {
@@ -74,7 +87,11 @@ public class RenderCache {
         GL15.glBufferData(GL15.GL_ARRAY_BUFFER, fb, GL15.GL_DYNAMIC_DRAW);
 
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, ebo);
-        IntBuffer ib = BufferUtils.createIntBuffer(indices.length);
+        if (indexStaging == null || indexStaging.capacity() < indices.length) {
+            indexStaging = BufferUtils.createIntBuffer(Math.max(indices.length, 8192));
+        }
+        IntBuffer ib = indexStaging;
+        ib.clear();
         ib.put(indices)
             .flip();
         if (indices.length * 4 > eboCap) {

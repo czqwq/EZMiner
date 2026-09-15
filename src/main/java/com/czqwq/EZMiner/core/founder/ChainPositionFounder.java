@@ -150,7 +150,7 @@ public class ChainPositionFounder extends BasePositionFounder {
             }
             if (batch.isEmpty()) break;
 
-            List<Vector3i> allNeighbours = new ArrayList<>(batch.size() * 124);
+            List<Vector3i> allNeighbours = new ArrayList<>(batch.size() * 32);
             for (Vector3i node : batch) {
                 collectNeighbours(node, allNeighbours);
             }
@@ -169,8 +169,8 @@ public class ChainPositionFounder extends BasePositionFounder {
                 tasks.add(() -> {
                     for (Vector3i c : slice) {
                         if (curCount.get() >= minerConfig.blockLimit) break;
-                        // markVisited handles both visited-set implementations (never NPEs).
-                        if (!markVisited(encodePos(c.x, c.y, c.z))) continue;
+                        // Admission already happened in collectNeighbours, so every element
+                        // here is a fresh position (no second visited lookup needed).
                         if (checkCanAddAfterVisited(c)) {
                             curCount.incrementAndGet();
                             positions.offer(c);
@@ -223,7 +223,7 @@ public class ChainPositionFounder extends BasePositionFounder {
                 continue;
             }
 
-            List<Vector3i> allNeighbours = new ArrayList<>(batch.size() * 124);
+            List<Vector3i> allNeighbours = new ArrayList<>(batch.size() * 32);
             for (Vector3i node : batch) {
                 collectNeighbours(node, allNeighbours);
             }
@@ -244,8 +244,8 @@ public class ChainPositionFounder extends BasePositionFounder {
                 tasks.add(() -> {
                     for (Vector3i c : slice) {
                         if (curCount.get() >= minerConfig.blockLimit) break;
-                        // markVisited handles both visited-set implementations (never NPEs).
-                        if (!markVisited(encodePos(c.x, c.y, c.z))) continue;
+                        // Admission already happened in collectNeighbours, so every element
+                        // here is a fresh position (no second visited lookup needed).
                         if (checkCanAddAfterVisited(c)) {
                             curCount.incrementAndGet();
                             positions.offer(c);
@@ -268,8 +268,16 @@ public class ChainPositionFounder extends BasePositionFounder {
     }
 
     /**
-     * Collects all valid neighbour positions of {@code node} into {@code out},
-     * applying radius bounds but <strong>not</strong> visiting or world reads.
+     * Collects the neighbour positions of {@code node} into {@code out} that have not been
+     * visited yet, applying radius bounds but <strong>no</strong> world reads.
+     *
+     * <p>
+     * Admission ({@link #markVisited}) happens here, on the single collecting thread, rather
+     * than in the workers: every node's {@code (2r+1)^3-1} neighbour box overlaps its
+     * neighbours' boxes, so "collect everything, filter in the worker" allocated and hashed
+     * the same position once per adjacent node. Workers must therefore call
+     * {@link #checkCanAddAfterVisited} (the visited lookup already happened).
+     * </p>
      */
     private void collectNeighbours(Vector3i node, List<Vector3i> out) {
         for (int dx = -minerConfig.smallRadius; dx <= minerConfig.smallRadius; dx++) {
@@ -282,6 +290,8 @@ public class ChainPositionFounder extends BasePositionFounder {
                     if (dx == 0 && dy == 0 && dz == 0) continue;
                     int cz = node.z + dz;
                     if (Math.abs(cz - center.z) > minerConfig.bigRadius) continue;
+                    // Atomic admission on the collecting thread (see method javadoc).
+                    if (!markVisited(encodePos(cx, cy, cz))) continue;
                     out.add(new Vector3i(cx, cy, cz));
                 }
             }

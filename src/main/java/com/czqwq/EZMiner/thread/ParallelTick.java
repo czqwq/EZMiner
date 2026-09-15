@@ -1,9 +1,7 @@
 package com.czqwq.EZMiner.thread;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import com.czqwq.EZMiner.EZMiner;
 
@@ -17,11 +15,10 @@ public class ParallelTick {
     public ArrayList<Pauseable> normalTasks = new ArrayList<>();
 
     public void processPreTickTasks(boolean shouldRun) {
-        if (!shouldRun) {
-            List<Pauseable> done = preTickTasks.stream()
-                .filter(t -> t.stopped.get())
-                .collect(Collectors.toList());
-            preTickTasks.removeAll(done);
+        // removeIf only when there is something to clean: the old stream+collect allocated a
+        // pipeline and a temporary list on every server tick end, even with no tasks at all.
+        if (!shouldRun && !preTickTasks.isEmpty()) {
+            preTickTasks.removeIf(t -> t.stopped.get());
         }
         for (Pauseable task : preTickTasks) {
             if (!task.started.get()) {
@@ -37,18 +34,26 @@ public class ParallelTick {
     public final ReentrantLock normalTaskLock = new ReentrantLock();
 
     public void processNormalTasks() {
+        // Called on every server tick end (via processPreTickTasks) and every client tick start;
+        // with no preview task registered there is nothing to do, so skip the lock and the
+        // per-call temporary list entirely.
+        if (normalTasks.isEmpty()) return;
         if (normalTaskLock.isLocked()) {
             EZMiner.LOG.warn("Normal task lock is blocked.");
             return;
         }
         normalTaskLock.lock();
         try {
-            ArrayList<Pauseable> done = new ArrayList<>();
-            for (Pauseable task : normalTasks) {
+            // In-place compaction: preserves order and allocates nothing, unlike the previous
+            // "collect stopped tasks into a temp list, then removeAll" pass.
+            int w = 0;
+            for (int i = 0; i < normalTasks.size(); i++) {
+                Pauseable task = normalTasks.get(i);
                 if (!task.started.get()) task.start();
-                if (task.stopped.get()) done.add(task);
+                if (!task.stopped.get()) normalTasks.set(w++, task);
             }
-            normalTasks.removeAll(done);
+            if (w < normalTasks.size()) normalTasks.subList(w, normalTasks.size())
+                .clear();
         } finally {
             normalTaskLock.unlock();
         }
