@@ -31,7 +31,7 @@ public class OreFounder extends BasePositionFounder {
         int blockMeta = player.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
         if (pos.x == cachedPlayerFloorX && pos.y == (cachedPlayerFloorY - 1) && pos.z == cachedPlayerFloorZ)
             return false;
-        if (!DeterminingIdentical.isOreBlock(pos, player)) return false;
+        if (!DeterminingIdentical.isOreBlock(block, blockMeta, pos, player)) return false;
         if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
         return block.canHarvestBlock(player, blockMeta) || WitcheryVampireBridge.canHarvestWithBareHands(player);

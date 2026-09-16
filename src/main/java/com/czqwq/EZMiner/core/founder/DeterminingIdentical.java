@@ -53,7 +53,23 @@ public class DeterminingIdentical {
     private static volatile Class<?> gtBlockOresAbstractLegacyClass;
 
     // ===== Ore cache =====
-    private static final ConcurrentHashMap<Block, Boolean> oreBlockCache = new ConcurrentHashMap<>();
+    /**
+     * Per-{@link Block} ore metadata mask: bit {@code i} is set when metadata {@code i} of
+     * that block is an ore.
+     *
+     * <p>
+     * The mask is essential: a single block can mix ore and non-ore metadata variants.
+     * Galacticraft's {@code blockMoon} (one Block, 16 metadata values) registers metadata
+     * 0/1/2 as {@code oreCopper}/{@code oreTin}/{@code oreCheese}, while metadata 3/4/5..13/14
+     * are moon dirt / moon rock (月球石头) / moon turf / dungeon bricks. The previous
+     * block-wide {@code Boolean} made <em>every</em> metadata of such a block look like an
+     * ore, so the blast "ore only" mode chain-mined plain moon rock around a GT ore.
+     */
+    private static final ConcurrentHashMap<Block, Integer> oreBlockCache = new ConcurrentHashMap<>();
+    /** Number of metadata values the mask covers (vanilla metadata range). */
+    private static final int ORE_META_BITS = 16;
+    /** Mask meaning "every metadata of this block is an ore" (block-class detectors). */
+    private static final int ALL_META_ORE = (1 << ORE_META_BITS) - 1;
 
     public static void checkCompatibility() {
         if (checked) return;
@@ -167,12 +183,21 @@ public class DeterminingIdentical {
     /** Thread-safe set of ore package names already logged. Uses CHM key set for lock-free reads. */
     private static final Set<String> reportedOrePackages = ConcurrentHashMap.newKeySet();
 
-    /** True if block at pos is an ore. Results cached per Block instance. */
+    /** True if the block at {@code pos} is an ore. Metadata aware; cached per Block. */
     public static boolean isOreBlock(Vector3i pos, EntityPlayer player) {
         Block block = player.worldObj.getBlock(pos.x, pos.y, pos.z);
         if (block == null) return false;
-        // Block-class based detection is cached per Block instance.
-        if (oreBlockCache.computeIfAbsent(block, DeterminingIdentical::computeIsOreBlock)) return true;
+        int meta = player.worldObj.getBlockMetadata(pos.x, pos.y, pos.z);
+        return isOreBlock(block, meta, pos, player);
+    }
+
+    /**
+     * Overload with pre-fetched block/metadata — the blast "ore only" scan already has
+     * both, so this avoids two redundant world lookups per candidate.
+     */
+    public static boolean isOreBlock(Block block, int meta, Vector3i pos, EntityPlayer player) {
+        if (block == null) return false;
+        if (isOreMeta(block, meta)) return true;
         // TE-only ore families (e.g. BartWorks ore TileEntities) need the live TE.
         // Only pay for the getTileEntity lookup when such an adapter is present,
         // and only scan TE-only adapters (block-only adapters already missed).
@@ -181,20 +206,43 @@ public class DeterminingIdentical {
         return OreCompatRegistry.isOreBlockByTileEntity(tileEntity);
     }
 
-    private static boolean computeIsOreBlock(Block block) {
-        // Vanilla + all block-class based optional-mod ores; TE-only adapters are
-        // handled by the TE-aware path in isOreBlock(Vector3i, EntityPlayer).
-        if (OreCompatRegistry.isOreBlock(block, null)) return true;
+    /** Metadata-aware lookup against the cached per-Block ore mask. */
+    private static boolean isOreMeta(Block block, int meta) {
+        int mask = oreBlockCache.computeIfAbsent(block, DeterminingIdentical::computeOreMetaMask);
+        if (mask == 0) return false;
+        // Extended (NEID) metadata outside the vanilla range: only block-wide detectors
+        // (block class / unlocalized name) can speak for it, never a metadata variant.
+        if (meta < 0 || meta >= ORE_META_BITS) return mask == ALL_META_ORE;
+        return (mask & (1 << meta)) != 0;
+    }
 
-        // ── Fallback 1: OreDictionary "ore*" registration ─────────────────────────────────
+    /**
+     * Builds the per-metadata ore mask of {@code block}.
+     *
+     * <p>
+     * Block-class detectors and the unlocalized-name fallback are metadata-agnostic (the
+     * whole block is that ore family → {@link #ALL_META_ORE}); the OreDictionary fallback is
+     * evaluated per metadata so a mixed block only exposes its real ore variants.
+     */
+    private static int computeOreMetaMask(Block block) {
+        // Vanilla + all block-class based optional-mod ores; TE-only adapters are
+        // handled by the TE-aware path in isOreBlock(Block, int, Vector3i, EntityPlayer).
+        if (OreCompatRegistry.isOreBlock(block, null)) return ALL_META_ORE;
+
+        // ── Fallback 1: OreDictionary "ore*" registration, per metadata ───────────────────
         // Precise — machines are never registered under "ore*". Covers mods whose ore blocks
         // are plain Block subclasses but register ore dict (e.g. Forestry resources).
-        // Queries every meta (0..15): GTNH's getOreIDs also resolves wildcard registrations
-        // on any query stack, so both wildcard and exact-meta registrations are found.
-        for (int meta = 0; meta < 16; meta++) {
+        // GTNH's getOreIDs resolves both wildcard and exact-metadata registrations for the
+        // queried stack, so a WILDCARD_VALUE registration sets every bit while a
+        // meta-specific one (e.g. Galacticraft oreCopper on blockMoon meta 0) sets one.
+        int mask = 0;
+        for (int meta = 0; meta < ORE_META_BITS; meta++) {
             for (int oreID : OreDictionary.getOreIDs(new ItemStack(block, 1, meta))) {
                 if (OreDictionary.getOreName(oreID)
-                    .startsWith("ore")) return true;
+                    .startsWith("ore")) {
+                    mask |= 1 << meta;
+                    break;
+                }
             }
         }
 
@@ -202,18 +250,18 @@ public class DeterminingIdentical {
         // e.g. "tile.oreCopper", "tile.forestry.oreApatite". A bare substring check is wrong:
         // "tile.for.core" (Forestry escritoire/analyzer) contains "ore" only as the "core"
         // suffix, which made the ore blast mode chain-mine writing desks (写字台).
-        String unloc = block.getUnlocalizedName()
-            .toLowerCase();
-        if (unloc.contains(".ore")) {
+        if (block.getUnlocalizedName()
+            .toLowerCase()
+            .contains(".ore")) {
             String pkg = block.getClass()
                 .getName();
             if (!reportedOrePackages.contains(pkg)) {
                 reportedOrePackages.add(pkg);
                 EZMiner.LOG.info("Detected possible unregistered ore class: {}", pkg);
             }
-            return true;
+            return ALL_META_ORE;
         }
-        return false;
+        return mask;
     }
 
     /**
