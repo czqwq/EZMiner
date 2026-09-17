@@ -43,6 +43,7 @@ public class CropFounder extends BasePositionFounder {
             .isLiquid() || block.equals(Blocks.bedrock)) return false;
         if (pos.x == cachedPlayerFloorX && pos.y == (cachedPlayerFloorY - 1) && pos.z == cachedPlayerFloorZ)
             return false;
+        if (DeterminingIdentical.isUnbreakable(player, block, pos.x, pos.y, pos.z)) return false;
         return CropAdapterRegistry.isCrop(player.worldObj, pos.x, pos.y, pos.z);
     }
 }

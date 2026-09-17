@@ -121,6 +121,7 @@ public class ChunkCachedHarvester {
         int lx = x & 15, ly = y & 15, lz = z & 15;
         Block block = currentEbs.getBlockByExtId(lx, ly, lz);
         if (block == null || block == Blocks.air) return false;
+        if (DeterminingIdentical.isUnbreakable(player, block, x, y, z)) return false;
 
         int meta = currentEbs.getExtBlockMetadata(lx, ly, lz);
 

@@ -66,6 +66,7 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
 
         Block block = world.getBlock(x, y, z);
         if (block == null || block.isAir(world, x, y, z)) return false;
+        if (DeterminingIdentical.isUnbreakable(player, block, x, y, z)) return false;
 
         int meta = world.getBlockMetadata(x, y, z);
 
@@ -136,6 +137,7 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
 
                 Block block = ebs.getBlockByExtId(lx, ly, lz);
                 if (block == null || block == Blocks.air) continue;
+                if (DeterminingIdentical.isUnbreakable(player, block, x, y, z)) continue;
 
                 int meta = ebs.getExtBlockMetadata(lx, ly, lz);
 
@@ -249,6 +251,7 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
         final int x = pos.x, y = pos.y, z = pos.z;
         World world = player.worldObj;
         if (world == null || block == null) return false;
+        if (DeterminingIdentical.isUnbreakable(player, block, x, y, z)) return false;
 
         if (block.hasTileEntity(meta) || DeterminingIdentical.isGTTileEntityCarrier(block)) {
             return player.theItemInWorldManager.tryHarvestBlock(x, y, z);

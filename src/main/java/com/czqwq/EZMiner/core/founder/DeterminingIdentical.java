@@ -328,6 +328,34 @@ public class DeterminingIdentical {
             && gtBlockOresAbstractLegacyClass.isInstance(block);
     }
 
+    /**
+     * True when {@code player} cannot break the block at {@code (x, y, z)}: its
+     * {@code getBlockHardness} is negative (bedrock, end portal frame, end portal,
+     * command block, …) and the player is not in creative mode.
+     *
+     * <p>
+     * Vanilla only enforces this on the client: {@code Block.getPlayerRelativeBlockHardness}
+     * returns {@code 0} for a negative hardness, so a survival client never accumulates
+     * break progress and never sends the finishing dig packet. All three EZMiner harvest
+     * paths write the world server-side and bypass that safeguard, so every candidate
+     * admission gate and every world-mutation path must consult this predicate first —
+     * otherwise a chain/blast removes blocks no survival player could have mined.
+     *
+     * <p>
+     * Creative is deliberately exempt: vanilla's creative paths
+     * ({@code PlayerControllerMP.clickBlockCreative} and the creative branch of
+     * {@code ItemInWorldManager.tryHarvestBlock}) remove blocks with no hardness check,
+     * so a creative player can break these blocks by hand and EZMiner keeps that parity.
+     *
+     * <p>
+     * The single source of truth for the policy — call sites only ask, never re-derive.
+     */
+    public static boolean isUnbreakable(EntityPlayer player, Block block, int x, int y, int z) {
+        if (player == null || player.capabilities.isCreativeMode) return false;
+        if (block == null) return false;
+        return block.getBlockHardness(player.worldObj, x, y, z) < 0.0F;
+    }
+
     /** Convenience overload — prefers world-less check (conservative for legacy). */
     public static boolean isGTLargeVeinOre(Block block, int meta) {
         return isGTLargeVeinOre(block, meta, null, 0, 0, 0);

@@ -52,6 +52,7 @@ public class InverseBlastFounder extends BasePositionFounder {
         // Accept only blocks that do NOT match the targeted sample.
         if (DeterminingIdentical
             .identical(sampleBlock, sampleBlockMeta, sampleTileEntity, block, blockMeta, pos, player)) return false;
+        if (DeterminingIdentical.isUnbreakable(player, block, pos.x, pos.y, pos.z)) return false;
         if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
         return block.canHarvestBlock(player, blockMeta) || WitcheryVampireBridge.canHarvestWithBareHands(player);

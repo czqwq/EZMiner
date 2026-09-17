@@ -49,6 +49,7 @@ public class FuzzyChainPositionFounder extends ChainPositionFounder {
             return false;
         if (!sampleBlock.getClass()
             .equals(block.getClass())) return false;
+        if (DeterminingIdentical.isUnbreakable(player, block, pos.x, pos.y, pos.z)) return false;
         if (skipHarvestCheck) return true;
         if (player.capabilities.isCreativeMode) return true;
         return block.canHarvestBlock(player, blockMeta) || WitcheryVampireBridge.canHarvestWithBareHands(player);
