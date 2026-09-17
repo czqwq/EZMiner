@@ -5,6 +5,8 @@
 A high-performance chain-mining mod designed for **GregTech: New Horizons (GTNH)**, running on Minecraft 1.7.10. Hold a key to mine in bulk — release to stop instantly.
 
 ---
+## Before Downloading
+Please note that versions with a -source or -dev suffix cannot be used after downloading. You need to download the version without any suffix .
 
 ## Quick Start
 
