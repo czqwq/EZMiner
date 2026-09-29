@@ -27,12 +27,45 @@ public class MinesweeperModeHandler {
     /** True when a LootGames game was active last probe cycle — for game-end cleanup. */
     private boolean wasGameActive = false;
 
+    /**
+     * How long an "is a board active?" answer is trusted, in milliseconds.
+     *
+     * <p>
+     * {@code isAnyGameActive} copies the entire {@code world.loadedTileEntityList} and reflects
+     * over every element. On a GTNH server that list routinely holds tens of thousands of
+     * entries, and the old code called it once per server tick <em>before</em> consulting the
+     * probe cooldown, so holding the chain key in minesweeper mode cost 20 full traversals per
+     * second even with no LootGames board anywhere. The answer only gates start/stop/cleanup,
+     * so a 500 ms TTL is far below the user-visible probe cadence while removing the per-tick
+     * cost.
+     * </p>
+     */
+    private static final long GAME_ACTIVE_TTL_MS = 500L;
+
+    /** Cached, {@link #GAME_ACTIVE_TTL_MS}-bounded answer of {@code bridge.isAnyGameActive}. */
+    private boolean gameActiveCached = false;
+    private long gameActiveCheckedAtMs = 0L;
+    /** False until the first probe, so the very first tick always scans. */
+    private boolean gameActiveKnown = false;
+
+    /** {@code bridge.isAnyGameActive} behind the {@link #GAME_ACTIVE_TTL_MS} cache. */
+    private boolean isGameActiveCached(EntityPlayerMP player) {
+        long now = System.currentTimeMillis();
+        if (gameActiveKnown && now - gameActiveCheckedAtMs < GAME_ACTIVE_TTL_MS) {
+            return gameActiveCached;
+        }
+        gameActiveCached = bridge.isAnyGameActive(player.worldObj);
+        gameActiveCheckedAtMs = now;
+        gameActiveKnown = true;
+        return gameActiveCached;
+    }
+
     /** One probe cycle. Sends {@link PacketMinesweeperMark} if a new mine is found. */
     public void tick(EntityPlayerMP player, UUID playerUUID) {
         // ── Detect game-end transitions: if a LootGames game was active last probe but no
         // game is in StageWaiting now, the game just ended — clear all stale marks so
         // the next game's scan starts fresh.
-        boolean gameActive = bridge.isAnyGameActive(player.worldObj);
+        boolean gameActive = isGameActiveCached(player);
         if (wasGameActive && !gameActive && !detectedBombs.isEmpty()) {
             reset();
             EZMiner.network.network.sendTo(new PacketMinesweeperClear(), player);
@@ -72,5 +105,7 @@ public class MinesweeperModeHandler {
         detectedBombs.clear();
         detectedPositions.clear();
         wasGameActive = false;
+        gameActiveKnown = false;
+        gameActiveCached = false;
     }
 }

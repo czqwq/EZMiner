@@ -146,8 +146,12 @@ public class Manager {
 
     // Must receive canceled events because some crop/interaction mods cancel
     // RIGHT_CLICK_BLOCK before EZMiner runs; we still need to start chain harvest.
+    // The guard below distinguishes "EZMiner runs before vanilla" (isCanceled() == false) from
+    // "a protection/claim mod already denied this interaction" (isCanceled() == true), which
+    // must NOT be turned into a chain.
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public void onCropRightClick(PlayerInteractEvent event) {
+        if (event.isCanceled()) return;
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
         if (!isSamePlayer(event.entityPlayer)) return;
         if (isInOperate() || !isKeyPressed()) return;
@@ -176,6 +180,7 @@ public class Manager {
     // signal. The player right-clicks while in this sub-mode to swap blocks
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public void onBlockSwapRightClick(PlayerInteractEvent event) {
+        if (event.isCanceled()) return;
         if (!isSamePlayer(event.entityPlayer)) return;
         if (isInOperate() || !isKeyPressed()) return;
         if (!isBlockSwapMode()) return;
@@ -224,6 +229,7 @@ public class Manager {
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public void onPlantRightClick(PlayerInteractEvent event) {
+        if (event.isCanceled()) return;
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
         if (!isSamePlayer(event.entityPlayer)) return;
         if (isInOperate() || !isKeyPressed()) return;
@@ -347,6 +353,16 @@ public class Manager {
         // Key released: stop any in-progress pre-calculation and flush drops.
         preCalcEngine.stop(player);
         flushDrops();
+    }
+
+    /**
+     * True when the player's world is available, so pending drops/XP can actually be
+     * spawned. Callers about to discard collected drops (e.g.
+     * {@code ChainLifecycleService.stopRuntime}) must use this to decide whether to flush
+     * first or to keep the collector for a later flush instead of deleting it.
+     */
+    public boolean canFlushDrops() {
+        return player != null && player.worldObj != null;
     }
 
     public void flushDrops() {

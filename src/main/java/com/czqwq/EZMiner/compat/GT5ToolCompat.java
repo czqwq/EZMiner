@@ -25,6 +25,9 @@ import com.czqwq.EZMiner.utils.ToolHarvestEligibility;
  */
 public class GT5ToolCompat {
 
+    /** Guards the resolution block so a racing caller never observes a half-initialised bridge. */
+    private static final Object INIT_LOCK = new Object();
+
     private static volatile boolean initialized;
     private static boolean gtLoaded;
     /**
@@ -68,12 +71,28 @@ public class GT5ToolCompat {
     // ── Initialisation ───────────────────────────────────────────────────────
 
     /**
-     * Must be called once during client startup (e.g. from
-     * {@code ClientProxy.preInit}). Idempotent — subsequent calls are no-ops.
+     * Safe to call from either side; idempotent and thread-safe.
+     *
+     * <p>
+     * Must be called from {@code CommonProxy} (not only {@code ClientProxy}): the bridge
+     * feeds {@code ToolHarvestEligibility}, which runs on the <strong>server</strong>. With
+     * only the client call, a dedicated server left {@code gtLoaded == false} forever and
+     * fell through to {@code ForgeHooks.canToolHarvestBlock}, which wrongly accepts a GT
+     * wrench for stone. The first call resolves the classes under {@link #INIT_LOCK} and
+     * publishes {@code initialized} only after the resolution finished, so a second thread
+     * can never observe {@code initialized == true} together with {@code gtLoaded == false}.
+     * </p>
      */
     public static void init() {
         if (initialized) return;
-        initialized = true;
+        synchronized (INIT_LOCK) {
+            if (initialized) return;
+            resolve();
+            initialized = true;
+        }
+    }
+
+    private static void resolve() {
         try {
             // Core GT classes: MetaGeneratedTool + IToolStats exist on every GT5U
             // generation (5.09.51.482 and master). The toolbox classes do NOT exist

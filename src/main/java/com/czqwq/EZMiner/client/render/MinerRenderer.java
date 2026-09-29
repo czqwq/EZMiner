@@ -193,7 +193,6 @@ public class MinerRenderer {
             // restartViewer hands the position to the new founder, which keeps the reference, so
             // it gets its own copy — the scratch must never be retained.
             restartViewer(mc, new Vector3i(scratchTarget));
-            previewController.setTarget(scratchTarget);
             lastTarget.set(scratchTarget);
         }
 
@@ -240,7 +239,6 @@ public class MinerRenderer {
         lastMinesweeperVersion = -1;
         clientState.previewRenderedCount = 0;
         previewController.getState().renderedCount = 0;
-        previewController.setTarget(null);
         // Reset so that pressing the key again while looking at the same block
         // correctly triggers restartViewer (lastTarget != any real block).
         lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);

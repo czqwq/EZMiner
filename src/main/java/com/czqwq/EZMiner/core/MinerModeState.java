@@ -66,6 +66,47 @@ public class MinerModeState {
     public int chainMode = 0;
     public int specialMode = 0;
 
+    /**
+     * Highest valid index for each mode group.
+     *
+     * <p>
+     * These are derived from the arrays above so a new sub-mode can never be unreachable: the
+     * network layer used to clamp to duplicated literals, so adding a mode silently clamped a
+     * legitimately-selected index away instead of accepting it. Keep the packet clamps pointed
+     * at these.
+     * </p>
+     */
+    public static final int MAX_MAIN_MODE_INDEX = MAIN_MODES.length - 1;
+    public static final int MAX_BLAST_MODE_INDEX = BLAST_MODES.length - 1;
+    public static final int MAX_CHAIN_MODE_INDEX = CHAIN_MODES.length - 1;
+    public static final int MAX_SPECIAL_MODE_INDEX = SPECIAL_MODES.length - 1;
+
+    /**
+     * Number of chain sub-modes the player can currently select. Cached chain sub-modes
+     * (indices 2 and 3) require {@link Config#enableCachedChain}; the cycling logic and the
+     * network clamp must agree with this rather than with {@link #CHAIN_MODES}{@code .length}.
+     */
+    public int getChainModeCount() {
+        return Config.enableCachedChain ? CHAIN_MODES.length : 2;
+    }
+
+    /**
+     * True when the requested chain sub-mode is selectable in the current configuration.
+     * Used to reject (rather than silently clamp) a mode switch that the admin cannot expose.
+     */
+    public static boolean isChainModeSelectable(int chainMode) {
+        if (chainMode < 0 || chainMode > MAX_CHAIN_MODE_INDEX) return false;
+        return Config.enableCachedChain || chainMode < 2;
+    }
+
+    /** True when the requested special sub-mode is selectable (see {@link #isSpecialModeVisible}). */
+    public static boolean isSpecialModeSelectable(int specialMode) {
+        if (specialMode < 0 || specialMode > MAX_SPECIAL_MODE_INDEX) return false;
+        if (specialMode == 3) return VisualProspectingBridge.isVpAvailable();
+        if (specialMode == 4) return Config.enableBlockSwapMode;
+        return true;
+    }
+
     // ===== Main mode =====
     public String nextMainMode() {
         mainMode = (mainMode + 1) % MAIN_MODES.length;

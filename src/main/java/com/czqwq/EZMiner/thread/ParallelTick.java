@@ -73,4 +73,24 @@ public class ParallelTick {
             normalTaskLock.unlock();
         }
     }
+
+    /**
+     * Drops every registered task without unpausing it.
+     *
+     * <p>
+     * Called on server start/stop: this singleton lives for the whole JVM, so a world reload
+     * would otherwise carry a still-started founder into the next world, where the tick-START
+     * unpause loop could resume it against the previous world (and, after
+     * {@code SearchWorkerPool.stop()}, dispatch into a null pool).
+     * </p>
+     */
+    public void clearAllTasks() {
+        preTickTasks.clear();
+        normalTaskLock.lock();
+        try {
+            normalTasks.clear();
+        } finally {
+            normalTaskLock.unlock();
+        }
+    }
 }

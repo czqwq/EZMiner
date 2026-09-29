@@ -31,6 +31,7 @@ import com.czqwq.EZMiner.chain.planning.CachedPositionsPlanningTask;
 import com.czqwq.EZMiner.chain.planning.ChainPlanningTask;
 import com.czqwq.EZMiner.chain.watchdog.ChainWatchdog;
 import com.czqwq.EZMiner.compat.GT5ToolCompat;
+import com.czqwq.EZMiner.compat.GT5ToolDurabilityBridge;
 import com.czqwq.EZMiner.compat.NaturaSaguaroCompat;
 import com.czqwq.EZMiner.compat.TinkersConstructCompat;
 import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
@@ -187,6 +188,11 @@ public class BaseOperator {
             return;
         }
 
+        // The planner delivered work, so the chain is making progress. Refreshing here (not only
+        // in markHarvested) is what stops the watchdog from cancelling a chain that is still
+        // searching or waiting in the tool-handoff state — see ChainWatchdog.markChainStarted.
+        ChainWatchdog.recordProgress(manager.playerUUID);
+
         // Tool break handoff: skip harvesting while waiting for the client to switch tools.
         // canOperate() returns true during the wait, but we shouldn't use the dying tool.
         if (toolBreakHandoffTick != 0 && getServerTick() - toolBreakHandoffTick >= 1) {
@@ -246,6 +252,13 @@ public class BaseOperator {
             boolean toolGood;
             if (TinkersConstructCompat.isTiCTool(item)) {
                 toolGood = TinkersConstructCompat.canContinueMining(item);
+            } else if (GT5ToolCompat.isGTTool(item)) {
+                // GT tools extend MetaBaseItem, whose constructor calls setMaxDamage(0), so the
+                // vanilla formula below evaluates (0 - 0) > 1 — always false. Every GT chain
+                // therefore requested a tool-break handoff on every step and EZMiner never got a
+                // real durability warning, which is what made the missing pre-check reachable.
+                // GT durability lives in NBT, so ask the bridge that already knows how to read it.
+                toolGood = GT5ToolDurabilityBridge.hasDurabilityReserveForNextBlock(playerMP);
             } else {
                 toolGood = (item.getMaxDamage() - item.getItemDamage()) > 1;
             }
@@ -333,7 +346,11 @@ public class BaseOperator {
         countdownStartTime = 0;
         lastCountdownSecond = -1;
         toolBreakHandoffTick = 0;
-        ChainWatchdog.markChainStarted(manager.playerUUID);
+        // The watchdog is deliberately NOT armed here. Arming at chain start made the 100-tick
+        // (5 s) default fire while a large-radius search was still legitimately running, because
+        // the check sits before the empty-queue early return below. It is armed by the first
+        // harvest / first enqueued candidates instead (ChainWatchdog.markChainStarted javadoc).
+        ChainWatchdog.remove(manager.playerUUID);
         // Init chunk preloader (no chunks loaded yet — loading happens in tick())
         if (Config.enableChainChunkLoading && manager.originPos != null) {
             chunkPreloader.init(playerMP.worldObj, manager.originPos, manager.pConfig.bigRadius);
@@ -511,7 +528,8 @@ public class BaseOperator {
             ChunkBlockWriteHelper.notifyBatchNeighborChange(playerMP.worldObj, removedSink);
         }
 
-        exhaustionStrategy.setExhaustion(food, exhaustionBefore + harvested * (float) manager.pConfig.addExhaustion);
+        exhaustionStrategy
+            .setExhaustion(food, Math.min(exhaustionBefore + harvested * (float) manager.pConfig.addExhaustion, 4.0F));
     }
 
     /**
@@ -593,6 +611,7 @@ public class BaseOperator {
             ChunkBlockWriteHelper.notifyBatchNeighborChange(playerMP.worldObj, removedSink);
         }
 
-        exhaustionStrategy.setExhaustion(food, exhaustionBefore + harvested * (float) manager.pConfig.addExhaustion);
+        exhaustionStrategy
+            .setExhaustion(food, Math.min(exhaustionBefore + harvested * (float) manager.pConfig.addExhaustion, 4.0F));
     }
 }

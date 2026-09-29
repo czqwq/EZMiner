@@ -30,3 +30,11 @@
 8. **解耦 core↔chain 双向依赖**
    - `chain.planning` import 12个 `core.founder` 类;`core.Manager`/`BaseOperator` import `chain.execution`/`planning`/`state`。
    - `LegacyFounderPlanningFactory` 移至 `core`;chain 对 `Manager` 的依赖通过接口反转(chain 定义接口,core 实现)。
+
+## P2 — 待移除的死配置项(t9 遗留)
+
+9. **移除 `Config.enableBudgetDeadline`**(已于 t9 判定为无效/inert)
+   - 现状:`Pauseable.waitUntil()` 现在只在 `unPause()` 或中断时退出,该截止时间不再被采纳,因此该开关**没有任何效果**。当前保留是因为移除一个持久化的服务端配置字段需要构建来校验 GUI 行位移不变式(本会话无法运行构建)。
+   - 背景:t9 的 V06 修复发现原实现不可行 —— 每个 founder 都把 `!consumeBudget()` 当作"从 `run1` 返回"(`ChainPositionFounder.java:70,74,117,121`、`BasePositionFounder.tryProcessShellPos:235`),让截止时间结束 park 会在一次普通 tick 结束暂停时**永久终止**搜索;让它返回"继续"则会在 tick 窗口外恢复读世界。两者都与 tick 暂停约定冲突。
+   - 待移除清单(下次有构建时):`Config` 字段 + `loadServerOnlyInternal` + `saveServerConfig` + `PacketSaveServerConfig` 字段与赋值 + `PacketServerConfig` 字段/编解码/`buildForPlayer` + `Config.applyServerRuntimeStability` 的对应参数 + OP GUI 行(`SERVER_CONTENT_ROWS` 递减并更新 `isSectionBreak`/`getRowLabelKey`/`initGui`/`actionPerformed`/`updateScrolledPositions`/`drawServerTab`/`updateTabVisibility`/`applyAndSaveServerConfig`)+ 两个 lang 文件 + `Pauseable.deadlineNanos`/`setDeadlineNanos`。
+   - 同时移除 `Pauseable.errorCount`(t9 后已无任何写入点)。

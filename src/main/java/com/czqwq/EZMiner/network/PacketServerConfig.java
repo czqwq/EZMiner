@@ -67,6 +67,18 @@ public class PacketServerConfig implements IMessage {
     public int maxLogBigRadius;
     public int maxLogBlockLimit;
     public boolean logFuzzyEnabled;
+    // Stability / tool-handoff settings. These are GUI-editable and persisted by
+    // PacketSaveServerConfig, so they must be synced too — otherwise the OP GUI shows the
+    // client's local EZMiner_Server.cfg values and an OP "Save" silently resets the server's.
+    public boolean enableChainWatchdog;
+    public boolean enableDropFallbackChain;
+    public boolean enableMainThreadGuard;
+    public boolean enableBudgetDeadline;
+    public boolean enableConfigValidation;
+    public boolean enableSafeReflection;
+    public int chainWatchdogTimeoutTicks;
+    public boolean enableToolBreakHandoff;
+    public int toolBreakHandoffTimeoutTicks;
     /** Whether the receiving client has OP permission on this server. Used to show/hide server config tab in GUI. */
     public boolean isOp;
 
@@ -133,6 +145,15 @@ public class PacketServerConfig implements IMessage {
         maxLogBigRadius = buf.readInt();
         maxLogBlockLimit = buf.readInt();
         logFuzzyEnabled = buf.readBoolean();
+        enableChainWatchdog = buf.readBoolean();
+        enableDropFallbackChain = buf.readBoolean();
+        enableMainThreadGuard = buf.readBoolean();
+        enableBudgetDeadline = buf.readBoolean();
+        enableConfigValidation = buf.readBoolean();
+        enableSafeReflection = buf.readBoolean();
+        chainWatchdogTimeoutTicks = buf.readInt();
+        enableToolBreakHandoff = buf.readBoolean();
+        toolBreakHandoffTimeoutTicks = buf.readInt();
         blacklistExpression = ByteBufUtils.readUTF8String(buf);
     }
 
@@ -180,6 +201,15 @@ public class PacketServerConfig implements IMessage {
         buf.writeInt(maxLogBigRadius);
         buf.writeInt(maxLogBlockLimit);
         buf.writeBoolean(logFuzzyEnabled);
+        buf.writeBoolean(enableChainWatchdog);
+        buf.writeBoolean(enableDropFallbackChain);
+        buf.writeBoolean(enableMainThreadGuard);
+        buf.writeBoolean(enableBudgetDeadline);
+        buf.writeBoolean(enableConfigValidation);
+        buf.writeBoolean(enableSafeReflection);
+        buf.writeInt(chainWatchdogTimeoutTicks);
+        buf.writeBoolean(enableToolBreakHandoff);
+        buf.writeInt(toolBreakHandoffTimeoutTicks);
         ByteBufUtils.writeUTF8String(buf, blacklistExpression == null ? "" : blacklistExpression);
     }
 
@@ -232,6 +262,15 @@ public class PacketServerConfig implements IMessage {
         packet.maxLogBigRadius = Config.logBigRadius;
         packet.maxLogBlockLimit = Config.logBlockLimit;
         packet.logFuzzyEnabled = Config.logFuzzyEnabled;
+        packet.enableChainWatchdog = Config.enableChainWatchdog;
+        packet.enableDropFallbackChain = Config.enableDropFallbackChain;
+        packet.enableMainThreadGuard = Config.enableMainThreadGuard;
+        packet.enableBudgetDeadline = Config.enableBudgetDeadline;
+        packet.enableConfigValidation = Config.enableConfigValidation;
+        packet.enableSafeReflection = Config.enableSafeReflection;
+        packet.chainWatchdogTimeoutTicks = Config.chainWatchdogTimeoutTicks;
+        packet.enableToolBreakHandoff = Config.enableToolBreakHandoff;
+        packet.toolBreakHandoffTimeoutTicks = Config.toolBreakHandoffTimeoutTicks;
         return packet;
     }
 
@@ -283,6 +322,16 @@ public class PacketServerConfig implements IMessage {
                     msg.plantRadius,
                     msg.plantMaxCount,
                     msg.notifyNeighborsOnChainBreak);
+                Config.applyServerRuntimeStability(
+                    msg.enableChainWatchdog,
+                    msg.enableDropFallbackChain,
+                    msg.enableMainThreadGuard,
+                    msg.enableBudgetDeadline,
+                    msg.enableConfigValidation,
+                    msg.enableSafeReflection,
+                    msg.chainWatchdogTimeoutTicks,
+                    msg.enableToolBreakHandoff,
+                    msg.toolBreakHandoffTimeoutTicks);
                 Config.logFuzzyEnabled = msg.logFuzzyEnabled;
                 Config.blacklistExpression = msg.blacklistExpression == null ? "" : msg.blacklistExpression.trim();
                 com.czqwq.EZMiner.EZMiner.clientIsOp = msg.isOp;

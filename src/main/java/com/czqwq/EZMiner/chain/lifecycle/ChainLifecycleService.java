@@ -45,7 +45,10 @@ public class ChainLifecycleService {
     public void onWorldUnload(Map<UUID, Manager> managers) {
         EZMiner.chainStateService.onWorldUnload();
         for (Manager mgr : managers.values()) {
-            stopRuntime(mgr);
+            // The world is going away: do not spawn into it, and do not destroy what is
+            // collected — the manager survives the unload, so the next key-release flush can
+            // still deliver it once the world is available again.
+            stopRuntime(mgr, false);
         }
     }
 
@@ -56,9 +59,36 @@ public class ChainLifecycleService {
     }
 
     private void stopRuntime(Manager mgr) {
+        stopRuntime(mgr, true);
+    }
+
+    /**
+     * Stops the operator and cleans up per-chain runtime state.
+     *
+     * <p>
+     * <strong>Drop/XP safety:</strong> with the default {@code dropImmediately=false} and
+     * {@code xpDropMode=1} the whole chain's items and XP live in the manager's drop collector
+     * and {@code XPDropHandler} until the key is released. The old code called
+     * {@code cleanupState()}/{@code clearDrops()} straight away, so logging out, respawning or
+     * changing dimension <em>destroyed</em> them with nothing spawned.
+     * {@link Manager#flushDrops()} — which already carries the respawn → world-spawn fallback
+     * chain — now runs first.
+     * </p>
+     *
+     * @param cleanupRuntime when {@code true} the collector/XP are discarded after the flush
+     *                       and the chain runtime state is reset. When {@code false} only the
+     *                       operator is stopped and the collector is left intact for a later
+     *                       flush (world unload).
+     */
+    private void stopRuntime(Manager mgr, boolean cleanupRuntime) {
         if (mgr.operator != null) {
             mgr.operator.stopImmediately();
             mgr.operator = null;
+        }
+        if (!cleanupRuntime) return;
+        if (mgr.canFlushDrops()) {
+            // Deliver pending items + XP before the collector is cleared.
+            mgr.flushDrops();
         }
         mgr.cleanupState();
         mgr.clearDrops();

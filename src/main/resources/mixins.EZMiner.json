@@ -12,9 +12,10 @@
     "MixinGTOreAdapter",
     "MixinBWOreAdapter",
     "MixinGTPPOreAdapter",
-    "MixinItemInWorldManager",
+    "MixinItemInWorldManager"
+  ],
+  "client": [
     "MixinGuiIngameMenu"
   ],
-  "client": [],
   "server": []
 }

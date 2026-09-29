@@ -56,7 +56,13 @@ public class PacketToolBreakHandoff implements IMessage {
         @Override
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(PacketToolBreakHandoff msg, MessageContext ctx) {
-            if (!Config.smartToolSwitchEnabled || !Config.enableToolBreakHandoff) return null;
+            // Do NOT re-gate on Config.enableToolBreakHandoff here. The packet only exists because
+            // the SERVER decided the handoff was warranted, and the client's copy of that field can
+            // be stale on a dedicated server (before the first PacketServerConfig sync). Re-gating
+            // on it made the server wait out toolBreakHandoffTimeoutTicks and then cancel the chain
+            // while the client discarded every handoff packet. The client-local
+            // smartToolSwitchEnabled / isActive() gates below are the only ones that belong here.
+            if (!Config.smartToolSwitchEnabled) return null;
 
             Minecraft mc = Minecraft.getMinecraft();
             if (mc.thePlayer == null) return null;

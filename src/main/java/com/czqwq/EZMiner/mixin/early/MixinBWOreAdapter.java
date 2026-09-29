@@ -13,6 +13,19 @@ import com.llamalad7.mixinextras.sugar.Local;
 import gregtech.common.ores.BWOreAdapter;
 import gregtech.common.ores.OreInfo;
 
+/**
+ * Removes the {@code fortune > 3} clamp in BartWorks' new-generation ore adapter and lets
+ * placed (non-natural) ore keep its fortune level.
+ *
+ * <p>
+ * <strong>Generation scope:</strong> targets {@code gregtech.common.ores.BWOreAdapter}, which
+ * only exists on GT5U generations shipping the new ore system ({@code gregtech.common.ores.*}
+ * — the generation this project compiles against). The older 5.09.x line has no such package,
+ * so on that line the feature is a silent no-op. {@code mixins.EZMiner.json} keeps
+ * {@code "required": false} and the injections carry no {@code require}, so a missing target
+ * degrades to a logged skip instead of a startup failure.
+ * </p>
+ */
 @Mixin(value = BWOreAdapter.class, remap = false)
 public abstract class MixinBWOreAdapter {
 

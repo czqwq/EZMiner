@@ -19,6 +19,7 @@ import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.chain.network.PacketBlockSwapResult;
 import com.czqwq.EZMiner.compat.GT5BlockSwapCompat;
+import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
 import com.czqwq.EZMiner.core.founder.DeterminingIdentical;
 import com.czqwq.EZMiner.utils.MessageUtils;
 
@@ -61,7 +62,10 @@ public class BlockSwapModeHandler {
         final int replacementItemDamage = heldStack.getItemDamage();
 
         // ── Find all matching blocks within configured radius ──
-        int maxRadius = Config.blockSwapRadius;
+        // Clamped: findAllMatching is a full Chebyshev-shell world read on the server thread
+        // inside the interact event, and blockSwapLimit bounds the *matches*, not the scan. An
+        // unbounded radius (the config accepted up to Integer.MAX_VALUE) hung the tick.
+        int maxRadius = Config.clampBlockSwapRadius(Config.blockSwapRadius);
         int maxBlocks = Math.min(Config.blockSwapLimit, countAvailableItems(player, heldStack));
 
         if (maxBlocks <= 0) {
@@ -106,6 +110,11 @@ public class BlockSwapModeHandler {
             // Consume from inventory AFTER validating the block still exists.
             // (harvestBlock on some modded blocks sets the tile to air, which
             // could invalidate adjacent positions if item were consumed first.)
+            // Per-position protection (V04's missing half). Block swap performs raw world writes,
+            // so a region/claim mod that only guards the trigger block would still let every
+            // matching block in range be swapped. Checked BEFORE consuming the replacement item.
+            if (!world.canMineBlock(player, pos.x, pos.y, pos.z)) continue;
+
             if (!consumeItem(player, heldStack)) break;
 
             // ── Preserve GT cable/pipe connection state before removal ──
@@ -113,14 +122,22 @@ public class BlockSwapModeHandler {
 
             // Harvest the original block (fires HarvestDropsEvent → drops collected
             // by ChainDropCollector when inOperate is set).
-            oldBlock.harvestBlock(world, player, pos.x, pos.y, pos.z, oldMeta);
+            // Guarded by the same predicate vanilla uses (canHarvestBlock, plus the Witchery
+            // bare-hand allowance the harvest executors already OR in): vanilla only calls
+            // harvestBlock when canHarvestBlock is true, so without this a wooden pickaxe
+            // right-clicked on obsidian handed the player the obsidian item.
+            if (oldBlock.canHarvestBlock(player, oldMeta) || WitcheryVampireBridge.canHarvestWithBareHands(player)) {
+                oldBlock.harvestBlock(world, player, pos.x, pos.y, pos.z, oldMeta);
+            }
 
             // Replace with the new block
             world.setBlock(pos.x, pos.y, pos.z, replacementBlock, replacementMeta, 3);
 
             // ── Init GT meta-tile-entity and restore connections ──
             if (replacementIsGT) {
-                GT5BlockSwapCompat.initGTMetaTileEntity(world, pos.x, pos.y, pos.z, replacementItemDamage);
+                // Pass the replacement stack so the TE receives the item's NBT (mode, owner…),
+                // matching GT's own ItemMachines placement; the old call passed null.
+                GT5BlockSwapCompat.initGTMetaTileEntity(world, pos.x, pos.y, pos.z, replacementItemDamage, heldStack);
                 if (savedConnections >= 0) {
                     GT5BlockSwapCompat.restoreConnections(world, pos.x, pos.y, pos.z, savedConnections);
                 }

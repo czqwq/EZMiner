@@ -33,35 +33,91 @@ public class LogFounder extends BasePositionFounder {
 
     @Override
     public void run1() {
-        int curRadius = 1;
-        int highRadius = 1;
-        // Track the bounds already covered so each position is visited only once.
-        int prevCurRadius = 0;
+        // Shell expansion, decomposed so each shell pays only for the positions it adds. The
+        // previous implementation walked the full (2R+1)x(2H+1)x(2R+1) box for every shell with the
+        // "already scanned" skip test INSIDE the innermost loop, and grew highRadius to 4*curRadius;
+        // at the old default radius of 1024 that was ~6.8e13 innermost iterations / ~3.4e10 world
+        // lookups, so the mode effectively never finished (on the client preview path too). It also
+        // had no player/world guard.
+        //
+        // For shell r the new positions are exactly:
+        // (i) the new y-levels ([-high, -prevHigh-1] and [prevHigh+1, high]) over the full x/z
+        // extent of the current shell;
+        // (ii) the two new x columns (x = ±r) at the previously covered y-levels;
+        // (iii) the two new z columns (z = ±r) at x in [-r+1, r-1] and the previously covered
+        // y-levels.
+        // Those three sets are disjoint and their union is shell(r) \ shell(r-1) — verified by hand
+        // for r = 1 (72 + 6 + 2 = 80 = 3x9x3 - 1) and r = 2 (200 + 90 + 54 = 344 = 5x17x5 - 3x9x3).
+        // Because every stop path returns immediately, the paused/limit-reached case allocates O(1)
+        // rather than a per-shell position list.
+        if (player == null || player.isDead || player.worldObj == null) return;
+
+        final int radius = Math.max(0, minerConfig.logBigRadius);
+
+        if (checkCanAdd(center)) {
+            addResult(center);
+            if (curCount.get() >= minerConfig.logBlockLimit) return;
+        }
+        waitUntil();
+        if (Thread.currentThread()
+            .isInterrupted()) return;
+
+        int prevRadius = 0;
         int prevHighRadius = 0;
-        while (curCount.get() < minerConfig.logBlockLimit) {
-            for (int x = center.x - curRadius; x <= center.x + curRadius; x++) {
-                for (int y = center.y - highRadius; y <= center.y + highRadius; y++) {
-                    for (int z = center.z - curRadius; z <= center.z + curRadius; z++) {
-                        // Skip positions that were inside the previous iteration's bounding box;
-                        // they were already processed and adding them again would be a no-op
-                        // (foundedPositions dedup) but wastes a world lookup for each air block.
-                        if (Math.abs(x - center.x) <= prevCurRadius && Math.abs(y - center.y) <= prevHighRadius
-                            && Math.abs(z - center.z) <= prevCurRadius) continue;
-                        Vector3i pos = new Vector3i(x, y, z);
-                        if (checkCanAdd(pos)) addResult(pos);
-                        if (curCount.get() >= minerConfig.logBlockLimit) return;
-                        waitUntil();
-                        if (Thread.currentThread()
-                            .isInterrupted()) return;
-                    }
+        for (int curRadius = 1; curRadius <= radius; curRadius++) {
+            final int highRadius = Math.min(4 * curRadius, Math.max(4 * radius, 64));
+            final int r = curRadius;
+            final int prevHigh = prevHighRadius;
+
+            // (i) New y-levels over the full x/z extent of the current shell. Emitted as two bands
+            // so the already-covered middle never has to be skipped.
+            if (highRadius > prevHigh) {
+                if (emit(-r, r, -highRadius, -prevHigh - 1, -r, r)) return;
+                if (emit(-r, r, prevHigh + 1, highRadius, -r, r)) return;
+            }
+
+            // (ii) + (iii) The new x and z columns at the previously covered y-levels.
+            if (curRadius > prevRadius) {
+                if (emit(-r, -r, -prevHigh, prevHigh, -r, r)) return;
+                if (emit(r, r, -prevHigh, prevHigh, -r, r)) return;
+                if (emit(-r + 1, r - 1, -prevHigh, prevHigh, -r, -r)) return;
+                if (emit(-r + 1, r - 1, -prevHigh, prevHigh, r, r)) return;
+            }
+
+            prevRadius = curRadius;
+            prevHighRadius = highRadius;
+        }
+    }
+
+    /**
+     * Walks one closed box of positions and feeds each to {@link #checkCanAdd}/{@link #addResult}.
+     *
+     * <p>
+     * The box bounds are passed explicitly rather than derived from each other: the caller's slabs
+     * are a thin y-band, two single x columns and two single z columns, which cannot be expressed as
+     * "the same range in x and z".
+     * </p>
+     *
+     * @param xMin,xMax inclusive x range, relative to {@link #center}
+     * @param yMin,yMax inclusive y range, relative to {@link #center}
+     * @param zMin,zMax inclusive z range, relative to {@link #center}
+     * @return {@code true} if the caller must stop (block limit reached, tick-end pause, or
+     *         thread interrupt)
+     */
+    private boolean emit(int xMin, int xMax, int yMin, int yMax, int zMin, int zMax) {
+        for (int y = yMin; y <= yMax; y++) {
+            for (int z = zMin; z <= zMax; z++) {
+                for (int x = xMin; x <= xMax; x++) {
+                    Vector3i pos = new Vector3i(center.x + x, center.y + y, center.z + z);
+                    if (checkCanAdd(pos)) addResult(pos);
+                    if (curCount.get() >= minerConfig.logBlockLimit) return true;
+                    waitUntil();
+                    if (Thread.currentThread()
+                        .isInterrupted()) return true;
                 }
             }
-            prevCurRadius = curRadius;
-            prevHighRadius = highRadius;
-            curRadius = Math.min(curRadius + 1, minerConfig.logBigRadius);
-            highRadius++;
-            if (curRadius >= minerConfig.logBigRadius && highRadius > minerConfig.logBigRadius * 4) break;
         }
+        return false;
     }
 
     @Override

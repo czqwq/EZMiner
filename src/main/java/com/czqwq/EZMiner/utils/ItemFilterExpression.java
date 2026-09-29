@@ -204,6 +204,17 @@ public final class ItemFilterExpression {
     /** Shared never-matching leaf — out-of-range / malformed atoms compile to this. */
     private static final Node NEVER_NODE = stack -> false;
 
+    /**
+     * Shared match-everything leaf — a bare {@code *} atom compiles to this.
+     *
+     * <p>
+     * Distinct from the glob {@code *} inside an ore-name pattern (which expands to
+     * contains/startsWith/endsWith over OreDictionary names and therefore cannot match a stack with
+     * no OreDictionary entry). A bare {@code *} is the documented "everything" filter.
+     * </p>
+     */
+    private static final Node ANY_NODE = stack -> stack != null;
+
     // ── Hand-rolled glob matching (no regex) ─────────────────────────────────
 
     @FunctionalInterface
@@ -381,6 +392,11 @@ public final class ItemFilterExpression {
                 if (id == null || id < 0 || id > MAX_ID) return NEVER_NODE;
                 return new NumericIdAtom((int) (long) id);
             }
+            // A bare `*` means "every stack", NOT "every stack that has an OreDictionary entry".
+            // The OrePatternAtom path below matches against OreDictionary ore *names*, so it
+            // returned false for any item without an entry (most modded junk) and the documented
+            // "destroy everything" filter silently kept those drops.
+            if (atom.equals("*")) return ANY_NODE;
             // Anything else is an OreDictionary name wildcard pattern.
             return new OrePatternAtom(compileGlob(atom));
         }

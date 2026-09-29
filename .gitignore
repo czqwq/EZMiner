@@ -27,6 +27,7 @@ servers.dat
 usercache.json
 whitelist.json
 /out/
+/.agent-teams/
 *.iml
 *.ipr
 *.iws

@@ -43,6 +43,12 @@ public class ChunkPreloader {
 
     private final Set<Long> loaded = new HashSet<>();
     private int chunkRadius = 0;
+    /**
+     * Position of the next cell to visit within the current shell, flattened over the
+     * {@code (2r+1)²} grid in row-major order. Persisted across ticks so a shell that is too
+     * large for one {@link #PER_TICK} batch is resumed instead of skipped.
+     */
+    private int shellCursor = 0;
     private int lastCenterX = Integer.MIN_VALUE;
     private int lastCenterZ = Integer.MIN_VALUE;
     private int maxChunkRadius;
@@ -63,6 +69,7 @@ public class ChunkPreloader {
     public void init(World world, Vector3i center, int bigRadius) {
         loaded.clear();
         chunkRadius = 0;
+        shellCursor = 0;
         lastCenterX = center.x;
         lastCenterZ = center.z;
         maxChunkRadius = (bigRadius + 15) / 16;
@@ -90,34 +97,43 @@ public class ChunkPreloader {
         int count = 0;
 
         while (chunkRadius <= maxChunkRadius && count < PER_TICK) {
-            int r = chunkRadius;
-            boolean anyNew = false;
-
-            for (int dx = -r; dx <= r && count < PER_TICK; dx++) {
-                for (int dz = -r; dz <= r && count < PER_TICK; dz++) {
-                    if (r > 0 && Math.abs(dx) < r && Math.abs(dz) < r) continue;
-                    int cx = cx0 + dx;
-                    int cz = cz0 + dz;
-                    long key = (long) cx << 32 | (cz & 0xffffffffL);
-                    if (loaded.contains(key)) continue;
-                    loaded.add(key);
-                    anyNew = true;
-
-                    // Only load chunks that already exist on disk.
-                    // Never trigger terrain generation during chain mining —
-                    // GTNH worldgen takes ~1.3s per new chunk.
-                    if (!cps.chunkExists(cx, cz)) {
-                        if (chunkLoader != null && chunkLoader.chunkExists(null, cx, cz)) {
-                            cps.loadChunk(cx, cz);
-                        }
-                        // else: chunk doesn't exist on disk — skip it silently.
-                        // The player hasn't explored this area yet.
-                    }
-                    count++;
+            // Enumerate this shell as a sequence of cells and resume from shellCursor.
+            // The previous implementation restarted the shell at (dx, dz) = (-r, -r) on every
+            // tick, so with PER_TICK == 1 it only ever visited the FIRST cell of each shell and
+            // then ran `chunkRadius++` unconditionally — loading ~maxChunkRadius+1 chunks
+            // instead of the documented (2r+1)^2 square.
+            final int side = 2 * chunkRadius + 1;
+            final int total = side * side;
+            while (shellCursor < total && count < PER_TICK) {
+                final int dx = shellCursor % side - chunkRadius;
+                final int dz = shellCursor / side - chunkRadius;
+                shellCursor++;
+                if (chunkRadius > 0 && Math.abs(dx) < chunkRadius && Math.abs(dz) < chunkRadius) {
+                    continue; // interior cell: only the shell ring is loaded
                 }
+                final int cx = cx0 + dx;
+                final int cz = cz0 + dz;
+                final long key = (long) cx << 32 | (cz & 0xffffffffL);
+                if (loaded.contains(key)) continue;
+                loaded.add(key);
+
+                // Only load chunks that already exist on disk.
+                // Never trigger terrain generation during chain mining —
+                // GTNH worldgen takes ~1.3s per new chunk.
+                if (!cps.chunkExists(cx, cz)) {
+                    if (chunkLoader != null && chunkLoader.chunkExists(null, cx, cz)) {
+                        cps.loadChunk(cx, cz);
+                    }
+                    // else: chunk doesn't exist on disk — skip it silently.
+                    // The player hasn't explored this area yet.
+                }
+                count++;
             }
-            chunkRadius++;
-            if (!anyNew && r >= maxChunkRadius) break;
+            if (shellCursor >= total) {
+                // Shell fully enumerated — advance to the next ring.
+                chunkRadius++;
+                shellCursor = 0;
+            }
         }
 
         return chunkRadius <= maxChunkRadius;
@@ -127,6 +143,7 @@ public class ChunkPreloader {
     public void reset() {
         loaded.clear();
         chunkRadius = 0;
+        shellCursor = 0;
         lastCenterX = Integer.MIN_VALUE;
         lastCenterZ = Integer.MIN_VALUE;
         chunkLoader = null;

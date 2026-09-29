@@ -90,11 +90,9 @@ public class PacketChainStateSync implements IMessage {
                     }
                     proxy.clientState.chainClientState.sessionId = msgSession;
                     proxy.clientState.chainClientState.sessionStartMs = msg.sessionStartMs;
-                    proxy.clientState.chainClientState.sessionDimension = msg.sessionDimension;
                 } else {
                     proxy.clientState.chainClientState.sessionId = null;
                     proxy.clientState.chainClientState.sessionStartMs = 0L;
-                    proxy.clientState.chainClientState.sessionDimension = 0;
                 }
                 boolean wasOperate = proxy.clientState.chainClientState.inOperate;
                 proxy.clientState.chainClientState.inOperate = msg.inOperate;
