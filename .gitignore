@@ -9,6 +9,7 @@
 /build/
 /eclipse/
 /.dsh-vision-router/
+/.agent-teams/
 .classpath
 .project
 /bin/
