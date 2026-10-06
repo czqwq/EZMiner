@@ -86,6 +86,20 @@ public class MinerRenderer {
      */
     private int lastPreviewModeFingerprint = Integer.MIN_VALUE;
 
+    // ── Active render path (see noteRenderKind) ───────────────────────────────────────────
+    private static final int KIND_NONE = -1;
+    private static final int KIND_PREVIEW = 0;
+    private static final int KIND_MINESWEEPER = 1;
+    private static final int KIND_SUDOKU = 2;
+    /**
+     * Which render path owns the geometry currently uploaded to {@link #renderCache}. Minesweeper
+     * marks, Sudoku fills and the chain preview all share one {@code SpaceCalculator} and one
+     * VBO/EBO pair, so without this a path switch could keep drawing the previous path's geometry
+     * (a Sudoku fill list rendered as orange minesweeper markers, and vice versa) until its own
+     * version counter happened to change.
+     */
+    private int lastRenderKind = KIND_NONE;
+
     private final ClientStateContainer clientState;
     private final ChainPreviewController previewController = new ChainPreviewController();
 
@@ -142,8 +156,8 @@ public class MinerRenderer {
                 founder = null;
                 foundQueue.clear();
                 lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
-                lastMinesweeperVersion = -1;
             }
+            noteRenderKind(KIND_MINESWEEPER);
             renderMinesweeperMarks();
             return;
         }
@@ -155,11 +169,15 @@ public class MinerRenderer {
                 founder = null;
                 foundQueue.clear();
                 lastTarget = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
-                lastSudokuVersion = -1;
             }
+            noteRenderKind(KIND_SUDOKU);
             renderSudokuFills();
             return;
         }
+
+        // Every remaining path renders the chain preview; entering it from a special mode must
+        // rebuild the mesh instead of reusing the marks/fills still in the cache.
+        noteRenderKind(KIND_PREVIEW);
 
         // ── Frozen mode: chain is active, just render the locked-in preview. ──
         ChainPreviewState previewState = previewController.getState();
@@ -199,6 +217,25 @@ public class MinerRenderer {
 
         drainQueue(mc);
         doRender();
+    }
+
+    /**
+     * Records {@code kind} as the active render path and invalidates the per-path version counters
+     * when it changed, so the next build of the new path always re-uploads its own geometry.
+     *
+     * <p>
+     * {@link #lastIndexCount} is deliberately not reset here: every special path sets it as part of
+     * its rebuild, and the preview path already invalidates its mesh through {@link #stopViewer()}
+     * (called by {@link #restartViewer} on a mode-fingerprint change). Keeping it out also leaves a
+     * frozen preview's locked-in geometry untouched.
+     * </p>
+     */
+    private void noteRenderKind(int kind) {
+        if (kind == lastRenderKind) return;
+        lastRenderKind = kind;
+        lastMinesweeperVersion = -1;
+        lastSudokuVersion = -1;
+        lastCachedPreviewVersion = -1;
     }
 
     /** Encodes all four mode indices into a single int for switch detection. */
