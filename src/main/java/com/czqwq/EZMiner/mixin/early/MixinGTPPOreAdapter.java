@@ -11,6 +11,19 @@ import com.llamalad7.mixinextras.sugar.Local;
 
 import gregtech.common.ores.GTPPOreAdapter;
 
+/**
+ * Removes the {@code fortune > 3} clamp in GT++'s new-generation ore adapter.
+ *
+ * <p>
+ * <strong>Generation scope:</strong> targets {@code gregtech.common.ores.GTPPOreAdapter},
+ * which only exists on GT5U generations shipping the new ore system
+ * ({@code gregtech.common.ores.*}). The older 5.09.x line clamps fortune inside
+ * {@code gtPlusPlus.core.block.base.BlockBaseOre} instead and has no
+ * {@code gregtech.common.ores} package, so on that line the feature is a silent no-op.
+ * {@code mixins.EZMiner.json} keeps {@code "required": false} and the injections carry no
+ * {@code require}, so a missing target degrades to a logged skip instead of a startup failure.
+ * </p>
+ */
 @Mixin(value = GTPPOreAdapter.class, remap = false)
 public abstract class MixinGTPPOreAdapter {
 

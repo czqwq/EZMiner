@@ -237,6 +237,14 @@ public class ChunkBlockWriteHelper {
                 int nz = z + NEIGHBOR_DZ[axis];
                 long key = ((long) nx << 40) | ((long) nz << 8) | (long) (ny & 0xFF);
                 if (!notified.add(key)) continue;
+                // Guard the read: World.getBlock routes through ChunkProviderServer.provideChunk,
+                // which loads/generates the chunk synchronously on the server thread
+                // (loadChunkOnProvideRequest). Hodgepodge's MixinWorld_PreventChunkLoading only
+                // wraps World.getBlock *inside* notifyBlockOfNeighborChange — which this method
+                // deliberately calls directly — so without this check EZMiner could load a chunk
+                // on every batch along the loaded-region border. Same guard as
+                // flagNeighbouringLeavesForDecay below.
+                if (!world.blockExists(nx, ny, nz)) continue;
                 Block nb = world.getBlock(nx, ny, nz);
                 if (nb == null || nb == Blocks.air) continue;
                 // Notify one neighbour of the block change. Direct onNeighborBlockChange

@@ -290,6 +290,12 @@ public class ChainPositionFounder extends BasePositionFounder {
                     if (dx == 0 && dy == 0 && dz == 0) continue;
                     int cz = node.z + dz;
                     if (Math.abs(cz - center.z) > minerConfig.bigRadius) continue;
+                    // Loaded-chunk positions are skipped BEFORE admission: the contract is that
+                    // an unloaded position is not marked visited, so it is retried on a future
+                    // tick once the player naturally loads that chunk. Marking it here and only
+                    // rejecting it later (in checkCanAddImpl's blockExists guard) lost it
+                    // permanently and made the single- and multi-threaded searches disagree.
+                    if (!player.worldObj.blockExists(cx, cy, cz)) continue;
                     // Atomic admission on the collecting thread (see method javadoc).
                     if (!markVisited(encodePos(cx, cy, cz))) continue;
                     out.add(new Vector3i(cx, cy, cz));

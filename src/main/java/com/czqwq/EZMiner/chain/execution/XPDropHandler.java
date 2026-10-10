@@ -41,6 +41,17 @@ public class XPDropHandler {
     private static final Map<UUID, List<Integer>> accumulatedXP = new HashMap<>();
 
     /**
+     * Largest XP value that survives the {@code EntityXPOrb} NBT round-trip.
+     *
+     * <p>
+     * Vanilla stores the orb value with {@code NBTTagCompound.setShort("Value", (short) xpValue)}
+     * and reads it back with {@code getShort}, so anything above {@link Short#MAX_VALUE}
+     * truncates to a negative value on a chunk reload (and the orb then removes XP).
+     * </p>
+     */
+    private static final int MAX_ORB_VALUE = Short.MAX_VALUE;
+
+    /**
      * Computes the experience that should be dropped when {@code player} breaks
      * {@code block}, mirroring what {@code BlockEvent.BreakEvent} would compute.
      *
@@ -162,8 +173,16 @@ public class XPDropHandler {
             for (int v : values) {
                 total += v;
             }
-            if (total > 0) {
-                world.spawnEntityInWorld(new EntityXPOrb(world, x, y, z, total));
+            // Split at the vanilla NBT limit. EntityXPOrb persists xpValue as an NBT SHORT
+            // (writeEntityToNBT: setShort("Value", (short) xpValue) / readEntityFromNBT:
+            // getShort("Value")), so a single orb with >= 32768 XP is written as a negative
+            // short and, after the chunk is saved and reloaded, onCollideWithPlayer calls
+            // addExperience(negative) — the orb *removes* XP. Splitting keeps every orb inside
+            // the representable range.
+            while (total > 0) {
+                final int chunk = Math.min(total, MAX_ORB_VALUE);
+                total -= chunk;
+                world.spawnEntityInWorld(new EntityXPOrb(world, x, y, z, chunk));
             }
         } else {
             for (int v : values) {

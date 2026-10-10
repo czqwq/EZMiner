@@ -30,10 +30,42 @@ public class SudokuModeHandler {
     /** Detects board regeneration after level-up. */
     private String lastBoardFingerprint = null;
 
+    /**
+     * How long an "is a board active?" answer is trusted, in milliseconds.
+     *
+     * <p>
+     * {@code isAnyGameActive} copies the entire {@code world.loadedTileEntityList} and reflects
+     * over every element. {@code tick} used to call it (and {@code getBoardFingerprint}, which
+     * does the same traversal again) on <em>every</em> server tick before consulting the fill
+     * cooldown — 40 full list traversals per second while the chain key was held, even with no
+     * LootGames board in the world. A 500 ms TTL removes the per-tick cost; the answer only
+     * gates start/stop/cleanup, and the fingerprint check still runs once per TTL window.
+     * </p>
+     */
+    private static final long GAME_ACTIVE_TTL_MS = 500L;
+
+    /** Cached, {@link #GAME_ACTIVE_TTL_MS}-bounded answer of {@code bridge.isAnyGameActive}. */
+    private boolean gameActiveCached = false;
+    private long gameActiveCheckedAtMs = 0L;
+    /** False until the first probe, so the very first tick always scans. */
+    private boolean gameActiveKnown = false;
+
+    /** {@code bridge.isAnyGameActive} behind the {@link #GAME_ACTIVE_TTL_MS} cache. */
+    private boolean isGameActiveCached(EntityPlayerMP player) {
+        long now = System.currentTimeMillis();
+        if (gameActiveKnown && now - gameActiveCheckedAtMs < GAME_ACTIVE_TTL_MS) {
+            return gameActiveCached;
+        }
+        gameActiveCached = bridge.isAnyGameActive(player.worldObj);
+        gameActiveCheckedAtMs = now;
+        gameActiveKnown = true;
+        return gameActiveCached;
+    }
+
     /** One probe cycle. Fills nearest incorrect cell, sends PacketSudokuFill. */
     public void tick(EntityPlayerMP player, UUID playerUUID) {
         // Detect game-end transitions (stage changed away from StageWaiting).
-        boolean gameActive = bridge.isAnyGameActive(player.worldObj);
+        boolean gameActive = isGameActiveCached(player);
         if (wasGameActive && !gameActive && !filledCells.isEmpty()) {
             reset();
             EZMiner.network.network.sendTo(new PacketSudokuClear(), player);
@@ -87,5 +119,7 @@ public class SudokuModeHandler {
         filledPositions.clear();
         wasGameActive = false;
         lastBoardFingerprint = null;
+        gameActiveKnown = false;
+        gameActiveCached = false;
     }
 }

@@ -33,7 +33,12 @@ public class LegacyFounderPlanningFactory {
         if (modeState.mainMode == 1) {
             // Chain mode 0 = basic, 1 = fuzzy, 2 = cached, 3 = cached fuzzy.
             // Cached modes use the same BFS algorithm; caching is orchestrated by Manager.
-            if (modeState.chainMode == 1 || modeState.chainMode == 3) {
+            // The fuzzy selection is gated on the cached chain mode actually being enabled:
+            // without this guard a chain mode 3 that the admin cannot select
+            // (enableCachedChain == false) still resolved to the fuzzy founder, so the server
+            // ran a mode combination the client preview does not describe.
+            if (modeState.chainMode == 1
+                || (modeState.chainMode == 3 && MinerModeState.isChainModeSelectable(modeState.chainMode))) {
                 return new FuzzyChainPositionFounder(center, results, player, config);
             }
             return new ChainPositionFounder(center, results, player, config);

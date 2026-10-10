@@ -112,6 +112,24 @@ public class SpaceCalculator {
     /** Scratch probe for neighbour lookups — avoids a Vector3i allocation per direction/block. */
     private final Vector3i probePos = new Vector3i();
 
+    /**
+     * The per-position index ranges produced by the most recent
+     * {@link #getVertexAndIndex()}, exposed for render strategies that draw a subset of the
+     * positions (the gradient renderer's Y-bands).
+     *
+     * <p>
+     * Thread-local because it is written while the mesh is rebuilt and read while rendering —
+     * both on the client thread — without changing the {@code BlockOutlineRenderStrategy}
+     * signature or having the renderer duplicate the geometry walk.
+     * </p>
+     */
+    private static final ThreadLocal<VertexAndIndex> LAST_GEOMETRY = new ThreadLocal<>();
+
+    /** See {@link #LAST_GEOMETRY}. May be {@code null} before the first mesh build. */
+    public static VertexAndIndex lastGeometry() {
+        return LAST_GEOMETRY.get();
+    }
+
     public void add(Vector3i pos) {
         if (posSet.contains(pos)) return;
         posSet.add(pos);
@@ -123,7 +141,17 @@ public class SpaceCalculator {
         ArrayList<float[]> verts = new ArrayList<>();
         ArrayList<int[]> inds = new ArrayList<>();
         int base = 0;
-        for (Vector3i p : positions) {
+        // Per-position index range inside the flat index stream. Consumers that draw a subset of
+        // the positions (the gradient renderer's Y-bands) need this, because the stream is NOT
+        // uniform per position: a fully-enclosed block contributes no indices at all, and a
+        // partially exposed block contributes only its surviving edges (kept * 2 indices). A
+        // fixed "position index * 24" stride therefore points at the wrong indices for every
+        // block after the first enclosed one.
+        final int[] blockIndexOffset = new int[positions.size()];
+        final int[] blockIndexCount = new int[positions.size()];
+        int runningIndex = 0;
+        for (int i = 0; i < positions.size(); i++) {
+            Vector3i p = positions.get(i);
             Arrays.fill(edgeKept, true);
             // Remove edges shared with neighbours (positions are block origins, so a unit offset in
             // each direction is the only possible neighbour). Allocation-free: one reused boolean[]
@@ -141,19 +169,21 @@ public class SpaceCalculator {
             // Skip fully-enclosed blocks – but do NOT increment base here;
             // base must only advance when vertices are actually appended.
             if (kept == 0) {
+                blockIndexOffset[i] = runningIndex;
+                blockIndexCount[i] = 0;
                 continue;
             }
 
             float[] v = VERTEX.clone();
-            for (int i = 0; i < v.length; i += 3) {
-                v[i] += p.x;
-                v[i + 1] += p.y;
-                v[i + 2] += p.z;
+            for (int k = 0; k < v.length; k += 3) {
+                v[k] += p.x;
+                v[k + 1] += p.y;
+                v[k + 2] += p.z;
             }
             verts.add(v);
 
-            int[] idx = new int[kept * 2];
             int c = 0;
+            int[] idx = new int[kept * 2];
             for (int e = 0; e < edgeKept.length; e++) {
                 if (!edgeKept[e]) continue;
                 Vector2i edge = COMPLETE_EDGES.get(e);
@@ -161,20 +191,61 @@ public class SpaceCalculator {
                 idx[c++] = edge.y + base;
             }
             inds.add(idx);
+            blockIndexOffset[i] = runningIndex;
+            blockIndexCount[i] = idx.length;
+            runningIndex += idx.length;
             base += 8; // advance only after vertices are appended
         }
         hasChange = false;
-        return new VertexAndIndex(ArrayConverter.convertF(verts), ArrayConverter.convertI(inds));
+        VertexAndIndex vi = new VertexAndIndex(
+            ArrayConverter.convertF(verts),
+            ArrayConverter.convertI(inds),
+            blockIndexOffset,
+            blockIndexCount);
+        LAST_GEOMETRY.set(vi);
+        return vi;
     }
 
     public static class VertexAndIndex {
 
         public final float[] vertices;
         public final int[] indices;
+        /**
+         * Flat index-stream offset of each entry in {@link SpaceCalculator#positions}, in the
+         * same order. Length equals {@code positions.size()}.
+         */
+        public final int[] blockIndexOffset;
+        /** Number of indices belonging to each entry in {@link SpaceCalculator#positions}. */
+        public final int[] blockIndexCount;
 
         public VertexAndIndex(float[] v, int[] i) {
+            this(v, i, null, null);
+        }
+
+        public VertexAndIndex(float[] v, int[] i, int[] offsets, int[] counts) {
             vertices = v;
             indices = i;
+            blockIndexOffset = offsets;
+            blockIndexCount = counts;
+        }
+
+        /**
+         * Index-stream offset for the position at {@code positionIndex}, falling back to the
+         * legacy fixed 24-index stride when per-position ranges are absent.
+         */
+        public int indexOffset(int positionIndex) {
+            if (blockIndexOffset == null || positionIndex < 0 || positionIndex >= blockIndexOffset.length) {
+                return positionIndex * 24;
+            }
+            return blockIndexOffset[positionIndex];
+        }
+
+        /** Number of indices for the position at {@code positionIndex}; 24 when unknown. */
+        public int indexCount(int positionIndex) {
+            if (blockIndexCount == null || positionIndex < 0 || positionIndex >= blockIndexCount.length) {
+                return 24;
+            }
+            return blockIndexCount[positionIndex];
         }
     }
 }

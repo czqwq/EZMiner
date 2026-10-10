@@ -294,7 +294,10 @@ public class PacketSaveServerConfig implements IMessage {
             Config.breakPerTick = Math.max(1, Math.min(512, msg.breakPerTick));
             Config.cachedBreakPerTick = Math.max(1, Math.min(1024, msg.cachedBreakPerTick));
             Config.dropImmediately = msg.dropImmediately;
-            Config.addExhaustion = msg.addExhaustion;
+            // Reject NaN/±Inf and clamp: an unvalidated NaN makes
+            // FoodStats.foodExhaustionLevel NaN forever (no player ever loses hunger), and
+            // the corrupt value persists because Double.parseDouble("NaN") succeeds.
+            Config.addExhaustion = Config.clampAddExhaustion(msg.addExhaustion);
             Config.dropToPlayer = msg.dropToPlayer;
             Config.serverUsePreview = msg.serverUsePreview;
             Config.serverMaxPreviewBigRadius = Math.max(0, msg.serverMaxPreviewBigRadius);
@@ -337,8 +340,11 @@ public class PacketSaveServerConfig implements IMessage {
             Config.logFuzzyEnabled = msg.logFuzzyEnabled;
             Config.prospectProbeIntervalSeconds = Math.max(0.1, msg.prospectProbeIntervalSeconds);
             Config.prospectMaxScanRadiusChunks = Math.max(1, Math.min(7, msg.prospectMaxScanRadiusChunks));
-            Config.plantRadius = Math.max(1, Math.min(64, msg.plantRadius));
-            Config.plantMaxCount = Math.max(1, Math.min(1024, msg.plantMaxCount));
+            // Clamp to the same ranges as loadServerOnlyInternal (Config.java:840-863) and
+            // applyServerRuntimeConfig: 1..12 / 1..256. The save path used to accept
+            // 1..64 / 1..1024, so the OP's session diverged from every other client.
+            Config.plantRadius = Math.max(1, Math.min(12, msg.plantRadius));
+            Config.plantMaxCount = Math.max(1, Math.min(256, msg.plantMaxCount));
             Config.blacklistExpression = msg.blacklistExpression == null ? "" : msg.blacklistExpression.trim();
 
             // Persist to disk

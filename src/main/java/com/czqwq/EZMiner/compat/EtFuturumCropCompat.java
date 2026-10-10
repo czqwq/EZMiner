@@ -26,24 +26,35 @@ import com.czqwq.EZMiner.core.crop.ICropAdapter;
  */
 public class EtFuturumCropCompat implements ICropAdapter {
 
+    private static final Object INIT_LOCK = new Object();
     private static volatile boolean initialized;
-    private static boolean efLoaded;
+    private static volatile boolean efLoaded;
 
     // ── Cached EFR crop classes ───────────────────────────────────────────────
     private static Class<?> berryBushType;
     private static Class<?> baseCaveVinesType;
 
     /**
-     * Resolves EFR crop classes once. Idempotent — subsequent calls are no-ops.
+     * Resolves EFR crop classes once. Idempotent and race-safe.
+     *
+     * <p>
+     * {@code initialized} is published <strong>after</strong> resolution: setting it first let a
+     * racing caller see {@code initialized == true} with {@code efLoaded} still false and return, so
+     * the EFR crop adapters never registered for that JVM.
+     * </p>
      */
     public static void init() {
         if (initialized) return;
-        initialized = true;
+        synchronized (INIT_LOCK) {
+            if (initialized) return;
 
-        berryBushType = ClassNameCompatSupport.resolveClass("ganymedes01.etfuturum.blocks.BlockBerryBush");
-        baseCaveVinesType = ClassNameCompatSupport.resolveClass("ganymedes01.etfuturum.blocks.BaseCaveVines");
+            berryBushType = ClassNameCompatSupport.resolveClass("ganymedes01.etfuturum.blocks.BlockBerryBush");
+            baseCaveVinesType = ClassNameCompatSupport.resolveClass("ganymedes01.etfuturum.blocks.BaseCaveVines");
 
-        efLoaded = berryBushType != null || baseCaveVinesType != null;
+            efLoaded = berryBushType != null || baseCaveVinesType != null;
+
+            initialized = true;
+        }
     }
 
     /**

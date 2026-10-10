@@ -659,6 +659,12 @@ public class EZMinerConfigGui extends GuiScreen {
 
         recalcTotalContentH();
         updateTabVisibility();
+        // Centre the controls in their rows on the FIRST frame too. initClientFields/
+        // initServerFields place fields at the row TOP (contentRowScreenY), while
+        // updateScrolledPositions uses the row CENTRE (getControlY); without this call the
+        // first open is drawn misaligned (up to ~27px on multi-line rows) and then "jumps" as
+        // soon as the wheel or a tab button is touched.
+        updateScrolledPositions();
     }
 
     @Override

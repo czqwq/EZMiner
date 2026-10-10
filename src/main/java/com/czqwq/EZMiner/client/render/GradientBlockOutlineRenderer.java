@@ -95,28 +95,42 @@ public class GradientBlockOutlineRenderer implements BlockOutlineRenderStrategy 
     }
 
     /**
-     * Renders all blocks in one band. Sorts indices so adjacent blocks form
-     * contiguous ranges, minimising draw calls.
+     * Renders one band by merging the exact index ranges of its blocks.
+     *
+     * <p>
+     * The index stream is <strong>not</strong> uniform per position: {@link SpaceCalculator}
+     * skips fully-enclosed blocks entirely and appends only the surviving edges of a partially
+     * exposed one, while {@code positions} still lists every block. The previous
+     * {@code renderRange(blockIndex * 24, count * 24)} therefore shifted every band onto the
+     * wrong blocks as soon as one enclosed block appeared. The per-position ranges now come from
+     * the geometry that was actually uploaded, so each band draws exactly its own blocks.
+     * </p>
      */
     private static void renderBand(RenderCache cache, List<Integer> blockIndices) {
         if (blockIndices.isEmpty()) return;
         Collections.sort(blockIndices);
 
-        int rangeStart = blockIndices.get(0);
-        int rangeCount = 1;
-        for (int i = 1; i < blockIndices.size(); i++) {
-            final int idx = blockIndices.get(i);
-            if (idx == rangeStart + rangeCount) {
-                // Adjacent — extend the current range.
-                rangeCount++;
+        final SpaceCalculator.VertexAndIndex geometry = SpaceCalculator.lastGeometry();
+        int rangeStart = -1;
+        int rangeCount = 0;
+        for (int i = 0; i < blockIndices.size(); i++) {
+            final int positionIndex = blockIndices.get(i);
+            final int offset = geometry != null ? geometry.indexOffset(positionIndex) : positionIndex * 24;
+            final int count = geometry != null ? geometry.indexCount(positionIndex) : 24;
+            if (count <= 0) continue; // fully-enclosed block — contributes no indices
+            if (rangeStart < 0) {
+                rangeStart = offset;
+                rangeCount = count;
+            } else if (offset == rangeStart + rangeCount) {
+                rangeCount += count; // contiguous with the previous block — extend the draw
             } else {
-                // Gap — flush the previous range, start a new one.
-                cache.renderRange(rangeStart * 24, rangeCount * 24);
-                rangeStart = idx;
-                rangeCount = 1;
+                cache.renderRange(rangeStart, rangeCount);
+                rangeStart = offset;
+                rangeCount = count;
             }
         }
-        // Flush the final range.
-        cache.renderRange(rangeStart * 24, rangeCount * 24);
+        if (rangeStart >= 0 && rangeCount > 0) {
+            cache.renderRange(rangeStart, rangeCount);
+        }
     }
 }

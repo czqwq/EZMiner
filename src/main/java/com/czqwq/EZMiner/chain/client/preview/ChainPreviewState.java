@@ -1,10 +1,15 @@
 package com.czqwq.EZMiner.chain.client.preview;
 
-import org.joml.Vector3i;
-
+/**
+ * Client-side preview projection state.
+ *
+ * <p>
+ * The former {@code target} field was written on every frame and never read; the search target
+ * is owned by {@code ChainPreviewController}.
+ * </p>
+ */
 public class ChainPreviewState {
 
     public boolean frozen = false;
-    public Vector3i target = null;
     public int renderedCount = 0;
 }

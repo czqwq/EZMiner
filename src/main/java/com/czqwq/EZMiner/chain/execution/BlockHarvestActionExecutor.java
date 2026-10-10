@@ -16,6 +16,7 @@ import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.compat.GT5ToolDurabilityBridge;
 import com.czqwq.EZMiner.compat.NaturaSaguaroCompat;
+import com.czqwq.EZMiner.compat.RemovedByPlayerBridge;
 import com.czqwq.EZMiner.compat.ShearsHarvestBridge;
 import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
@@ -68,6 +69,13 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
         if (block == null || block.isAir(world, x, y, z)) return false;
         if (DeterminingIdentical.isUnbreakable(player, block, x, y, z)) return false;
 
+        // ── Protection gate, ABOVE the TE/override early returns ──
+        // Placed here deliberately: it must also cover the two vanilla escape branches below
+        // (TE carriers and blocks that override removedByPlayer), and vanilla's
+        // ItemInWorldManager.tryHarvestBlock does NOT consult canMineBlock — vanilla only checks it
+        // on the dig packet, so for an automated batch removal EZMiner's check is the only gate.
+        if (!world.canMineBlock(player, x, y, z)) return false;
+
         int meta = world.getBlockMetadata(x, y, z);
 
         // Blocks with tile entities must go through the vanilla path so that
@@ -82,15 +90,18 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
         }
 
         // Fast path: skip playAuxSFX, excess getBlock calls, and neighbor
-        // notifications (setBlock flag=2 instead of flag=3). The per-block
-        // BreakEvent fires only when Config.fireBreakEvent is enabled.
-        BlockEvent.BreakEvent event = ChainBreakEventHelper.fireIfEnabled(world, player, x, y, z);
-        if (event != null && event.isCanceled()) return false;
-
+        // notifications (setBlock flag=2 instead of flag=3).
+        //
+        // No BreakEvent is pre-fired here. The mixin's own protection gate
+        // (ChainBreakEventHelper.canBreakAt, called at the top of
+        // ezminer$tryHarvestBlockFast) fires it when Config.fireBreakEvent is on or a
+        // protection mod needs it, and the mixin computes XP itself when no event is handed in.
+        // Pre-firing here as well produced TWO BreakEvents per block (the old code fired one and
+        // passed it in, and the mixin fired a second inside canBreakAt).
         IEZMinerItemInWorldManager fastMgr = (IEZMinerItemInWorldManager) player.theItemInWorldManager;
         boolean canHarvest = block.canHarvestBlock(player, meta)
             || WitcheryVampireBridge.canHarvestWithBareHands(player);
-        boolean removed = fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, event);
+        boolean removed = fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, null);
         if (removed) {
             // Tree felling: flag adjacent leaves for vanilla decay (O(1), wood only).
             ChunkBlockWriteHelper.flagNeighbouringLeavesForDecay(world, x, y, z, block);
@@ -139,6 +150,12 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
                 if (block == null || block == Blocks.air) continue;
                 if (DeterminingIdentical.isUnbreakable(player, block, x, y, z)) continue;
 
+                // Protection gate, ABOVE the branches: it must also guard the TE-carrier and
+                // removedByPlayer-override branches below, which go through vanilla
+                // tryHarvestBlock — and that does not consult canMineBlock (vanilla only checks it
+                // on the dig packet). For an automated batch removal this is the only gate.
+                if (!world.canMineBlock(player, x, y, z)) continue;
+
                 int meta = ebs.getExtBlockMetadata(lx, ly, lz);
 
                 // TE blocks must use vanilla path (incl. TE-carrying GT ore containers
@@ -150,8 +167,26 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
                     continue;
                 }
 
-                // ── Optional per-block Forge BreakEvent (Config.fireBreakEvent) ──
-                BlockEvent.BreakEvent breakEvent = ChainBreakEventHelper.fireIfEnabled(world, player, x, y, z);
+                // Blocks that declare their own Block.removedByPlayer would have that side effect
+                // skipped by the direct EBS write, so they take the vanilla escape hatch the
+                // executors already use for TE carriers (this also runs breakBlock/TE cleanup).
+                if (RemovedByPlayerBridge.overridesRemovedByPlayer(block)) {
+                    if (player.theItemInWorldManager.tryHarvestBlock(x, y, z)) {
+                        harvested++;
+                    }
+                    continue;
+                }
+
+                // ── Forge BreakEvent for the fast path only ──
+                // This point is reached only by blocks that take the direct EBS write. The TE
+                // carrier and removedByPlayer-override branches above continue before this line,
+                // because both go through vanilla tryHarvestBlock, which fires the BreakEvent
+                // itself.
+                //
+                // Protection is NOT handled here: world.canMineBlock is consulted once per block
+                // near the top of the loop (above the branches), so it covers all three cases.
+                BlockEvent.BreakEvent breakEvent = ChainBreakEventHelper
+                    .fireIfEnabledOrProtected(world, player, x, y, z);
                 if (breakEvent != null && breakEvent.isCanceled()) continue;
 
                 // ── TiC compat: fire ActiveToolMod.beforeBlockBreak (IguanaTweaks tool
@@ -221,7 +256,7 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
                 }
 
                 // ── XP ──
-                if (removed) {
+                if (removed && !isCreative) {
                     if (breakEvent != null) {
                         XPDropHandler.handlePreComputedXP(world, block, x, y, z, breakEvent.getExpToDrop(), player);
                     } else {
@@ -253,6 +288,11 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
         if (world == null || block == null) return false;
         if (DeterminingIdentical.isUnbreakable(player, block, x, y, z)) return false;
 
+        // Protection gate, ABOVE the TE/override branch (see execute() for the vanilla-chain
+        // reason). Has no in-tree caller today; kept consistent with the other three paths so it
+        // cannot become a bypass if something starts calling it.
+        if (!world.canMineBlock(player, x, y, z)) return false;
+
         if (block.hasTileEntity(meta) || DeterminingIdentical.isGTTileEntityCarrier(block)) {
             return player.theItemInWorldManager.tryHarvestBlock(x, y, z);
         }
@@ -261,9 +301,9 @@ public class BlockHarvestActionExecutor implements ChainActionExecutor {
         boolean canHarvest = block.canHarvestBlock(player, meta)
             || WitcheryVampireBridge.canHarvestWithBareHands(player);
 
-        BlockEvent.BreakEvent event = ChainBreakEventHelper.fireIfEnabled(world, player, x, y, z);
-        if (event != null && event.isCanceled()) return false;
-
-        return fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, event);
+        // No BreakEvent is pre-fired here either: the mixin's canBreakAt fires it exactly once and
+        // computes XP itself when none is handed in. Pre-firing here as well produced TWO events per
+        // block whenever Config.fireBreakEvent was on (this call plus the one inside canBreakAt).
+        return fastMgr.ezminer$tryHarvestBlockFast(x, y, z, canHarvest, null);
     }
 }

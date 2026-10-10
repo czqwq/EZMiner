@@ -1,10 +1,11 @@
 package com.czqwq.EZMiner.compat;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockDynamicLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.init.Blocks;
 import net.minecraft.world.World;
+
+import com.czqwq.EZMiner.EZMiner;
 
 /**
  * Adapter for CoFH Core's water replacement.
@@ -13,10 +14,21 @@ import net.minecraft.world.World;
  * CoFH Core (via its ASM hooks) swaps the water blocks so a chain-mining fast path
  * runs into its {@code BlockTickingWater}
  * (<code>cofh.asmhooks.block.BlockTickingWater</code>), which <em>extends
- * {@link BlockDynamicLiquid}</em>. {@code BlockDynamicLiquid} inherits
+ * {@link net.minecraft.block.BlockDynamicLiquid}</em>. {@code BlockDynamicLiquid} inherits
  * {@code BlockLiquid.onNeighborBlockChange}, whose only branch ({@code func_149805_n})
  * handles <em>lava</em> — it is a no-op for water. So notifying such a water block
  * never makes it flow, leaving the cavity dug beneath it unfilled ("floating" water).
+ *
+ * <p>
+ * <strong>Hierarchy correction (verified against CoFH Core's ASM hooks):</strong> only the
+ * <em>flowing</em> replacement conflates with {@link net.minecraft.block.BlockDynamicLiquid}. {@code Blocks.water}
+ * (id 9) is replaced by {@code cofh.asmhooks.block.BlockWater}, which extends
+ * {@code BlockStaticLiquid} and whose own {@code onNeighborBlockChange} <em>does</em> react
+ * ({@code setNotStationary} → schedule). The "water no-op" premise therefore holds for the
+ * flowing block only. The reschedule branch below is keyed on {@code Material.water} rather
+ * than the class so it also covers {@code BlockStaticLiquid} water and Forge
+ * {@code BlockFluidClassic} water (e.g. EnderIO's {@code BlockFluidEio}).
+ * </p>
  *
  * <p>
  * This bridge is deterministic: when a notified water neighbour no longer has the
@@ -44,19 +56,47 @@ public final class CoFHWaterBridge {
         // Cheap pre-filter: only water.
         if (neighbour.getMaterial() != Material.water) return;
 
-        Block below = world.getBlock(x, y - 1, z);
-        if (below != null && below == Blocks.air) {
-            world.setBlock(x, y - 1, z, Blocks.flowing_water, 8, 3);
-            // Promptly settle the placed water (BlockDynamicLiquid is not auto-scheduled
-            // when placed via setBlock).
-            world.scheduleBlockUpdate(x, y - 1, z, Blocks.flowing_water, 5);
+        if (!world.blockExists(x, y - 1, z)) {
+            // Do not synchronously load a chunk from a neighbour-notify sweep.
+        } else {
+            Block below = world.getBlock(x, y - 1, z);
+            if (isWaterReplaceable(below)) {
+                dropReplaced(world, x, y - 1, z, below);
+                world.setBlock(x, y - 1, z, Blocks.flowing_water, 8, 3);
+                // Promptly settle the placed water (BlockDynamicLiquid is not auto-scheduled
+                // when placed via setBlock).
+                world.scheduleBlockUpdate(x, y - 1, z, Blocks.flowing_water, 5);
+            }
         }
 
-        // Also schedule the neighbour's own flow engine so levels settle; covers the
-        // CoFH BlockTickingWater (BlockDynamicLiquid) no-op for onNeighborBlockChange.
-        if (neighbour instanceof BlockDynamicLiquid && world.getBlock(x, y, z) == neighbour) {
+        // Also schedule the neighbour's own flow engine so levels settle. Guarded on the
+        // material rather than `instanceof BlockDynamicLiquid`: Blocks.water is replaced by
+        // CoFH's BlockWater, which extends BlockStaticLiquid (not BlockDynamicLiquid), and
+        // Forge-fluid water (e.g. EnderIO's BlockFluidEio) is a BlockFluidClassic — neither
+        // would have matched the old check. A bare updateTick is a no-op for non-liquids, so
+        // the wider guard is safe.
+        if (neighbour.getMaterial() == Material.water && world.blockExists(x, y, z)
+            && world.getBlock(x, y, z) == neighbour) {
             world.scheduleBlockUpdate(x, y, z, neighbour, neighbour.tickRate(world));
         }
+    }
+
+    /**
+     * Mirrors vanilla {@code BlockDynamicLiquid}'s can-flow-into test
+     * ({@code func_149809_q}/{@code func_149807_p}): any cell whose material is neither water
+     * nor lava and which does not block movement is replaceable.
+     *
+     * <p>
+     * The bridge previously tested {@code below == Blocks.air}, so water sitting above tall
+     * grass, a torch, vines or any other replaceable non-air block never flowed into the
+     * vacated cell and stayed visually floating.
+     * </p>
+     */
+    private static boolean isWaterReplaceable(Block below) {
+        if (below == null) return false;
+        Material material = below.getMaterial();
+        if (material == Material.water || material == Material.lava) return false;
+        return !material.blocksMovement();
     }
 
     /**
@@ -78,18 +118,38 @@ public final class CoFHWaterBridge {
         if (world == null || world.isRemote || y < 0) return;
         int maxY = Math.min(255, y + MAX_SWEEP);
         for (int cy = y + 1; cy <= maxY; cy++) {
+            if (!world.blockExists(x, cy, z)) break; // unloaded: do not force a chunk load
             Block above = world.getBlock(x, cy, z);
             if (above == null || (above != Blocks.air && above.getMaterial() != Material.water)) {
                 break; // solid ceiling — nothing reachable above this point
             }
             if (above.getMaterial() != Material.water) continue; // air — keep climbing
             // Water: check its own support.
-            Block support = world.getBlock(x, cy - 1, z);
-            if (support == null || support == Blocks.air) {
+            Block support = world.blockExists(x, cy - 1, z) ? world.getBlock(x, cy - 1, z) : null;
+            if (isWaterReplaceable(support)) {
+                dropReplaced(world, x, cy - 1, z, support);
                 world.setBlock(x, cy - 1, z, Blocks.flowing_water, 8, 3);
                 world.scheduleBlockUpdate(x, cy - 1, z, Blocks.flowing_water, 5);
             }
             break; // handled the first water cell in this column
+        }
+    }
+
+    /**
+     * Mirrors the drop vanilla's {@code func_149813_h} performs when it replaces a non-air cell.
+     *
+     * <p>
+     * Without this, the replaceable-cell fill deleted a vine / reed / torch in the cell silently.
+     * There is no double-drop risk with {@code BushSupportBridge}: that bridge re-checks that the
+     * plant is <em>still present</em> at the position, and this fill has already replaced it.
+     * </p>
+     */
+    private static void dropReplaced(World world, int x, int y, int z, Block replaced) {
+        if (replaced == null || replaced.getMaterial() == Material.air) return;
+        try {
+            replaced.dropBlockAsItem(world, x, y, z, world.getBlockMetadata(x, y, z), 0);
+        } catch (Exception e) {
+            EZMiner.LOG.warn("EZMiner water bridge: dropping the replaced block at ({},{},{}) failed", x, y, z, e);
         }
     }
 

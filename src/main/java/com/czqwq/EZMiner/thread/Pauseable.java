@@ -28,11 +28,12 @@ public class Pauseable extends Thread {
     private int budgetRemaining = 0;
 
     /**
-     * Absolute nanosecond deadline for cooperative yield.
-     * When {@link Config#enableBudgetDeadline} is {@code true} and this deadline
-     * is exceeded, {@link #waitUntil()} returns even if the thread hasn't been
-     * unpaused — providing a safety net against lost unpark signals.
-     * Default: {@link Long#MAX_VALUE} (never expires).
+     * Wall-clock deadline retained for API compatibility. <strong>Inert:</strong> it is written by
+     * {@link #setDeadlineNanos(long)} (when {@link Config#enableBudgetDeadline} is on) and read by
+     * nothing. {@link #waitUntil()} deliberately exits only on unpark or interrupt, because
+     * honouring the deadline either ended a search permanently on an ordinary tick-end pause (every
+     * founder treats {@code !consumeBudget()} as "return from {@code run1}") or resumed world reads
+     * outside the server-tick window. See {@code docs/todo.md} for its removal.
      */
     private volatile long deadlineNanos = Long.MAX_VALUE;
 
@@ -87,9 +88,11 @@ public class Pauseable extends Thread {
     public void pause() {
         if (!started.get()) throw new RuntimeException("Thread not started");
         if (stopped.get()) {
-            EZMiner.LOG.error("Thread already stopped! Cannot pause.");
-            errorCount++;
-            if (errorCount > 10) throw new RuntimeException("Attempted operation on stopped thread 10+ times");
+            // Not an error: the task may have finished between the tick-end prune and this
+            // call. Debug-level so a world reload cannot spam the log.
+            if (EZMiner.LOG.isDebugEnabled()) {
+                EZMiner.LOG.debug("pause() on an already-stopped thread; ignoring.");
+            }
             return;
         }
         paused.set(true);
@@ -99,9 +102,9 @@ public class Pauseable extends Thread {
     public void unPause() {
         if (!started.get()) throw new RuntimeException("Thread not started");
         if (stopped.get()) {
-            EZMiner.LOG.error("Thread already stopped! Cannot resume.");
-            errorCount++;
-            if (errorCount > 10) throw new RuntimeException("Attempted operation on stopped thread 10+ times");
+            if (EZMiner.LOG.isDebugEnabled()) {
+                EZMiner.LOG.debug("unPause() on an already-stopped thread; ignoring.");
+            }
             return;
         }
         paused.set(false);
@@ -110,10 +113,23 @@ public class Pauseable extends Thread {
     }
 
     /**
-     * Sets an absolute nanosecond deadline after which {@link #waitUntil()} will return
-     * even if the thread hasn't been explicitly unpaused. This is a safety net against
-     * lost unpark signals — when {@link Config#enableBudgetDeadline} is {@code false}
-     * (default), the deadline is never set and this has no effect.
+     * Records a wall-clock deadline. Retained for API compatibility — the deadline no longer
+     * lets {@link #waitUntil()} exit early.
+     *
+     * <p>
+     * Honouring the deadline while {@code paused} was a contract violation: the founder woke
+     * 50 ms after tick END, {@link #consumeBudget()} reported "continue", and the scan resumed
+     * reading the world outside the server-tick window. It was also unrecoverable to fix by
+     * returning "stop", because every founder treats {@code !consumeBudget()} as "return from
+     * run1" (e.g. {@code ChainPositionFounder.java:70,74,117,121} and
+     * {@code BasePositionFounder.tryProcessShellPos:235}), which would end the search
+     * permanently on an ordinary tick-end pause. The lost-unpark scenario the deadline guarded
+     * against does not exist in practice: {@code ParallelTick.processPreTickTasks(true)} calls
+     * {@link #unPause()} (and therefore {@code LockSupport.unpark}) at every server tick START.
+     * World reads therefore stay inside the tick window unconditionally, which is the stronger
+     * invariant. {@link Config#enableBudgetDeadline} is consequently inert; this is recorded in
+     * {@code docs/review/agent-teams/fix-report.md}.
+     * </p>
      *
      * @param nanos absolute deadline in nanoseconds ({@link System#nanoTime()} units)
      */
@@ -128,11 +144,7 @@ public class Pauseable extends Thread {
         while (paused.get()) {
             if (Thread.currentThread()
                 .isInterrupted()) return;
-            // Deadline safety net: yield if the deadline has passed (defense against
-            // lost unpark signals). No-op when deadlineNanos == Long.MAX_VALUE.
-            long remaining = deadlineNanos - System.nanoTime();
-            if (remaining <= 0) return;
-            LockSupport.parkNanos(Math.min(1_000_000, remaining)); // 1ms park, yields CPU
+            LockSupport.parkNanos(1_000_000L); // 1ms park, yields CPU
         }
     }
 

@@ -101,6 +101,10 @@ public class PlantingModeHandler {
                         // Shared candidate predicate — the client planting preview
                         // uses the exact same check, so preview == planting area.
                         if (!isPlantablePosition(world, x, y, z, plantable)) continue;
+                        // Per-position protection (V04's missing half). Planting mode replays the
+                        // item's onItemUse over the whole radius, so a region/claim mod that only
+                        // guards the trigger block would still let the whole area be planted.
+                        if (!world.canMineBlock(player, x, y, z)) continue;
                         // Vanilla planting path: the item validates the soil itself
                         // (canSustainPlant), offsets to y+1 and consumes from the stack.
                         if (item.onItemUse(current, player, world, x, y, z, 1, 0.5F, 1.0F, 0.5F)) {

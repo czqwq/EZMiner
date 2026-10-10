@@ -204,16 +204,30 @@ public class GT5BlockSwapCompat {
 
     /**
      * Initialises a freshly-created GT TileEntity with the given item-damage
-     * (meta-tile-entity ID). Must be called after {@code world.setBlock()} with
-     * the correct base meta.
+     * (meta-tile-entity ID) and the placed item's NBT. Must be called after
+     * {@code world.setBlock()} with the correct base meta.
+     *
+     * <p>
+     * <strong>The NBT argument matters.</strong> This used to pass {@code null}
+     * unconditionally, while GT5U's own placement path
+     * ({@code gregtech.common.blocks.ItemMachines}) passes
+     * {@code aStack.getTagCompound()}, then runs {@code initDefaultModes(...)} and sets the
+     * owner. Passing null discarded the machine's configured mode and ownership, so a
+     * block-swapped GT machine came back with defaults.
+     * </p>
+     *
+     * @param stack the replacement item, read for its NBT tag; may be {@code null}
      */
-    public static void initGTMetaTileEntity(World world, int x, int y, int z, int itemDamage) {
+    public static void initGTMetaTileEntity(World world, int x, int y, int z, int itemDamage,
+        net.minecraft.item.ItemStack stack) {
         if (!isAvailable() || setInitialValuesMethod == null) return;
         TileEntity te = world.getTileEntity(x, y, z);
         if (te == null) return;
         try {
-            // CommonBaseMetaTileEntity.setInitialValuesAsNBT(null, (short) itemDamage)
-            setInitialValuesMethod.invoke(te, null, (short) itemDamage);
+            // CommonBaseMetaTileEntity.setInitialValuesAsNBT(nbt, (short) itemDamage)
+            // Mirrors GT's own ItemMachines placement, which forwards the stack's tag compound.
+            net.minecraft.nbt.NBTTagCompound tag = stack == null ? null : stack.getTagCompound();
+            setInitialValuesMethod.invoke(te, tag, (short) itemDamage);
         } catch (Exception e) {
             EZMiner.LOG.debug("GT5BlockSwapCompat: TE init failed — {}", e.getMessage());
         }

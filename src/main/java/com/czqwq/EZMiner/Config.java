@@ -213,13 +213,6 @@ public class Config {
     public static boolean enableSafeReflection = true;
 
     /**
-     * When true (default), mixins are only applied when the target class bytecode
-     * shape matches expectations — preventing crashes on GTNH version mismatches.
-     * Requires a game restart to take effect (mixin plugin is loaded at startup).
-     */
-    public static boolean enableMixinCapabilityGates = true;
-
-    /**
      * When true (default), network packet handlers verify they are running on the
      * main thread and defer execution if called from a netty IO thread.
      */
@@ -247,10 +240,15 @@ public class Config {
     public static boolean enableDropFallbackChain = true;
 
     /**
-     * When true, background search threads respect a deadline timestamp and yield
-     * at tick boundaries even if {@code unPause()} is never called (defense against
-     * founder-thread hangs). Default: false (experimental — may affect search
-     * throughput).
+     * <strong>Inert / deprecated — currently has no effect.</strong> The deadline it controls can
+     * no longer be honoured: every founder treats {@code !consumeBudget()} as "return from
+     * {@code run1}" (e.g. {@code ChainPositionFounder.java:70,74,117,121}), so letting the
+     * deadline end the park would abort the search permanently on an ordinary tick-end pause,
+     * while letting it return "continue" resumed world reads outside the server-tick window.
+     * Honouring it was therefore incompatible with the documented tick-pause contract, and
+     * {@code Pauseable.waitUntil()} now exits only on unpark or interrupt. The knob is kept (its
+     * GUI row and both lang labels remain) because removing a persisted server config field
+     * needs a build to validate the GUI row-shift invariants. See {@code docs/todo.md}.
      */
     public static boolean enableBudgetDeadline = false;
 
@@ -306,10 +304,28 @@ public class Config {
      */
     public static boolean notifyNeighborsOnChainBreak = true;
 
-    /** Remove Fortune III cap for GT/BW ore drops. Mixin-based — requires game restart. */
+    /** Remove Fortune III cap for GT/BW ore drops. Read per ore-drop call, so no restart needed. */
     public static boolean enableUnlimitedOreFortune = false;
 
-    /** Max Fortune level for GT/BW ores (clamped to 255). Mixin-based — requires game restart. */
+    /**
+     * <strong>NOT ENFORCED — dead setting, kept for config-file compatibility.</strong>
+     *
+     * <p>
+     * The uncap mixins only remove GT5U's own {@code fortune > 3} clamp; they never read this value,
+     * and {@code utils/FortuneCompatHelper} reads only the two booleans beside it. Setting it
+     * therefore has no effect on drops — with {@link #enableUnlimitedOreFortune} on, a modded tool
+     * with Fortune N is honoured at N regardless of this field. The only observable effect is the
+     * {@code ConfigValidator} warning when it is above 100.
+     * </p>
+     *
+     * <p>
+     * Enforcing it requires a new injection into each of the three version-locked ore mixins
+     * ({@code @ModifyVariable}/{@code @ModifyExpressionValue} on the {@code fortune} local). That
+     * could not be compile- or apply-verified in this session, and a non-applying injection is a
+     * silent no-op — exactly the failure mode this field already has. Tracked for a follow-up with
+     * a build available; see {@code docs/review/agent-teams/fix-report.md} §Repair round 2 (V40).
+     * </p>
+     */
     public static int maxFortuneLevel = 3;
 
     /**
@@ -603,13 +619,16 @@ public class Config {
             false,
             "Master switch for the Block Swap special sub-mode. "
                 + "When false (default), the mode is hidden from the list.");
-        blockSwapRadius = serverConfiguration.getInt(
-            "blockSwapRadius",
-            Configuration.CATEGORY_GENERAL,
-            8,
-            0,
-            Integer.MAX_VALUE,
-            "Maximum radius for block swap mode. Controls how far from the target block " + "the search expands.");
+        blockSwapRadius = clampBlockSwapRadius(
+            serverConfiguration.getInt(
+                "blockSwapRadius",
+                Configuration.CATEGORY_GENERAL,
+                8,
+                0,
+                Integer.MAX_VALUE,
+                "Maximum radius for block swap mode. Controls how far from the target block the search "
+                    + "expands. Clamped to 0..32: the search is a synchronous full-shell world scan on the "
+                    + "server thread, and blockSwapLimit bounds the matches, not the scan."));
         blockSwapLimit = serverConfiguration.getInt(
             "blockSwapLimit",
             Configuration.CATEGORY_GENERAL,
@@ -617,13 +636,19 @@ public class Config {
             0,
             Integer.MAX_VALUE,
             "Maximum number of blocks that can be swapped in a single block-swap operation.");
-        logBigRadius = serverConfiguration.getInt(
-            "logBigRadius",
-            Configuration.CATEGORY_GENERAL,
-            1024,
-            8,
-            Integer.MAX_VALUE,
-            "Maximum radius (in blocks) for tree-felling (LogFounder blast sub-mode).");
+        // Upper bound: the LogFounder sweep cost is O(R² · H) with H up to 4R, so an
+        // unbounded radius is a multi-hour scan (see LogFounder.run1). 64 blocks is already
+        // far beyond any real tree while keeping the worst case tractable.
+        logBigRadius = clampLogBigRadius(
+            serverConfiguration.getInt(
+                "logBigRadius",
+                Configuration.CATEGORY_GENERAL,
+                64,
+                8,
+                Integer.MAX_VALUE,
+                "Maximum radius (in blocks) for tree-felling (LogFounder blast sub-mode). "
+                    + "Clamped to 8..64: the sweep cost grows as O(R^2 * 4R), so a large radius makes the "
+                    + "tree-felling scan take minutes-to-hours."));
         logBlockLimit = serverConfiguration.getInt(
             "logBlockLimit",
             Configuration.CATEGORY_GENERAL,
@@ -709,12 +734,6 @@ public class Config {
             Configuration.CATEGORY_GENERAL,
             true,
             "When true (default), compat reflection uses safe wrappers with LinkageError guards.");
-        enableMixinCapabilityGates = serverConfiguration.getBoolean(
-            "enableMixinCapabilityGates",
-            Configuration.CATEGORY_GENERAL,
-            true,
-            "When true (default), mixins are only applied when target class bytecode matches expectations. "
-                + "Requires game restart to take effect.");
         enableMainThreadGuard = serverConfiguration.getBoolean(
             "enableMainThreadGuard",
             Configuration.CATEGORY_GENERAL,
@@ -758,16 +777,17 @@ public class Config {
             1,
             40,
             "Max ticks the server waits for the client to switch tools (default: 5 = 0.25s).");
-        addExhaustion = serverConfiguration
-            .get(
-                Configuration.CATEGORY_GENERAL,
-                "addExhaustion",
-                0.025,
-                "Food exhaustion added to the player for each block mined during a chain operation. "
-                    + "Negative values restore food.",
-                -Double.MAX_VALUE,
-                Double.MAX_VALUE)
-            .getDouble();
+        addExhaustion = clampAddExhaustion(
+            serverConfiguration
+                .get(
+                    Configuration.CATEGORY_GENERAL,
+                    "addExhaustion",
+                    0.025,
+                    "Food exhaustion added to the player for each block mined during a chain operation. "
+                        + "Negative values restore food.",
+                    -Double.MAX_VALUE,
+                    Double.MAX_VALUE)
+                .getDouble());
         dropToPlayer = serverConfiguration.getBoolean(
             "dropToPlayer",
             Configuration.CATEGORY_GENERAL,
@@ -977,6 +997,32 @@ public class Config {
     }
 
     /**
+     * Applies server-synced stability / tool-handoff settings on the client.
+     *
+     * <p>
+     * Same pattern as {@link #applyServerRuntimePerformance}: these nine fields are
+     * GUI-editable and persisted by {@code PacketSaveServerConfig}, so they must be
+     * mirrored into the client's {@code Config} statics. Without this the OP GUI
+     * displayed the client's local {@code EZMiner_Server.cfg} values and an OP
+     * "Save" silently overwrote the server's real settings with them.
+     * </p>
+     */
+    public static void applyServerRuntimeStability(boolean syncedEnableChainWatchdog,
+        boolean syncedEnableDropFallbackChain, boolean syncedEnableMainThreadGuard, boolean syncedEnableBudgetDeadline,
+        boolean syncedEnableConfigValidation, boolean syncedEnableSafeReflection, int syncedChainWatchdogTimeoutTicks,
+        boolean syncedEnableToolBreakHandoff, int syncedToolBreakHandoffTimeoutTicks) {
+        enableChainWatchdog = syncedEnableChainWatchdog;
+        enableDropFallbackChain = syncedEnableDropFallbackChain;
+        enableMainThreadGuard = syncedEnableMainThreadGuard;
+        enableBudgetDeadline = syncedEnableBudgetDeadline;
+        enableConfigValidation = syncedEnableConfigValidation;
+        enableSafeReflection = syncedEnableSafeReflection;
+        chainWatchdogTimeoutTicks = Math.max(20, Math.min(1200, syncedChainWatchdogTimeoutTicks));
+        enableToolBreakHandoff = syncedEnableToolBreakHandoff;
+        toolBreakHandoffTimeoutTicks = Math.max(1, Math.min(40, syncedToolBreakHandoffTimeoutTicks));
+    }
+
+    /**
      * Applies server-synced general config values on the client (P1-1 fix).
      * Mirrors the server's actual runtime values into the client's {@code Config}
      * static fields so the OP GUI displays correct values instead of the
@@ -993,12 +1039,15 @@ public class Config {
         int syncedPlantMaxCount, boolean syncedNotifyNeighborsOnChainBreak) {
         cachedBreakPerTick = Math.max(1, Math.min(1024, syncedCachedBreakPerTick));
         dropImmediately = syncedDropImmediately;
-        addExhaustion = syncedAddExhaustion;
+        addExhaustion = clampAddExhaustion(syncedAddExhaustion);
         dropToPlayer = syncedDropToPlayer;
         minesweeperProbeCooldownSeconds = Math.max(0.1, syncedMinesweeperCooldown);
         sudokuProbeCooldownSeconds = Math.max(0.1, syncedSudokuCooldown);
         prospectProbeIntervalSeconds = Math.max(0.1, syncedProspectProbeInterval);
         prospectMaxScanRadiusChunks = Math.max(1, Math.min(7, syncedProspectMaxScanRadius));
+        // Single source of truth for the plant clamps: 1..12 / 1..256, matching
+        // loadServerOnlyInternal (Config.java:840-863). The OP save path used to accept
+        // 1..64 / 1..1024, so an OP's own session diverged from every other client's.
         plantRadius = Math.max(1, Math.min(12, syncedPlantRadius));
         plantMaxCount = Math.max(1, Math.min(256, syncedPlantMaxCount));
         enableCachedChain = syncedEnableCachedChain;
@@ -1016,6 +1065,53 @@ public class Config {
         mergeXPOrbs = syncedMergeXPOrbs;
         fireBreakEvent = syncedFireBreakEvent;
         notifyNeighborsOnChainBreak = syncedNotifyNeighborsOnChainBreak;
+    }
+
+    /**
+     * Rejects {@code NaN}/infinite and clamps {@code addExhaustion} to a sane magnitude.
+     *
+     * <p>
+     * An unvalidated {@code NaN} reaching {@code FoodStats.foodExhaustionLevel} makes
+     * {@code foodExhaustionLevel > 4.0F} false forever, so no player ever loses
+     * saturation or hunger again — and because {@code Double.parseDouble("NaN")} succeeds,
+     * the corrupt value survives a config reload.
+     * </p>
+     */
+    public static double clampAddExhaustion(double value) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) return 0.025;
+        return Math.max(-1000.0, Math.min(1000.0, value));
+    }
+
+    /**
+     * Hard cap for the tree-felling scan radius (server {@link #logBigRadius} and client
+     * {@link #clientLogBigRadius}).
+     *
+     * <p>
+     * {@code LogFounder.run1} enumerates shells with {@code highRadius} growing up to
+     * {@code 4 × curRadius}, so the sweep cost is {@code O(R² · 4R)} — at the previous 1024
+     * default that was ~3.4e10 world lookups and the mode effectively never finished, on the
+     * client preview path as well as the server. 64 blocks is already far beyond any real
+     * tree while keeping the worst case tractable; the lower bound of 8 matches the Forge
+     * config range the field has always declared.
+     * </p>
+     */
+    public static int clampLogBigRadius(int value) {
+        return Math.max(8, Math.min(64, value));
+    }
+
+    /**
+     * Hard cap for the block-swap scan radius.
+     *
+     * <p>
+     * {@code BlockSwapModeHandler.findAllMatching} walks every Chebyshev shell up to the radius,
+     * doing {@code world.blockExists} + {@code world.getBlock} +
+     * {@code DeterminingIdentical.identical} per position, synchronously on the server thread
+     * inside the interact event. {@code blockSwapLimit} bounds the matches, not the scan, so an
+     * unbounded radius hung the tick; 32 blocks is already a very large swap.
+     * </p>
+     */
+    public static int clampBlockSwapRadius(int value) {
+        return Math.max(0, Math.min(32, value));
     }
 
     /**
@@ -1173,13 +1269,15 @@ public class Config {
             0,
             Integer.MAX_VALUE,
             "Client preferred block swap limit. Effective value is clamped by server max.");
-        clientLogBigRadius = clientConfiguration.getInt(
-            "clientLogBigRadius",
-            CLIENT_CATEGORY,
-            1024,
-            8,
-            Integer.MAX_VALUE,
-            "Client preferred tree-felling radius. Effective value is clamped by server max.");
+        clientLogBigRadius = clampLogBigRadius(
+            clientConfiguration.getInt(
+                "clientLogBigRadius",
+                CLIENT_CATEGORY,
+                64,
+                8,
+                Integer.MAX_VALUE,
+                "Client preferred tree-felling radius. Effective value is clamped by server max, and hard-capped "
+                    + "to 8..64 because the sweep cost grows as O(R^2 * 4R)."));
         clientLogBlockLimit = clientConfiguration.getInt(
             "clientLogBlockLimit",
             CLIENT_CATEGORY,
@@ -1468,13 +1566,6 @@ public class Config {
                 true,
                 "Use safe reflection wrappers with error guards.")
             .set(enableSafeReflection);
-        serverConfiguration
-            .get(
-                Configuration.CATEGORY_GENERAL,
-                "enableMixinCapabilityGates",
-                true,
-                "Only apply mixins when target class matches expectations (requires restart).")
-            .set(enableMixinCapabilityGates);
         serverConfiguration
             .get(
                 Configuration.CATEGORY_GENERAL,

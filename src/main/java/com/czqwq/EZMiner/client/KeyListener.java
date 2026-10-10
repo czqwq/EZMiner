@@ -1,5 +1,6 @@
 package com.czqwq.EZMiner.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.client.event.MouseEvent;
@@ -58,8 +59,23 @@ public class KeyListener {
         ClientProxy proxy = (ClientProxy) EZMiner.proxy;
         MinerModeState state = proxy.clientState.minerModeState;
 
+        // A screen opening swallows the key-release event (InputEvent is not dispatched while
+        // mc.currentScreen != null), so the release edge below would never be seen and the server
+        // would keep mining with the chain key stuck "held". Release proactively when a GUI is up.
+        if (Minecraft.getMinecraft().currentScreen != null && wasHoldingChain) {
+            stopChain();
+            wasHoldingChain = false;
+        }
+
         // ===== HUD config key =====
         if (KEY_HUD_CONFIG.isPressed()) {
+            // Do NOT return before the hold-state machine below: that early return is what left the
+            // chain running when the HUD-config GUI was opened while the chain key was held. Release
+            // first, then open.
+            if (wasHoldingChain) {
+                stopChain();
+                wasHoldingChain = false;
+            }
             HudConfigGui.open();
             return;
         }
@@ -200,6 +216,11 @@ public class KeyListener {
     public void onMouseEvent(MouseEvent event) {
         if (!Config.blockScrollOnChainKey) return;
         if (event.dwheel == 0) return;
+
+        // MouseEvent is posted by Minecraft.runTick regardless of mc.currentScreen, so without this
+        // guard a wheel scroll inside the inventory / a chest / the config GUI advanced EZMiner's
+        // sub-mode (and fought the GUI's own handleMouseInput) while the chain key was held.
+        if (Minecraft.getMinecraft().currentScreen != null) return;
 
         // In toggle mode the chain key is not physically held, so we must check
         // the toggle state instead of KEY_CHAIN.getIsKeyPressed().

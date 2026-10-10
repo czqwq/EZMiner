@@ -66,6 +66,8 @@ public final class ChainPreCalcEngine {
      * once — otherwise every idle player gets 20 packets/second.
      */
     private boolean dirty;
+    /** Number of results already pushed to the client — the base for the V08 append-only delta. */
+    private int lastSentSize;
 
     private static final int CHECKS_PER_TICK = 2048;
 
@@ -77,7 +79,13 @@ public final class ChainPreCalcEngine {
 
     public void tick(EntityPlayerMP player, MinerConfig pConfig, MinerModeState modeState) {
         if (!modeState.isCachedChainMode()) {
-            stop(player);
+            // Only run the cleanup when there is actually something to clean up. tick() is called
+            // every server tick for every player while the chain key is held AND on release, and
+            // stop() clears four collections plus a ConcurrentHashMap entry — for a player who
+            // never used a cached chain mode that was pure per-tick work.
+            if (inProgress || dirty || hasState()) {
+                stop(player);
+            }
             return;
         }
         if (player == null || player.worldObj == null || player.isDead) return;
@@ -112,6 +120,22 @@ public final class ChainPreCalcEngine {
 
     public void cleanup() {
         clearState();
+        dirty = false;
+    }
+
+    /**
+     * True when any per-player pre-calculation state is live and would need clearing.
+     * Lets {@link #tick} skip the {@link #stop} cleanup for players who never ran a cached
+     * chain pre-calculation (the common case, and it was previously done every server tick).
+     *
+     * <p>
+     * {@code sampleBlock} is the sentinel: {@link #start} sets it on every path that leaves the
+     * engine with something to clear, and {@code clearState()} nulls it, so a non-null value
+     * implies {@code center}/{@code hash}/the collections also hold state.
+     * </p>
+     */
+    private boolean hasState() {
+        return sampleBlock != null;
     }
 
     // ── Internal state machine ──
@@ -128,6 +152,7 @@ public final class ChainPreCalcEngine {
         inProgress = false;
         hash = -1;
         cooldown = 0;
+        lastSentSize = 0;
     }
 
     private void start(EntityPlayerMP player, MinerConfig pConfig, MinerModeState modeState) {
@@ -166,6 +191,8 @@ public final class ChainPreCalcEngine {
         long centerKey = BasePositionFounder.encodePos(bx, by, bz);
         visited.add(centerKey);
         results.add(new Vector3i(bx, by, bz));
+        // A new pre-calculation restarts the client-side list, so the next packet is a full one.
+        lastSentSize = 0;
         inProgress = true;
     }
 
@@ -288,8 +315,30 @@ public final class ChainPreCalcEngine {
 
             int dimension = world.provider.dimensionId;
             dirty = true;
-            EZMiner.network.network
-                .sendTo(new PacketCachedBlockSync(results, center.x, center.y, center.z, dimension), player);
+            // Append-only delta (V08). Sending the whole growing list every tick cost O(n²) bytes
+            // per pre-calculation plus a fresh netty allocation each tick. Send only what the client
+            // does not have yet: startIndex 0 when it needs a full list (first send), otherwise the
+            // tail since the last packet. An empty tail is not sent at all.
+            final List<Vector3i> payload;
+            final int startIndex;
+            if (lastSentSize > 0 && lastSentSize <= results.size()) {
+                if (lastSentSize == results.size()) {
+                    payload = null; // nothing new this tick
+                    startIndex = lastSentSize;
+                } else {
+                    payload = new ArrayList<>(results.subList(lastSentSize, results.size()));
+                    startIndex = lastSentSize;
+                }
+            } else {
+                payload = new ArrayList<>(results);
+                startIndex = 0;
+            }
+            if (payload != null) {
+                EZMiner.network.network.sendTo(
+                    new PacketCachedBlockSync(payload, center.x, center.y, center.z, dimension, startIndex),
+                    player);
+            }
+            lastSentSize = results.size();
 
             if (done) {
                 inProgress = false;

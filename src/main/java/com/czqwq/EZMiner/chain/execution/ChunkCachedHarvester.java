@@ -15,6 +15,7 @@ import org.joml.Vector3i;
 
 import com.czqwq.EZMiner.compat.GT5ToolDurabilityBridge;
 import com.czqwq.EZMiner.compat.NaturaSaguaroCompat;
+import com.czqwq.EZMiner.compat.RemovedByPlayerBridge;
 import com.czqwq.EZMiner.compat.ShearsHarvestBridge;
 import com.czqwq.EZMiner.compat.TinkersConstructLevelingBridge;
 import com.czqwq.EZMiner.compat.WitcheryVampireBridge;
@@ -123,6 +124,12 @@ public class ChunkCachedHarvester {
         if (block == null || block == Blocks.air) return false;
         if (DeterminingIdentical.isUnbreakable(player, block, x, y, z)) return false;
 
+        // Protection gate, ABOVE the two vanilla escape branches below (TE carriers and
+        // removedByPlayer overrides). Both of those go through ItemInWorldManager.tryHarvestBlock,
+        // which does NOT consult canMineBlock — vanilla only checks it on the dig packet — so for an
+        // automated chain removal this call is the only protection gate for them too.
+        if (!world.canMineBlock(player, x, y, z)) return false;
+
         int meta = currentEbs.getExtBlockMetadata(lx, ly, lz);
 
         // TE blocks → vanilla path (does its own chunk lookup). GT ore containers
@@ -138,8 +145,24 @@ public class ChunkCachedHarvester {
             return ok;
         }
 
-        // ── Optional per-block Forge BreakEvent (Config.fireBreakEvent) ──
-        BlockEvent.BreakEvent breakEvent = ChainBreakEventHelper.fireIfEnabled(world, player, x, y, z);
+        // Blocks that declare their own Block.removedByPlayer would have that side effect skipped
+        // by the direct EBS write, so they take the vanilla escape hatch used just above for TE
+        // carriers (which also runs breakBlock/TE cleanup).
+        if (RemovedByPlayerBridge.overridesRemovedByPlayer(block)) {
+            boolean ok = player.theItemInWorldManager.tryHarvestBlock(x, y, z);
+            if (ok) {
+                touchedColumns[(lx) | (lz << 4)] = true;
+            }
+            return ok;
+        }
+
+        // ── Forge BreakEvent for the direct-EBS-write path only ──
+        // Reached only by blocks that get the direct EBS write: the TE-carrier and
+        // removedByPlayer-override branches returned above, and both go through vanilla
+        // tryHarvestBlock, which fires the BreakEvent itself. The event is conditional on
+        // Config.fireBreakEvent or a protection mod that cancels through it.
+        // Protection itself is handled once per block near the top of this method.
+        BlockEvent.BreakEvent breakEvent = ChainBreakEventHelper.fireIfEnabledOrProtected(world, player, x, y, z);
         if (breakEvent != null && breakEvent.isCanceled()) return false;
 
         // ── TiC compat: fire ActiveToolMod.beforeBlockBreak (IguanaTweaks tool XP,
@@ -214,7 +237,9 @@ public class ChunkCachedHarvester {
         }
 
         // ── XP ──
-        if (removed) {
+        // Vanilla guards its XP block with !isCreative(); handlePreComputedXP has no guard of
+        // its own, so the creative case must be excluded here.
+        if (removed && !isCreative) {
             if (breakEvent != null) {
                 XPDropHandler.handlePreComputedXP(world, block, x, y, z, breakEvent.getExpToDrop(), player);
             } else {

@@ -43,26 +43,49 @@ public final class ChainWatchdog {
     private ChainWatchdog() {}
 
     /**
-     * Records that a chain operation started for the given player.
-     * Called from {@code BaseOperator.registry()}.
+     * Arms the watchdog for the given player.
+     *
+     * <p>
+     * <strong>Not called from {@code registry()} any more.</strong> Arming at chain start made the
+     * timeout fire while the founder was still legitimately searching (a big-radius blast/ore/log
+     * sweep, or a chunk-load stall), because the check sits before the empty-queue early return in
+     * {@code BaseOperator}: the shipped default is 100 ticks (5 s), so any chain whose first
+     * candidate took longer than that was force-cancelled even though it was making progress.
+     * The timer is now armed by the first real harvest ({@link #recordProgress}) and by the planner
+     * when it enqueues candidates, so "no progress" means exactly that.
+     * </p>
+     *
+     * <p>
+     * Retained (and still safe to call) for callers that want to pre-arm a timer explicitly.
+     * </p>
      */
     public static void markChainStarted(UUID playerUUID) {
         if (!Config.enableChainWatchdog) return;
-        LAST_PROGRESS_TICK.put(playerUUID, currentServerTick());
+        long tick = currentServerTick();
+        if (tick < 0) return; // server unavailable: do not seed a bogus base
+        LAST_PROGRESS_TICK.put(playerUUID, tick);
     }
 
     /**
-     * Records that the chain made progress (a block was harvested).
-     * Called from {@code BaseOperator.markHarvested()}.
+     * Records that the chain made progress (a block was harvested, or the planner enqueued new
+     * candidates). Called from {@code BaseOperator.markHarvested()} and from the enqueue path.
      */
     public static void recordProgress(UUID playerUUID) {
         if (!Config.enableChainWatchdog) return;
-        LAST_PROGRESS_TICK.put(playerUUID, currentServerTick());
+        long tick = currentServerTick();
+        if (tick < 0) return;
+        LAST_PROGRESS_TICK.put(playerUUID, tick);
     }
 
     /**
      * Checks whether the chain for the given player has exceeded the tick-based
      * timeout without progress.
+     *
+     * <p>
+     * A player with no recorded progress is <strong>not</strong> timed out: the timer only starts at
+     * the first harvest (see {@link #markChainStarted}), so "not yet armed" must not be read as
+     * "stalled since tick 0".
+     * </p>
      *
      * @param playerUUID the player's UUID
      * @return {@code true} if the watchdog has fired (chain should be cancelled)
@@ -72,6 +95,10 @@ public final class ChainWatchdog {
         Long last = LAST_PROGRESS_TICK.get(playerUUID);
         if (last == null) return false;
         long current = currentServerTick();
+        // A negative tick means "server instance unavailable"; comparing it against a real tick
+        // would produce a huge delta and a spurious timeout, which is why both writers refuse to
+        // store one and this read refuses to compare against one.
+        if (current < 0) return false;
         return (current - last) >= Config.chainWatchdogTimeoutTicks;
     }
 
@@ -82,6 +109,17 @@ public final class ChainWatchdog {
         LAST_PROGRESS_TICK.remove(playerUUID);
     }
 
+    /**
+     * Current server tick, or {@code -1} when no server instance is available.
+     *
+     * <p>
+     * The old body fell back to {@code System.currentTimeMillis() / 50} (≈3.5e10), a completely
+     * different base from {@code MinecraftServer.getTickCounter()} (a few thousand). Mixing the two
+     * made {@code current - last} explode, so a transiently unavailable server caused a spurious
+     * timeout and a cancelled chain. Returning a sentinel instead lets every caller refuse to
+     * compare rather than compare nonsense.
+     * </p>
+     */
     private static long currentServerTick() {
         try {
             MinecraftServer server = FMLCommonHandler.instance()
@@ -90,7 +128,6 @@ public final class ChainWatchdog {
                 return server.getTickCounter();
             }
         } catch (Exception ignored) {}
-        // Fallback: use system time / 50ms as an approximate tick counter.
-        return System.currentTimeMillis() / 50;
+        return -1L;
     }
 }

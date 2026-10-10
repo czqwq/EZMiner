@@ -10,8 +10,9 @@ public final class EtFuturumOreCompat {
 
     private static final String ET_FUTURUM_MODID = "etfuturum";
 
+    private static final Object INIT_LOCK = new Object();
     private static volatile boolean initialized;
-    private static boolean efLoaded;
+    private static volatile boolean efLoaded;
 
     // ── Cached EFR ore classes ────────────────────────────────────────────────
     private static Class<?> netherGoldOreType;
@@ -21,20 +22,36 @@ public final class EtFuturumOreCompat {
 
     private EtFuturumOreCompat() {}
 
-    /** Resolves all EFR ore classes once. Idempotent. */
+    /**
+     * Resolves all EFR ore classes once. Idempotent and race-safe.
+     *
+     * <p>
+     * {@code initialized} is published <strong>after</strong> resolution. Setting it first (the
+     * previous behaviour) let a second caller — the ore registry can be triggered from a founder
+     * thread via {@code DeterminingIdentical}, while the crop registry runs on the server thread —
+     * observe {@code initialized == true} together with {@code efLoaded == false}, return
+     * immediately, and leave the EFR adapters permanently disabled for that JVM.
+     * </p>
+     */
     public static void init() {
         if (initialized) return;
-        initialized = true;
+        synchronized (INIT_LOCK) {
+            if (initialized) return;
 
-        netherGoldOreType = ClassNameCompatSupport.resolveClass("ganymedes01.etfuturum.blocks.ores.BlockOreNetherGold");
-        ancientDebrisType = ClassNameCompatSupport.resolveClass("ganymedes01.etfuturum.blocks.BlockAncientDebris");
-        deepslateOreType = ClassNameCompatSupport.resolveClass("ganymedes01.etfuturum.blocks.ores.BaseDeepslateOre");
-        moddedDeepslateOreType = ClassNameCompatSupport
-            .resolveClass("ganymedes01.etfuturum.blocks.ores.modded.BlockGeneralModdedDeepslateOre");
+            netherGoldOreType = ClassNameCompatSupport
+                .resolveClass("ganymedes01.etfuturum.blocks.ores.BlockOreNetherGold");
+            ancientDebrisType = ClassNameCompatSupport.resolveClass("ganymedes01.etfuturum.blocks.BlockAncientDebris");
+            deepslateOreType = ClassNameCompatSupport
+                .resolveClass("ganymedes01.etfuturum.blocks.ores.BaseDeepslateOre");
+            moddedDeepslateOreType = ClassNameCompatSupport
+                .resolveClass("ganymedes01.etfuturum.blocks.ores.modded.BlockGeneralModdedDeepslateOre");
 
-        efLoaded = netherGoldOreType != null || ancientDebrisType != null
-            || deepslateOreType != null
-            || moddedDeepslateOreType != null;
+            efLoaded = netherGoldOreType != null || ancientDebrisType != null
+                || deepslateOreType != null
+                || moddedDeepslateOreType != null;
+
+            initialized = true;
+        }
     }
 
     public static boolean isLoaded() {
