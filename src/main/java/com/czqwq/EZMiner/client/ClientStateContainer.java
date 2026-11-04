@@ -67,9 +67,9 @@ public class ClientStateContainer {
     // ── Sudoku assistant state ──────────────────────────────────────────────
 
     /**
-     * World positions (board origins) of Sudoku boards where cells were filled
-     * in the current session. Written by the Netty IO thread, read by the render
-     * thread; thread-safe via {@link CopyOnWriteArrayList}.
+     * World positions of the Sudoku cells the assistant has filled (one entry per filled cell).
+     * Written by the Netty IO thread, read by the render thread; thread-safe via
+     * {@link CopyOnWriteArrayList}.
      */
     public final List<Vector3i> sudokuFilledPositions = new CopyOnWriteArrayList<>();
 

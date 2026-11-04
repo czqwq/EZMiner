@@ -77,7 +77,7 @@ public class PlayerManager {
     public void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (!(event.player instanceof EntityPlayerMP)) return;
         EntityPlayerMP mp = (EntityPlayerMP) event.player;
-        EZMiner.chainLifecycleService.onPlayerRespawn(mp.getUniqueID(), managers);
+        EZMiner.chainLifecycleService.onPlayerRespawn(mp, managers);
     }
 
     @SubscribeEvent

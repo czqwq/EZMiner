@@ -474,6 +474,26 @@ public class Manager {
         MinecraftForge.EVENT_BUS.unregister(this);
     }
 
+    /**
+     * Re-binds this manager to the player entity instance that currently represents the player.
+     *
+     * <p>
+     * Vanilla {@code ServerConfigurationManager.respawnPlayer} creates a <em>new</em>
+     * {@code EntityPlayerMP} on every respawn and marks the old one dead; the manager itself is
+     * keyed by UUID and survives the respawn. Without this re-bind, {@code player} keeps pointing
+     * at the dead entity, so every guard that reads it — most importantly
+     * {@link #tickSpecialMode()}'s {@code player.isDead} check — short-circuits for the rest of the
+     * session. That is why a single death (e.g. the LootGames minesweeper failure detonation) used
+     * to leave both the minesweeper and the sudoku assistant showing "ready" without ever acting.
+     * </p>
+     *
+     * @param player the live player entity after respawn; must belong to the same UUID
+     */
+    public void rebindPlayer(EntityPlayerMP player) {
+        if (player == null) return;
+        this.player = player;
+    }
+
     public void cleanupState() {
         preCalcEngine.cleanup();
         ChainPreCalcCache.remove(playerUUID);

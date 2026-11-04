@@ -71,6 +71,30 @@ public class MinesweeperModeHandler {
     /** Ticks left of the post-deal client re-sync window (see {@link #DEAL_SETTLE_MS}). */
     private int clientResyncTicks = 0;
 
+    /**
+     * Earliest time at which a freshly reset (not generated) board may be opened by the assistant.
+     *
+     * <p>
+     * A detonation ends with LootGames switching back to {@code StageWaiting} and nulling the
+     * board; only a player's left click re-generates it. Waiting one {@link #DEAL_SETTLE_MS} after
+     * the board transition keeps EZMiner's {@code generateBoard} call from racing the reset
+     * packets LootGames is still sending to the client.
+     * </p>
+     */
+    private long openBoardAllowedAtMs = 0L;
+
+    /**
+     * Retry cadence when the auto-open call is unavailable or failed. Prevents a broken reflection
+     * handle from retrying on every server tick.
+     */
+    private static final long AUTO_OPEN_RETRY_MS = 1000L;
+
+    /**
+     * Boards further away than this are never auto-opened: the helper already mutates every loaded
+     * board's marks, but opening a board is a real game action, so it stays local to the player.
+     */
+    private static final double AUTO_OPEN_MAX_DISTANCE_SQ = 64.0 * 64.0;
+
     /** {@code bridge.snapshotBoards} behind the {@link #BOARD_VIEW_TTL_MS} cache. */
     private List<BoardView> boardViews(EntityPlayerMP player, boolean force) {
         long now = System.currentTimeMillis();
@@ -92,29 +116,33 @@ public class MinesweeperModeHandler {
         resyncPending = false;
 
         List<BoardView> views = boardViews(player, resyncRequested);
+        long now = System.currentTimeMillis();
 
         // ── A board set that differs from the previous tick means a freshly dealt board (or a
-        // completed level, a new attempt, a new game, or the game ending). Two things are needed:
-        // • settle briefly before probing, so EZMiner never races the deal's own packets;
+        // completed level, a new attempt, a new game, a board reset by a detonation, or the game
+        // ending). Three things are needed:
+        // • settle briefly before probing/opening, so EZMiner never races the deal's own packets;
         // • re-push the authoritative board state for a few ticks. An auto-solved level ends
         // immediately after the deal, and the level-end sync ("not generated") can then land
         // after the next deal's board packet — the client kept rendering an unopened board
         // while the server's board was generated, and since the server never calls
         // generateBoard() again in that state, the board stayed uninteractable forever.
+        // • delay the auto-open hook by the same settle time.
         String signature = LootGamesMinesweeperBridge.boardSignature(views);
         if (!signature.equals(lastBoardSignature)) {
             lastBoardSignature = signature;
             if (!views.isEmpty()) {
                 // This also restarts the probe timer, exactly like the old "no board seen" path
                 // did: a freshly dealt board deserves a prompt probe, just not an immediate one.
-                nextDetectAtMs = System.currentTimeMillis() + DEAL_SETTLE_MS;
+                nextDetectAtMs = now + DEAL_SETTLE_MS;
+                openBoardAllowedAtMs = now + DEAL_SETTLE_MS;
                 clientResyncTicks = CLIENT_RESYNC_TICKS;
             }
         }
         if (clientResyncTicks > 0) {
             clientResyncTicks--;
             for (BoardView view : views) {
-                bridge.syncClient(view);
+                if (view.generated) bridge.syncClient(view);
             }
         }
 
@@ -129,14 +157,56 @@ public class MinesweeperModeHandler {
             // The next game gets an immediate first probe instead of the tail of the previous
             // game's cooldown.
             nextDetectAtMs = 0L;
+            openBoardAllowedAtMs = 0L;
             return;
+        }
+
+        // ── Auto-open a board that LootGames reset. A detonation ends with StageExploding
+        // switching back to StageWaiting and calling MSBoard.resetBoard(), which only nulls the
+        // grid: the next board is generated inside StageWaiting.onClick, i.e. by a player's left
+        // click. Without performing that click ourselves the bridge only sees a board with no
+        // bombs, so the assistant would show READY and do nothing even while the key is held.
+        if (now >= openBoardAllowedAtMs) {
+            boolean opened = false;
+            boolean attempted = false;
+            for (BoardView view : views) {
+                if (view.generated) continue;
+                if (player.getDistanceSq(view.originX + 0.5, view.originY + 0.5, view.originZ + 0.5)
+                    > AUTO_OPEN_MAX_DISTANCE_SQ) continue;
+                attempted = true;
+                opened |= bridge.openBoard(player, view);
+            }
+            if (opened) {
+                // The cached snapshot predates the open: re-scan on the next tick and let the fresh
+                // board settle before the first flag.
+                boardViewsKnown = false;
+                nextDetectAtMs = now + DEAL_SETTLE_MS;
+                openBoardAllowedAtMs = now + DEAL_SETTLE_MS;
+                clientResyncTicks = CLIENT_RESYNC_TICKS;
+                // The remembered marks belong to the previous board; drop them now so the client
+                // never draws the old boxes over the fresh board.
+                if (bridge.invalidateStaleMarks(views, marks) > 0) syncMarks(player);
+                return;
+            }
+            if (attempted) {
+                // The reflected call failed (or the hook is missing): retry at a bounded cadence
+                // instead of on every server tick.
+                openBoardAllowedAtMs = now + AUTO_OPEN_RETRY_MS;
+            }
+        }
+
+        // ── Only a generated board carries bombs; a reset board is waiting for the click above.
+        List<BoardView> generated = new ArrayList<>(views.size());
+        for (BoardView view : views) {
+            if (view.generated) generated.add(view);
         }
 
         // ── Re-validate the remembered flags against the live board. This is the half that used to
         // leave the orange wireframes "residing" and "drifting": completing a level re-creates the
         // board with a new size, which moves getBoardOrigin() by one block, so a stale world
-        // position lands one cell off the next board. A flag the player right-clicked away, or a
-        // bomb revealed by an explosion, is caught by the same pass.
+        // position lands one cell off the next board. A flag the player right-clicked away, a bomb
+        // revealed by an explosion, or a flag on a board that was just reset is caught by the same
+        // pass.
         int removed = bridge.invalidateStaleMarks(views, marks);
         if (removed > 0 || resyncRequested) {
             // A key-press resync republishes even when nothing was dropped: the client clears its
@@ -144,14 +214,14 @@ public class MinesweeperModeHandler {
             syncMarks(player);
         }
 
-        long now = System.currentTimeMillis();
+        if (generated.isEmpty()) return;
         if (now < nextDetectAtMs) return;
         long cooldownMs = (long) (Math.max(0.1, Config.minesweeperProbeCooldownSeconds) * 1000.0);
         nextDetectAtMs = now + cooldownMs;
         boolean boardChanged = false;
 
         // ── Phase 1: flag exactly one bomb per probe.
-        Mark marked = bridge.flagNearestBomb(player, views, marks);
+        Mark marked = bridge.flagNearestBomb(player, generated, marks);
         if (marked != null) {
             EZMiner.network.network.sendTo(new PacketMinesweeperMark(marked.x, marked.y, marked.z, cooldownMs), player);
             boardChanged = true;
@@ -161,7 +231,7 @@ public class MinesweeperModeHandler {
         // one go. Until then nothing is revealed, so the flagging phase stays visible and can be
         // followed cell by cell. The reveal normally completes the level (which resets the board),
         // so there is nothing left to do afterwards.
-        for (BoardView view : views) {
+        for (BoardView view : generated) {
             if (!bridge.areAllBombsFlagged(view)) continue;
             bridge.revealAllSafeCells(player, view);
             boardChanged = true;
@@ -172,7 +242,7 @@ public class MinesweeperModeHandler {
         // left believing the board is still unopened (see syncClient). Skipped once the board is
         // gone: the level-end sync must stand then.
         if (boardChanged) {
-            for (BoardView view : views) {
+            for (BoardView view : generated) {
                 if (bridge.isStillGenerated(view)) bridge.syncClient(view);
             }
         }
@@ -225,5 +295,6 @@ public class MinesweeperModeHandler {
         resyncPending = false;
         lastBoardSignature = "";
         clientResyncTicks = 0;
+        openBoardAllowedAtMs = 0L;
     }
 }

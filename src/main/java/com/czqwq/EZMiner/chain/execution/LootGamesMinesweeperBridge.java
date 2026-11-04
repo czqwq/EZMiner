@@ -48,6 +48,8 @@ public class LootGamesMinesweeperBridge {
     private Method stageSwapFieldMarkMethod = null;
     /** Auto-reveal hook; {@code null} on a LootGames build without {@code StageWaiting.revealField}. */
     private Method stageRevealFieldMethod = null;
+    /** Auto-open hook; {@code null} on a LootGames build without {@code StageWaiting.generateBoard}. */
+    private Method stageGenerateBoardMethod = null;
     /** Full tile-entity sync hook ({@code LootGame.saveAndSync}); {@code null} when unavailable. */
     private Method getSaveAndSyncMethod = null;
     private Constructor<?> pos2iConstructor = null;
@@ -105,6 +107,16 @@ public class LootGamesMinesweeperBridge {
                 EZMiner.LOG.warn(
                     "EZMiner: LootGames StageWaiting.revealField() not found - minesweeper auto-reveal disabled.");
             }
+            // Auto-open is likewise an extra capability. LootGames resets the board after every
+            // detonation and only a player's left click calls generateBoard, so without this hook
+            // the assistant can only wait for a manual click on a freshly reset board.
+            try {
+                stageGenerateBoardMethod = stageWaitingClass
+                    .getMethod("generateBoard", EntityPlayerMP.class, pos2iClass);
+            } catch (NoSuchMethodException e) {
+                EZMiner.LOG.warn(
+                    "EZMiner: LootGames StageWaiting.generateBoard() not found - minesweeper auto-open disabled.");
+            }
             // Client-state repair hook; also an extra capability rather than a prerequisite.
             try {
                 getSaveAndSyncMethod = gameMineSweeperClass.getMethod("saveAndSync");
@@ -123,7 +135,8 @@ public class LootGamesMinesweeperBridge {
 
     /**
      * One scan of {@code world.loadedTileEntityList} collecting every minesweeper board that is
-     * currently generated and waiting for clicks.
+     * currently in {@code StageWaiting} — both a generated board (bombs to flag) and a board that
+     * was just reset and is waiting for its first click (see {@link #openBoard}).
      *
      * <p>
      * The scan copies the whole loaded-tile-entity list and reflects over every element, so callers
@@ -148,7 +161,7 @@ public class LootGamesMinesweeperBridge {
 
                 Object game = getGameMethod.invoke(te);
                 if (game == null) continue;
-                if (!((Boolean) isBoardGeneratedMethod.invoke(game))) continue;
+                boolean generated = (Boolean) isBoardGeneratedMethod.invoke(game);
                 Object stage = getStageMethod.invoke(game);
                 if (stage == null || !stageWaitingClass.isInstance(stage)) continue;
                 Object board = getBoardMethod.invoke(game);
@@ -162,6 +175,7 @@ public class LootGamesMinesweeperBridge {
                         game,
                         board,
                         stage,
+                        generated,
                         (Integer) boardSizeMethod.invoke(board),
                         (Integer) blockPosGetXMethod.invoke(origin),
                         (Integer) blockPosGetYMethod.invoke(origin),
@@ -211,6 +225,9 @@ public class LootGamesMinesweeperBridge {
     /** True when {@code mark} still is a hidden, flagged bomb of the current board it belongs to. */
     private boolean isMarkAlive(Mark mark, BoardView view) {
         if (view == null) return false;
+        // A board that was reset after a detonation carries no flags any more; every remembered
+        // mark describes the previous board and must be dropped.
+        if (!view.generated) return false;
         // The origin is derived from the current board size, so comparing it detects a board that
         // was re-created (level completed) even while every cell would still be in range.
         if (view.size != mark.boardSize || view.originX != mark.originX
@@ -250,6 +267,7 @@ public class LootGamesMinesweeperBridge {
         Candidate best = null;
         try {
             for (BoardView view : views) {
+                if (!view.generated) continue;
                 for (int x = 0; x < view.size; x++) {
                     for (int z = 0; z < view.size; z++) {
                         if (boardGetTypeMethod.invoke(view.board, x, z) != bombTypeConstant) continue;
@@ -377,7 +395,7 @@ public class LootGamesMinesweeperBridge {
      * </p>
      */
     public void revealAllSafeCells(EntityPlayerMP player, BoardView view) {
-        if (view == null || stageRevealFieldMethod == null) return;
+        if (view == null || !view.generated || stageRevealFieldMethod == null) return;
         for (int x = 0; x < view.size; x++) {
             for (int z = 0; z < view.size; z++) {
                 try {
@@ -409,11 +427,56 @@ public class LootGamesMinesweeperBridge {
      * </p>
      */
     public void syncClient(BoardView view) {
-        if (view == null || getSaveAndSyncMethod == null) return;
+        if (view == null || !view.generated || getSaveAndSyncMethod == null) return;
         try {
             getSaveAndSyncMethod.invoke(view.game);
         } catch (Exception e) {
             EZMiner.LOG.debug("EZMiner: LootGames minesweeper client re-sync failed: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Opens a freshly reset board by calling LootGames' own {@code StageWaiting.generateBoard}.
+     *
+     * <p>
+     * A detonation ends with {@code StageExploding.onTick} switching back to {@code StageWaiting}
+     * and then {@code MSBoard.resetBoard()}, which only nulls the cell grid (size/origin are kept).
+     * The next board is generated inside {@code StageWaiting.onClick} when a player left-clicks a
+     * field — so without this hook the assistant has no bombs to flag and sits "ready" forever
+     * after every failure. The bridge performs the same first click itself: cell {@code (0,0)} is
+     * guaranteed bomb-free by {@code MSBoard.generate}'s safe-distance logic, and its reveal
+     * cascades exactly like a player click.
+     * </p>
+     *
+     * <p>
+     * The live game is re-checked before the write (the snapshot may be up to the caller's TTL old,
+     * and a boom/level transition can change the stage inside that window).
+     * </p>
+     *
+     * @return true when the board was opened; the caller must force a re-scan afterwards
+     */
+    public boolean openBoard(EntityPlayerMP player, BoardView view) {
+        if (player == null || view == null || view.generated || stageGenerateBoardMethod == null) return false;
+        if (!isBoardWaitingAndUngenerated(view)) return false;
+        try {
+            stageGenerateBoardMethod.invoke(view.stage, player, toGamePos(0, 0));
+            return true;
+        } catch (Exception e) {
+            EZMiner.LOG.debug("EZMiner: LootGames minesweeper auto-open failed: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /** True when the live game still is the same {@code StageWaiting} board the view was read from. */
+    private boolean isBoardWaitingAndUngenerated(BoardView view) {
+        try {
+            Object stage = getStageMethod.invoke(view.game);
+            if (stage != view.stage) return false;
+            if ((Boolean) isBoardGeneratedMethod.invoke(view.game)) return false;
+            return isGeometryCurrent(view);
+        } catch (Exception e) {
+            EZMiner.LOG.debug("EZMiner: LootGames minesweeper auto-open re-check failed: {}", e.getMessage());
+            return false;
         }
     }
 
@@ -429,14 +492,25 @@ public class LootGamesMinesweeperBridge {
 
     /**
      * Deterministic signature of the board set in a snapshot: identity of every active master tile
-     * plus its current size and origin. Any change — a freshly dealt board, a completed level
-     * (new size/origin), a new attempt, a new game or the game ending — produces a different value.
+     * plus its generated flag, current size and origin. Any change — a freshly dealt board, a board
+     * reset by a detonation, a completed level (new size/origin), a new attempt, a new game or the
+     * game ending — produces a different value.
      */
     public static String boardSignature(List<BoardView> views) {
         if (views.isEmpty()) return "";
         List<String> tokens = new ArrayList<>(views.size());
         for (BoardView view : views) {
-            tokens.add(view.key + "|" + view.size + "|" + view.originX + "," + view.originY + "," + view.originZ);
+            tokens.add(
+                view.key + "|"
+                    + (view.generated ? 1 : 0)
+                    + "|"
+                    + view.size
+                    + "|"
+                    + view.originX
+                    + ","
+                    + view.originY
+                    + ","
+                    + view.originZ);
         }
         Collections.sort(tokens);
         return String.join(";", tokens);
@@ -467,7 +541,10 @@ public class LootGamesMinesweeperBridge {
         return false;
     }
 
-    /** Snapshot of one minesweeper board that is currently generated and waiting for clicks. */
+    /**
+     * Snapshot of one minesweeper board that is currently in {@code StageWaiting}: either generated
+     * (bombs to flag) or freshly reset and waiting for its first click (see {@link #openBoard}).
+     */
     public static final class BoardView {
 
         /** {@code dimension:masterX:masterY:masterZ} — stable identity of the master tile. */
@@ -478,17 +555,20 @@ public class LootGamesMinesweeperBridge {
         public final Object board;
         /** The live {@code GameMineSweeper.StageWaiting} the board belongs to. */
         public final Object stage;
+        /** False after a detonation until the board is generated again (by a click or auto-open). */
+        public final boolean generated;
         public final int size;
         public final int originX;
         public final int originY;
         public final int originZ;
 
-        private BoardView(String key, Object game, Object board, Object stage, int size, int originX, int originY,
-            int originZ) {
+        private BoardView(String key, Object game, Object board, Object stage, boolean generated, int size, int originX,
+            int originY, int originZ) {
             this.key = key;
             this.game = game;
             this.board = board;
             this.stage = stage;
+            this.generated = generated;
             this.size = size;
             this.originX = originX;
             this.originY = originY;

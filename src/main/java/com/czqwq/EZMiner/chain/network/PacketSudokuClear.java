@@ -10,8 +10,9 @@ import io.netty.buffer.ByteBuf;
 
 /**
  * Server → Client: notifies the client that all Sudoku filled-cell positions should
- * be cleared. Sent when a LootGames Sudoku game transitions from {@code StageWaiting}
- * to a terminal stage.
+ * be cleared. Sent when a LootGames Sudoku game ends, when the assistant's remembered
+ * fills no longer match the live board (a wrong submission resets the player grid while
+ * keeping the puzzle/solution), and before a validated fill list is republished.
  */
 public class PacketSudokuClear implements IMessage {
 

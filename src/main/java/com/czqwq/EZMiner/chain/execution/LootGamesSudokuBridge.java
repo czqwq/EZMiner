@@ -4,8 +4,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.tileentity.TileEntity;
@@ -23,7 +25,15 @@ import com.czqwq.EZMiner.utils.MessageUtils;
  * <p>
  * Uses reflection to interact with the LootGames Sudoku API so that EZMiner has no
  * compile-time dependency on LootGames. When LootGames is not installed the bridge
- * degrades gracefully (all methods return {@code null} or {@code false}).
+ * degrades gracefully (all methods return {@code null} or an empty list).
+ * </p>
+ *
+ * <p>
+ * The bridge is stateless: {@link #snapshotBoards(World)} produces immutable
+ * {@link BoardView}s and the caller owns the remembered fills, so the same instance serves a
+ * probe cycle, a re-validation cycle and a client re-sync. Every board read happens on the
+ * server thread, because the handler only calls in from its per-tick work.
+ * </p>
  */
 public class LootGamesSudokuBridge {
 
@@ -49,13 +59,15 @@ public class LootGamesSudokuBridge {
     private Method saveMethod = null;
     private Method onLevelSuccessfullyFinishedMethod = null;
 
-    // --- Board methods ---
+    // --- Board methods / fields ---
     private Method boardIsGeneratedMethod = null;
     private Method boardCheckWinMethod = null;
     private Method boardGetPlayerValueMethod = null;
     private Field boardPlayerField = null;
     private Field boardSolutionField = null;
     private Field boardPuzzleField = null;
+    /** {@code SudokuBoard.SIZE}; LootGames' board is a fixed square grid (9×9 by default). */
+    private int boardSize = 9;
 
     // --- Pos2i ---
     private Constructor<?> pos2iConstructor = null;
@@ -68,7 +80,6 @@ public class LootGamesSudokuBridge {
     private Method blockPosGetYMethod = null;
     private Method blockPosGetZMethod = null;
 
-    @SuppressWarnings("unchecked")
     public synchronized void checkCompatibility() {
         if (compatibilityChecked) return;
         try {
@@ -111,6 +122,13 @@ public class LootGamesSudokuBridge {
             boardPlayerField = sudokuBoardClass.getField("player");
             boardSolutionField = sudokuBoardClass.getField("solution");
             boardPuzzleField = sudokuBoardClass.getField("puzzle");
+            try {
+                boardSize = (Integer) sudokuBoardClass.getField("SIZE")
+                    .get(null);
+            } catch (Exception ignored) {
+                boardSize = 9;
+            }
+            if (boardSize <= 0) boardSize = 9;
 
             // Pos2i(int, int)
             pos2iConstructor = pos2iClass.getConstructor(int.class, int.class);
@@ -134,49 +152,24 @@ public class LootGamesSudokuBridge {
     }
 
     /**
-     * Checks whether any LootGames Sudoku game is currently active (in
-     * {@code StageWaiting}) in the given world.
+     * One scan of {@code world.loadedTileEntityList} collecting every Sudoku board that is
+     * currently generated and waiting for clicks.
+     *
+     * <p>
+     * The scan copies the whole loaded-tile-entity list and reflects over every element, so
+     * callers must cache the result (the handler uses a 500&nbsp;ms TTL) instead of calling it
+     * per tick.
+     * </p>
+     *
+     * @param world the world to scan
+     * @return the boards found; empty when LootGames is absent or no board is in {@code StageWaiting}
      */
-    public boolean isAnyGameActive(World world) {
-        if (world == null) return false;
+    public List<BoardView> snapshotBoards(World world) {
+        List<BoardView> views = new ArrayList<>();
+        if (world == null) return views;
         if (!compatibilityChecked) checkCompatibility();
-        if (!hasLootGamesApi || sudokuTileClass == null) return false;
+        if (!hasLootGamesApi || sudokuTileClass == null) return views;
 
-        try {
-            @SuppressWarnings("unchecked")
-            List<TileEntity> loadedTileEntities = new ArrayList<>(world.loadedTileEntityList);
-            for (TileEntity te : loadedTileEntities) {
-                if (te == null || te.isInvalid() || te.getWorldObj() != world) continue;
-                if (!sudokuTileClass.isInstance(te)) continue;
-
-                Object game = getGameMethod.invoke(te);
-                if (game == null) continue;
-                Object board = getBoardMethod.invoke(game);
-                if (board == null) continue;
-                if (!((Boolean) boardIsGeneratedMethod.invoke(board))) continue;
-                Object stage = getStageMethod.invoke(game);
-                if (stage != null && stageWaitingClass.isInstance(stage)) {
-                    return true;
-                }
-            }
-        } catch (Exception e) {
-            EZMiner.LOG.debug("EZMiner: LootGames Sudoku isAnyGameActive check failed: {}", e.getMessage());
-        }
-        return false;
-    }
-
-    /**
-     * Finds the nearest unfilled Sudoku cell and fills it with the correct solution
-     * value. Returns the world position of the filled cell, or {@code null} if no
-     * cell needed filling.
-     */
-    public Vector3i detectAndFillNearestCell(EntityPlayerMP player, Set<String> filledCells) {
-        if (player == null || player.worldObj == null || filledCells == null) return null;
-        if (!compatibilityChecked) checkCompatibility();
-        if (!hasLootGamesApi || sudokuTileClass == null) return null;
-
-        World world = player.worldObj;
-        FillCandidate best = null;
         try {
             @SuppressWarnings("unchecked")
             List<TileEntity> loadedTileEntities = new ArrayList<>(world.loadedTileEntityList);
@@ -191,19 +184,131 @@ public class LootGamesSudokuBridge {
                 if (!((Boolean) boardIsGeneratedMethod.invoke(board))) continue;
                 Object stage = getStageMethod.invoke(game);
                 if (stage == null || !stageWaitingClass.isInstance(stage)) continue;
+                Object origin = getBoardOriginMethod.invoke(game);
+                if (origin == null) continue;
 
-                Object boardOrigin = getBoardOriginMethod.invoke(game);
-                if (boardOrigin == null) continue;
-                int originX = (Integer) blockPosGetXMethod.invoke(boardOrigin);
-                int originY = (Integer) blockPosGetYMethod.invoke(boardOrigin);
-                int originZ = (Integer) blockPosGetZMethod.invoke(boardOrigin);
+                views.add(
+                    new BoardView(
+                        world.provider.dimensionId,
+                        te.xCoord + ":" + te.yCoord + ":" + te.zCoord,
+                        game,
+                        board,
+                        stage,
+                        boardSize,
+                        (Integer) blockPosGetXMethod.invoke(origin),
+                        (Integer) blockPosGetYMethod.invoke(origin),
+                        (Integer) blockPosGetZMethod.invoke(origin),
+                        solutionHash(board)));
+            }
+        } catch (Exception e) {
+            EZMiner.LOG.debug("EZMiner: LootGames Sudoku board scan failed: {}", e.getMessage());
+        }
+        return views;
+    }
 
-                Integer[][] playerGrid = (Integer[][]) boardPlayerField.get(board);
-                Integer[][] solutionGrid = (Integer[][]) boardSolutionField.get(board);
-                Integer[][] puzzleGrid = (Integer[][]) boardPuzzleField.get(board);
+    /**
+     * Deterministic fingerprint of the board set in a snapshot: the identity/origin of every
+     * waiting board plus a hash of its solution grid. A freshly dealt board or a completed level
+     * changes it; a wrong-answer retry does not, because LootGames keeps the puzzle and solution
+     * and only resets the player grid (that case is caught by {@link #invalidateStaleFills}).
+     */
+    public static String boardFingerprint(List<BoardView> views) {
+        if (views.isEmpty()) return "";
+        List<String> tokens = new ArrayList<>(views.size());
+        for (BoardView view : views) {
+            tokens.add(view.fingerprint());
+        }
+        Collections.sort(tokens);
+        return String.join(";", tokens);
+    }
 
-                for (int x = 0; x < 9; x++) {
-                    for (int y = 0; y < 9; y++) {
+    /**
+     * Drops every remembered fill that no longer describes a correctly filled cell of a live
+     * board, removing the stale entries from {@code filledCells} in place.
+     *
+     * <p>
+     * This is what keeps the assistant from stalling after a wrong submission. LootGames'
+     * {@code handleEndGameCheck} answers a wrong answer with {@code SudokuBoard.resetPlayer()}
+     * (the default {@code clear_on_wrong_answer=ALL} mode) while the puzzle and solution stay
+     * identical, so the board fingerprint does not change — and every cell EZMiner had already
+     * filled is silently emptied. Without this re-validation those cells stay in the memo and are
+     * skipped by {@link #fillNearestCell} forever, so the board can never be completed again.
+     * </p>
+     *
+     * @param views       the boards from {@link #snapshotBoards(World)}
+     * @param filledCells the caller's memo ({@code key -> world cell position}), modified in place
+     * @return the number of entries removed
+     */
+    public int invalidateStaleFills(List<BoardView> views, Map<String, Vector3i> filledCells) {
+        if (filledCells.isEmpty()) return 0;
+        int removed = 0;
+        Iterator<Map.Entry<String, Vector3i>> iterator = filledCells.entrySet()
+            .iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Vector3i> entry = iterator.next();
+            if (!isFillStillCorrect(views, entry.getKey(), entry.getValue())) {
+                iterator.remove();
+                removed++;
+            }
+        }
+        return removed;
+    }
+
+    /** True when {@code pos} still holds {@code solution} in the live board that owns it. */
+    private boolean isFillStillCorrect(List<BoardView> views, String key, Vector3i pos) {
+        for (BoardView view : views) {
+            if (!key.startsWith(view.dimensionPrefix)) continue;
+            int cellX = pos.x - view.originX;
+            int cellZ = pos.z - view.originZ;
+            if (pos.y != view.originY) continue;
+            if (cellX < 0 || cellZ < 0 || cellX >= view.size || cellZ >= view.size) continue;
+            try {
+                Integer[][] playerGrid = (Integer[][]) boardPlayerField.get(view.board);
+                Integer[][] solutionGrid = (Integer[][]) boardSolutionField.get(view.board);
+                Integer playerValue = playerGrid[cellX][cellZ];
+                Integer solutionValue = solutionGrid[cellX][cellZ];
+                return playerValue != null && solutionValue != null
+                    && playerValue != 0
+                    && playerValue.equals(solutionValue);
+            } catch (Exception e) {
+                EZMiner.LOG.debug("EZMiner: LootGames Sudoku fill validation failed: {}", e.getMessage());
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Finds the nearest not-yet-correct cell of any waiting board and fills it with the
+     * solution value. Returns the world position of the filled cell, or {@code null} when
+     * there was nothing to fill.
+     *
+     * <p>
+     * Clue cells are never written, and a cell whose live value already equals the solution is
+     * skipped by reading the board itself — not by trusting the memo — so a board reset by
+     * LootGames is refilled on the next pass even if the memo had not been pruned yet.
+     * </p>
+     *
+     * @param player      the player whose proximity selects the cell
+     * @param views       the boards from {@link #snapshotBoards(World)}
+     * @param filledCells the caller's memo; the newly filled cell is added on success
+     * @return the world position of the filled cell, or {@code null}
+     */
+    public Vector3i fillNearestCell(EntityPlayerMP player, List<BoardView> views, Map<String, Vector3i> filledCells) {
+        if (player == null || player.worldObj == null) return null;
+        if (!compatibilityChecked) checkCompatibility();
+        if (!hasLootGamesApi || sudokuTileClass == null) return null;
+
+        int dimensionId = player.dimension;
+        FillCandidate best = null;
+        try {
+            for (BoardView view : views) {
+                Integer[][] playerGrid = (Integer[][]) boardPlayerField.get(view.board);
+                Integer[][] solutionGrid = (Integer[][]) boardSolutionField.get(view.board);
+                Integer[][] puzzleGrid = (Integer[][]) boardPuzzleField.get(view.board);
+
+                for (int x = 0; x < view.size; x++) {
+                    for (int y = 0; y < view.size; y++) {
                         // Skip clue cells (pre-filled by the puzzle)
                         if (puzzleGrid[x][y] != null && puzzleGrid[x][y] != 0) continue;
 
@@ -213,15 +318,15 @@ public class LootGamesSudokuBridge {
                         int playerValue = playerGrid[x][y] != null ? playerGrid[x][y] : 0;
                         if (playerValue == solutionValue) continue;
 
-                        int worldX = originX + x;
-                        int worldY = originY;
-                        int worldZ = originZ + y;
-                        String key = player.dimension + ":" + worldX + ":" + worldY + ":" + worldZ;
-                        if (filledCells.contains(key)) continue;
+                        int worldX = view.originX + x;
+                        int worldY = view.originY;
+                        int worldZ = view.originZ + y;
+                        String key = dimensionId + ":" + worldX + ":" + worldY + ":" + worldZ;
+                        if (filledCells.containsKey(key)) continue;
 
                         double distSq = player.getDistanceSq(worldX + 0.5, worldY + 0.5, worldZ + 0.5);
                         if (best == null || distSq < best.distanceSq) {
-                            best = new FillCandidate(key, game, board, x, y, solutionValue, distSq);
+                            best = new FillCandidate(view, x, y, solutionValue, worldX, worldY, worldZ, key, distSq);
                         }
                     }
                 }
@@ -230,103 +335,151 @@ public class LootGamesSudokuBridge {
             EZMiner.LOG.debug("EZMiner: LootGames Sudoku probe failed: {}", e.getMessage());
             return null;
         }
-
         if (best == null) return null;
 
+        // The board list may be up to the caller's TTL old, and a fill mutates the board. A game
+        // that ended (or was re-dealt) inside that window must not be written to, so re-check the
+        // live stage/generated state before touching the cell.
+        if (!isViewCurrent(best.view)) {
+            EZMiner.LOG.debug("EZMiner: LootGames Sudoku board changed during probe - skipping this cycle.");
+            return null;
+        }
+
         try {
-            // Set player value directly
-            Integer[][] playerGrid = (Integer[][]) boardPlayerField.get(best.board);
-            playerGrid[best.boardX][best.boardY] = best.solutionValue;
+            // Set player value directly (the puzzle guard is already applied above).
+            Integer[][] playerGrid = (Integer[][]) boardPlayerField.get(best.view.board);
+            playerGrid[best.cellX][best.cellY] = best.solutionValue;
 
             // Sync to clients
-            Object pos2i = pos2iConstructor.newInstance(best.boardX, best.boardY);
-            int playerValue = (Integer) boardGetPlayerValueMethod.invoke(best.board, pos2i);
+            Object pos2i = pos2iConstructor.newInstance(best.cellX, best.cellY);
+            int playerValue = (Integer) boardGetPlayerValueMethod.invoke(best.view.board, pos2i);
             Object syncPacket = spSyncCellConstructor.newInstance(pos2i, playerValue);
-            sendUpdatePacketToNearbyMethod.invoke(best.game, syncPacket);
-            saveMethod.invoke(best.game);
+            sendUpdatePacketToNearbyMethod.invoke(best.view.game, syncPacket);
+            saveMethod.invoke(best.view.game);
 
             // Check win
-            boolean won = (Boolean) boardCheckWinMethod.invoke(best.board);
+            boolean won = (Boolean) boardCheckWinMethod.invoke(best.view.board);
             if (won) {
-                onLevelSuccessfullyFinishedMethod.invoke(best.game);
+                onLevelSuccessfullyFinishedMethod.invoke(best.view.game);
             }
 
-            filledCells.add(best.key);
+            Vector3i filledPos = new Vector3i(best.x, best.y, best.z);
+            filledCells.put(best.key, filledPos);
             MessageUtils.serverSendPlayerMessage(
                 new ChatComponentTranslation(
                     "ezminer.message.special.sudoku.filled",
-                    best.boardX + 1,
-                    best.boardY + 1,
+                    best.cellX + 1,
+                    best.cellY + 1,
                     best.solutionValue),
                 player.getUniqueID());
-            Object origin = getBoardOriginMethod.invoke(best.game);
-            return new Vector3i(
-                (Integer) blockPosGetXMethod.invoke(origin),
-                (Integer) blockPosGetYMethod.invoke(origin),
-                (Integer) blockPosGetZMethod.invoke(origin));
+            return filledPos;
         } catch (Exception e) {
             EZMiner.LOG.debug("EZMiner: LootGames Sudoku fill failed: {}", e.getMessage());
             return null;
         }
     }
 
-    /**
-     * Returns a fingerprint string for the first Sudoku board found in the given world,
-     * or {@code null} if no board is active. The fingerprint changes whenever the board
-     * is regenerated (e.g. after a level-up), allowing the handler to detect that stale
-     * filled-cell keys must be cleared.
-     */
-    public String getBoardFingerprint(World world) {
-        if (world == null) return null;
-        if (!compatibilityChecked) checkCompatibility();
-        if (!hasLootGamesApi || sudokuTileClass == null) return null;
-
+    /** True when the live game still is the same generated {@code StageWaiting} board. */
+    private boolean isViewCurrent(BoardView view) {
         try {
-            @SuppressWarnings("unchecked")
-            List<TileEntity> loadedTileEntities = new ArrayList<>(world.loadedTileEntityList);
-            for (TileEntity te : loadedTileEntities) {
-                if (te == null || te.isInvalid() || te.getWorldObj() != world) continue;
-                if (!sudokuTileClass.isInstance(te)) continue;
-
-                Object game = getGameMethod.invoke(te);
-                if (game == null) continue;
-                Object board = getBoardMethod.invoke(game);
-                if (board == null) continue;
-                if (!((Boolean) boardIsGeneratedMethod.invoke(board))) continue;
-
-                Integer[][] solutionGrid = (Integer[][]) boardSolutionField.get(board);
-                // Build a fingerprint from the first 3 solution cells.
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < 3 && i < 9; i++) {
-                    sb.append(solutionGrid[0][i] != null ? solutionGrid[0][i] : 0);
-                    sb.append(',');
-                }
-                return sb.toString();
-            }
+            Object stage = getStageMethod.invoke(view.game);
+            if (stage != view.stage) return false;
+            return (Boolean) boardIsGeneratedMethod.invoke(view.board);
         } catch (Exception e) {
-            EZMiner.LOG.debug("EZMiner: LootGames Sudoku fingerprint failed: {}", e.getMessage());
+            EZMiner.LOG.debug("EZMiner: LootGames Sudoku board re-check failed: {}", e.getMessage());
+            return false;
         }
-        return null;
     }
 
-    private static class FillCandidate {
+    /** Best-effort hash of a board's full solution grid; used to detect a re-dealt board. */
+    private int solutionHash(Object board) throws IllegalAccessException {
+        Integer[][] solutionGrid = (Integer[][]) boardSolutionField.get(board);
+        int hash = 17;
+        for (int x = 0; x < boardSize; x++) {
+            for (int y = 0; y < boardSize; y++) {
+                Integer value = solutionGrid[x] != null ? solutionGrid[x][y] : null;
+                hash = hash * 31 + (value == null ? 0 : value);
+            }
+        }
+        return hash;
+    }
 
-        private final String key;
-        private final Object game;
-        private final Object board;
-        private final int boardX;
-        private final int boardY;
-        private final int solutionValue;
-        private final double distanceSq;
+    /** Snapshot of one Sudoku board that is currently generated and waiting for clicks. */
+    public static final class BoardView {
 
-        private FillCandidate(String key, Object game, Object board, int boardX, int boardY, int solutionValue,
-            double distanceSq) {
-            this.key = key;
+        /** Dimension the board lives in. */
+        public final int dimensionId;
+        /** {@code masterX:masterY:masterZ} — stable identity within the dimension. */
+        public final String masterKey;
+        /** {@code dimension:} — prefix used to attribute a remembered fill to this board. */
+        public final String dimensionPrefix;
+        /** The live {@code GameSudoku}. */
+        public final Object game;
+        /** The live {@code SudokuBoard}. */
+        public final Object board;
+        /** The live {@code GameSudoku.StageWaiting} the board belongs to. */
+        public final Object stage;
+        public final int size;
+        public final int originX;
+        public final int originY;
+        public final int originZ;
+        /** Hash of the solution grid; changes when LootGames re-deals the board. */
+        public final int solutionHash;
+
+        private BoardView(int dimensionId, String masterKey, Object game, Object board, Object stage, int size,
+            int originX, int originY, int originZ, int solutionHash) {
+            this.dimensionId = dimensionId;
+            this.masterKey = masterKey;
+            this.dimensionPrefix = dimensionId + ":";
             this.game = game;
             this.board = board;
-            this.boardX = boardX;
-            this.boardY = boardY;
+            this.stage = stage;
+            this.size = size;
+            this.originX = originX;
+            this.originY = originY;
+            this.originZ = originZ;
+            this.solutionHash = solutionHash;
+        }
+
+        /** Deterministic board identity used to detect a re-deal/level change. */
+        public String fingerprint() {
+            return dimensionPrefix + masterKey
+                + "|"
+                + size
+                + "|"
+                + originX
+                + ","
+                + originY
+                + ","
+                + originZ
+                + "|"
+                + solutionHash;
+        }
+    }
+
+    /** Nearest-fill candidate for one probe cycle. */
+    private static final class FillCandidate {
+
+        private final BoardView view;
+        private final int cellX;
+        private final int cellY;
+        private final int solutionValue;
+        private final int x;
+        private final int y;
+        private final int z;
+        private final String key;
+        private final double distanceSq;
+
+        private FillCandidate(BoardView view, int cellX, int cellY, int solutionValue, int x, int y, int z, String key,
+            double distanceSq) {
+            this.view = view;
+            this.cellX = cellX;
+            this.cellY = cellY;
             this.solutionValue = solutionValue;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.key = key;
             this.distanceSq = distanceSq;
         }
     }

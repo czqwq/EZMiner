@@ -12,9 +12,9 @@ import io.netty.buffer.ByteBuf;
  * Server → Client: notifies the client that all minesweeper flagged positions should be cleared.
  *
  * <p>
- * Sent when a LootGames minesweeper game transitions from {@code StageWaiting} to a terminal
- * stage (win / lose / finished) so that stale flagged-mine wireframes from the previous game
- * are removed before the next game starts.
+ * Sent when the LootGames game ends or resets the board (a detonation leaves the board ungenerated
+ * inside {@code StageWaiting}), when a remembered flag no longer describes a flagged bomb of the
+ * live board, and before a validated flag list is republished.
  */
 public class PacketMinesweeperClear implements IMessage {
 

@@ -12,7 +12,7 @@ import io.netty.buffer.ByteBuf;
 
 /**
  * Server → Client: notifies the client that a Sudoku cell was filled at the given
- * board origin position. Also carries the probe cooldown so the HUD can display a countdown.
+ * world position. Also carries the probe cooldown so the HUD can display a countdown.
  */
 public class PacketSudokuFill implements IMessage {
 

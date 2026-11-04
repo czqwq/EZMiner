@@ -30,9 +30,25 @@ public class ChainLifecycleService {
         ToolSwapServerService.clear(playerUUID);
     }
 
-    public void onPlayerRespawn(UUID playerUUID, Map<UUID, Manager> managers) {
+    /**
+     * Handles a respawn: cleans the chain runtime, then re-binds the surviving manager to the new
+     * player entity instance.
+     *
+     * <p>
+     * Vanilla's {@code ServerConfigurationManager.respawnPlayer} creates a new
+     * {@code EntityPlayerMP} and marks the old one dead. The manager is keyed by UUID and is not
+     * re-created on respawn, so it must be re-bound here — otherwise its
+     * {@code Manager.tickSpecialMode()} keeps seeing the dead entity and every special-mode
+     * assistant (minesweeper, sudoku, prospect, planting) stops working for the rest of the
+     * session while the client HUD still reports "ready".
+     * </p>
+     */
+    public void onPlayerRespawn(EntityPlayerMP player, Map<UUID, Manager> managers) {
+        UUID playerUUID = player.getUniqueID();
         EZMiner.chainStateService.onPlayerRespawn(playerUUID);
         cleanupManagerRuntime(playerUUID, managers);
+        Manager mgr = managers.get(playerUUID);
+        if (mgr != null) mgr.rebindPlayer(player);
         ToolSwapServerService.clear(playerUUID);
     }
 
