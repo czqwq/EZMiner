@@ -4,6 +4,7 @@ import com.czqwq.EZMiner.client.ClientStateContainer;
 import com.czqwq.EZMiner.client.HudRenderer;
 import com.czqwq.EZMiner.client.KeyListener;
 import com.czqwq.EZMiner.client.SmartToolSwitchHandler;
+import com.czqwq.EZMiner.client.ToolboxSelectionSanitizer;
 import com.czqwq.EZMiner.client.gui.InventoryButtonOverlay;
 import com.czqwq.EZMiner.client.render.MinerRenderer;
 import com.czqwq.EZMiner.compat.GT5ToolCompat;
@@ -20,6 +21,7 @@ public class ClientProxy extends CommonProxy {
     public final MinerRenderer minerRenderer = new MinerRenderer(clientState);
     public final InventoryButtonOverlay inventoryButtonOverlay = new InventoryButtonOverlay();
     public final SmartToolSwitchHandler smartToolSwitchHandler = new SmartToolSwitchHandler();
+    public final ToolboxSelectionSanitizer toolboxSelectionSanitizer = new ToolboxSelectionSanitizer();
 
     @Override
     public void preInit(FMLPreInitializationEvent event) {
@@ -33,6 +35,7 @@ public class ClientProxy extends CommonProxy {
         minerRenderer.registry();
         inventoryButtonOverlay.registry();
         smartToolSwitchHandler.registry();
+        toolboxSelectionSanitizer.registry();
     }
 
     @Override

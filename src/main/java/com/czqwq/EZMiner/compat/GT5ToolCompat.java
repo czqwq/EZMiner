@@ -1,13 +1,16 @@
 package com.czqwq.EZMiner.compat;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 
 import com.czqwq.EZMiner.utils.SafeReflection;
 import com.czqwq.EZMiner.utils.ToolHarvestEligibility;
@@ -63,6 +66,18 @@ public class GT5ToolCompat {
     private static Method mToolboxItemStackHandlerGetSlots;
     /** {@code ItemGTToolbox.sendChangeToolPacket(int, int)} — private static. */
     private static Method mSendChangeToolPacket;
+    /** Cached {@code ToolboxSlot.getSlotID()} — resolved lazily with the slot layout. */
+    private static Method mToolboxSlotGetSlotID;
+    /** Slot IDs of GT's activatable tool slots ({@code ToolboxSlot.TOOL_SLOTS}); empty until resolved. */
+    private static int[] selectableToolboxSlotIds = new int[0];
+    /** {@link #selectableToolboxSlotIds} as a slot-id lookup table. */
+    private static boolean[] selectableToolboxSlotMap = new boolean[0];
+    /** Lazy {@code ToolboxSlot} layout resolution state. */
+    private static volatile boolean toolboxSlotLayoutResolved;
+    private static boolean toolboxSlotLayoutAvailable;
+    /** Cached {@code ItemGTToolbox.CURRENT_TOOL_KEY}; resolved lazily on the first repair scan. */
+    private static String mCurrentToolKey;
+    private static boolean currentToolKeyResolved;
 
     // ── Sword / Tool attack damage fields (MCP first, SRG fallback) ──────────
     private static final String[] SWORD_DAMAGE_FIELDS = { "field_150934_a", "weaponDamage" };
@@ -247,13 +262,16 @@ public class GT5ToolCompat {
             }
             @SuppressWarnings("unchecked")
             List<Enum<?>> slots = (List<Enum<?>>) mPickResultsSuggestedTools.invoke(pickResults);
-            if (slots == null || slots.isEmpty()) return -1;
-            Enum<?> bestSlot = slots.get(0);
-            int slotId = bestSlot.ordinal();
+            if (slots == null || slots.isEmpty() || !ensureToolboxSlotLayout()) return -1;
+            Object bestSlot = slots.get(0);
+            Object slotIdValue = mToolboxSlotGetSlotID.invoke(bestSlot);
+            if (!(slotIdValue instanceof Number)) return -1;
+            int slotId = ((Number) slotIdValue).intValue();
+            if (!isSelectableToolboxSlot(slotId)) return -1;
             Object handler = classToolboxItemStackHandler.getConstructor(ItemStack.class)
                 .newInstance(toolbox);
             ItemStack internalTool = (ItemStack) mToolboxItemStackHandlerGetStackInSlot.invoke(handler, slotId);
-            return (internalTool != null && internalTool.getItem() != null) ? slotId : -1;
+            return (internalTool != null && internalTool.getItem() != null && isGTTool(internalTool)) ? slotId : -1;
         } catch (IllegalAccessException | InvocationTargetException | InstantiationException
             | NoSuchMethodException ignored) {
             return -1;
@@ -261,23 +279,71 @@ public class GT5ToolCompat {
     }
 
     /**
-     * Finds the best internal toolbox slot whose tool can actually harvest the
-     * target block.
+     * Lazily resolves GT's activatable tool slot IDs. Lazy because {@code ToolboxSlot}'s static init reads
+     * GT registries, which may not be ready during EZMiner's early {@link #init()}.
+     */
+    private static boolean ensureToolboxSlotLayout() {
+        if (toolboxSlotLayoutResolved) return toolboxSlotLayoutAvailable;
+        synchronized (INIT_LOCK) {
+            if (toolboxSlotLayoutResolved) return toolboxSlotLayoutAvailable;
+            try {
+                Class<?> classToolboxSlot = SafeReflection.forName("gregtech.api.enums.ToolboxSlot");
+                mToolboxSlotGetSlotID = SafeReflection.getMethod(classToolboxSlot, "getSlotID");
+                Field toolSlotsField = SafeReflection.getField(classToolboxSlot, "TOOL_SLOTS");
+                if (classToolboxSlot != null && mToolboxSlotGetSlotID != null && toolSlotsField != null) {
+                    Object raw = toolSlotsField.get(null);
+                    if (raw instanceof Iterable<?>) {
+                        int maxSlotId = -1;
+                        List<Integer> slotIds = new ArrayList<>();
+                        for (Object slot : (Iterable<?>) raw) {
+                            Object slotIdValue = slot == null ? null : mToolboxSlotGetSlotID.invoke(slot);
+                            if (!(slotIdValue instanceof Number)) continue;
+                            int slotId = ((Number) slotIdValue).intValue();
+                            if (slotId < 0) continue;
+                            slotIds.add(slotId);
+                            if (slotId > maxSlotId) maxSlotId = slotId;
+                        }
+                        if (!slotIds.isEmpty()) {
+                            boolean[] slotMap = new boolean[maxSlotId + 1];
+                            int[] slotArray = new int[slotIds.size()];
+                            for (int i = 0; i < slotArray.length; i++) {
+                                slotArray[i] = slotIds.get(i);
+                                slotMap[slotArray[i]] = true;
+                            }
+                            selectableToolboxSlotIds = slotArray;
+                            selectableToolboxSlotMap = slotMap;
+                            toolboxSlotLayoutAvailable = true;
+                        }
+                    }
+                }
+            } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
+                toolboxSlotLayoutAvailable = false;
+            }
+            toolboxSlotLayoutResolved = true;
+            return toolboxSlotLayoutAvailable;
+        }
+    }
+
+    /** True when {@code slotId} is a slot GT's {@code CHANGE_ACTIVE_TOOL} handler accepts. */
+    private static boolean isSelectableToolboxSlot(int slotId) {
+        if (slotId < 0 || !ensureToolboxSlotLayout()) return false;
+        boolean[] slotMap = selectableToolboxSlotMap;
+        return slotId < slotMap.length && slotMap[slotId];
+    }
+
+    /**
+     * Finds the best internal toolbox slot that can harvest the target block. Only GT-activatable tool slots
+     * ({@code ToolboxSlot.TOOL_SLOTS}) holding a real {@code MetaGeneratedTool} are considered: GT ignores selections
+     * for other slots, and a non-tool stack (e.g. the battery, {@code MetaGeneratedItem01}) crashes GT's tool renderer.
      *
-     * <p>
-     * Unlike {@link #getToolboxBestInternalSlot} (which only knows wrench/crowbar/
-     * soft-mallet suggestions for machine blocks), this scans every internal stack
-     * and applies the same real harvest-eligibility rules used for normal tools.
-     * This is what makes a toolbox containing a pickaxe a valid switch candidate
-     * for stone/ore mining.
-     *
-     * @return internal slot index, or -1 if no internal tool can harvest the block
+     * @return internal slot id, or -1 if no activatable internal tool can harvest the block
      */
     public static int findBestToolboxSlotForBlock(ItemStack toolbox, Block block, int meta) {
         if (!gtLoaded || !toolboxLoaded
             || toolbox == null
             || block == null
-            || mToolboxItemStackHandlerGetSlots == null) {
+            || mToolboxItemStackHandlerGetSlots == null
+            || !ensureToolboxSlotLayout()) {
             return -1;
         }
         try {
@@ -286,14 +352,17 @@ public class GT5ToolCompat {
             int slots = ((Number) mToolboxItemStackHandlerGetSlots.invoke(handler)).intValue();
             int best = -1;
             int bestRemaining = -1;
-            for (int i = 0; i < slots; i++) {
-                ItemStack internal = (ItemStack) mToolboxItemStackHandlerGetStackInSlot.invoke(handler, i);
+            for (int slotId : selectableToolboxSlotIds) {
+                if (slotId < 0 || slotId >= slots) continue;
+                ItemStack internal = (ItemStack) mToolboxItemStackHandlerGetStackInSlot.invoke(handler, slotId);
                 if (internal == null || internal.getItem() == null) continue;
+                // GT only renders/delegates real MetaGeneratedTool entries.
+                if (!isGTTool(internal)) continue;
                 if (!ToolHarvestEligibility.isEligible(internal, block, meta)) continue;
                 int remaining = ToolHarvestEligibility.remainingDurability(internal);
                 if (remaining > bestRemaining) {
                     bestRemaining = remaining;
-                    best = i;
+                    best = slotId;
                 }
             }
             return best;
@@ -303,12 +372,12 @@ public class GT5ToolCompat {
     }
 
     public static int getToolboxInternalToolHarvestLevel(ItemStack toolbox, int slotId, String toolClass) {
-        if (!gtLoaded || !toolboxLoaded || toolbox == null) return -1;
+        if (!gtLoaded || !toolboxLoaded || toolbox == null || !isSelectableToolboxSlot(slotId)) return -1;
         try {
             Object handler = classToolboxItemStackHandler.getConstructor(ItemStack.class)
                 .newInstance(toolbox);
             ItemStack internalTool = (ItemStack) mToolboxItemStackHandlerGetStackInSlot.invoke(handler, slotId);
-            if (internalTool == null) return -1;
+            if (internalTool == null || !isGTTool(internalTool)) return -1;
             return internalTool.getItem()
                 .getHarvestLevel(internalTool, toolClass);
         } catch (IllegalAccessException | InvocationTargetException | InstantiationException
@@ -321,12 +390,14 @@ public class GT5ToolCompat {
      * Returns the dig speed of a toolbox's internal tool on the target block.
      */
     public static float getToolboxInternalToolDigSpeed(ItemStack toolbox, int slotId, Block block, int meta) {
-        if (!gtLoaded || !toolboxLoaded || toolbox == null || block == null) return 0F;
+        if (!gtLoaded || !toolboxLoaded || toolbox == null || block == null || !isSelectableToolboxSlot(slotId)) {
+            return 0F;
+        }
         try {
             Object handler = classToolboxItemStackHandler.getConstructor(ItemStack.class)
                 .newInstance(toolbox);
             ItemStack internalTool = (ItemStack) mToolboxItemStackHandlerGetStackInSlot.invoke(handler, slotId);
-            if (internalTool == null || internalTool.getItem() == null) return 0F;
+            if (internalTool == null || internalTool.getItem() == null || !isGTTool(internalTool)) return 0F;
             return internalTool.getItem()
                 .getDigSpeed(internalTool, block, meta);
         } catch (IllegalAccessException | InvocationTargetException | InstantiationException
@@ -340,18 +411,68 @@ public class GT5ToolCompat {
     }
 
     /**
-     * Changes the toolbox's active internal tool via GT's own
-     * {@code sendChangeToolPacket}, which sends a {@code GTPacketToolboxEvent}
-     * to the server so both sides stay in sync. The slot ID should come from
-     * {@link #getToolboxBestInternalSlot}.
+     * Changes the toolbox's active internal tool through GT's own {@code sendChangeToolPacket}. {@code -1} is GT's
+     * {@code NO_TOOL_SELECTED}; every other id must be a real tool slot (see {@link #findBestToolboxSlotForBlock}).
      *
-     * @param hotbarSlot the hotbar index (0–8) where the toolbox currently resides
+     * @param inventorySlot the toolbox's inventory slot index (hotbar or main inventory)
      */
-    public static void setToolboxSelectedTool(int hotbarSlot, int slotId) {
+    public static void setToolboxSelectedTool(int inventorySlot, int slotId) {
         if (!gtLoaded || !toolboxLoaded || mSendChangeToolPacket == null) return;
+        if (slotId != -1 && !isSelectableToolboxSlot(slotId)) return;
         try {
-            mSendChangeToolPacket.invoke(null, hotbarSlot, slotId);
+            mSendChangeToolPacket.invoke(null, inventorySlot, slotId);
         } catch (IllegalAccessException | InvocationTargetException ignored) {}
+    }
+
+    /**
+     * Client-side self-heal for a toolbox whose stored current-tool slot no longer holds a real GT tool (e.g. the
+     * battery slot picked by older EZMiner builds, an empty slot or an out-of-range id). GT's renderer casts the
+     * selected stack to {@code MetaGeneratedTool}, so such a selection crashes the client; this clears the local NBT
+     * immediately and asks GT to deselect the same slot on the server.
+     *
+     * @param inventorySlot the toolbox's inventory slot index (used for the GT deselect packet)
+     * @return {@code true} when a repair was performed
+     */
+    public static boolean repairInvalidToolboxSelection(int inventorySlot, ItemStack toolbox) {
+        if (!gtLoaded || !toolboxLoaded || toolbox == null || !isGTToolbox(toolbox)) return false;
+        String currentToolKey = currentToolKey();
+        if (currentToolKey == null) return false;
+        NBTTagCompound tag = toolbox.getTagCompound();
+        if (tag == null || !tag.hasKey(currentToolKey)) return false;
+        try {
+            int slotId = tag.getInteger(currentToolKey);
+            if (slotId < 0) return false;
+            Object handler = classToolboxItemStackHandler.getConstructor(ItemStack.class)
+                .newInstance(toolbox);
+            int slots = ((Number) mToolboxItemStackHandlerGetSlots.invoke(handler)).intValue();
+            if (slotId < slots) {
+                ItemStack internal = (ItemStack) mToolboxItemStackHandlerGetStackInSlot.invoke(handler, slotId);
+                if (internal != null && internal.getItem() != null && isGTTool(internal)) return false;
+            }
+            tag.removeTag(currentToolKey);
+            if (tag.hasNoTags()) toolbox.setTagCompound(null);
+            setToolboxSelectedTool(inventorySlot, -1);
+            return true;
+        } catch (RuntimeException | LinkageError | ReflectiveOperationException ignored) {
+            return false;
+        }
+    }
+
+    /** Lazily reads {@code ItemGTToolbox.CURRENT_TOOL_KEY} (its class init must not run during {@link #init()}). */
+    private static String currentToolKey() {
+        if (currentToolKeyResolved) return mCurrentToolKey;
+        synchronized (INIT_LOCK) {
+            if (!currentToolKeyResolved) {
+                try {
+                    Field field = SafeReflection.getField(classItemGTToolbox, "CURRENT_TOOL_KEY");
+                    mCurrentToolKey = field == null ? null : (String) field.get(null);
+                } catch (ReflectiveOperationException | RuntimeException | LinkageError ignored) {
+                    mCurrentToolKey = null;
+                }
+                currentToolKeyResolved = true;
+            }
+        }
+        return mCurrentToolKey;
     }
 
     // ── Vanilla attack-damage helpers ────────────────────────────────────────
