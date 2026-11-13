@@ -61,6 +61,7 @@ Three paths exist; all mutation runs on the server thread:
 - Root package `com.czqwq.EZMiner`; run `./gradlew spotlessApply` before committing (Google Java Format).
 - New server config field: declare in `Config` (server section), load in `loadServerOnlyInternal`, save in `saveServerConfig`, sync via `PacketServerConfig` + `applyServerRuntimeConfig`, save via `PacketSaveServerConfig`, and add a GUI row (Server tab; when appending at the end bump `SERVER_CONTENT_ROWS` and update `isSectionBreak`/`getRowLabelKey`/`initGui`/`actionPerformed`/`updateScrolledPositions`/`drawServerTab`/`updateTabVisibility`/`applyAndSaveServerConfig` at the new row + `lang`).
 - New network packet: register in `NetworkMain`, extend `AbstractPacket` (GTNH lib).
+- New config **text input** row: also register its validation rule in `EZMinerConfigGui.initFieldRules()` (`client/gui/validation/ConfigFieldRule`) — it drives the hover tooltip (`✓ 输入内容有效` / `× 输入内容无效` / `× 超出服务端配置`) and the red outline drawn on invalid inputs.
 - Do NOT add Mixins for core mining functionality; prefer the EBS/chunk-cached pure-Java helpers which are EndlessIDs-safe (`func_150818_a` / `getBlockByExtId`).
 
 ## Recent changes (2026-07)

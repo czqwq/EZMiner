@@ -88,6 +88,18 @@ ezminer.gui.save=§aSave & Apply§r
 ezminer.gui.inventory_button=§b[EZMiner]§r §fSettings
 ezminer.gui.syncToServerMax=Sync this value to the server maximum
 
+# Config input validation hover tooltip: <mark> <verdict>, plus a grey hint line
+ezminer.gui.validation.mark.valid=✓
+ezminer.gui.validation.mark.invalid=×
+ezminer.gui.validation.valid=Input is valid
+ezminer.gui.validation.invalid=Input is invalid
+ezminer.gui.validation.exceedsServerCap=Exceeds server config
+ezminer.gui.validation.range=Allowed range: %s ~ %s
+ezminer.gui.validation.rangeMin=Allowed range: ≥ %s
+ezminer.gui.validation.rangeMax=Allowed range: ≤ %s
+ezminer.gui.validation.serverCap=Server cap: %s
+ezminer.gui.validation.hint.registryList=Comma-separated item registry names, e.g. minecraft:diamond_pickaxe
+
 ezminer.command.nopermission=§cYou need OP permission to reload the config.
 ezminer.command.reloadconfig.success=EZMiner config reloaded successfully.
 ezminer.command.reloadclientconfig.success=EZMiner client config reloaded and server render caps synced.

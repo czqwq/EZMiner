@@ -1,7 +1,7 @@
 
 elytraModpackVersion {
     // 在这配置的gtnh版本 用于自动拉取依赖版本
-    gtnhVersion = "2.9.0-beta-3"
+    gtnhVersion = "2.9.0"
     // 是否不缓存拉取的依赖清单文件
     manifestNoCache = false
     // 是否自动为输出的jar添加 `gtnhVersion` 后缀
@@ -25,8 +25,7 @@ dependencies {
     runtimeOnlyNonPublishable(gtnhDev("InGame-Info-XML"))
     runtimeOnlyNonPublishable(gtnhDev("VisualProspecting"))
 
-    runtimeOnlyNonPublishable(rfg.deobf('maven.modrinth:journeymap:5.2.16'))
-    //runtimeOnlyNonPublishable rfg.deobf(files("libs/journeymap-1.7.10-5.2.10-fairplay.jar"))
+    runtimeOnlyNonPublishable rfg.deobf(files("libs/journeymap-1.7.10-5.2.34-unlimited.jar"))
     runtimeOnlyNonPublishable rfg.deobf(files("libs/spark-1.10.19.jar"))
     runtimeOnlyNonPublishable rfg.deobf(files("libs/extrautilities-1.2.12.jar"))
     runtimeOnlyNonPublishable(gtnhDev("StructureLib"))

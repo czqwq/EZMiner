@@ -44,6 +44,17 @@ public final class GuiTooltipRenderer {
      */
     public static void render(FontRenderer fontRenderer, String text, int mouseX, int mouseY, int screenW,
         int screenH) {
+        render(fontRenderer, text, mouseX, mouseY, screenW, screenH, BORDER_COLOR);
+    }
+
+    /**
+     * Draws the tooltip with a custom border colour, used to tint the box by state
+     * (green for a valid config input, red for an invalid one).
+     *
+     * @param borderColor ARGB border colour; the background stays the default
+     */
+    public static void render(FontRenderer fontRenderer, String text, int mouseX, int mouseY, int screenW, int screenH,
+        int borderColor) {
         if (text == null || text.isEmpty()) return;
 
         // MC 1.7.10's .lang parser stores \n as literal backslash-n; convert so
@@ -73,10 +84,10 @@ public final class GuiTooltipRenderer {
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         Gui.drawRect(left, top, right, bottom, BG_COLOR);
         // 1px border
-        Gui.drawRect(left, top, right, top + 1, BORDER_COLOR);
-        Gui.drawRect(left, bottom - 1, right, bottom, BORDER_COLOR);
-        Gui.drawRect(left, top + 1, left + 1, bottom - 1, BORDER_COLOR);
-        Gui.drawRect(right - 1, top + 1, right, bottom - 1, BORDER_COLOR);
+        Gui.drawRect(left, top, right, top + 1, borderColor);
+        Gui.drawRect(left, bottom - 1, right, bottom, borderColor);
+        Gui.drawRect(left, top + 1, left + 1, bottom - 1, borderColor);
+        Gui.drawRect(right - 1, top + 1, right, bottom - 1, borderColor);
 
         GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         for (int i = 0; i < lines.length; i++) {

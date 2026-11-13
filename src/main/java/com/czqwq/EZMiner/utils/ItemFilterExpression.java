@@ -101,6 +101,27 @@ public final class ItemFilterExpression {
     }
 
     /**
+     * Syntax-only check, for GUI live validation. Never logs and never caches.
+     *
+     * <p>
+     * {@link #compile(String)} maps both "blank" and "malformed" to the same
+     * never-matching matcher, so it cannot be used to tell a disabled filter from a
+     * broken one. This method does: blank input is valid (the filter is simply off),
+     * anything else must parse completely and be within the length cap.
+     * </p>
+     *
+     * @param expression the expression, may be null / blank / malformed
+     * @return {@code true} when the expression is blank or parses without leftovers
+     */
+    public static boolean isValid(String expression) {
+        if (!isEnabled(expression)) return true;
+        if (expression.length() > MAX_EXPRESSION_LENGTH) return false;
+        Parser parser = new Parser(expression);
+        Node node = parser.parseOr();
+        return node != null && !parser.hasNext();
+    }
+
+    /**
      * Compiles an expression into an immutable matcher.
      *
      * @param expression the expression, may be null / blank / malformed

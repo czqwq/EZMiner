@@ -1,6 +1,8 @@
 package com.czqwq.EZMiner.client.gui;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntSupplier;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -17,6 +19,8 @@ import org.lwjgl.opengl.GL11;
 import com.czqwq.EZMiner.Config;
 import com.czqwq.EZMiner.EZMiner;
 import com.czqwq.EZMiner.client.gui.sync.ClientCapSyncTarget;
+import com.czqwq.EZMiner.client.gui.validation.ConfigFieldRule;
+import com.czqwq.EZMiner.client.gui.validation.FieldValidationStatus;
 import com.czqwq.EZMiner.network.PacketMinerConfig;
 import com.czqwq.EZMiner.network.PacketOpStatusRequest;
 import com.czqwq.EZMiner.network.PacketReloadServerConfig;
@@ -130,6 +134,16 @@ public class EZMinerConfigGui extends GuiScreen {
     /** MC 1.7.10 lowercases ResourceLocation domain — must match assets/ezminer/. */
     private static final ResourceLocation SYNC_ICON = new ResourceLocation("ezminer", "textures/icons/reset.png");
 
+    // ── Input validation (hover tooltip + red outline) ────────────────────────
+    /** Tooltip border colour while the hovered input passes validation. */
+    private static final int TOOLTIP_BORDER_VALID = 0xFF3FBF5F;
+    /** Tooltip border colour while the hovered input fails validation. */
+    private static final int TOOLTIP_BORDER_INVALID = 0xFFCC3333;
+    /** Outline colour drawn around every invalid input field. */
+    private static final int INVALID_OUTLINE_COLOR = 0xFFCC3333;
+    /** Short alias of {@link ConfigFieldRule#NO_LIMIT}, keeps the rule table readable. */
+    private static final int NO_LIMIT = ConfigFieldRule.NO_LIMIT;
+
     // ── Adaptive layout (computed in initGui) ─────────────────────────────────
     /** Actual panel height for the current screen. */
     private int guiH;
@@ -194,6 +208,9 @@ public class EZMinerConfigGui extends GuiScreen {
     private GuiTextField tfPlantRadius;
     private GuiTextField tfPlantMaxCount;
     private GuiTextField tfServerBlacklist;
+
+    /** Validation rule per config text field, in hover-priority order (tab-tagged). */
+    private final List<FieldRuleBinding> fieldRules = new ArrayList<>();
 
     // ── Toggle button references ──────────────────────────────────────────────
     private GuiButton btnUsePreview;
@@ -656,6 +673,7 @@ public class EZMinerConfigGui extends GuiScreen {
         if (EZMiner.clientIsOp) {
             initServerFields();
         }
+        initFieldRules();
 
         recalcTotalContentH();
         updateTabVisibility();
@@ -708,6 +726,9 @@ public class EZMinerConfigGui extends GuiScreen {
         } else {
             drawServerTab();
         }
+        // Red outline around invalid inputs — drawn inside the scissor region so it is
+        // clipped to the viewport like the fields themselves.
+        drawInvalidFieldOutlines();
 
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
 
@@ -719,7 +740,7 @@ public class EZMinerConfigGui extends GuiScreen {
 
         // Hover tooltips for icon buttons — drawn last so they overlay the panel.
         drawButtonTooltips(mouseX, mouseY);
-        drawServerFieldTooltip(mouseX, mouseY);
+        drawFieldValidationTooltip(mouseX, mouseY);
     }
 
     /** Renders the tooltip of the hovered icon button, if any. */
@@ -735,22 +756,22 @@ public class EZMinerConfigGui extends GuiScreen {
     }
 
     /**
-     * Renders the hover tooltip of the server blacklist text field. Scrolling moves
+     * Renders the validation tooltip of the hovered config input field. Scrolling moves
      * {@code yPosition} with the row, so the hover rect stays in sync automatically.
      */
-    private void drawServerFieldTooltip(int mouseX, int mouseY) {
-        if (activeTab != TAB_SERVER || !EZMiner.clientIsOp || tfServerBlacklist == null) return;
-        if (mouseX >= tfServerBlacklist.xPosition && mouseX <= tfServerBlacklist.xPosition + tfServerBlacklist.width
-            && mouseY >= tfServerBlacklist.yPosition
-            && mouseY <= tfServerBlacklist.yPosition + tfServerBlacklist.height) {
-            GuiTooltipRenderer.render(
-                mc.fontRenderer,
-                I18n.format("ezminer.config.blacklistExpression.tooltip"),
-                mouseX,
-                mouseY,
-                width,
-                height);
-        }
+    private void drawFieldValidationTooltip(int mouseX, int mouseY) {
+        FieldRuleBinding hovered = hoveredFieldRule(mouseX, mouseY);
+        if (hovered == null) return;
+        String text = hovered.field.getText();
+        FieldValidationStatus status = hovered.rule.status(text);
+        GuiTooltipRenderer.render(
+            mc.fontRenderer,
+            hovered.rule.tooltip(status),
+            mouseX,
+            mouseY,
+            width,
+            height,
+            status.isValid() ? TOOLTIP_BORDER_VALID : TOOLTIP_BORDER_INVALID);
     }
 
     @Override
@@ -1662,6 +1683,128 @@ public class EZMinerConfigGui extends GuiScreen {
         GuiTextField tf = new GuiTextField(mc.fontRenderer, x, y, FIELD_W, FIELD_H);
         tf.setText(initialText);
         return tf;
+    }
+
+    // ── Input validation ──────────────────────────────────────────────────────
+
+    /**
+     * Registers the validation rule of every config input field. Bounds mirror the
+     * values the Apply path really enforces ({@code Config} load clamps plus the ranges
+     * {@code PacketSaveServerConfig} accepts), so "valid" means "applied as typed".
+     * Client-tab numbers carry the server cap they are silently clamped to — that is
+     * the only case reported as {@link FieldValidationStatus#EXCEEDS_SERVER_CAP}.
+     */
+    private void initFieldRules() {
+        fieldRules.clear();
+
+        // ── Client tab: hard range where Config clamps it, plus the server cap the
+        // value is silently clamped to on apply / sync ──────────────────────────
+        bind(TAB_CLIENT, tfClientBigRadius, cappedInteger(0, NO_LIMIT, ClientCapSyncTarget.BIG_RADIUS));
+        bind(TAB_CLIENT, tfClientBlockLimit, cappedInteger(0, NO_LIMIT, ClientCapSyncTarget.BLOCK_LIMIT));
+        bind(TAB_CLIENT, tfClientSmallRadius, cappedInteger(0, NO_LIMIT, ClientCapSyncTarget.SMALL_RADIUS));
+        bind(TAB_CLIENT, tfClientTunnelWidth, cappedInteger(0, NO_LIMIT, ClientCapSyncTarget.TUNNEL_WIDTH));
+        bind(TAB_CLIENT, tfClientLogBigRadius, cappedInteger(8, 64, ClientCapSyncTarget.LOG_BIG_RADIUS));
+        bind(TAB_CLIENT, tfClientLogBlockLimit, cappedInteger(8, NO_LIMIT, ClientCapSyncTarget.LOG_BLOCK_LIMIT));
+        bind(TAB_CLIENT, tfPreviewBigRadius, cappedInteger(0, NO_LIMIT, ClientCapSyncTarget.PREVIEW_BIG_RADIUS));
+        bind(TAB_CLIENT, tfPreviewBlockLimit, cappedInteger(0, NO_LIMIT, ClientCapSyncTarget.PREVIEW_BLOCK_LIMIT));
+        bind(TAB_CLIENT, tfClientBlockSwapRadius, cappedInteger(0, 32, ClientCapSyncTarget.BLOCK_SWAP_RADIUS));
+        bind(TAB_CLIENT, tfClientBlockSwapLimit, cappedInteger(0, NO_LIMIT, ClientCapSyncTarget.BLOCK_SWAP_LIMIT));
+        bind(TAB_CLIENT, tfPreferredTools, ConfigFieldRule.registryList());
+
+        // ── Server tab: no server cap, only the ranges the server enforces ──────
+        bind(TAB_SERVER, tfServerBigRadius, ConfigFieldRule.integer(0, NO_LIMIT));
+        bind(TAB_SERVER, tfServerBlockLimit, ConfigFieldRule.integer(0, NO_LIMIT));
+        bind(TAB_SERVER, tfServerSmallRadius, ConfigFieldRule.integer(0, NO_LIMIT));
+        bind(TAB_SERVER, tfServerTunnelWidth, ConfigFieldRule.integer(0, NO_LIMIT));
+        bind(TAB_SERVER, tfServerLogBigRadius, ConfigFieldRule.integer(8, 64));
+        bind(TAB_SERVER, tfServerLogBlockLimit, ConfigFieldRule.integer(8, NO_LIMIT));
+        bind(TAB_SERVER, tfBreakPerTick, ConfigFieldRule.integer(1, 512));
+        bind(TAB_SERVER, tfCachedBreakPerTick, ConfigFieldRule.integer(1, 1024));
+        bind(TAB_SERVER, tfSearchWorkerThreads, ConfigFieldRule.integer(0, 8));
+        bind(TAB_SERVER, tfAddExhaustion, ConfigFieldRule.decimal(-1000.0, 1000.0));
+        bind(TAB_SERVER, tfServerMaxPreviewRadius, ConfigFieldRule.integer(0, NO_LIMIT));
+        bind(TAB_SERVER, tfServerMaxPreviewLimit, ConfigFieldRule.integer(0, NO_LIMIT));
+        // -1 disables the idle timeout / countdown; 0 means the same and stays valid.
+        bind(TAB_SERVER, tfChainIdleTimeout, ConfigFieldRule.integer(-1, NO_LIMIT));
+        bind(TAB_SERVER, tfChainIdleCountdown, ConfigFieldRule.integer(-1, NO_LIMIT));
+        bind(TAB_SERVER, tfChainCooldownTicks, ConfigFieldRule.integer(0, NO_LIMIT));
+        bind(TAB_SERVER, tfServerBlacklist, ConfigFieldRule.itemExpression());
+        bind(TAB_SERVER, tfServerBlockSwapRadius, ConfigFieldRule.integer(0, 32));
+        bind(TAB_SERVER, tfServerBlockSwapLimit, ConfigFieldRule.integer(0, NO_LIMIT));
+        bind(TAB_SERVER, tfSearchBudgetPerYield, ConfigFieldRule.integer(0, 4096));
+        bind(TAB_SERVER, tfChainWatchdogTimeoutTicks, ConfigFieldRule.integer(20, 1200));
+        bind(TAB_SERVER, tfToolBreakHandoffTimeoutTicks, ConfigFieldRule.integer(1, 40));
+        bind(TAB_SERVER, tfProspectProbeInterval, ConfigFieldRule.decimal(0.1, 3600.0));
+        bind(TAB_SERVER, tfProspectMaxScanRadius, ConfigFieldRule.integer(1, 7));
+        bind(TAB_SERVER, tfPlantRadius, ConfigFieldRule.integer(1, 12));
+        bind(TAB_SERVER, tfPlantMaxCount, ConfigFieldRule.integer(1, 256));
+        bind(TAB_SERVER, tfMinesweeperCooldown, ConfigFieldRule.decimal(0.1, 3600.0));
+        bind(TAB_SERVER, tfSudokuCooldown, ConfigFieldRule.decimal(0.1, 3600.0));
+    }
+
+    /** Binds a rule to a field; fields of a hidden tab (non-OP server tab) are skipped. */
+    private void bind(int tab, GuiTextField field, ConfigFieldRule rule) {
+        if (field != null) fieldRules.add(new FieldRuleBinding(tab, field, rule));
+    }
+
+    /** {@link ConfigFieldRule#cappedInteger} with the cap read from a sync target. */
+    private static ConfigFieldRule cappedInteger(int min, int max, ClientCapSyncTarget target) {
+        IntSupplier cap = target::serverMax;
+        return ConfigFieldRule.cappedInteger(min, max, cap);
+    }
+
+    /** The binding whose field sits under the cursor on the active tab, or {@code null}. */
+    private FieldRuleBinding hoveredFieldRule(int mouseX, int mouseY) {
+        for (int i = 0; i < fieldRules.size(); i++) {
+            FieldRuleBinding binding = fieldRules.get(i);
+            if (binding.tab != activeTab) continue;
+            GuiTextField field = binding.field;
+            // Scrolled-out fields keep a yPosition off the viewport; skip them so a
+            // stale position can never produce a tooltip.
+            if (!isInViewport(field.yPosition)) continue;
+            if (mouseX >= field.xPosition && mouseX < field.xPosition + field.width
+                && mouseY >= field.yPosition
+                && mouseY < field.yPosition + field.height) {
+                return binding;
+            }
+        }
+        return null;
+    }
+
+    /** Red outline around every invalid input on the active tab, clipped to the viewport. */
+    private void drawInvalidFieldOutlines() {
+        for (int i = 0; i < fieldRules.size(); i++) {
+            FieldRuleBinding binding = fieldRules.get(i);
+            if (binding.tab != activeTab) continue;
+            GuiTextField field = binding.field;
+            if (!isInViewport(field.yPosition)) continue;
+            if (binding.rule.status(field.getText())
+                .isValid()) continue;
+            drawFieldOutline(field.xPosition, field.yPosition, field.width, field.height, INVALID_OUTLINE_COLOR);
+        }
+    }
+
+    /** 1px rectangle just outside the given field rectangle. */
+    private void drawFieldOutline(int x, int y, int w, int h, int color) {
+        drawRect(x - 1, y - 1, x + w + 1, y, color);
+        drawRect(x - 1, y + h, x + w + 1, y + h + 1, color);
+        drawRect(x - 1, y, x, y + h, color);
+        drawRect(x + w, y, x + w + 1, y + h, color);
+    }
+
+    /** One config text field together with the rule used to validate its contents. */
+    private static final class FieldRuleBinding {
+
+        /** Tab the field belongs to: {@link #TAB_CLIENT} or {@link #TAB_SERVER}. */
+        private final int tab;
+        private final GuiTextField field;
+        private final ConfigFieldRule rule;
+
+        private FieldRuleBinding(int tab, GuiTextField field, ConfigFieldRule rule) {
+            this.tab = tab;
+            this.field = field;
+            this.rule = rule;
+        }
     }
 
     /**

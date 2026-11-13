@@ -1,6 +1,16 @@
-// Add any additional repositories for your dependencies here.
-
 repositories { handler ->
+    maven { url 'https://maven.enginehub.org/repo/' }
+    maven { url 'https://cfa2.cursemaven.com' }
+    maven { url 'https://maven.minecraftforge.net/' }
+    maven { url 'https://plugins.gradle.org/m2/' }
+    mavenCentral()
+    maven {
+        url 'https://jitpack.io'
+        content {
+            includeGroup 'com.github.czqwq'
+        }
+    }
+
     exclusiveContent {
         forRepository {
             handler.maven {
