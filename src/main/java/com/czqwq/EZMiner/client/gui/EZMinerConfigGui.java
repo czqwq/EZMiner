@@ -1738,8 +1738,8 @@ public class EZMinerConfigGui extends GuiScreen {
         bind(TAB_SERVER, tfProspectMaxScanRadius, ConfigFieldRule.integer(1, 7));
         bind(TAB_SERVER, tfPlantRadius, ConfigFieldRule.integer(1, 12));
         bind(TAB_SERVER, tfPlantMaxCount, ConfigFieldRule.integer(1, 256));
-        bind(TAB_SERVER, tfMinesweeperCooldown, ConfigFieldRule.decimal(0.1, 3600.0));
-        bind(TAB_SERVER, tfSudokuCooldown, ConfigFieldRule.decimal(0.1, 3600.0));
+        bind(TAB_SERVER, tfMinesweeperCooldown, ConfigFieldRule.decimal(0.0, 3600.0));
+        bind(TAB_SERVER, tfSudokuCooldown, ConfigFieldRule.decimal(0.0, 3600.0));
     }
 
     /** Binds a rule to a field; fields of a hidden tab (non-OP server tab) are skipped. */

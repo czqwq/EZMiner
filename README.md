@@ -147,8 +147,8 @@ Numeric fields accept direct input; toggle options switch ON/OFF with a click.
 | Blocks Per Tick | 16 | Maximum blocks broken per game tick (max 64; lower = less TPS impact) |
 | Food Cost | 0.025 | Hunger exhaustion per block mined |
 | Drop Location | Player feet | Where batched drops appear — at the player or at the origin block |
-| Minesweeper Cooldown | 5 s | Delay between auto-flag operations in Minesweeper mode |
-| Sudoku Cooldown | 5 s | Delay between auto-fill operations in Sudoku mode |
+| Minesweeper Cooldown | 5 s | Delay between auto-flag operations in Minesweeper mode (0 = no cooldown) |
+| Sudoku Cooldown | 5 s | Delay between auto-fill operations in Sudoku mode (0 = no cooldown) |
 
 ### Common Client Options
 

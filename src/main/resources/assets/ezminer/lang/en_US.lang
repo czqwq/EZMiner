@@ -63,8 +63,8 @@ ezminer.config.chainIdleTimeoutSeconds=Idle Timeout (s)
 ezminer.config.chainIdleCountdownSeconds=Idle Countdown (s)
 ezminer.config.stopOnUnbreakable=Stop On Unbreakable\nON: stop chain if block cannot be harvested\nOFF: skip unharvestable blocks (default)
 ezminer.config.chainCooldownTicks=Chain Cooldown (ticks)\n0 = no cooldown\n20 ticks = 1 second
-ezminer.config.minesweeperCooldown=Minesweeper Cooldown (s)
-ezminer.config.sudokuCooldown=Sudoku Cooldown (s)
+ezminer.config.minesweeperCooldown=Minesweeper Cooldown (s)\n0 = no cooldown (one probe/tick)
+ezminer.config.sudokuCooldown=Sudoku Cooldown (s)\n0 = no cooldown (one fill/tick)
 ezminer.config.serverPreviewRadius=Server Max Preview Radius
 ezminer.config.serverPreviewLimit=Server Max Preview Blocks
 ezminer.config.serverUsePreview=Server Preview Enabled

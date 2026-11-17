@@ -216,7 +216,8 @@ public class MinesweeperModeHandler {
 
         if (generated.isEmpty()) return;
         if (now < nextDetectAtMs) return;
-        long cooldownMs = (long) (Math.max(0.1, Config.minesweeperProbeCooldownSeconds) * 1000.0);
+        // 0 = cooldown disabled: the cadence then falls back to one probe per server tick.
+        long cooldownMs = (long) (Math.max(0.0, Config.minesweeperProbeCooldownSeconds) * 1000.0);
         nextDetectAtMs = now + cooldownMs;
         boolean boardChanged = false;
 

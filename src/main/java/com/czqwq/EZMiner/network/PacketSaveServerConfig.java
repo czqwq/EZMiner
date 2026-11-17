@@ -302,8 +302,9 @@ public class PacketSaveServerConfig implements IMessage {
             Config.serverUsePreview = msg.serverUsePreview;
             Config.serverMaxPreviewBigRadius = Math.max(0, msg.serverMaxPreviewBigRadius);
             Config.serverMaxPreviewBlockLimit = Math.max(0, msg.serverMaxPreviewBlockLimit);
-            Config.minesweeperProbeCooldownSeconds = Math.max(0.1, msg.minesweeperProbeCooldownSeconds);
-            Config.sudokuProbeCooldownSeconds = Math.max(0.1, msg.sudokuProbeCooldownSeconds);
+            // 0 = cooldown disabled (the assistant then probes once per server tick).
+            Config.minesweeperProbeCooldownSeconds = Math.max(0.0, msg.minesweeperProbeCooldownSeconds);
+            Config.sudokuProbeCooldownSeconds = Math.max(0.0, msg.sudokuProbeCooldownSeconds);
             Config.enableCachedChain = msg.enableCachedChain;
             Config.searchWorkerThreads = Math.max(0, Math.min(8, msg.searchWorkerThreads));
             Config.suppressHodgepodgeWarnings = msg.suppressHodgepodgeWarnings;

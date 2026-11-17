@@ -150,7 +150,8 @@ public class SudokuModeHandler {
         }
 
         if (now < nextFillAtMs) return;
-        long cooldownMs = (long) (Math.max(0.1, Config.sudokuProbeCooldownSeconds) * 1000.0);
+        // 0 = cooldown disabled: the cadence then falls back to one fill per server tick.
+        long cooldownMs = (long) (Math.max(0.0, Config.sudokuProbeCooldownSeconds) * 1000.0);
         nextFillAtMs = now + cooldownMs;
         Vector3i filledPos = bridge.fillNearestCell(player, views, filledCells);
         if (filledPos != null) {

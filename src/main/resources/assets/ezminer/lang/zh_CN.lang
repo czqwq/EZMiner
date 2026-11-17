@@ -63,8 +63,8 @@ ezminer.config.chainIdleTimeoutSeconds=空闲超时（秒）
 ezminer.config.chainIdleCountdownSeconds=空闲倒计时（秒）
 ezminer.config.stopOnUnbreakable=遇到无法采集的方块立即停止\n开: 遇到无法采集的方块时停止连锁\n关: 跳过无法采集的方块（默认）
 ezminer.config.chainCooldownTicks=连锁冷却（tick）\n0 = 无冷却\n20 tick = 1秒
-ezminer.config.minesweeperCooldown=扫雷探测冷却（秒）
-ezminer.config.sudokuCooldown=数独解算冷却（秒）
+ezminer.config.minesweeperCooldown=扫雷探测冷却（秒）\n0 = 无冷却（每tick探测一次）
+ezminer.config.sudokuCooldown=数独解算冷却（秒）\n0 = 无冷却（每tick填入一次）
 ezminer.config.serverPreviewRadius=服务端最大预览半径
 ezminer.config.serverPreviewLimit=服务端最大预览方块数
 ezminer.config.serverUsePreview=服务端全局预览开关

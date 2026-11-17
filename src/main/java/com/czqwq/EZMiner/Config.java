@@ -110,12 +110,16 @@ public class Config {
     public static int chainIdleCountdownSeconds = 10;
     /**
      * Cooldown in seconds between successive minesweeper auto-flag operations
-     * when the chain key is held in Special / Minesweeper mode. Minimum: 0.1 s (2 ticks).
+     * when the chain key is held in Special / Minesweeper mode.
+     * 0 = no cooldown (one probe per server tick, i.e. always usable).
+     * Minimum: 0 s. Default: 5.
      */
     public static double minesweeperProbeCooldownSeconds = 5.0;
     /**
      * Cooldown in seconds between successive Sudoku auto-fill operations
-     * when the chain key is held in Special / Sudoku mode. Minimum: 0.1 s (2 ticks).
+     * when the chain key is held in Special / Sudoku mode.
+     * 0 = no cooldown (one fill per server tick, i.e. always usable).
+     * Minimum: 0 s. Default: 5.
      */
     public static double sudokuProbeCooldownSeconds = 5.0;
     /**
@@ -820,8 +824,8 @@ public class Config {
                 Configuration.CATEGORY_GENERAL,
                 5.0,
                 "Cooldown in seconds between successive auto-flag operations in Special / Minesweeper mode "
-                    + "(while the chain key is held). Minimum: 0.1. Default: 5.",
-                0.1,
+                    + "(while the chain key is held). 0 = no cooldown (one probe per server tick). Default: 5.",
+                0.0,
                 3600.0)
             .getDouble();
         sudokuProbeCooldownSeconds = serverConfiguration
@@ -830,8 +834,8 @@ public class Config {
                 Configuration.CATEGORY_GENERAL,
                 5.0,
                 "Cooldown in seconds between successive auto-fill operations in Special / Sudoku mode "
-                    + "(while the chain key is held). Minimum: 0.1. Default: 5.",
-                0.1,
+                    + "(while the chain key is held). 0 = no cooldown (one fill per server tick). Default: 5.",
+                0.0,
                 3600.0)
             .getDouble();
         prospectProbeIntervalSeconds = serverConfiguration
@@ -1041,8 +1045,8 @@ public class Config {
         dropImmediately = syncedDropImmediately;
         addExhaustion = clampAddExhaustion(syncedAddExhaustion);
         dropToPlayer = syncedDropToPlayer;
-        minesweeperProbeCooldownSeconds = Math.max(0.1, syncedMinesweeperCooldown);
-        sudokuProbeCooldownSeconds = Math.max(0.1, syncedSudokuCooldown);
+        minesweeperProbeCooldownSeconds = Math.max(0.0, syncedMinesweeperCooldown);
+        sudokuProbeCooldownSeconds = Math.max(0.0, syncedSudokuCooldown);
         prospectProbeIntervalSeconds = Math.max(0.1, syncedProspectProbeInterval);
         prospectMaxScanRadiusChunks = Math.max(1, Math.min(7, syncedProspectMaxScanRadius));
         // Single source of truth for the plant clamps: 1..12 / 1..256, matching
@@ -1712,8 +1716,9 @@ public class Config {
                 "minesweeperProbeCooldownSeconds",
                 Configuration.CATEGORY_GENERAL,
                 5.0,
-                "Cooldown in seconds between minesweeper auto-flag operations.",
-                0.1,
+                "Cooldown in seconds between minesweeper auto-flag operations. "
+                    + "0 = no cooldown (one probe per server tick).",
+                0.0,
                 3600.0)
             .set(minesweeperProbeCooldownSeconds);
         serverConfiguration
@@ -1721,8 +1726,9 @@ public class Config {
                 "sudokuProbeCooldownSeconds",
                 Configuration.CATEGORY_GENERAL,
                 5.0,
-                "Cooldown in seconds between sudoku auto-fill operations.",
-                0.1,
+                "Cooldown in seconds between sudoku auto-fill operations. "
+                    + "0 = no cooldown (one fill per server tick).",
+                0.0,
                 3600.0)
             .set(sudokuProbeCooldownSeconds);
         serverConfiguration
